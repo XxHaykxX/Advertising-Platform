@@ -8,6 +8,8 @@
 
 import { PrismaClient, type CompanyVerifStatus } from '@prisma/client';
 
+import { notifyVerificationDecision } from '../src/lib/verification-notify';
+
 const prisma = new PrismaClient();
 
 async function main() {
@@ -72,6 +74,17 @@ async function main() {
   }
 
   console.info(`[approve] ${company.name} → ${status}${reason ? ` (${reason})` : ''}`);
+
+  // Fire the result email + in-app notification (skipped for PENDING since
+  // there is no decision to communicate).
+  if (status !== 'PENDING') {
+    await notifyVerificationDecision({
+      companyId: company.id,
+      decision: status,
+      reason,
+    });
+    console.info(`[approve] notification dispatched for ${user.name}`);
+  }
 }
 
 main()

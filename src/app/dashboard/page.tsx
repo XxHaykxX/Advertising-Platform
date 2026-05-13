@@ -84,20 +84,28 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         </ul>
       </section>
 
-      <form
-        action={async () => {
-          'use server';
-          const { signOut } = await import('@/auth');
-          await signOut({ redirectTo: '/' });
-        }}
-      >
-        <button
-          type="submit"
-          className="text-body text-secondary underline-offset-4 hover:text-primary hover:underline"
+      <div className="flex items-center gap-6 text-body text-secondary">
+        <Link
+          href="/settings/security"
+          className="underline-offset-4 hover:text-primary hover:underline"
         >
-          Log out
-        </button>
-      </form>
+          Change password
+        </Link>
+        <form
+          action={async () => {
+            'use server';
+            const { signOut } = await import('@/auth');
+            await signOut({ redirectTo: '/' });
+          }}
+        >
+          <button
+            type="submit"
+            className="underline-offset-4 hover:text-primary hover:underline"
+          >
+            Log out
+          </button>
+        </form>
+      </div>
     </main>
   );
 }
