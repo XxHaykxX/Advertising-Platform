@@ -14,7 +14,10 @@ export function MarketingHeader() {
           ADVERTISING<span className="text-accent">.</span>
         </Link>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
+          <Button asChild variant="ghost" size="sm">
+            <Link href="/catalog">Catalog</Link>
+          </Button>
           <Button asChild variant="ghost" size="sm">
             <Link href="/login">Log in</Link>
           </Button>
