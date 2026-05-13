@@ -63,6 +63,17 @@ enum ListingStatus {
   CLOSED
 }
 
+enum InquiryStatus {
+  NEW
+  ASSIGNED
+  IN_PROGRESS
+  AWAITING_PUBLISHER
+  AWAITING_ADVERTISER
+  CONFIRMED
+  LOST
+  CANCELLED
+}
+
 // === CORE (stubs for S-01.1; expanded in subsequent stories) ===
 
 model User {
@@ -85,6 +96,8 @@ model User {
   notifications       Notification[]
   verificationTokens  VerificationToken[]
   passwordResetTokens PasswordResetToken[]
+  inquiriesAdvertiser Inquiry[]            @relation("advertiserInquiries")
+  inquiriesAssigned   Inquiry[]            @relation("assignedInquiries")
 
   @@index([email])
   @@index([role])
@@ -129,30 +142,32 @@ model Notification {
 }
 
 model Company {
-  id                   String                @id @default(cuid())
-  name                 String
-  legalName            String?
-  taxId                String?
-  type                 String?
-  foundingYear         Int?
-  country              String                @default("AM")
-  address              String?               @db.Text
-  logoUrl              String?
+  id                    String                @id @default(cuid())
+  name                  String
+  legalName             String?
+  taxId                 String?
+  type                  String?
+  foundingYear          Int?
+  country               String                @default("AM")
+  address               String?               @db.Text
+  logoUrl               String?
   // For advertisers: ChannelType[] (interest). For publishers: not used —
   // owned channels live in SourceChannel.ownerCompanyId.
-  channelsOfInterest   Json?
-  verificationStatus   CompanyVerifStatus    @default(PENDING)
-  verifiedAt           DateTime?
-  verifiedById         String?
-  canAdvertise         Boolean               @default(false)
-  canPublish           Boolean               @default(false)
-  users                User[]
-  industries           CompanyIndustry[]
-  sourceChannels       SourceChannel[]
-  listings             Listing[]
-  verificationRequests VerificationRequest[]
-  createdAt            DateTime              @default(now())
-  updatedAt            DateTime              @updatedAt
+  channelsOfInterest    Json?
+  verificationStatus    CompanyVerifStatus    @default(PENDING)
+  verifiedAt            DateTime?
+  verifiedById          String?
+  canAdvertise          Boolean               @default(false)
+  canPublish            Boolean               @default(false)
+  users                 User[]
+  industries            CompanyIndustry[]
+  sourceChannels        SourceChannel[]
+  listings              Listing[]
+  verificationRequests  VerificationRequest[]
+  inquiriesAsAdvertiser Inquiry[]             @relation("advertiserCompanyInquiries")
+  inquiriesAsPublisher  Inquiry[]             @relation("publisherCompanyInquiries")
+  createdAt             DateTime              @default(now())
+  updatedAt             DateTime              @updatedAt
 
   @@index([verificationStatus])
 }
@@ -205,12 +220,59 @@ model Listing {
   status               ListingStatus  @default(DRAFT)
   viewCount            Int            @default(0)
   inquiryCount         Int            @default(0)
+  inquiries            Inquiry[]
   createdAt            DateTime       @default(now())
   updatedAt            DateTime       @updatedAt
 
   @@index([status, channelType])
   @@index([availableFrom, availableTo])
   @@index([companyId])
+}
+
+model Inquiry {
+  id                  String              @id @default(cuid())
+  advertiserUserId    String
+  advertiserUser      User                @relation("advertiserInquiries", fields: [advertiserUserId], references: [id], onDelete: Restrict)
+  advertiserCompanyId String
+  advertiserCompany   Company             @relation("advertiserCompanyInquiries", fields: [advertiserCompanyId], references: [id], onDelete: Restrict)
+  publisherCompanyId  String
+  publisherCompany    Company             @relation("publisherCompanyInquiries", fields: [publisherCompanyId], references: [id], onDelete: Restrict)
+  listingId           String?
+  listing             Listing?            @relation(fields: [listingId], references: [id], onDelete: SetNull)
+  assignedAdminId     String?
+  assignedAdmin       User?               @relation("assignedInquiries", fields: [assignedAdminId], references: [id], onDelete: SetNull)
+  status              InquiryStatus       @default(NEW)
+  closeReason         String?             @db.Text
+  slaDeadline         DateTime?
+  campaignGoal        String?             @db.Text
+  desiredDateFrom     DateTime?
+  desiredDateTo       DateTime?
+  budgetRangeLow      Int?
+  budgetRangeHigh     Int?
+  notes               String?             @db.Text
+  auditEntries        InquiryAuditEntry[]
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  closedAt            DateTime?
+
+  @@index([status, assignedAdminId])
+  @@index([advertiserUserId, createdAt])
+  @@index([publisherCompanyId, createdAt])
+  @@index([slaDeadline])
+}
+
+model InquiryAuditEntry {
+  id          String         @id @default(cuid())
+  inquiryId   String
+  inquiry     Inquiry        @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+  actorUserId String?
+  fromStatus  InquiryStatus?
+  toStatus    InquiryStatus?
+  action      String
+  note        String?        @db.Text
+  createdAt   DateTime       @default(now())
+
+  @@index([inquiryId, createdAt])
 }
 
 model VerificationRequest {

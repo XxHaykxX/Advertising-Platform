@@ -83,20 +83,38 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         </section>
       ) : null}
 
+      {user.role === 'ADVERTISER' && company.verificationStatus === 'APPROVED' ? (
+        <section className="flex flex-col gap-3 rounded-lg border border-border-subtle bg-surface p-6">
+          <h2 className="text-h3 text-primary">Inquiries</h2>
+          <p className="text-body text-secondary">
+            Pick a listing from the catalog and send an inquiry. Our team
+            handles the rest.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button asChild>
+              <Link href="/catalog">Browse catalog</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/inquiries">My inquiries</Link>
+            </Button>
+          </div>
+        </section>
+      ) : null}
+
       <section className="flex flex-col gap-3 rounded-lg border border-border-subtle bg-surface p-6">
         <h2 className="text-h3 text-primary">What lands next</h2>
         <ul className="flex flex-col gap-2 text-body text-secondary">
           {user.role === 'ADVERTISER' ? (
             <>
-              <li>Public catalog (S-01.5) — browse without auth.</li>
-              <li>Submit inquiries (E-05) — once your company is verified.</li>
               <li>Wishlist for saved listings (S-05.6).</li>
+              <li>Per-inquiry chat (E-07).</li>
+              <li>Admin queue + verification review (E-08, E-09).</li>
             </>
           ) : (
             <>
-              <li>Public listing detail (S-04.5) — your draft becomes browsable.</li>
-              <li>Public catalog (S-01.5).</li>
+              <li>Incoming inquiries cabinet (E-06, Phase 3).</li>
               <li>Per-inquiry chat (E-07).</li>
+              <li>Admin override on listings (S-04.6).</li>
             </>
           )}
         </ul>
