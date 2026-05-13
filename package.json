@@ -15,6 +15,7 @@
     "db:studio": "prisma studio",
     "db:generate": "prisma generate",
     "db:seed": "tsx prisma/seed.ts",
+    "db:approve": "tsx scripts/approve-company.ts",
     "email:dev": "react-email dev --dir ./emails --port 3001",
     "email:export": "react-email export --dir ./emails",
     "postinstall": "prisma generate"

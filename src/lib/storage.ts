@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto';
 import { mkdir, writeFile, unlink } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -67,4 +68,98 @@ export async function deleteCompanyLogo(publicUrl: string): Promise<void> {
   } catch {
     // Ignore — already gone, or never existed.
   }
+}
+
+// ─── Private uploads ────────────────────────────────────────────────────────
+// Verification documents and other admin-only files live OUTSIDE public/ so
+// they cannot be served by the static handler. An auth-checked Next.js route
+// will stream them for admins in S-03.5; for now we just persist them.
+
+const PRIVATE_ROOT = path.join(process.cwd(), 'storage', 'uploads');
+
+const ALLOWED_DOC_MIME = new Set([
+  'application/pdf',
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+]);
+const MAX_DOC_BYTES = 10 * 1024 * 1024; // 10 MB per S-03.2 AC
+
+function docExtensionFor(mime: string): string {
+  switch (mime) {
+    case 'application/pdf':
+      return 'pdf';
+    case 'image/jpeg':
+      return 'jpg';
+    case 'image/png':
+      return 'png';
+    case 'image/webp':
+      return 'webp';
+    default:
+      return 'bin';
+  }
+}
+
+export interface SavedDocument {
+  path: string;
+  mimeType: string;
+  originalName: string;
+  size: number;
+}
+
+export interface SaveVerificationDocsResult {
+  ok: boolean;
+  documents: SavedDocument[];
+  error?: string;
+}
+
+/**
+ * Persist verification documents under storage/uploads/companies/<companyId>/verification/.
+ * Caller is responsible for storing the returned descriptors on VerificationRequest.documents.
+ */
+export async function saveVerificationDocs(
+  companyId: string,
+  files: File[]
+): Promise<SaveVerificationDocsResult> {
+  if (files.length === 0) return { ok: true, documents: [] };
+  if (files.length > 5) {
+    return { ok: false, documents: [], error: 'Upload up to 5 documents at a time' };
+  }
+
+  const dir = path.join(PRIVATE_ROOT, 'companies', companyId, 'verification');
+  await mkdir(dir, { recursive: true });
+
+  const saved: SavedDocument[] = [];
+  for (const file of files) {
+    if (file.size === 0) continue;
+    if (file.size > MAX_DOC_BYTES) {
+      return {
+        ok: false,
+        documents: saved,
+        error: `${file.name}: exceeds the 10 MB limit`,
+      };
+    }
+    if (!ALLOWED_DOC_MIME.has(file.type)) {
+      return {
+        ok: false,
+        documents: saved,
+        error: `${file.name}: only PDF / JPG / PNG / WEBP allowed`,
+      };
+    }
+    const random = randomBytes(12).toString('hex');
+    const ext = docExtensionFor(file.type);
+    const filename = `${random}.${ext}`;
+    const absPath = path.join(dir, filename);
+    const bytes = Buffer.from(await file.arrayBuffer());
+    await writeFile(absPath, bytes);
+
+    saved.push({
+      path: `companies/${companyId}/verification/${filename}`,
+      mimeType: file.type,
+      originalName: file.name,
+      size: file.size,
+    });
+  }
+
+  return { ok: true, documents: saved };
 }

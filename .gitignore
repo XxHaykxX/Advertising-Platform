@@ -45,6 +45,9 @@ next-env.d.ts
 # uploaded files (private)
 /storage/uploads/
 
+# uploaded files (public, generated at runtime)
+/public/uploads/
+
 # vercel (we don't use it but be safe)
 .vercel
 

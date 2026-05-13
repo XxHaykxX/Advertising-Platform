@@ -122,28 +122,29 @@ model Notification {
 }
 
 model Company {
-  id                 String             @id @default(cuid())
-  name               String
-  legalName          String?
-  taxId              String?
-  type               String?
-  foundingYear       Int?
-  country            String             @default("AM")
-  address            String?            @db.Text
-  logoUrl            String?
+  id                   String                @id @default(cuid())
+  name                 String
+  legalName            String?
+  taxId                String?
+  type                 String?
+  foundingYear         Int?
+  country              String                @default("AM")
+  address              String?               @db.Text
+  logoUrl              String?
   // For advertisers: ChannelType[] (interest). For publishers: not used —
   // owned channels live in SourceChannel.ownerCompanyId.
-  channelsOfInterest Json?
-  verificationStatus CompanyVerifStatus @default(PENDING)
-  verifiedAt         DateTime?
-  verifiedById       String?
-  canAdvertise       Boolean            @default(false)
-  canPublish         Boolean            @default(false)
-  users              User[]
-  industries         CompanyIndustry[]
-  sourceChannels     SourceChannel[]
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
+  channelsOfInterest   Json?
+  verificationStatus   CompanyVerifStatus    @default(PENDING)
+  verifiedAt           DateTime?
+  verifiedById         String?
+  canAdvertise         Boolean               @default(false)
+  canPublish           Boolean               @default(false)
+  users                User[]
+  industries           CompanyIndustry[]
+  sourceChannels       SourceChannel[]
+  verificationRequests VerificationRequest[]
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
 
   @@index([verificationStatus])
 }
@@ -178,4 +179,19 @@ model SourceChannel {
 
   @@index([type])
   @@index([ownerCompanyId])
+}
+
+model VerificationRequest {
+  id                String              @id @default(cuid())
+  companyId         String
+  company           Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  submittedAt       DateTime            @default(now())
+  documents         Json?
+  reviewedByAdminId String?
+  reviewedAt        DateTime?
+  decision          CompanyVerifStatus?
+  decisionReason    String?             @db.Text
+
+  @@index([companyId, submittedAt])
+  @@index([decision])
 }
