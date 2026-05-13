@@ -65,7 +65,7 @@ export async function login(
   //    enumeration leak (email exists) in exchange for substantially better UX.
   const user = await prisma.user.findUnique({
     where: { email },
-    select: { emailVerified: true, role: true },
+    select: { emailVerified: true, role: true, companyId: true },
   });
   if (user && !user.emailVerified) {
     return {
@@ -94,7 +94,11 @@ export async function login(
   // Successful login — clear the failure counter for this IP.
   resetRateLimit(`login:${ip}`);
 
-  // 5. Redirect by role (admins land in /admin, everyone else in /dashboard).
-  //    The pre-flight `user` is still in scope and was loaded before signIn.
-  redirect(user?.role === 'ADMIN' ? '/admin' : '/dashboard');
+  // 5. Redirect by onboarding stage:
+  //    - Admins go straight to /admin (no company profile required).
+  //    - New users without a Company row land on /company-profile (S-03.1).
+  //    - Everyone else hits the dashboard.
+  if (user?.role === 'ADMIN') redirect('/admin');
+  if (!user?.companyId) redirect('/company-profile');
+  redirect('/dashboard');
 }
