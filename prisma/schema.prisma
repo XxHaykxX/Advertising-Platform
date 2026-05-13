@@ -1,0 +1,79 @@
+// Prisma schema — Advertising Platform
+// Datasource: MySQL on Hostinger (architecture.md ADR-002).
+// Conventions: cuid() PKs, explicit @db.Text for long fields, explicit onDelete on FKs.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// === ENUMS ===
+
+enum UserRole {
+  ADVERTISER
+  PUBLISHER
+  ADMIN
+}
+
+enum AdminSubrole {
+  OWNER
+  MANAGER
+  BROKER
+  SUPPORT
+}
+
+enum CompanyVerifStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  NEEDS_INFO
+}
+
+// === CORE (stubs for S-01.1; expanded in subsequent stories) ===
+
+model User {
+  id               String        @id @default(cuid())
+  email            String        @unique
+  emailVerified    DateTime?
+  passwordHash     String
+  name             String
+  phone            String?
+  role             UserRole
+  adminSubrole     AdminSubrole?
+  companyId        String?
+  company          Company?      @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  twoFactorEnabled Boolean       @default(false)
+  twoFactorSecret  String?       @db.Text
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  lastLoginAt      DateTime?
+
+  @@index([email])
+  @@index([role])
+}
+
+model Company {
+  id                 String             @id @default(cuid())
+  name               String
+  legalName          String?
+  taxId              String?
+  type               String?
+  foundingYear       Int?
+  country            String             @default("AM")
+  address            String?            @db.Text
+  logoUrl            String?
+  verificationStatus CompanyVerifStatus @default(PENDING)
+  verifiedAt         DateTime?
+  verifiedById       String?
+  canAdvertise       Boolean            @default(false)
+  canPublish         Boolean            @default(false)
+  users              User[]
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  @@index([verificationStatus])
+}
