@@ -1,11 +1,11 @@
 'use client';
 
 import * as React from 'react';
-import { useActionState } from 'react';
+import { useFormState } from 'react-dom';
 import Link from 'next/link';
 
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { SubmitButton } from '@/components/ui/submit-button';
 import { cn } from '@/lib/utils';
 
 import { registerUser, type RegisterActionState } from '../_actions';
@@ -22,7 +22,7 @@ function FieldError({ message }: { message?: string }) {
 }
 
 export function PersonalForm({ role }: PersonalFormProps) {
-  const [state, action, pending] = useActionState(registerUser, initialState);
+  const [state, action] = useFormState(registerUser, initialState);
 
   return (
     <form action={action} className="flex flex-col gap-5">
@@ -120,7 +120,6 @@ export function PersonalForm({ role }: PersonalFormProps) {
           name="acceptTerms"
           required
           className="mt-1 h-4 w-4 accent-accent"
-          aria-describedby={state.fieldErrors?.acceptTerms ? 'terms-error' : undefined}
         />
         <span className="text-body text-secondary">
           I accept the{' '}
@@ -136,9 +135,9 @@ export function PersonalForm({ role }: PersonalFormProps) {
       </label>
       <FieldError message={state.fieldErrors?.acceptTerms} />
 
-      <Button type="submit" size="lg" disabled={pending} className="w-full">
-        {pending ? 'Creating account…' : 'Create account'}
-      </Button>
+      <SubmitButton size="lg" pendingLabel="Creating account…" className="w-full">
+        Create account
+      </SubmitButton>
 
       <p className="text-center text-body text-secondary">
         Already have an account?{' '}

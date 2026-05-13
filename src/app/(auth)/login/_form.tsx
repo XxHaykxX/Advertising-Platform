@@ -1,18 +1,18 @@
 'use client';
 
 import * as React from 'react';
-import { useActionState } from 'react';
+import { useFormState } from 'react-dom';
 import Link from 'next/link';
 
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { SubmitButton } from '@/components/ui/submit-button';
 
 import { login, type LoginActionState } from './_actions';
 
 const initialState: LoginActionState = { ok: true };
 
 export function LoginForm({ verified }: { verified: boolean }) {
-  const [state, action, pending] = useActionState(login, initialState);
+  const [state, action] = useFormState(login, initialState);
 
   return (
     <form action={action} className="flex flex-col gap-5">
@@ -71,9 +71,9 @@ export function LoginForm({ verified }: { verified: boolean }) {
         />
       </div>
 
-      <Button type="submit" size="lg" disabled={pending} className="w-full">
-        {pending ? 'Logging in…' : 'Log in'}
-      </Button>
+      <SubmitButton size="lg" pendingLabel="Logging in…" className="w-full">
+        Log in
+      </SubmitButton>
 
       <p className="text-center text-body text-secondary">
         New here?{' '}

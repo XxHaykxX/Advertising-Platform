@@ -1,9 +1,9 @@
 'use client';
 
 import * as React from 'react';
-import { useActionState } from 'react';
+import { useFormState } from 'react-dom';
 
-import { Button } from '@/components/ui/button';
+import { SubmitButton } from '@/components/ui/submit-button';
 import { cn } from '@/lib/utils';
 
 import {
@@ -19,16 +19,10 @@ const verifyInitial: VerifyActionState = { ok: true };
 const resendInitial: ResendActionState = { ok: true };
 
 export function VerifyForm({ email }: { email: string }) {
-  const [verifyState, verifyAction, verifyPending] = useActionState(
-    verifyCode,
-    verifyInitial
-  );
-  const [resendState, resendAction, resendPending] = useActionState(
-    resendVerification,
-    resendInitial
-  );
+  const [verifyState, verifyAction] = useFormState(verifyCode, verifyInitial);
+  const [resendState, resendAction] = useFormState(resendVerification, resendInitial);
 
-  // 60s countdown after page load (initial cooldown) and after each resend.
+  // 60s countdown after page load and after each resend.
   const [cooldown, setCooldown] = React.useState(RESEND_COOLDOWN);
 
   React.useEffect(() => {
@@ -37,7 +31,6 @@ export function VerifyForm({ email }: { email: string }) {
     return () => clearInterval(id);
   }, [cooldown]);
 
-  // Reset countdown when a resend succeeds; honor server-reported remaining when throttled.
   React.useEffect(() => {
     if (resendState.ok && resendState.message) setCooldown(RESEND_COOLDOWN);
     if (!resendState.ok && resendState.cooldownSecondsRemaining) {
@@ -78,26 +71,22 @@ export function VerifyForm({ email }: { email: string }) {
           ) : null}
         </div>
 
-        <Button type="submit" size="lg" disabled={verifyPending} className="w-full">
-          {verifyPending ? 'Verifying…' : 'Verify email'}
-        </Button>
+        <SubmitButton size="lg" pendingLabel="Verifying…" className="w-full">
+          Verify email
+        </SubmitButton>
       </form>
 
       <form action={resendAction} className="flex flex-col gap-2">
         <input type="hidden" name="email" value={email} />
-        <Button
-          type="submit"
+        <SubmitButton
           variant="ghost"
           size="sm"
-          disabled={resendPending || cooldown > 0}
+          disabled={cooldown > 0}
+          pendingLabel="Sending…"
           className="w-full"
         >
-          {resendPending
-            ? 'Sending…'
-            : cooldown > 0
-              ? `Resend in ${cooldown}s`
-              : 'Resend code'}
-        </Button>
+          {cooldown > 0 ? `Resend in ${cooldown}s` : 'Resend code'}
+        </SubmitButton>
         {resendState.message ? (
           <p
             className={cn(
