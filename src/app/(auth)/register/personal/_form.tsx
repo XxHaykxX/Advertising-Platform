@@ -123,11 +123,11 @@ export function PersonalForm({ role }: PersonalFormProps) {
         />
         <span className="text-body text-secondary">
           I accept the{' '}
-          <Link href="/legal/terms" className="text-primary underline-offset-4 hover:underline">
+          <Link href="/terms" className="text-primary underline-offset-4 hover:underline">
             Terms of Service
           </Link>{' '}
           and{' '}
-          <Link href="/legal/privacy" className="text-primary underline-offset-4 hover:underline">
+          <Link href="/privacy" className="text-primary underline-offset-4 hover:underline">
             Privacy Policy
           </Link>
           .
