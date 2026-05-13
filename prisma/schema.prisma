@@ -56,6 +56,13 @@ enum ChannelType {
   EVENT
 }
 
+enum ListingStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  CLOSED
+}
+
 // === CORE (stubs for S-01.1; expanded in subsequent stories) ===
 
 model User {
@@ -142,6 +149,7 @@ model Company {
   users                User[]
   industries           CompanyIndustry[]
   sourceChannels       SourceChannel[]
+  listings             Listing[]
   verificationRequests VerificationRequest[]
   createdAt            DateTime              @default(now())
   updatedAt            DateTime              @updatedAt
@@ -176,9 +184,33 @@ model SourceChannel {
   ownerCompany   Company?    @relation(fields: [ownerCompanyId], references: [id], onDelete: SetNull)
   archived       Boolean     @default(false)
   createdAt      DateTime    @default(now())
+  listings       Listing[]
 
   @@index([type])
   @@index([ownerCompanyId])
+}
+
+model Listing {
+  id                   String         @id @default(cuid())
+  companyId            String
+  company              Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  title                String
+  channelType          ChannelType
+  sourceChannelId      String?
+  sourceChannel        SourceChannel? @relation(fields: [sourceChannelId], references: [id], onDelete: SetNull)
+  availableFrom        DateTime
+  availableTo          DateTime
+  audienceDemographics Json?
+  description          String         @db.Text
+  status               ListingStatus  @default(DRAFT)
+  viewCount            Int            @default(0)
+  inquiryCount         Int            @default(0)
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+
+  @@index([status, channelType])
+  @@index([availableFrom, availableTo])
+  @@index([companyId])
 }
 
 model VerificationRequest {

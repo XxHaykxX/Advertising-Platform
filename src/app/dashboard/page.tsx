@@ -65,6 +65,24 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         role={user.role}
       />
 
+      {user.role === 'PUBLISHER' && company.verificationStatus === 'APPROVED' ? (
+        <section className="flex flex-col gap-3 rounded-lg border border-border-subtle bg-surface p-6">
+          <h2 className="text-h3 text-primary">Listings</h2>
+          <p className="text-body text-secondary">
+            Manage your inventory — drafts, active slots, paused listings, and
+            historical close-outs.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button asChild>
+              <Link href="/listings/new">Create a listing</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/listings/mine">My listings</Link>
+            </Button>
+          </div>
+        </section>
+      ) : null}
+
       <section className="flex flex-col gap-3 rounded-lg border border-border-subtle bg-surface p-6">
         <h2 className="text-h3 text-primary">What lands next</h2>
         <ul className="flex flex-col gap-2 text-body text-secondary">
@@ -76,9 +94,9 @@ export default async function DashboardPage({ searchParams }: PageProps) {
             </>
           ) : (
             <>
-              <li>Create your first listing (S-04.1) — once verified.</li>
-              <li>Manage listing status: Draft / Active / Paused / Closed (S-04.3).</li>
-              <li>Per-listing analytics: views, inquiry counts (S-04.4).</li>
+              <li>Public listing detail (S-04.5) — your draft becomes browsable.</li>
+              <li>Public catalog (S-01.5).</li>
+              <li>Per-inquiry chat (E-07).</li>
             </>
           )}
         </ul>
