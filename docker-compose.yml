@@ -1,0 +1,37 @@
+# Local dev MySQL — production runs on Hostinger's MySQL service (architecture.md §10.2).
+# Start with: docker compose up -d
+# Stop with:  docker compose down       (keeps data)
+# Wipe with:  docker compose down -v    (drops volume)
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: adplatform-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: adplatform
+      MYSQL_USER: adplatform
+      MYSQL_PASSWORD: localdev_password
+      MYSQL_ROOT_PASSWORD: localdev_root
+    ports:
+      # Host port 3307 (3306 is taken by another local container).
+      # Container-internal port stays 3306; only the host mapping shifts.
+      - "3307:3306"
+    volumes:
+      - adplatform-mysql-data:/var/lib/mysql
+    healthcheck:
+      test:
+        - CMD
+        - mysqladmin
+        - ping
+        - -h
+        - localhost
+        - -u
+        - adplatform
+        - -plocaldev_password
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  adplatform-mysql-data:
