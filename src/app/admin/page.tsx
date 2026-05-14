@@ -64,6 +64,14 @@ export default async function AdminPage() {
               Taxonomy · Industries →
             </Link>
           </li>
+          <li>
+            <Link
+              href="/admin/team"
+              className="text-secondary underline-offset-4 hover:text-primary hover:underline"
+            >
+              Admin team →
+            </Link>
+          </li>
         </ul>
       </section>
 

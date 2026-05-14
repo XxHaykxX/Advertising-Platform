@@ -902,6 +902,13 @@ Critical path: E-01 → E-02 → E-03 → E-04 → E-05 → E-07 → E-09. Other
 
 ### S-10.4 — Admin team management (admin users + sub-roles)
 
+- **Status:** **S-10.4a shipped** — `/admin/team` lists every admin with name, email, sub-role badge (tone-coded by role), 2FA-enrolled state, last-login timestamp. Inline form to invite a new admin (email + name + password ≥10 + sub-role) — matches the db:create-admin script's behaviour with the same EmailVerified=now + role=ADMIN bootstrap. Per-row controls: change sub-role (auto-submits), reset 2FA (clears twoFactorEnabled / secret / mfaVerifiedAt), reset password (inline form, ≥10 chars; also clears 2FA so they re-enrol).
+- **Self-protection:** every destructive row control is disabled when the row is the current admin (you can't lock yourself out by accident).
+- **Deferred (S-10.4b):** demoting / removing an admin — pulled out because there's no operational pressure yet, and "set role=ADVERTISER on an internal user" would create a fake account. Manual Prisma Studio path until needed.
+- **Note:** sub-roles are informational metadata today. The state-machine for "OWNER can do X, MANAGER can't" lands in S-08.3.
+
+
+
 - **As** an Owner admin, **I want** to create, edit, disable admin user accounts and assign sub-roles, **so that** I can manage the platform team.
 - **Acceptance criteria:** [FR-070, 071]
   - `/admin/team` lists admin users with sub-role chips.
