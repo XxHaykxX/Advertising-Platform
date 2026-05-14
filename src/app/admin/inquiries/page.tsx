@@ -409,14 +409,17 @@ export default async function AdminInquiriesPage({ searchParams }: PageProps) {
                     className="border-t border-border-subtle hover:bg-background"
                   >
                     <td className="px-4 py-3">
-                      <div className="flex flex-col">
-                        <span className="font-mono text-caption text-tertiary">
+                      <Link
+                        href={`/admin/inquiries/${inq.id}`}
+                        className="flex flex-col underline-offset-4 hover:underline"
+                      >
+                        <span className="font-mono text-caption text-accent">
                           INQ-{inq.id.slice(-8)}
                         </span>
                         <span className="text-caption text-tertiary">
                           {dateFmt.format(inq.createdAt)}
                         </span>
-                      </div>
+                      </Link>
                     </td>
                     <td className="px-4 py-3 text-secondary">
                       {inq.advertiserCompany.name}

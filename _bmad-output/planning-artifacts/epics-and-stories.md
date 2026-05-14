@@ -758,6 +758,7 @@ Critical path: E-01 → E-02 → E-03 → E-04 → E-05 → E-07 → E-09. Other
 - **Depends on:** S-07.5, S-09.3
 - **Phase:** 3
 - **Notes:** Likely the single biggest dev story. Split if needed: layout + context (S-09.5a) and chat embed wiring (S-09.5b).
+- **Status:** **S-09.5a shipped** as a single-column detail page (the 3-col split + chat columns wait on E-07). `/admin/inquiries/[id]` now renders context cards (advertiser + publisher + listing), the full brief, inline reassign + status controls (reusing the queue's row components), close-as-* CTAs, and the activity timeline (S-09.10). Chat-pane wiring is **S-09.5b** — blocked until a chat provider is picked.
 
 ### S-09.6 — Quick-response templates
 
@@ -818,6 +819,10 @@ Critical path: E-01 → E-02 → E-03 → E-04 → E-05 → E-07 → E-09. Other
 - **Effort:** M
 - **Depends on:** S-09.5, S-09.8, S-09.9
 - **Phase:** 4
+- **Status:** Initial cut shipped on the detail page (S-09.5a). Reads `InquiryAuditEntry` only — `InternalNote`, `Call`, and chat-webhook events fold in as those stories land. Order toggle works via `?order=asc|desc`. Event-type filter intentionally deferred until there are >1 source feeding the timeline.
+- **Decisions:**
+  - Actor names resolved via a separate `user.findMany({ where: { id: { in: actorIds } } })` rather than a schema relation — keeps the audit table append-only without forcing a relation rewrite when we ship S-12.x generic audit.
+  - Unknown action codes fall back to the raw string so a new code never disappears silently from the timeline; we just see the literal action label until the verb map is updated.
 
 ---
 
