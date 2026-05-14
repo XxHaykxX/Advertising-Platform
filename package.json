@@ -17,6 +17,7 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:approve": "tsx scripts/approve-company.ts",
     "db:inquiry": "tsx scripts/advance-inquiry.ts",
+    "db:create-admin": "tsx scripts/create-admin.ts",
     "email:dev": "react-email dev --dir ./emails --port 3001",
     "email:export": "react-email export --dir ./emails",
     "postinstall": "prisma generate"
@@ -42,7 +43,9 @@
     "mysql2": "^3.11.3",
     "next": "14.2.13",
     "next-auth": "5.0.0-beta.20",
+    "otplib": "^13.4.0",
     "posthog-js": "^1.165.0",
+    "qrcode": "^1.5.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.53.0",
@@ -53,6 +56,7 @@
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^22.7.4",
+    "@types/qrcode": "^1.5.6",
     "@types/react": "^18.3.10",
     "@types/react-dom": "^18.3.0",
     "autoprefixer": "^10.4.20",

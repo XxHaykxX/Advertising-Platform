@@ -1,43 +1,81 @@
-import { redirect } from 'next/navigation';
+import * as React from 'react';
+import Link from 'next/link';
 
-import { auth } from '@/auth';
+import { Button } from '@/components/ui/button';
+import { prisma } from '@/lib/prisma';
+import { requireAdmin } from '@/lib/admin-guard';
+
+import { signOutAdmin } from './_actions';
 
 export const metadata = {
   title: 'Admin — Advertising Platform',
 };
 
 export default async function AdminPage() {
-  const session = await auth();
-  if (!session?.user) redirect('/login');
-  if (session.user.role !== 'ADMIN') redirect('/dashboard');
+  const admin = await requireAdmin();
+
+  const [pendingVerifications, openInquiries, listingsTotal] = await Promise.all([
+    prisma.company.count({ where: { verificationStatus: 'PENDING' } }),
+    prisma.inquiry.count({
+      where: { status: { in: ['NEW', 'ASSIGNED', 'IN_PROGRESS'] } },
+    }),
+    prisma.listing.count({ where: { status: 'ACTIVE' } }),
+  ]);
 
   return (
     <main className="mx-auto flex min-h-screen max-w-4xl flex-col gap-8 px-8 py-16">
       <header className="flex flex-col gap-2">
-        <p className="text-caption uppercase text-tertiary">Admin</p>
+        <p className="text-caption uppercase text-tertiary">Super Admin</p>
         <h1 className="text-display-lg tracking-tight text-primary">
-          Super Admin
+          Welcome, {admin.name}
         </h1>
         <p className="text-body-lg text-secondary">
-          Welcome, {session.user.name}. The full admin queue, verification
-          tools, and analytics land in Epic 8 (S-08.x → S-09.x → S-10.x).
+          Two-factor session is active. The full admin queue, verification
+          review, and management tools roll in across S-03.5, S-04.6, E-09,
+          and E-10.
         </p>
       </header>
 
-      <form
-        action={async () => {
-          'use server';
-          const { signOut } = await import('@/auth');
-          await signOut({ redirectTo: '/' });
-        }}
-      >
-        <button
-          type="submit"
-          className="text-body text-secondary underline-offset-4 hover:text-primary hover:underline"
+      <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <StatCard label="Pending verifications" value={pendingVerifications} />
+        <StatCard label="Open inquiries" value={openInquiries} />
+        <StatCard label="Active listings" value={listingsTotal} />
+      </section>
+
+      <section className="flex flex-col gap-3 rounded-lg border border-info/30 bg-info/10 p-5">
+        <h2 className="text-h3 text-primary">Coming up</h2>
+        <ul className="flex flex-col gap-1 text-body text-secondary">
+          <li>S-03.5 admin verification queue replaces the db:approve script.</li>
+          <li>S-09.1–10 admin inquiry workspace replaces db:inquiry.</li>
+          <li>S-10.2/3 user + company management.</li>
+        </ul>
+      </section>
+
+      <div className="flex items-center gap-6 text-body text-secondary">
+        <Link
+          href="/settings/security"
+          className="underline-offset-4 hover:text-primary hover:underline"
         >
-          Log out
-        </button>
-      </form>
+          Change password
+        </Link>
+        <form action={signOutAdmin}>
+          <button
+            type="submit"
+            className="underline-offset-4 hover:text-primary hover:underline"
+          >
+            Log out
+          </button>
+        </form>
+      </div>
     </main>
+  );
+}
+
+function StatCard({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="flex flex-col gap-1 rounded-lg border border-border-subtle bg-surface p-5">
+      <p className="text-caption uppercase text-tertiary">{label}</p>
+      <p className="text-display-lg text-primary">{value}</p>
+    </div>
   );
 }
