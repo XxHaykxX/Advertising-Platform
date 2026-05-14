@@ -123,8 +123,8 @@ export default async function AdminPage({ searchParams }: PageProps) {
           </h1>
           <p className="text-body-lg text-secondary">
             {adminMfaDisabled
-              ? 'Two-factor gate is OFF (DISABLE_ADMIN_2FA=true — dev only). Verification queue and inquiry queue are live.'
-              : 'Two-factor session is active. Verification queue and inquiry queue are live; admin override on listings, bulk actions, and team management are still to come.'}
+              ? 'Two-factor gate is OFF (DISABLE_ADMIN_2FA=true) — pre-launch only.'
+              : 'Two-factor session is active.'}
           </p>
         </div>
         <NotificationBell />
@@ -325,14 +325,11 @@ export default async function AdminPage({ searchParams }: PageProps) {
       </section>
 
       <section className="flex flex-col gap-3 rounded-lg border border-info/30 bg-info/10 p-5">
-        <h2 className="text-h3 text-primary">Coming up</h2>
+        <h2 className="text-h3 text-primary">Blocked / pending external choices</h2>
         <ul className="flex flex-col gap-1 text-body text-secondary">
-          <li>S-09.4 bulk actions (assign / close many at once).</li>
-          <li>S-09.5 inquiry detail split-pane (blocked on chat provider — E-07).</li>
-          <li>S-09.7–10 close-with-reason modal, internal notes, call log, activity timeline.</li>
-          <li>S-04.6 admin override on listings.</li>
-          <li>S-10.2/3/4 user + company + admin-team management.</li>
-          <li>S-12.x generic audit log (today the decision audit lives on each VerificationRequest).</li>
+          <li>E-07 per-inquiry chat — blocked on chat provider selection.</li>
+          <li>E-11 daily digest emails — pending cron schedule on Hostinger panel.</li>
+          <li>S-10.5b drag-and-drop reorder, S-10.6b rich-text editor, S-10.7b email editor, S-10.8b dashboard charts — pending library decisions.</li>
         </ul>
       </section>
 
