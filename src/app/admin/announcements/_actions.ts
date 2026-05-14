@@ -5,6 +5,7 @@ import { z } from 'zod';
 
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/admin-guard';
+import { recordAudit } from '@/lib/audit';
 
 const createSchema = z
   .object({
@@ -54,7 +55,7 @@ export async function createAnnouncement(
     return { ok: false, fieldErrors };
   }
 
-  await prisma.announcement.create({
+  const created = await prisma.announcement.create({
     data: {
       title: parsed.data.title,
       body: parsed.data.body,
@@ -62,6 +63,18 @@ export async function createAnnouncement(
       startsAt: parsed.data.startsAt,
       endsAt: parsed.data.endsAt,
       createdById: admin.userId,
+    },
+  });
+
+  await recordAudit({
+    actorUserId: admin.userId,
+    action: 'ANNOUNCEMENT_CREATED',
+    entityType: 'ANNOUNCEMENT',
+    entityId: created.id,
+    after: {
+      title: parsed.data.title,
+      audience: parsed.data.audience,
+      window: `${parsed.data.startsAt.toISOString()} → ${parsed.data.endsAt.toISOString()}`,
     },
   });
 
@@ -73,12 +86,18 @@ export async function createAnnouncement(
 
 /** End an announcement immediately (sets endsAt = now). Soft-archive. */
 export async function endAnnouncement(formData: FormData): Promise<void> {
-  await requireAdmin();
+  const me = await requireAdmin();
   const id = String(formData.get('id') ?? '').trim();
   if (!id) return;
   await prisma.announcement.update({
     where: { id },
     data: { endsAt: new Date() },
+  });
+  await recordAudit({
+    actorUserId: me.userId,
+    action: 'ANNOUNCEMENT_ENDED',
+    entityType: 'ANNOUNCEMENT',
+    entityId: id,
   });
   revalidatePath('/admin/announcements');
   revalidatePath('/dashboard');

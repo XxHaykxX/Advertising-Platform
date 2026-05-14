@@ -321,6 +321,29 @@ model Call {
   @@index([inquiryId, occurredAt])
 }
 
+model AuditEntry {
+  id          String   @id @default(cuid())
+  // Nullable actor — some events (cron, system) won't have one.
+  actorUserId String?
+  // String, not enum, so adding new event types doesn't force a migration.
+  // Convention: SCREAMING_SNAKE_CASE verb-noun, e.g. VERIFICATION_APPROVED.
+  action      String
+  // What it acted on: COMPANY / INQUIRY / LISTING / USER / ANNOUNCEMENT etc.
+  entityType  String
+  entityId    String
+  // Optional snapshot of the change. before = state before; after = state after.
+  // Use sparingly — verbose for high-frequency events.
+  before      Json?
+  after       Json?
+  // Client IP if available. Stored unhashed at MVP scale.
+  ip          String?
+  createdAt   DateTime @default(now())
+
+  @@index([entityType, entityId, createdAt])
+  @@index([actorUserId, createdAt])
+  @@index([action, createdAt])
+}
+
 model Announcement {
   id          String               @id @default(cuid())
   title       String

@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/admin-guard';
+import { recordAudit } from '@/lib/audit';
 import {
   allowedListingTransitions,
   type ListingStatusInput,
@@ -85,15 +86,18 @@ export async function overrideListing(
     ),
   ]);
 
+  await recordAudit({
+    actorUserId: admin.userId,
+    action: `LISTING_OVERRIDE_${target}`,
+    entityType: 'LISTING',
+    entityId: listing.id,
+    before: { status: listing.status },
+    after: { status: target, reason: reason || null },
+  });
+
   revalidatePath('/admin/listings');
   revalidatePath(`/admin/listings/${listing.id}/override`);
   revalidatePath('/listings/mine');
-
-  // Mark the override actor for future audit-log retrofit (S-12.x). For
-  // now we just log to the server console so we don't lose the who.
-  console.info(
-    `[admin-override] listing ${listing.id} ${listing.status}→${target} by ${admin.email}${reason ? ` (${reason})` : ''}`
-  );
 
   redirect('/admin/listings');
 }

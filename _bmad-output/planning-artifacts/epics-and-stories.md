@@ -1012,6 +1012,21 @@ Critical path: E-01 → E-02 → E-03 → E-04 → E-05 → E-07 → E-09. Other
 - **Effort:** M
 - **Depends on:** S-08.1
 - **Phase:** 4
+- **Status:** Shipped along with **S-12.x** (new `AuditEntry` model + `recordAudit()` helper). `/admin/audit` is a filtered + paginated table; click "View diff" on a row expands the before/after JSON. Filters: actor (admin dropdown), action contains-search, entity-type select, date range. 50/page.
+
+### S-12.x — Generic AuditEntry
+
+- **Status:** Initial cut shipped. `AuditEntry` schema with `(actorUserId?, action, entityType, entityId, before?, after?, ip?, createdAt)`. Indexed on `(entityType, entityId, createdAt)`, `(actorUserId, createdAt)`, `(action, createdAt)`. New helper `src/lib/audit.ts → recordAudit()` resolves the client IP from `x-forwarded-for` when available; never throws (failures log to server console).
+- **Initial backfill sites:**
+  - Verification decisions (`VERIFICATION_APPROVED` / `_REJECTED` / `_NEEDS_INFO`)
+  - Listing override (`LISTING_OVERRIDE_PAUSED` / `_CLOSED` / `_ACTIVE`) — replaces the old `console.info` retrofit-hack
+  - Admin team mgmt (`ADMIN_INVITED`, `ADMIN_SUBROLE_CHANGED`, `ADMIN_2FA_RESET`, `ADMIN_PASSWORD_RESET`)
+  - Announcements (`ANNOUNCEMENT_CREATED`, `ANNOUNCEMENT_ENDED`)
+- **Deliberately not backfilled yet** (audit lives elsewhere for now):
+  - Inquiry status transitions — already captured in `InquiryAuditEntry` (richer per-inquiry view).
+  - Internal notes / calls — same, captured per-inquiry.
+  - User identity-field changes — caught via Notification fan-out today.
+  - Industry CRUD — low forensic value, can backfill if needed.
 
 ---
 

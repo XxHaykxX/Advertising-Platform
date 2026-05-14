@@ -110,6 +110,14 @@ export default async function AdminPage() {
               Announcements →
             </Link>
           </li>
+          <li>
+            <Link
+              href="/admin/audit"
+              className="text-secondary underline-offset-4 hover:text-primary hover:underline"
+            >
+              Audit log →
+            </Link>
+          </li>
         </ul>
       </section>
 

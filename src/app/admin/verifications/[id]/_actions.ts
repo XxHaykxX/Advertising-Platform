@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/admin-guard';
+import { recordAudit } from '@/lib/audit';
 import { notifyVerificationDecision } from '@/lib/verification-notify';
 
 export type DecisionState = {
@@ -91,6 +92,19 @@ export async function decideVerification(
       },
     }),
   ]);
+
+  await recordAudit({
+    actorUserId: admin.userId,
+    action: `VERIFICATION_${decision}`,
+    entityType: 'COMPANY',
+    entityId: req.companyId,
+    after: {
+      verificationStatus: decision,
+      reason: decision === 'APPROVED' ? null : reason || null,
+      canAdvertise,
+      canPublish,
+    },
+  });
 
   await notifyVerificationDecision({
     companyId: req.companyId,

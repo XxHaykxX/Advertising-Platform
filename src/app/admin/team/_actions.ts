@@ -7,6 +7,7 @@ import type { AdminSubrole } from '@prisma/client';
 
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/admin-guard';
+import { recordAudit } from '@/lib/audit';
 
 const BCRYPT_ROUNDS = 12;
 
@@ -31,7 +32,7 @@ export async function createAdminUser(
   _prev: CreateAdminState,
   formData: FormData
 ): Promise<CreateAdminState> {
-  await requireAdmin();
+  const me = await requireAdmin();
 
   const parsed = createSchema.safeParse({
     email: formData.get('email'),
@@ -61,7 +62,7 @@ export async function createAdminUser(
   }
 
   const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
-  await prisma.user.create({
+  const created = await prisma.user.create({
     data: {
       email,
       passwordHash,
@@ -70,6 +71,14 @@ export async function createAdminUser(
       adminSubrole: subrole,
       emailVerified: new Date(),
     },
+  });
+
+  await recordAudit({
+    actorUserId: me.userId,
+    action: 'ADMIN_INVITED',
+    entityType: 'USER',
+    entityId: created.id,
+    after: { email, subrole },
   });
 
   revalidatePath('/admin/team');
@@ -82,7 +91,7 @@ export async function createAdminUser(
 const subroleSchema = z.enum(['OWNER', 'MANAGER', 'BROKER', 'SUPPORT']);
 
 export async function changeAdminSubrole(formData: FormData): Promise<void> {
-  await requireAdmin();
+  const me = await requireAdmin();
 
   const userId = String(formData.get('userId') ?? '').trim();
   const next = String(formData.get('subrole') ?? '').trim();
@@ -101,11 +110,21 @@ export async function changeAdminSubrole(formData: FormData): Promise<void> {
     where: { id: userId },
     data: { adminSubrole: parsed.data as AdminSubrole },
   });
+
+  await recordAudit({
+    actorUserId: me.userId,
+    action: 'ADMIN_SUBROLE_CHANGED',
+    entityType: 'USER',
+    entityId: userId,
+    before: { subrole: target.adminSubrole },
+    after: { subrole: parsed.data },
+  });
+
   revalidatePath('/admin/team');
 }
 
 export async function resetAdminMfaState(formData: FormData): Promise<void> {
-  await requireAdmin();
+  const me = await requireAdmin();
 
   const userId = String(formData.get('userId') ?? '').trim();
   if (!userId) return;
@@ -124,11 +143,19 @@ export async function resetAdminMfaState(formData: FormData): Promise<void> {
       mfaVerifiedAt: null,
     },
   });
+
+  await recordAudit({
+    actorUserId: me.userId,
+    action: 'ADMIN_2FA_RESET',
+    entityType: 'USER',
+    entityId: userId,
+  });
+
   revalidatePath('/admin/team');
 }
 
 export async function resetAdminPassword(formData: FormData): Promise<CreateAdminState> {
-  await requireAdmin();
+  const me = await requireAdmin();
 
   const userId = String(formData.get('userId') ?? '').trim();
   const password = String(formData.get('password') ?? '');
@@ -155,6 +182,14 @@ export async function resetAdminPassword(formData: FormData): Promise<CreateAdmi
       mfaVerifiedAt: null,
     },
   });
+
+  await recordAudit({
+    actorUserId: me.userId,
+    action: 'ADMIN_PASSWORD_RESET',
+    entityType: 'USER',
+    entityId: target.id,
+  });
+
   revalidatePath('/admin/team');
   return {
     ok: true,
