@@ -703,6 +703,11 @@ Critical path: E-01 → E-02 → E-03 → E-04 → E-05 → E-07 → E-09. Other
 - **Effort:** L
 - **Depends on:** S-08.3
 - **Phase:** 3
+- **Decisions:**
+  - Filters drive off `searchParams` so the URL is the source of truth; the form is `method="get"` (no client JS for the filter wiring).
+  - Industry filter applies to `advertiserCompany.industries` (the side that's choosing where to spend). Publisher-industry filtering can join later if a real use case emerges.
+  - SLA-breached toggle also constrains to open statuses (closed inquiries can't breach prospectively).
+  - Inquiry-ID search uses `endsWith` so the tail-8 we surface as `INQ-XXXXXXXX` resolves; full cuid prefixes also match.
 
 ### S-09.2 — Saved views
 
