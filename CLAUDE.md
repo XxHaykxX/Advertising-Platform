@@ -35,11 +35,12 @@ npm run db:deploy              # production-only — never run against local
 npm run db:seed                # 18 industries (idempotent upsert)
 npm run db:studio              # Prisma Studio on http://localhost:5555
 
-# Dev-only helpers — they exist because Phase 3 admin UIs aren't built yet
+# Dev-only helpers
 npm run db:create-admin -- <email> [<name> <password>]   # promote or create
-npm run db:approve -- <email> [APPROVED|REJECTED|NEEDS_INFO] [reason]
-npm run db:inquiry -- <inquiry-id-or-tail-8> <action> [note]
+npm run db:approve -- <email> [APPROVED|REJECTED|NEEDS_INFO] [reason]  # superseded by /admin/verifications (S-03.5); kept for scripting
+npm run db:inquiry -- <inquiry-id-or-tail-8> <action> [note]           # superseded by /admin/inquiries (S-09.3); kept for scripting
 # actions: assign, progress, awaiting-publisher, awaiting-advertiser, confirm, lost
+npm run db:seed-test           # nuke + recreate the [TEST] fixture: 6 companies × all verification states, 1 listing, 9 inquiries spanning every InquiryStatus (incl. SLA-breached + <1h examples). Password: Password123! / emails: *@test.local. Idempotent — re-run to reset.
 
 # Emails
 npm run email:dev              # react-email preview on :3001
