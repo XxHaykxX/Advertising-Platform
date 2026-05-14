@@ -142,7 +142,13 @@ export default async function ListingDetailPage({ params }: PageProps) {
           ) : null}
         </div>
         <p className="text-body-lg text-secondary">
-          By <span className="text-primary">{listing.company.name}</span>
+          By{' '}
+          <Link
+            href={`/publishers/${listing.company.id}`}
+            className="text-primary underline-offset-4 hover:underline"
+          >
+            {listing.company.name}
+          </Link>
         </p>
       </header>
 

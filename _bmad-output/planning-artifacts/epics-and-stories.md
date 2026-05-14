@@ -402,6 +402,12 @@ Critical path: E-01 → E-02 → E-03 → E-04 → E-05 → E-07 → E-09. Other
 - **Depends on:** S-04.1
 - **Phase:** 2
 
+### S-04.5b — Public publisher profile
+
+- **As** any visitor, **I want** to see a publisher's page with their info and active listings, **so that** I can evaluate whether they fit my campaign before inquiring.
+- **Status:** Shipped. `/publishers/[id]` renders only for APPROVED publisher companies (404 otherwise). Header shows logo + name + country + founding year + industries. Grid of every ACTIVE listing they own (cards link to catalog detail). "Send a general inquiry" CTA: routes to `/inquiries/new?publisherCompanyId=:id` for verified advertisers; politely declines for everyone else (no CTA → no-cta button "Pending verification" / "Sign in as advertiser" / "Register to inquire").
+- **Where linked from:** the catalog listing detail page now turns the publisher's name into a clickable link to their profile. Future catalog grid + saved publishers (S-05.6b) will link here too.
+
 ### S-04.5 — Public listing detail page
 
 - **As** any visitor, **I want** to see a listing detail page with publisher info, dates, channel, audience, description, **so that** I can decide whether to inquire.
