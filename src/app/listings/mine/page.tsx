@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { Eye, MessageSquare, Plus } from 'lucide-react';
 
 import { auth } from '@/auth';
+import { AnnouncementBanner } from '@/components/announcement-banner';
 import { Button } from '@/components/ui/button';
 import { prisma } from '@/lib/prisma';
 import { channelTypeLabels } from '@/lib/validation/company';
@@ -102,6 +103,7 @@ export default async function MyListingsPage() {
 
   return (
     <main className="mx-auto flex max-w-5xl flex-col gap-8 px-6 py-16">
+      <AnnouncementBanner />
       <header className="flex flex-wrap items-baseline justify-between gap-4">
         <div className="flex flex-col gap-2">
           <p className="text-caption uppercase text-tertiary">Publisher</p>
