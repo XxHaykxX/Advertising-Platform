@@ -33,6 +33,9 @@ const credentialsSchema = z.object({
 // adapter-managed accounts/sessions are not needed without OAuth.
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  // Hostinger sits behind a reverse proxy; NextAuth v5 refuses to set the
+  // session cookie unless we explicitly trust the forwarded host.
+  trustHost: true,
   session: { strategy: 'jwt' },
   pages: {
     signIn: '/login',
