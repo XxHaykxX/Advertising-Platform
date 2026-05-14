@@ -12,16 +12,89 @@ export const metadata = {
   title: 'Admin — Advertising Platform',
 };
 
+const OPEN_STATUSES = [
+  'NEW',
+  'ASSIGNED',
+  'IN_PROGRESS',
+  'AWAITING_PUBLISHER',
+  'AWAITING_ADVERTISER',
+] as const;
+
+const dateFmt = new Intl.DateTimeFormat('en-GB', {
+  dateStyle: 'short',
+  timeStyle: 'short',
+});
+
+function durationLabel(ms: number): string {
+  const abs = Math.max(0, ms);
+  const min = Math.floor(abs / 60_000);
+  if (min < 60) return `${min}m`;
+  const hr = Math.floor(min / 60);
+  if (hr < 48) return `${hr}h`;
+  return `${Math.floor(hr / 24)}d`;
+}
+
+function ageLabel(d: Date): string {
+  return durationLabel(Date.now() - d.getTime());
+}
+
 export default async function AdminPage() {
   const admin = await requireAdmin();
 
-  const [pendingVerifications, openInquiries, listingsTotal] = await Promise.all([
+  const [
+    pendingVerifications,
+    openInquiries,
+    listingsTotal,
+    myQueue,
+    unassigned,
+  ] = await Promise.all([
     prisma.company.count({ where: { verificationStatus: 'PENDING' } }),
     prisma.inquiry.count({
       where: { status: { in: ['NEW', 'ASSIGNED', 'IN_PROGRESS'] } },
     }),
     prisma.listing.count({ where: { status: 'ACTIVE' } }),
+    prisma.inquiry.findMany({
+      where: {
+        assignedAdminId: admin.userId,
+        status: { in: [...OPEN_STATUSES] },
+      },
+      orderBy: [{ slaDeadline: 'asc' }, { createdAt: 'asc' }],
+      take: 5,
+      select: {
+        id: true,
+        status: true,
+        slaDeadline: true,
+        createdAt: true,
+        advertiserCompany: { select: { name: true } },
+        publisherCompany: { select: { name: true } },
+      },
+    }),
+    prisma.inquiry.findMany({
+      where: {
+        assignedAdminId: null,
+        status: { in: ['NEW', 'ASSIGNED'] },
+      },
+      orderBy: { createdAt: 'asc' },
+      take: 5,
+      select: {
+        id: true,
+        status: true,
+        slaDeadline: true,
+        createdAt: true,
+        advertiserCompany: { select: { name: true } },
+        publisherCompany: { select: { name: true } },
+      },
+    }),
   ]);
+
+  const now = Date.now();
+  function slaTone(d: Date | null): string {
+    if (!d) return 'text-tertiary';
+    const ms = d.getTime() - now;
+    if (ms < 0) return 'text-danger';
+    if (ms < 60 * 60 * 1000) return 'text-accent';
+    return 'text-secondary';
+  }
 
   return (
     <main className="mx-auto flex min-h-screen max-w-4xl flex-col gap-8 px-8 py-16">
@@ -57,6 +130,98 @@ export default async function AdminPage() {
           value={listingsTotal}
           href="/admin/listings?status=ACTIVE"
         />
+      </section>
+
+      <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <div className="flex flex-col gap-3 rounded-lg border border-border-subtle bg-surface p-5">
+          <header className="flex items-center justify-between gap-2">
+            <h2 className="text-h3 text-primary">My queue · {myQueue.length}</h2>
+            <Link
+              href={`/admin/inquiries?assigned=${admin.userId}`}
+              className="text-caption text-secondary underline-offset-4 hover:text-primary hover:underline"
+            >
+              View all →
+            </Link>
+          </header>
+          {myQueue.length === 0 ? (
+            <p className="text-body text-secondary">
+              Nothing assigned to you. Pick from the unassigned queue or wait for a
+              triage decision.
+            </p>
+          ) : (
+            <ul className="flex flex-col gap-2">
+              {myQueue.map((q) => (
+                <li
+                  key={q.id}
+                  className="flex flex-col gap-1 rounded border border-border-subtle bg-background px-3 py-2"
+                >
+                  <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <Link
+                      href={`/admin/inquiries/${q.id}`}
+                      className="font-mono text-caption text-accent underline-offset-4 hover:underline"
+                    >
+                      INQ-{q.id.slice(-8)}
+                    </Link>
+                    <span className={`text-caption ${slaTone(q.slaDeadline)}`}>
+                      {q.slaDeadline
+                        ? q.slaDeadline.getTime() < now
+                          ? `⚠ breached ${durationLabel(now - q.slaDeadline.getTime())} ago`
+                          : `SLA ${durationLabel(q.slaDeadline.getTime() - now)} left`
+                        : '—'}
+                    </span>
+                  </div>
+                  <p className="text-caption text-secondary">
+                    {q.advertiserCompany.name} → {q.publisherCompany.name}
+                  </p>
+                  <p className="text-caption text-tertiary">
+                    {q.status.replace(/_/g, ' ')} · created {dateFmt.format(q.createdAt)}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <div className="flex flex-col gap-3 rounded-lg border border-border-subtle bg-surface p-5">
+          <header className="flex items-center justify-between gap-2">
+            <h2 className="text-h3 text-primary">Unassigned · {unassigned.length}</h2>
+            <Link
+              href="/admin/inquiries?assigned=unassigned"
+              className="text-caption text-secondary underline-offset-4 hover:text-primary hover:underline"
+            >
+              View all →
+            </Link>
+          </header>
+          {unassigned.length === 0 ? (
+            <p className="text-body text-secondary">
+              Inbox zero. New inquiries land here first.
+            </p>
+          ) : (
+            <ul className="flex flex-col gap-2">
+              {unassigned.map((q) => (
+                <li
+                  key={q.id}
+                  className="flex flex-col gap-1 rounded border border-border-subtle bg-background px-3 py-2"
+                >
+                  <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <Link
+                      href={`/admin/inquiries/${q.id}`}
+                      className="font-mono text-caption text-accent underline-offset-4 hover:underline"
+                    >
+                      INQ-{q.id.slice(-8)}
+                    </Link>
+                    <span className="text-caption text-tertiary">
+                      {ageLabel(q.createdAt)} ago
+                    </span>
+                  </div>
+                  <p className="text-caption text-secondary">
+                    {q.advertiserCompany.name} → {q.publisherCompany.name}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </section>
 
       <section className="flex flex-col gap-2 rounded-lg border border-border-subtle bg-surface p-5">
