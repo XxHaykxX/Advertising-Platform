@@ -24,7 +24,8 @@ const PLACEHOLDER: Record<Props['target'], string> = {
 };
 
 export function BulkCloseForm({ ids, target }: Props) {
-  const [state, action] = useFormState(bulkCloseInquiries, initialState);
+  const [rawState, action] = useFormState(bulkCloseInquiries, initialState);
+  const state = rawState ?? initialState;
 
   return (
     <form action={action} className="flex flex-col gap-4">

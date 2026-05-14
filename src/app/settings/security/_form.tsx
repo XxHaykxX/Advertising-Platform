@@ -16,7 +16,8 @@ function FieldError({ message }: { message?: string }) {
 }
 
 export function ChangePasswordForm() {
-  const [state, action] = useFormState(changePassword, initialState);
+  const [rawState, action] = useFormState(changePassword, initialState);
+  const state = rawState ?? initialState;
 
   if (state.done) {
     return (

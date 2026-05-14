@@ -12,7 +12,8 @@ import { requestPasswordReset, type ForgotActionState } from './_actions';
 const initialState: ForgotActionState = { ok: true };
 
 export function ForgotForm() {
-  const [state, action] = useFormState(requestPasswordReset, initialState);
+  const [rawState, action] = useFormState(requestPasswordReset, initialState);
+  const state = rawState ?? initialState;
 
   if (state.ok && state.message) {
     return (

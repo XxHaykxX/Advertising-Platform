@@ -11,7 +11,8 @@ import { adminLogin, type AdminLoginActionState } from './_actions';
 const initialState: AdminLoginActionState = { ok: true };
 
 export function AdminLoginForm() {
-  const [state, action] = useFormState(adminLogin, initialState);
+  const [rawState, action] = useFormState(adminLogin, initialState);
+  const state = rawState ?? initialState;
 
   return (
     <form action={action} className="flex flex-col gap-5">

@@ -10,7 +10,8 @@ import { saveContent, saveSlaHours, type SettingState } from './_actions';
 const initialState: SettingState = { ok: true };
 
 export function SlaForm({ currentHours }: { currentHours: number }) {
-  const [state, action] = useFormState(saveSlaHours, initialState);
+  const [rawState, action] = useFormState(saveSlaHours, initialState);
+  const state = rawState ?? initialState;
   return (
     <form
       action={action}
@@ -61,7 +62,8 @@ interface ContentDefaults {
 }
 
 export function ContentForm({ defaults }: { defaults: ContentDefaults }) {
-  const [state, action] = useFormState(saveContent, initialState);
+  const [rawState, action] = useFormState(saveContent, initialState);
+  const state = rawState ?? initialState;
   return (
     <form
       action={action}

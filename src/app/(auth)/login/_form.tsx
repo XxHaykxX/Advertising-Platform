@@ -12,7 +12,8 @@ import { login, type LoginActionState } from './_actions';
 const initialState: LoginActionState = { ok: true };
 
 export function LoginForm({ verified }: { verified: boolean }) {
-  const [state, action] = useFormState(login, initialState);
+  const [rawState, action] = useFormState(login, initialState);
+  const state = rawState ?? initialState;
 
   return (
     <form action={action} className="flex flex-col gap-5">

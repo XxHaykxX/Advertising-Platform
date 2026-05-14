@@ -14,7 +14,8 @@ interface Props {
 }
 
 export function AddFeaturedForm({ listings }: Props) {
-  const [state, action] = useFormState(addFeatured, initialState);
+  const [rawState, action] = useFormState(addFeatured, initialState);
+  const state = rawState ?? initialState;
   const formRef = React.useRef<HTMLFormElement>(null);
 
   React.useEffect(() => {

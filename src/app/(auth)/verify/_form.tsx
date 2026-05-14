@@ -19,8 +19,12 @@ const verifyInitial: VerifyActionState = { ok: true };
 const resendInitial: ResendActionState = { ok: true };
 
 export function VerifyForm({ email }: { email: string }) {
-  const [verifyState, verifyAction] = useFormState(verifyCode, verifyInitial);
-  const [resendState, resendAction] = useFormState(resendVerification, resendInitial);
+  // React 18 useFormState can briefly hand back undefined when the action
+  // throws (incl. redirect()) — defensive fallback so render never crashes.
+  const [rawVerifyState, verifyAction] = useFormState(verifyCode, verifyInitial);
+  const verifyState = rawVerifyState ?? verifyInitial;
+  const [rawResendState, resendAction] = useFormState(resendVerification, resendInitial);
+  const resendState = rawResendState ?? resendInitial;
 
   // 60s countdown after page load and after each resend.
   const [cooldown, setCooldown] = React.useState(RESEND_COOLDOWN);

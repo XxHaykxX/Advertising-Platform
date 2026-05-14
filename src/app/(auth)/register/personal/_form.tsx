@@ -22,7 +22,8 @@ function FieldError({ message }: { message?: string }) {
 }
 
 export function PersonalForm({ role }: PersonalFormProps) {
-  const [state, action] = useFormState(registerUser, initialState);
+  const [rawState, action] = useFormState(registerUser, initialState);
+  const state = rawState ?? initialState;
 
   return (
     <form action={action} className="flex flex-col gap-5">

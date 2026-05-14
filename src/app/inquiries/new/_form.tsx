@@ -24,7 +24,8 @@ interface InquiryFormProps {
 }
 
 export function InquiryForm({ listingId, publisherCompanyId }: InquiryFormProps) {
-  const [state, action] = useFormState(submitInquiry, initialState);
+  const [rawState, action] = useFormState(submitInquiry, initialState);
+  const state = rawState ?? initialState;
 
   return (
     <form action={action} className="flex flex-col gap-6">

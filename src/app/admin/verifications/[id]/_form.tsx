@@ -10,7 +10,8 @@ import { decideVerification, type DecisionState } from './_actions';
 const initialState: DecisionState = { ok: true };
 
 export function DecisionForm({ verificationRequestId }: { verificationRequestId: string }) {
-  const [state, action] = useFormState(decideVerification, initialState);
+  const [rawState, action] = useFormState(decideVerification, initialState);
+  const state = rawState ?? initialState;
 
   return (
     <form action={action} className="flex flex-col gap-4">

@@ -41,7 +41,8 @@ interface Props {
 }
 
 export function EditCompanyForm({ role, industries, defaults }: Props) {
-  const [state, action] = useFormState(updateCompanyProfile, initialState);
+  const [rawState, action] = useFormState(updateCompanyProfile, initialState);
+  const state = rawState ?? initialState;
   const selected = new Set(defaults.selectedIndustryIds);
   const selectedChannels = new Set(defaults.channelsOfInterest);
 

@@ -43,7 +43,8 @@ export function EditListingForm({
   justCreated,
 }: EditListingFormProps) {
   const boundAction = updateListing.bind(null, listingId);
-  const [state, action] = useFormState(boundAction, initialState);
+  const [rawState, action] = useFormState(boundAction, initialState);
+  const state = rawState ?? initialState;
 
   return (
     <form action={action} className="flex flex-col gap-6">

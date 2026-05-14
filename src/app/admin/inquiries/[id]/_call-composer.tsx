@@ -17,7 +17,8 @@ function nowForDatetimeLocal(): string {
 }
 
 export function CallComposer({ inquiryId }: { inquiryId: string }) {
-  const [state, action] = useFormState(logCall, initialState);
+  const [rawState, action] = useFormState(logCall, initialState);
+  const state = rawState ?? initialState;
   const formRef = React.useRef<HTMLFormElement>(null);
   const [open, setOpen] = React.useState(false);
 

@@ -20,7 +20,8 @@ function FieldError({ message }: { message?: string }) {
 }
 
 export function CreateListingForm() {
-  const [state, action] = useFormState(createListing, initialState);
+  const [rawState, action] = useFormState(createListing, initialState);
+  const state = rawState ?? initialState;
 
   return (
     <form action={action} className="flex flex-col gap-6">

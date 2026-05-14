@@ -30,7 +30,8 @@ interface CompanyProfileFormProps {
 }
 
 export function CompanyProfileForm({ role, industries }: CompanyProfileFormProps) {
-  const [state, action] = useFormState(submitCompanyProfile, initialState);
+  const [rawState, action] = useFormState(submitCompanyProfile, initialState);
+  const state = rawState ?? initialState;
 
   return (
     <form action={action} className="flex flex-col gap-6">

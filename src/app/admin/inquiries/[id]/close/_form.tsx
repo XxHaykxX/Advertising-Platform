@@ -30,7 +30,8 @@ const TARGET_COPY: Record<Props['target'], { label: string; placeholder: string 
 };
 
 export function CloseForm({ inquiryId, target }: Props) {
-  const [state, action] = useFormState(closeInquiry, initialState);
+  const [rawState, action] = useFormState(closeInquiry, initialState);
+  const state = rawState ?? initialState;
   const copy = TARGET_COPY[target];
 
   return (

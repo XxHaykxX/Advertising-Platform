@@ -13,7 +13,8 @@ import {
 const initialState: SubmitVerificationActionState = { ok: true };
 
 export function VerificationForm() {
-  const [state, action] = useFormState(submitVerificationRequest, initialState);
+  const [rawState, action] = useFormState(submitVerificationRequest, initialState);
+  const state = rawState ?? initialState;
   const [count, setCount] = React.useState(0);
 
   return (

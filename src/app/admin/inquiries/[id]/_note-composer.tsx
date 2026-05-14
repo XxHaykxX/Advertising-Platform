@@ -10,7 +10,8 @@ import { addInternalNote, type NoteState } from './_notes-actions';
 const initialState: NoteState = { ok: true };
 
 export function NoteComposer({ inquiryId }: { inquiryId: string }) {
-  const [state, action] = useFormState(addInternalNote, initialState);
+  const [rawState, action] = useFormState(addInternalNote, initialState);
+  const state = rawState ?? initialState;
   const formRef = React.useRef<HTMLFormElement>(null);
 
   React.useEffect(() => {

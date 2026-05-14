@@ -25,7 +25,8 @@ function defaultEnds(): string {
 }
 
 export function AnnouncementForm() {
-  const [state, action] = useFormState(createAnnouncement, initialState);
+  const [rawState, action] = useFormState(createAnnouncement, initialState);
+  const state = rawState ?? initialState;
   const formRef = React.useRef<HTMLFormElement>(null);
 
   React.useEffect(() => {

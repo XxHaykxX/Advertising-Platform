@@ -33,7 +33,8 @@ const COPY: Record<Props['target'], { label: string; cta: string; variant: 'defa
 };
 
 export function OverrideForm({ listingId, target }: Props) {
-  const [state, action] = useFormState(overrideListing, initialState);
+  const [rawState, action] = useFormState(overrideListing, initialState);
+  const state = rawState ?? initialState;
   const copy = COPY[target];
 
   return (

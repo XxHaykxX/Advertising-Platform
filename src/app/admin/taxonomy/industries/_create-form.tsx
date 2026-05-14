@@ -14,7 +14,8 @@ interface Props {
 const initialState: IndustryFormState = { ok: true };
 
 export function CreateIndustryForm({ parents }: Props) {
-  const [state, action] = useFormState(createIndustry, initialState);
+  const [rawState, action] = useFormState(createIndustry, initialState);
+  const state = rawState ?? initialState;
   const formRef = React.useRef<HTMLFormElement>(null);
 
   React.useEffect(() => {

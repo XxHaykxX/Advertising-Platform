@@ -11,7 +11,10 @@ import { verifyMfa, type VerifyActionState } from './_actions';
 const initialState: VerifyActionState = { ok: true };
 
 export function VerifyMfaForm() {
-  const [state, action] = useFormState(verifyMfa, initialState);
+  // React 18 useFormState can briefly hand back undefined when the action
+  // throws (incl. redirect()) — defensive fallback so render never crashes.
+  const [rawState, action] = useFormState(verifyMfa, initialState);
+  const state = rawState ?? initialState;
 
   return (
     <form action={action} className="flex flex-col gap-4">

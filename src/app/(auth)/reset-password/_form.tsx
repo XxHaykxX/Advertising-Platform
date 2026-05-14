@@ -17,7 +17,8 @@ function FieldError({ message }: { message?: string }) {
 }
 
 export function ResetForm({ token }: { token: string }) {
-  const [state, action] = useFormState(resetPassword, initialState);
+  const [rawState, action] = useFormState(resetPassword, initialState);
+  const state = rawState ?? initialState;
 
   if (state.done) {
     return (

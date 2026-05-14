@@ -10,7 +10,8 @@ import { createAdminUser, type CreateAdminState } from './_actions';
 const initialState: CreateAdminState = { ok: true };
 
 export function CreateAdminForm() {
-  const [state, action] = useFormState(createAdminUser, initialState);
+  const [rawState, action] = useFormState(createAdminUser, initialState);
+  const state = rawState ?? initialState;
   const formRef = React.useRef<HTMLFormElement>(null);
 
   React.useEffect(() => {

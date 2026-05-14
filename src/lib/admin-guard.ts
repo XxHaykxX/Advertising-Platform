@@ -9,17 +9,15 @@ import type { AdminSubrole } from '@prisma/client';
 // terminal locks itself within an hour.
 const MFA_WINDOW_MS = 60 * 60 * 1000;
 
-// Dev-only escape hatch: setting DISABLE_ADMIN_2FA=true in .env skips the
-// TOTP enrolment + verification gate entirely. Gated on NODE_ENV so even an
-// accidental prod value is ignored (defense in depth — prod env should
-// never contain this var anyway).
-export const adminMfaDisabled =
-  process.env.NODE_ENV !== 'production' &&
-  process.env.DISABLE_ADMIN_2FA === 'true';
+// Escape hatch: setting DISABLE_ADMIN_2FA=true skips the TOTP enrolment +
+// verification gate entirely. We honour this in production too while the
+// platform is pre-launch (no real users yet) — flip the env var back off
+// the moment we open up registration.
+export const adminMfaDisabled = process.env.DISABLE_ADMIN_2FA === 'true';
 
 if (adminMfaDisabled) {
   console.warn(
-    '[admin-guard] DISABLE_ADMIN_2FA=true — 2FA gate is OFF. Dev use only.'
+    '[admin-guard] DISABLE_ADMIN_2FA=true — 2FA gate is OFF. Pre-launch only.'
   );
 }
 
