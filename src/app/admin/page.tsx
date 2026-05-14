@@ -1,9 +1,8 @@
 import * as React from 'react';
 import Link from 'next/link';
 
-import { Button } from '@/components/ui/button';
 import { prisma } from '@/lib/prisma';
-import { requireAdmin } from '@/lib/admin-guard';
+import { adminMfaDisabled, requireAdmin } from '@/lib/admin-guard';
 
 import { signOutAdmin } from './_actions';
 
@@ -30,9 +29,9 @@ export default async function AdminPage() {
           Welcome, {admin.name}
         </h1>
         <p className="text-body-lg text-secondary">
-          Two-factor session is active. The full admin queue, verification
-          review, and management tools roll in across S-03.5, S-04.6, E-09,
-          and E-10.
+          {adminMfaDisabled
+            ? 'Two-factor gate is OFF (DISABLE_ADMIN_2FA=true — dev only). Verification queue and inquiry queue are live.'
+            : 'Two-factor session is active. Verification queue and inquiry queue are live; admin override on listings, bulk actions, and team management are still to come.'}
         </p>
       </header>
 
@@ -53,9 +52,12 @@ export default async function AdminPage() {
       <section className="flex flex-col gap-3 rounded-lg border border-info/30 bg-info/10 p-5">
         <h2 className="text-h3 text-primary">Coming up</h2>
         <ul className="flex flex-col gap-1 text-body text-secondary">
-          <li>S-09.3–10 inquiry detail, bulk actions, internal notes.</li>
-          <li>S-10.2/3 user + company management.</li>
-          <li>S-12.x generic audit log (current decisions are recorded on each VerificationRequest).</li>
+          <li>S-09.4 bulk actions (assign / close many at once).</li>
+          <li>S-09.5 inquiry detail split-pane (blocked on chat provider — E-07).</li>
+          <li>S-09.7–10 close-with-reason modal, internal notes, call log, activity timeline.</li>
+          <li>S-04.6 admin override on listings.</li>
+          <li>S-10.2/3/4 user + company + admin-team management.</li>
+          <li>S-12.x generic audit log (today the decision audit lives on each VerificationRequest).</li>
         </ul>
       </section>
 
