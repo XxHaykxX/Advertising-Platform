@@ -189,7 +189,12 @@ export default async function AdminCompaniesPage({ searchParams }: PageProps) {
                   >
                     <td className="px-4 py-3">
                       <div className="flex flex-col">
-                        <span>{c.name}</span>
+                        <Link
+                          href={`/admin/companies/${c.id}`}
+                          className="text-primary underline-offset-4 hover:underline"
+                        >
+                          {c.name}
+                        </Link>
                         {c.legalName && c.legalName !== c.name ? (
                           <span className="text-caption text-tertiary">{c.legalName}</span>
                         ) : null}

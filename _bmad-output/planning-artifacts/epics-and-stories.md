@@ -920,6 +920,7 @@ Critical path: E-01 → E-02 → E-03 → E-04 → E-05 → E-07 → E-09. Other
   - Per-company detail page (employees + verification history + audit timeline).
   - "Unpublish all listings" bulk action — `/admin/listings` already lets admins pause individual listings; cascading-pause across a company waits for an operational case.
   - Editing company fields from the admin side (today the company itself edits via `/settings/company`).
+- **Update (S-10.3b shipped — detail page):** `/admin/companies/[id]` renders Basics card (taxId / type / founded / country / address / industries / channels), Employees card (per-user role + last login + suspend state), Listings card (top 10 with view + inquiry counts, link to full list), advertiser-side and publisher-side recent inquiries (10 each), and Verification history (every `VerificationRequest` with decision tone + reviewer name resolved via a separate user.findMany — same append-only pattern as the audit feed). Company-row name on the queue page is now a clickable link to detail.
 
 ### S-10.4 — Admin team management (admin users + sub-roles)
 
