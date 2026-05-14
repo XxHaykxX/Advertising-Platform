@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache';
 
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
+import { getInquirySlaHours } from '@/lib/platform-settings';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import {
   canTransitionInquiry,
@@ -14,7 +15,6 @@ import {
 
 const INQUIRY_RATE_LIMIT = 20;
 const INQUIRY_WINDOW_MS = 60 * 60 * 1000; // 20/hr/advertiser per NFR-015
-const SLA_HOURS = 4;
 
 export type InquirySubmitActionState = {
   ok: boolean;
@@ -137,7 +137,8 @@ export async function submitInquiry(
     };
   }
 
-  const slaDeadline = new Date(Date.now() + SLA_HOURS * 60 * 60 * 1000);
+  const slaHours = await getInquirySlaHours();
+  const slaDeadline = new Date(Date.now() + slaHours * 60 * 60 * 1000);
 
   const inquiry = await prisma.$transaction(async (tx) => {
     const created = await tx.inquiry.create({

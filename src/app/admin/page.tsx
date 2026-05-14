@@ -313,6 +313,14 @@ export default async function AdminPage({ searchParams }: PageProps) {
               Featured listings →
             </Link>
           </li>
+          <li>
+            <Link
+              href="/admin/settings"
+              className="text-secondary underline-offset-4 hover:text-primary hover:underline"
+            >
+              Platform settings →
+            </Link>
+          </li>
         </ul>
       </section>
 

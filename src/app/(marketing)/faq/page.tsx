@@ -1,5 +1,7 @@
 import * as React from 'react';
 
+import { getContent } from '@/lib/platform-content';
+
 export const metadata = {
   title: 'FAQ — Advertising Platform',
 };
@@ -9,8 +11,11 @@ interface QA {
   a: React.ReactNode;
 }
 
-const faq: QA[] = [
-  // Registration
+// Curated Q&A list. Used when the admin hasn't overridden /faq from the
+// platform-content CMS — the curated tone is hard to keep in plain text, so
+// the static list is the better default until someone deliberately replaces
+// it.
+const CURATED: QA[] = [
   {
     q: 'Who can register?',
     a: 'Companies that buy advertising (advertisers) and companies that sell ad inventory (publishers) — TV, radio, outdoor, video, product placement. Individual users register on behalf of a company.',
@@ -23,8 +28,6 @@ const faq: QA[] = [
     q: 'How much does it cost?',
     a: 'During the MVP phase, registration and inquiry submission are free. We are working out the commission model with pilot partners.',
   },
-
-  // Verification
   {
     q: 'Why do I have to verify my email?',
     a: 'It confirms you control the inbox you registered with. Without verification you cannot log in. The 6-digit code expires in 10 minutes — you can request a new one every 60 seconds.',
@@ -37,8 +40,6 @@ const faq: QA[] = [
     q: 'My documents were rejected — what now?',
     a: 'You will receive an email with the specific reason. You can resubmit corrected documents from your cabinet at any time.',
   },
-
-  // Inquiries
   {
     q: 'How do I contact a publisher about a slot?',
     a: 'You submit an Inquiry from the listing page. Our team picks it up, gathers details from both sides, and brokers the conversation. Advertisers and publishers do not see each other directly until the deal is confirmed.',
@@ -53,7 +54,28 @@ const faq: QA[] = [
   },
 ];
 
-export default function FaqPage() {
+export default async function FaqPage() {
+  const content = await getContent('faq');
+
+  if (content.fromDb) {
+    const paragraphs = content.body.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
+    return (
+      <main className="mx-auto flex max-w-3xl flex-col gap-8 px-6 py-16">
+        <header className="flex flex-col gap-2">
+          <p className="text-caption uppercase text-tertiary">Help</p>
+          <h1 className="text-display-lg tracking-tight text-primary">{content.title}</h1>
+        </header>
+        <section className="flex flex-col gap-4 text-body-lg text-secondary">
+          {paragraphs.map((p, idx) => (
+            <p key={idx} className="whitespace-pre-line">
+              {p}
+            </p>
+          ))}
+        </section>
+      </main>
+    );
+  }
+
   return (
     <main className="mx-auto flex max-w-3xl flex-col gap-8 px-6 py-16">
       <header className="flex flex-col gap-2">
@@ -72,7 +94,7 @@ export default function FaqPage() {
       </header>
 
       <ul className="flex flex-col gap-6">
-        {faq.map(({ q, a }) => (
+        {CURATED.map(({ q, a }) => (
           <li
             key={q}
             className="flex flex-col gap-2 border-b border-border-subtle pb-6 last:border-b-0"

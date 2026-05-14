@@ -970,6 +970,13 @@ Critical path: E-01 → E-02 → E-03 → E-04 → E-05 → E-07 → E-09. Other
 
 ### S-10.7 — Admin settings: email templates, SLA rules, brand assets, legal pages
 
+- **Status:** **S-10.7a shipped** — `/admin/settings` covers SLA hours + legal-page CMS:
+  - New `PlatformSetting` key/value table (`inquirySlaHours` is the first key). `getInquirySlaHours()` falls back to 4h; `/inquiries/_actions.ts` now reads from DB at submission time so admin edits take effect on the very next inquiry without a redeploy.
+  - New `PlatformContent` table keyed on slug (`terms` / `privacy` / `faq`). Public `/terms`, `/privacy`, `/faq` pages read from DB and fall back to curated static placeholders (so the public site never breaks on a fresh deploy).
+  - FAQ is a special case: if admin hasn't saved a DB version, the curated Q&A list renders; once saved, plain-text paragraph mode takes over.
+  - Body rendering: split on blank lines into paragraphs, `whitespace-pre-line` preserves intra-paragraph newlines.
+- **Deferred (S-10.7b):** email-template editor (React Email components in `/emails/` — code-edit territory until we add a viewer/source-editor), brand assets (logo + accent colour swap), advanced SLA per-channel.
+
 - **As** an Owner admin, **I want** to edit email templates, SLA configuration, brand assets, legal pages, **so that** I can change platform-wide settings without redeployment.
 - **Acceptance criteria:**
   - `/admin/settings` with tabs: Email Templates / SLA Rules / Brand / Legal.

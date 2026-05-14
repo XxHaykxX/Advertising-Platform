@@ -345,6 +345,25 @@ model AuditEntry {
   @@index([action, createdAt])
 }
 
+// Single-row platform config. Each row is a typed key/value pair: store
+// strings; callers parse to the expected type (int for sla, etc.).
+// `key` is unique so upsert-by-key is the one-and-only write pattern.
+model PlatformSetting {
+  key       String   @id
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt
+}
+
+// Editable legal / informational pages (terms, privacy, faq, etc.).
+// Plain-text body; rendered by splitting on blank lines into paragraphs.
+model PlatformContent {
+  slug        String   @id
+  title       String
+  body        String   @db.Text
+  updatedAt   DateTime @updatedAt
+  updatedById String?
+}
+
 model FeaturedListing {
   id        String    @id @default(cuid())
   listingId String
