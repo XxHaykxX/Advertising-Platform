@@ -888,6 +888,12 @@ Critical path: E-01 → E-02 → E-03 → E-04 → E-05 → E-07 → E-09. Other
 - **Effort:** L
 - **Depends on:** S-08.1
 - **Phase:** 4
+- **Status:** **S-10.2a shipped** — `/admin/users` table with role filter + search across name / email / company. Each row links the company name to `/admin/companies?q=…` so the admin can pivot. Admin-role users have a note pointing to `/admin/team` since they're managed there.
+- **Deferred (S-10.2b+):**
+  - Suspend / Delete need a schema field on `User` (no `suspended` column yet); pulled out of the MVP cut.
+  - Reset password for non-admins needs an email flow via Resend (`PasswordResetToken` model exists; we'd reuse it). Done as part of S-10.2b once the email-trigger fan-out is wired.
+  - Impersonation is intentionally last — it's a security audit liability if shipped half-baked.
+  - Per-user detail page also deferred; the table + cross-links are enough triage signal for MVP.
 
 ### S-10.3 — Company management
 
@@ -899,6 +905,11 @@ Critical path: E-01 → E-02 → E-03 → E-04 → E-05 → E-07 → E-09. Other
 - **Effort:** M
 - **Depends on:** S-10.2
 - **Phase:** 4
+- **Status:** **S-10.3a shipped** — `/admin/companies` table with verification-status filter + search across `name` / `legalName` / `taxId`. Per-row counts (users / listings / inquiries) are clickable cross-links to `/admin/listings?q=…` and `/admin/inquiries?q=…`. Header links the pending-review queue at `/admin/verifications`.
+- **Deferred (S-10.3b+):**
+  - Per-company detail page (employees + verification history + audit timeline).
+  - "Unpublish all listings" bulk action — `/admin/listings` already lets admins pause individual listings; cascading-pause across a company waits for an operational case.
+  - Editing company fields from the admin side (today the company itself edits via `/settings/company`).
 
 ### S-10.4 — Admin team management (admin users + sub-roles)
 

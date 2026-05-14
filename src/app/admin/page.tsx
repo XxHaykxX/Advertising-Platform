@@ -72,6 +72,22 @@ export default async function AdminPage() {
               Admin team →
             </Link>
           </li>
+          <li>
+            <Link
+              href="/admin/users"
+              className="text-secondary underline-offset-4 hover:text-primary hover:underline"
+            >
+              Users →
+            </Link>
+          </li>
+          <li>
+            <Link
+              href="/admin/companies"
+              className="text-secondary underline-offset-4 hover:text-primary hover:underline"
+            >
+              Companies →
+            </Link>
+          </li>
         </ul>
       </section>
 
