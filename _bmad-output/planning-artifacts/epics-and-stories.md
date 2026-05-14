@@ -975,6 +975,9 @@ Critical path: E-01 → E-02 → E-03 → E-04 → E-05 → E-07 → E-09. Other
 
 ### S-10.8 — Platform analytics dashboard
 
+- **Status:** **S-10.8a shipped** — `/admin/analytics` with date-range picker (default last 30 days, persisted in `?from=&to=` for shareable links). Tiles for new signups + role split, cards for: Inquiries (status breakdown + closed-conversion %), Companies & verification funnel + median time-to-verify, Listings status breakdown, Top advertisers (by inquiries submitted), Top publishers (by confirmed deals). No charts library — just numbers + lists, fast to render and "honest" in the brand-voice sense (no fake bar charts on 3 data points).
+- **Deferred (S-10.8b):** DAU/WAU/MAU growth chart (needs a SignIn event log we don't have — would key off `User.lastLoginAt` snapshots), CSV export, admin-perf metrics (response time per admin — needs first-response logging).
+
 - **As** an admin, **I want** to view platform-wide analytics with date-range picker and CSV export, **so that** I can report on platform health.
 - **Acceptance criteria:** [FR-075, 076]
   - `/admin/analytics` with date-range picker (default last 30 days).

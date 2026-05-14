@@ -92,6 +92,14 @@ export default async function AdminPage() {
               Companies →
             </Link>
           </li>
+          <li>
+            <Link
+              href="/admin/analytics"
+              className="text-secondary underline-offset-4 hover:text-primary hover:underline"
+            >
+              Platform analytics →
+            </Link>
+          </li>
         </ul>
       </section>
 

@@ -55,5 +55,8 @@ next-env.d.ts
 .vscode/
 .idea/
 
+# throwaway deploy helpers (contain SSH passwords)
+.ssh-deploy.py
+
 # OS
 Thumbs.db
