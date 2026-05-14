@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 
 import { auth } from '@/auth';
 import { Button } from '@/components/ui/button';
+import { NotificationBell } from '@/components/notification-bell';
 import { prisma } from '@/lib/prisma';
 
 export const metadata = {
@@ -47,14 +48,17 @@ export default async function DashboardPage({ searchParams }: PageProps) {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-4xl flex-col gap-8 px-8 py-16">
-      <header className="flex flex-col gap-2">
-        <p className="text-caption uppercase text-tertiary">Dashboard</p>
-        <h1 className="text-display-lg tracking-tight text-primary">
-          Welcome, {user.name}
-        </h1>
-        <p className="text-body-lg text-secondary">
-          {company.name} · {user.role === 'ADVERTISER' ? 'Advertiser' : 'Publisher'}
-        </p>
+      <header className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-2">
+          <p className="text-caption uppercase text-tertiary">Dashboard</p>
+          <h1 className="text-display-lg tracking-tight text-primary">
+            Welcome, {user.name}
+          </h1>
+          <p className="text-body-lg text-secondary">
+            {company.name} · {user.role === 'ADVERTISER' ? 'Advertiser' : 'Publisher'}
+          </p>
+        </div>
+        <NotificationBell />
       </header>
 
       <VerificationBanner

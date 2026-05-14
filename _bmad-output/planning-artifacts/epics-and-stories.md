@@ -546,6 +546,14 @@ Critical path: E-01 → E-02 → E-03 → E-04 → E-05 → E-07 → E-09. Other
 
 ### S-06.2 — In-app notification drawer (user-side)
 
+- **Status:** Shipped. `<NotificationBell>` is a server component that fetches unread count + the last 8 notifications for the current user, then hands off to a small client popover (`NotificationBellPopover`). Bell sits in `/dashboard` (advertiser + publisher) and `/admin` (admin landing) headers; returns null when no session so it's safe to drop into shared headers later. `/notifications` page lists everything with All / Unread tabs, per-item "Mark read", and "Mark all read".
+- **Open / close behaviour:** click toggles, click-outside + Esc close, item click submits `openNotification` which marks-read AND redirects to the notification's `link` in one round-trip (so the badge doesn't lag after navigation).
+- **Decisions:**
+  - Items are server-fetched, not client-fetched — no polling, no SWR. The cabinet pages all server-render on each navigation so the bell refreshes naturally.
+  - Date strings are sent to the client as ISO so the client doesn't have to think about Date objects in props.
+
+
+
 - **As** any logged-in user, **I want** to see my unread and recent notifications via a bell icon, **so that** I don't miss platform updates.
 - **Acceptance criteria:** [FR-041, 044]
   - Bell icon in top nav shows unread count badge (refreshed on page load — no real-time push, per ADR-006).

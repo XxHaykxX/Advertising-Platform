@@ -1,6 +1,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 
+import { NotificationBell } from '@/components/notification-bell';
 import { prisma } from '@/lib/prisma';
 import { adminMfaDisabled, requireAdmin } from '@/lib/admin-guard';
 
@@ -23,16 +24,19 @@ export default async function AdminPage() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-4xl flex-col gap-8 px-8 py-16">
-      <header className="flex flex-col gap-2">
-        <p className="text-caption uppercase text-tertiary">Super Admin</p>
-        <h1 className="text-display-lg tracking-tight text-primary">
-          Welcome, {admin.name}
-        </h1>
-        <p className="text-body-lg text-secondary">
-          {adminMfaDisabled
-            ? 'Two-factor gate is OFF (DISABLE_ADMIN_2FA=true — dev only). Verification queue and inquiry queue are live.'
-            : 'Two-factor session is active. Verification queue and inquiry queue are live; admin override on listings, bulk actions, and team management are still to come.'}
-        </p>
+      <header className="flex items-start justify-between gap-4">
+        <div className="flex flex-col gap-2">
+          <p className="text-caption uppercase text-tertiary">Super Admin</p>
+          <h1 className="text-display-lg tracking-tight text-primary">
+            Welcome, {admin.name}
+          </h1>
+          <p className="text-body-lg text-secondary">
+            {adminMfaDisabled
+              ? 'Two-factor gate is OFF (DISABLE_ADMIN_2FA=true — dev only). Verification queue and inquiry queue are live.'
+              : 'Two-factor session is active. Verification queue and inquiry queue are live; admin override on listings, bulk actions, and team management are still to come.'}
+          </p>
+        </div>
+        <NotificationBell />
       </header>
 
       <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
