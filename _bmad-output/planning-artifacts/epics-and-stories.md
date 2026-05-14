@@ -948,6 +948,8 @@ Critical path: E-01 → E-02 → E-03 → E-04 → E-05 → E-07 → E-09. Other
 - **Effort:** M
 - **Depends on:** S-01.3 (homepage featured strip)
 - **Phase:** 4
+- **Status:** **S-10.5a shipped** — `FeaturedListing` schema (listingId unique, position int, optional startsAt/endsAt). `/admin/featured` page: add via dropdown of ACTIVE listings + position + optional date window; per-row edit-position + remove buttons. Homepage `FeaturedListings` server component now queries the DB (date-window filter + only ACTIVE listings + ordered by position ASC); falls back to mock listings when no entries (so the homepage doesn't go empty on day 1).
+- **Deferred (S-10.5b):** drag-and-drop reordering. Position-by-number replacement is fine for ≤10 entries; once we'd ever curate larger we'd ship `@dnd-kit` or similar.
 
 ### S-10.6 — Broadcast announcements
 

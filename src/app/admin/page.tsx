@@ -283,6 +283,14 @@ export default async function AdminPage() {
               Audit log →
             </Link>
           </li>
+          <li>
+            <Link
+              href="/admin/featured"
+              className="text-secondary underline-offset-4 hover:text-primary hover:underline"
+            >
+              Featured listings →
+            </Link>
+          </li>
         </ul>
       </section>
 
