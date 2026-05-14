@@ -6,6 +6,7 @@ import { prisma } from '@/lib/prisma';
 import type { ChannelType, InquiryStatus, Prisma } from '@prisma/client';
 
 import { ReassignControl, StatusControl } from './_row-actions';
+import { BulkForm } from './_bulk-bar';
 
 export const metadata = {
   title: 'Inquiries — Admin',
@@ -120,6 +121,8 @@ export default async function AdminInquiriesPage({ searchParams }: PageProps) {
   const slaOnly = asString(searchParams.sla) === '1';
   const q = asString(searchParams.q).trim();
   const page = Math.max(1, Number(asString(searchParams.page)) || 1);
+  const bulkClosed = Number(asString(searchParams.bulkClosed)) || 0;
+  const bulkSkipped = Number(asString(searchParams.bulkSkipped)) || 0;
 
   const dateFrom = parseDate(dateFromRaw);
   const dateTo = parseDate(dateToRaw);
@@ -381,6 +384,14 @@ export default async function AdminInquiriesPage({ searchParams }: PageProps) {
         </div>
       </form>
 
+      {bulkClosed ? (
+        <p className="rounded border border-success/30 bg-success/10 px-4 py-2 text-body text-success">
+          Closed {bulkClosed} inquir{bulkClosed === 1 ? 'y' : 'ies'}
+          {bulkSkipped ? ` · skipped ${bulkSkipped} that couldn't transition` : ''}.
+        </p>
+      ) : null}
+
+      <BulkForm admins={admins}>
       <section className="overflow-hidden rounded-lg border border-border-subtle bg-surface">
         {inquiries.length === 0 ? (
           <p className="p-8 text-center text-body text-secondary">
@@ -390,6 +401,14 @@ export default async function AdminInquiriesPage({ searchParams }: PageProps) {
           <table className="w-full border-collapse text-left">
             <thead className="bg-background text-caption uppercase text-tertiary">
               <tr>
+                <th className="px-4 py-3 font-medium">
+                  <input
+                    type="checkbox"
+                    data-select-all
+                    aria-label="Select all on this page"
+                    className="size-4 rounded border-border-strong bg-background text-accent focus:ring-accent/40"
+                  />
+                </th>
                 <th className="px-4 py-3 font-medium">Inquiry</th>
                 <th className="px-4 py-3 font-medium">Advertiser</th>
                 <th className="px-4 py-3 font-medium">Publisher · listing</th>
@@ -408,6 +427,15 @@ export default async function AdminInquiriesPage({ searchParams }: PageProps) {
                     key={inq.id}
                     className="border-t border-border-subtle hover:bg-background"
                   >
+                    <td className="px-4 py-3">
+                      <input
+                        type="checkbox"
+                        name="inquiryIds"
+                        value={inq.id}
+                        aria-label={`Select INQ-${inq.id.slice(-8)}`}
+                        className="size-4 rounded border-border-strong bg-background text-accent focus:ring-accent/40"
+                      />
+                    </td>
                     <td className="px-4 py-3">
                       <Link
                         href={`/admin/inquiries/${inq.id}`}
@@ -484,6 +512,7 @@ export default async function AdminInquiriesPage({ searchParams }: PageProps) {
           </table>
         )}
       </section>
+      </BulkForm>
 
       {totalPages > 1 ? (
         <nav className="flex items-center justify-between gap-4">

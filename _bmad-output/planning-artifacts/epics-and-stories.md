@@ -744,6 +744,10 @@ Critical path: E-01 → E-02 → E-03 → E-04 → E-05 → E-07 → E-09. Other
 - **Effort:** M
 - **Depends on:** S-09.1
 - **Phase:** 4
+- **Decisions:**
+  - Selection state lives in the DOM (checkboxes inside a `<form>`), not in React state. `BulkForm` client wrapper just `querySelectorAll(':checked')`-counts on each `change` event. The server-rendered table can repaint freely without React resync — and the form's native submit ships the IDs as `formData.getAll('inquiryIds')` with zero glue.
+  - Bulk assign is a single Server Action call. Bulk close routes to a dedicated `/admin/inquiries/bulk-close?as=…&ids=…` page (reuses the S-09.7 design — reason capture for Lost/Cancelled, optional for Confirmed). One shared reason is written to every selected inquiry; FSM-invalid ones are silently skipped and counted in the success flash on the queue.
+  - Flash message arrives via `?bulkClosed=N&bulkSkipped=M` redirected from the action.
 
 ### S-09.5 — Admin inquiry detail split-pane (3 columns)
 
