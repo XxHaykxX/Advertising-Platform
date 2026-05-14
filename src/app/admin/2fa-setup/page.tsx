@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { generateEnrollment } from '@/lib/totp';
+import { adminMfaDisabled } from '@/lib/admin-guard';
 
 import { EnrollForm } from './_form';
 
@@ -13,6 +14,8 @@ export const metadata = {
 };
 
 export default async function AdminMfaSetupPage() {
+  if (adminMfaDisabled) redirect('/admin');
+
   const session = await auth();
   if (!session?.user) redirect('/admin/login');
 

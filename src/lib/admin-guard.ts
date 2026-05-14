@@ -8,6 +8,20 @@ import { prisma } from '@/lib/prisma';
 // terminal locks itself within an hour.
 const MFA_WINDOW_MS = 60 * 60 * 1000;
 
+// Dev-only escape hatch: setting DISABLE_ADMIN_2FA=true in .env skips the
+// TOTP enrolment + verification gate entirely. Gated on NODE_ENV so even an
+// accidental prod value is ignored (defense in depth — prod env should
+// never contain this var anyway).
+export const adminMfaDisabled =
+  process.env.NODE_ENV !== 'production' &&
+  process.env.DISABLE_ADMIN_2FA === 'true';
+
+if (adminMfaDisabled) {
+  console.warn(
+    '[admin-guard] DISABLE_ADMIN_2FA=true — 2FA gate is OFF. Dev use only.'
+  );
+}
+
 export type AdminGuardResult = {
   userId: string;
   name: string;
@@ -42,18 +56,21 @@ export async function requireAdmin(): Promise<AdminGuardResult> {
 
   if (!user) redirect('/admin/login');
   if (user.role !== 'ADMIN') redirect('/dashboard');
-  if (!user.twoFactorEnabled) redirect('/admin/2fa-setup');
 
-  const verifiedAt = user.mfaVerifiedAt?.getTime() ?? 0;
-  if (Date.now() - verifiedAt > MFA_WINDOW_MS) {
-    redirect('/admin/2fa');
+  if (!adminMfaDisabled) {
+    if (!user.twoFactorEnabled) redirect('/admin/2fa-setup');
+
+    const verifiedAt = user.mfaVerifiedAt?.getTime() ?? 0;
+    if (Date.now() - verifiedAt > MFA_WINDOW_MS) {
+      redirect('/admin/2fa');
+    }
+
+    // Slide the window so an active admin doesn't get logged out mid-flow.
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { mfaVerifiedAt: new Date() },
+    });
   }
-
-  // Slide the window so an active admin doesn't get logged out mid-flow.
-  await prisma.user.update({
-    where: { id: user.id },
-    data: { mfaVerifiedAt: new Date() },
-  });
 
   return { userId: user.id, name: user.name, email: user.email };
 }
