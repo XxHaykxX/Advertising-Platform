@@ -53,6 +53,20 @@ export default async function AdminPage() {
         />
       </section>
 
+      <section className="flex flex-col gap-2 rounded-lg border border-border-subtle bg-surface p-5">
+        <h2 className="text-h3 text-primary">Settings</h2>
+        <ul className="flex flex-col gap-1 text-body">
+          <li>
+            <Link
+              href="/admin/taxonomy/industries"
+              className="text-secondary underline-offset-4 hover:text-primary hover:underline"
+            >
+              Taxonomy · Industries →
+            </Link>
+          </li>
+        </ul>
+      </section>
+
       <section className="flex flex-col gap-3 rounded-lg border border-info/30 bg-info/10 p-5">
         <h2 className="text-h3 text-primary">Coming up</h2>
         <ul className="flex flex-col gap-1 text-body text-secondary">

@@ -862,6 +862,11 @@ Critical path: E-01 → E-02 → E-03 → E-04 → E-05 → E-07 → E-09. Other
   - Hierarchy support for industries (parent-child) and regions (country/marz/city).
   - Source channels link to a Company (owner).
 - **Effort:** L
+- **Status:** **S-10.1a shipped** — Industries CRUD. `/admin/taxonomy/industries` lists top-level + nested children with company counts; inline rename (toggle to input + Save), archive/restore, add-new form with optional parent select. Per-name uniqueness enforced server-side (matches the `@unique` on Industry.name).
+- **Deferred:**
+  - **Channel types** stay schema-bound — `ChannelType` is a Prisma enum, runtime editing isn't possible without a migration. Documented in the UI itself so nobody asks why the tab is missing.
+  - **Source channels** are already managed per-publisher when they create/edit a listing — global admin CRUD is overkill for MVP.
+  - **Regions** live as free text on `Listing.audienceDemographics.region`. A controlled vocabulary lands in S-10.1b if/when ambiguity hurts.
 - **Depends on:** S-08.1
 - **Phase:** 2 (blocks S-03.1 ideally — bootstrapping data)
 
