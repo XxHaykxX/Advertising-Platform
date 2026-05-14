@@ -14,9 +14,9 @@ export function FeaturedListings() {
     <section className="mx-auto flex max-w-6xl flex-col gap-6 px-6 py-20">
       <header className="flex items-baseline justify-between gap-4">
         <h2 className="text-display-lg tracking-tight text-primary">
-          Featured inventory
+          Advertising opportunities
         </h2>
-        <p className="text-body text-tertiary">Mock data · live wiring in S-04</p>
+        <p className="text-body text-tertiary">Sample — live data after pilot launch</p>
       </header>
 
       <ul className="grid grid-cols-1 gap-4 md:grid-cols-2">

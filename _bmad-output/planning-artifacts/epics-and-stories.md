@@ -139,6 +139,32 @@ Critical path: E-01 → E-02 → E-03 → E-04 → E-05 → E-07 → E-09. Other
 - **Depends on:** S-01.1, S-04.1 (Listing model)
 - **Phase:** 2 (after listing model exists)
 
+### S-01.6 — Homepage Our Partners strip
+
+- **As** a visitor on the homepage, **I want** to see logos of the publishers our team works with, **so that** I trust the platform has real inventory before I register.
+- **Acceptance criteria:**
+  - Homepage renders an "Our partners" section below "Advertising opportunities" and above "How it works".
+  - **Phase 1 (placeholder):** 6-slot grid, each slot rendered as a dashed-border tile with the copy "Onboarding — partner reveal at launch." No fake logos. Honest about pre-launch state per brand voice §2 "Confidence over reassurance".
+  - **Phase 4 (data-driven):** queries `Company` where `verificationStatus = APPROVED AND role-derived-from-users includes PUBLISHER AND logoUrl IS NOT NULL`, ordered by `verifiedAt DESC`, shows up to 12 logos. Each logo links to `/publishers/<id>` once the public publisher page lands.
+  - Section title and CTA copy stay neutral; no superlatives ("best", "top", "leading").
+  - Lime accent count on the page stays ≤3 (per S-01.3 brand rule).
+- **Effort:** S (Phase 1 placeholder), M (Phase 4 data wiring)
+- **Depends on:** S-01.3 (homepage shell). Phase 4 wiring also depends on `/publishers/<id>` route (TBD story in E-04 or E-10).
+- **Phase:** 1 for placeholder, 4 for data wiring.
+
+### S-01.7 — Homepage Our Works strip
+
+- **As** a visitor on the homepage, **I want** to see case studies of past brokered deals, **so that** I understand what success on the platform looks like.
+- **Acceptance criteria:**
+  - Homepage renders a "Our works" section below "Our partners" and above "How it works".
+  - **Phase 1 (placeholder):** single honest panel — copy "First case studies publish after our pilot deals close. We won't fake them." No mock case-study cards.
+  - **Phase 4 (data-driven):** 3-card grid sourced from a new `CaseStudy` table (admin-curated; not auto-pulled from inquiries to keep editorial control). Each card has title, publisher name, channel type tag, one-paragraph teaser, link to detail page.
+  - Section title and copy stay neutral; case studies require explicit consent from both advertiser and publisher before publication (privacy + ToS).
+- **Effort:** S (Phase 1 placeholder), L (Phase 4 — new model + admin curator + detail page)
+- **Depends on:** S-01.3. Phase 4 depends on a new admin curator story (TBD).
+- **Phase:** 1 for placeholder, 4 for the full feature.
+- **Notes:** Considered auto-generating cards from `Inquiry.status = CONFIRMED` rows but rejected — editorial / consent gates are too important to automate. Always admin-curated.
+
 ---
 
 ## E-02 — Authentication

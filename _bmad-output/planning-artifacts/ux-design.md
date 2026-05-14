@@ -200,7 +200,7 @@ Detail level: each screen has purpose, key elements, primary interactions. Wiref
 
 | Screen | Purpose | Key elements |
 |---|---|---|
-| Homepage | Pitch + funnel into registration | Hero with lime-period wordmark, value prop in sentence case, two CTAs (lime + outline), featured-listings grid, How-it-works strip, footer |
+| Homepage | Pitch + funnel into registration | Hero with lime-period wordmark, value prop in sentence case, two CTAs (lime + outline), Advertising-opportunities grid, Our-partners strip (S-01.6), Our-works strip (S-01.7), How-it-works strip, footer |
 | How It Works — For Advertisers | Conversion content for buyers | 3-step illustration, advertiser-side benefits, CTA |
 | How It Works — For Publishers | Conversion content for sellers | 3-step illustration, publisher-side benefits, CTA |
 | About | Trust-builders | Team, mission, contact channel |
@@ -301,7 +301,7 @@ Wireframes for the five screens where the design carries the most weight. Other 
 │                          ─── ↓ scroll ───                                │
 │                                                                          │
 ├─────────────────────────────────────────────────────────────────────────┤
-│  FEATURED OPPORTUNITIES                                                  │
+│  ADVERTISING OPPORTUNITIES                                               │
 │  ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐         │
 │  │ RADIO           │  │ TV              │  │ PRODUCT PLAC.   │         │
 │  │ Morning Drive   │  │ Prime-Time Spot │  │ Q3 Film         │         │
@@ -311,6 +311,18 @@ Wireframes for the five screens where the design carries the most weight. Other 
 │  │ ⊙ Active        │  │ ⊙ Active        │  │ ⊙ Active        │         │
 │  │  240 views      │  │  189 views      │  │  87 views       │         │
 │  └─────────────────┘  └─────────────────┘  └─────────────────┘         │
+│                                                                          │
+├─────────────────────────────────────────────────────────────────────────┤
+│  OUR PARTNERS  (S-01.6 — Phase 1: 6 dashed-border placeholder tiles,     │
+│  Phase 4: real publisher logos from approved Companies)                  │
+│  ┌─────┐  ┌─────┐  ┌─────┐  ┌─────┐  ┌─────┐  ┌─────┐                  │
+│  │     │  │     │  │     │  │     │  │     │  │     │                  │
+│  └─────┘  └─────┘  └─────┘  └─────┘  └─────┘  └─────┘                  │
+│                                                                          │
+├─────────────────────────────────────────────────────────────────────────┤
+│  OUR WORKS  (S-01.7 — Phase 1: single honest panel "First case studies   │
+│  publish after our pilot deals close", Phase 4: 3-card grid sourced     │
+│  from admin-curated CaseStudy table)                                    │
 │                                                                          │
 ├─────────────────────────────────────────────────────────────────────────┤
 │  HOW IT WORKS                                                            │
