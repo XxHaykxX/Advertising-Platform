@@ -498,6 +498,12 @@ Critical path: E-01 → E-02 → E-03 → E-04 → E-05 → E-07 → E-09. Other
 - **Effort:** M
 - **Depends on:** S-04.5
 - **Phase:** 2
+- **Status:** **S-05.6a shipped** — saved listings half. New `WishlistItem` schema (composite PK on (userId, listingId)). Star toggle (inline SVG, `_star.tsx` client component) on both the catalog grid card and the catalog detail header. Server action `toggleWishlistEntry` upserts/deletes with verification-status check on add (only ACTIVE listings can be saved). `/wishlist` page lists saved items, marks listings that have since paused/closed.
+- **Deferred (S-05.6b — saved publishers):** publisher detail page (`S-04.5` family) isn't built yet; once it ships, add a Star there + a "Saved publishers" tab on `/wishlist`.
+- **Decisions:**
+  - AC said "verified advertiser" — relaxed to "any advertiser" for saving. Saving a listing is harmless; the verification gate fires when they actually inquire. One fewer wall during onboarding.
+  - Wishlist toggle is one Server Action with `intent=add|remove` rather than two endpoints — every caller knows the target state from the rendered star tone.
+  - Wishlist star sits OUTSIDE the card's `<Link>` (the card body is wrapped in a `<Link>`); `stopPropagation` on the form click stops navigation when the star is hit.
 
 ### S-05.7 — Quick-inquiry from wishlist
 

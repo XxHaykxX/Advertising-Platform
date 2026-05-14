@@ -2,6 +2,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { Filter, Search } from 'lucide-react';
 
+import { auth } from '@/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { prisma } from '@/lib/prisma';
@@ -10,6 +11,7 @@ import {
   channelTypeLabels,
   type ChannelTypeInput,
 } from '@/lib/validation/company';
+import { WishlistStar } from '@/app/wishlist/_star';
 
 export const metadata = {
   title: 'Catalog — Advertising Platform',
@@ -74,7 +76,10 @@ export default async function CatalogPage({ searchParams }: PageProps) {
       ? { availableFrom: 'asc' as const }
       : { createdAt: 'desc' as const };
 
-  const [listings, total] = await Promise.all([
+  const session = await auth();
+  const viewerUserId = session?.user?.id;
+
+  const [listings, total, viewer] = await Promise.all([
     prisma.listing.findMany({
       where,
       orderBy,
@@ -92,7 +97,26 @@ export default async function CatalogPage({ searchParams }: PageProps) {
       },
     }),
     prisma.listing.count({ where }),
+    viewerUserId
+      ? prisma.user.findUnique({
+          where: { id: viewerUserId },
+          select: { role: true },
+        })
+      : Promise.resolve(null),
   ]);
+
+  const canWishlist = viewer?.role === 'ADVERTISER';
+  const savedIds = new Set<string>();
+  if (canWishlist && listings.length) {
+    const saved = await prisma.wishlistItem.findMany({
+      where: {
+        userId: viewerUserId!,
+        listingId: { in: listings.map((l) => l.id) },
+      },
+      select: { listingId: true },
+    });
+    saved.forEach((s) => savedIds.add(s.listingId));
+  }
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -183,7 +207,7 @@ export default async function CatalogPage({ searchParams }: PageProps) {
               region?: string | null;
             };
             return (
-              <li key={l.id}>
+              <li key={l.id} className="relative">
                 <Link
                   href={`/catalog/listings/${l.id}`}
                   className="flex h-full flex-col gap-3 rounded-lg border border-border-subtle bg-surface p-5 transition-colors duration-200 ease-out-expo hover:border-border-strong hover:bg-surface-elevated"
@@ -210,6 +234,9 @@ export default async function CatalogPage({ searchParams }: PageProps) {
                     </p>
                   ) : null}
                 </Link>
+                {canWishlist ? (
+                  <WishlistStar listingId={l.id} isSaved={savedIds.has(l.id)} />
+                ) : null}
               </li>
             );
           })}

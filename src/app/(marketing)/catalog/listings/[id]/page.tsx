@@ -10,6 +10,7 @@ import { auth } from '@/auth';
 import { Button } from '@/components/ui/button';
 import { prisma } from '@/lib/prisma';
 import { channelTypeLabels } from '@/lib/validation/company';
+import { WishlistStar } from '@/app/wishlist/_star';
 
 const VIEW_COOKIE = 'viewed_listings';
 const VIEW_COOKIE_MAX_BYTES = 3500; // keep well under cookie size limits
@@ -94,6 +95,24 @@ export default async function ListingDetailPage({ params }: PageProps) {
   const session = (await auth()) as Session | null;
   const cta = await resolveInquiryCTA(session);
 
+  // Star is rendered only for advertisers — anyone else doesn't have a
+  // wishlist concept. Verification is NOT required for wishlist (per AC).
+  let isSaved = false;
+  let canWishlist = false;
+  if (session?.user) {
+    const viewer = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { role: true },
+    });
+    if (viewer?.role === 'ADVERTISER') {
+      canWishlist = true;
+      const existing = await prisma.wishlistItem.findUnique({
+        where: { userId_listingId: { userId: session.user.id, listingId: listing.id } },
+      });
+      isSaved = Boolean(existing);
+    }
+  }
+
   return (
     <main className="mx-auto flex max-w-4xl flex-col gap-10 px-6 py-12">
       <div>
@@ -110,9 +129,18 @@ export default async function ListingDetailPage({ params }: PageProps) {
           {channelTypeLabels[listing.channelType as keyof typeof channelTypeLabels]}
           {listing.sourceChannel ? ` · ${listing.sourceChannel.name}` : ''}
         </p>
-        <h1 className="text-display-lg tracking-tight text-primary">
-          {listing.title}
-        </h1>
+        <div className="flex items-start justify-between gap-3">
+          <h1 className="text-display-lg tracking-tight text-primary">
+            {listing.title}
+          </h1>
+          {canWishlist ? (
+            <WishlistStar
+              listingId={listing.id}
+              isSaved={isSaved}
+              className="shrink-0"
+            />
+          ) : null}
+        </div>
         <p className="text-body-lg text-secondary">
           By <span className="text-primary">{listing.company.name}</span>
         </p>

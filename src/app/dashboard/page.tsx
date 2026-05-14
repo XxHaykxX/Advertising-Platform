@@ -97,6 +97,9 @@ export default async function DashboardPage({ searchParams }: PageProps) {
             <Button asChild variant="outline">
               <Link href="/inquiries">My inquiries</Link>
             </Button>
+            <Button asChild variant="ghost">
+              <Link href="/wishlist">Wishlist</Link>
+            </Button>
           </div>
         </section>
       ) : null}
@@ -106,9 +109,9 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         <ul className="flex flex-col gap-2 text-body text-secondary">
           {user.role === 'ADVERTISER' ? (
             <>
-              <li>Wishlist for saved listings (S-05.6).</li>
-              <li>Per-inquiry chat with our team (E-07).</li>
               <li>Quick-inquiry from the wishlist (S-05.7).</li>
+              <li>Per-inquiry chat with our team (E-07).</li>
+              <li>Saved publishers (S-05.6b — publisher detail page lands first).</li>
             </>
           ) : (
             <>
