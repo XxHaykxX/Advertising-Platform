@@ -46,4 +46,15 @@ copy(
   '@prisma/client package'
 );
 
+// Replace the auto-generated server.js with our custom one that handles
+// unix-socket binding for Hostinger LSWS — see the file header for why.
+const customServer = path.join(ROOT, 'scripts', 'custom-standalone-server.js');
+const targetServer = path.join(STANDALONE, 'server.js');
+if (fs.existsSync(customServer)) {
+  fs.copyFileSync(customServer, targetServer);
+  console.log('[post-build] overwrote server.js with custom unix-socket aware version');
+} else {
+  console.warn('[post-build] custom-standalone-server.js missing — keeping default');
+}
+
 console.log('[post-build] standalone assets ready.');
