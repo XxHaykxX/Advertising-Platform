@@ -385,6 +385,11 @@ Critical path: E-01 → E-02 → E-03 → E-04 → E-05 → E-07 → E-09. Other
 
 ### S-04.4 — Per-listing analytics (views, inquiry counts)
 
+- **Status:** Shipped on `/listings/mine`. Page-level tiles (Active listings · Total views · Total inquiries · Confirmed deals — the last one lime-tinted as the headline KPI for a brokered marketplace) sit above the list. Each listing row now shows views, total inquiries, and a status breakdown (confirmed / open / lost / cancelled) right next to the existing icons. Single `inquiry.groupBy` on `(listingId, status)` powers the breakdown.
+- **Why this composition:** the AC asks "views, inquiry counts" — but in a brokered model "inquiry count" alone is misleading (high inquiry volume + zero confirms is not success). Surfacing confirmed-vs-open-vs-lost answers "is this slot actually selling" without needing a separate analytics page.
+
+
+
 - **As** a publisher, **I want** to see view count and inquiry count per listing, **so that** I know which inventory is in demand.
 - **Acceptance criteria:** [FR-024]
   - View count increments on catalog detail page render (cached per session to avoid double-counting).

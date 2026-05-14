@@ -52,6 +52,54 @@ export default async function MyListingsPage() {
     },
   });
 
+  // S-04.4 per-listing analytics: split inquiry counts by status so a
+  // publisher can see "of 12 inquiries, 3 confirmed, 6 still open, 3 lost".
+  const inquiryBuckets = listings.length
+    ? await prisma.inquiry.groupBy({
+        by: ['listingId', 'status'],
+        _count: { _all: true },
+        where: {
+          listingId: { in: listings.map((l) => l.id) },
+        },
+      })
+    : [];
+
+  type Bucket = { open: number; confirmed: number; lost: number; cancelled: number };
+  const bucketsByListing = new Map<string, Bucket>();
+  for (const row of inquiryBuckets) {
+    if (!row.listingId) continue;
+    const b = bucketsByListing.get(row.listingId) ?? {
+      open: 0,
+      confirmed: 0,
+      lost: 0,
+      cancelled: 0,
+    };
+    const n = row._count._all;
+    switch (row.status) {
+      case 'CONFIRMED':
+        b.confirmed += n;
+        break;
+      case 'LOST':
+        b.lost += n;
+        break;
+      case 'CANCELLED':
+        b.cancelled += n;
+        break;
+      default:
+        b.open += n;
+    }
+    bucketsByListing.set(row.listingId, b);
+  }
+
+  // Page-level totals.
+  const totalViews = listings.reduce((acc, l) => acc + l.viewCount, 0);
+  const totalInquiries = listings.reduce((acc, l) => acc + l.inquiryCount, 0);
+  const totalConfirmed = Array.from(bucketsByListing.values()).reduce(
+    (acc, b) => acc + b.confirmed,
+    0
+  );
+  const totalActive = listings.filter((l) => l.status === 'ACTIVE').length;
+
   return (
     <main className="mx-auto flex max-w-5xl flex-col gap-8 px-6 py-16">
       <header className="flex flex-wrap items-baseline justify-between gap-4">
@@ -87,6 +135,15 @@ export default async function MyListingsPage() {
             </Button>
           </div>
         </div>
+      ) : null}
+
+      {listings.length ? (
+        <section className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          <StatTile label="Active listings" value={totalActive} />
+          <StatTile label="Total views" value={totalViews} />
+          <StatTile label="Total inquiries" value={totalInquiries} />
+          <StatTile label="Confirmed deals" value={totalConfirmed} highlight />
+        </section>
       ) : null}
 
       {listings.length === 0 ? (
@@ -128,13 +185,32 @@ export default async function MyListingsPage() {
                 {l.availableFrom.toISOString().slice(0, 10)} →{' '}
                 {l.availableTo.toISOString().slice(0, 10)}
               </p>
-              <div className="flex items-center gap-5 text-caption text-tertiary">
+              <div className="flex flex-wrap items-center gap-5 text-caption text-tertiary">
                 <span className="inline-flex items-center gap-1">
-                  <Eye size={14} /> {l.viewCount}
+                  <Eye size={14} /> {l.viewCount} views
                 </span>
                 <span className="inline-flex items-center gap-1">
-                  <MessageSquare size={14} /> {l.inquiryCount}
+                  <MessageSquare size={14} /> {l.inquiryCount} inquir
+                  {l.inquiryCount === 1 ? 'y' : 'ies'}
                 </span>
+                {(() => {
+                  const b = bucketsByListing.get(l.id);
+                  if (!b || b.open + b.confirmed + b.lost + b.cancelled === 0) {
+                    return null;
+                  }
+                  return (
+                    <span className="inline-flex items-center gap-3">
+                      {b.confirmed ? (
+                        <span className="text-success">{b.confirmed} confirmed</span>
+                      ) : null}
+                      {b.open ? <span className="text-info">{b.open} open</span> : null}
+                      {b.lost ? <span className="text-danger">{b.lost} lost</span> : null}
+                      {b.cancelled ? (
+                        <span className="text-tertiary">{b.cancelled} cancelled</span>
+                      ) : null}
+                    </span>
+                  );
+                })()}
               </div>
               <ListingStatusControls
                 listingId={l.id}
@@ -145,5 +221,30 @@ export default async function MyListingsPage() {
         </ul>
       )}
     </main>
+  );
+}
+
+function StatTile({
+  label,
+  value,
+  highlight,
+}: {
+  label: string;
+  value: number;
+  highlight?: boolean;
+}) {
+  return (
+    <div
+      className={`flex flex-col gap-1 rounded-lg border bg-surface p-4 ${
+        highlight ? 'border-accent/40' : 'border-border-subtle'
+      }`}
+    >
+      <p className="text-caption uppercase text-tertiary">{label}</p>
+      <p
+        className={`text-display-md tracking-tight ${highlight ? 'text-accent' : 'text-primary'}`}
+      >
+        {value}
+      </p>
+    </div>
   );
 }
