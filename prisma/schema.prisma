@@ -63,6 +63,13 @@ enum ListingStatus {
   CLOSED
 }
 
+enum AnnouncementAudience {
+  ALL
+  ADVERTISERS
+  PUBLISHERS
+  ADMINS
+}
+
 enum InquiryStatus {
   NEW
   ASSIGNED
@@ -312,6 +319,19 @@ model Call {
   createdAt       DateTime @default(now())
 
   @@index([inquiryId, occurredAt])
+}
+
+model Announcement {
+  id          String               @id @default(cuid())
+  title       String
+  body        String               @db.Text
+  audience    AnnouncementAudience @default(ALL)
+  startsAt    DateTime
+  endsAt      DateTime
+  createdById String
+  createdAt   DateTime             @default(now())
+
+  @@index([audience, startsAt, endsAt])
 }
 
 model WishlistItem {

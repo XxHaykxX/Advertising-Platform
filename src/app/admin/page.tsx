@@ -1,6 +1,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 
+import { AnnouncementBanner } from '@/components/announcement-banner';
 import { NotificationBell } from '@/components/notification-bell';
 import { prisma } from '@/lib/prisma';
 import { adminMfaDisabled, requireAdmin } from '@/lib/admin-guard';
@@ -24,6 +25,7 @@ export default async function AdminPage() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-4xl flex-col gap-8 px-8 py-16">
+      <AnnouncementBanner />
       <header className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-2">
           <p className="text-caption uppercase text-tertiary">Super Admin</p>
@@ -98,6 +100,14 @@ export default async function AdminPage() {
               className="text-secondary underline-offset-4 hover:text-primary hover:underline"
             >
               Platform analytics →
+            </Link>
+          </li>
+          <li>
+            <Link
+              href="/admin/announcements"
+              className="text-secondary underline-offset-4 hover:text-primary hover:underline"
+            >
+              Announcements →
             </Link>
           </li>
         </ul>

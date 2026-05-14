@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
 import { auth } from '@/auth';
+import { AnnouncementBanner } from '@/components/announcement-banner';
 import { Button } from '@/components/ui/button';
 import { NotificationBell } from '@/components/notification-bell';
 import { prisma } from '@/lib/prisma';
@@ -48,6 +49,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-4xl flex-col gap-8 px-8 py-16">
+      <AnnouncementBanner />
       <header className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-2">
           <p className="text-caption uppercase text-tertiary">Dashboard</p>

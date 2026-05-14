@@ -959,6 +959,11 @@ Critical path: E-01 → E-02 → E-03 → E-04 → E-05 → E-07 → E-09. Other
 - **Effort:** L
 - **Depends on:** S-08.1
 - **Phase:** 4
+- **Status:** Shipped. New `Announcement` model with `AnnouncementAudience` enum (`ALL` / `ADVERTISERS` / `PUBLISHERS` / `ADMINS` — no "custom user list" yet, MVP keeps audience role-coarse). `/admin/announcements` lists everything with Live / Scheduled / Ended tones; create-form uses `<input type="datetime-local">` with sensible defaults (now → +7d). "End now" sets `endsAt = new Date()` (soft-archive). `AnnouncementBanner` server component drops into `/dashboard` and `/admin` headers; renders top three active announcements role-targeted via `ROLE_TO_AUDIENCES` map, hides itself when nothing's live.
+- **Decisions:**
+  - Body is plain text. AC said rich text but no editor library is in deps — bumped to S-10.6b.
+  - Custom user-list audience (per AC) deferred — coarse role-based covers ≥90% of use without a multi-select picker.
+  - Banner shows TOP-3 active rather than only newest — useful when there's overlapping maintenance windows.
 
 ### S-10.7 — Admin settings: email templates, SLA rules, brand assets, legal pages
 
