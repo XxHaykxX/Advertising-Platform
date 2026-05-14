@@ -415,6 +415,9 @@ Critical path: E-01 → E-02 → E-03 → E-04 → E-05 → E-07 → E-09. Other
 - **Effort:** M
 - **Depends on:** S-04.1, S-08.1
 - **Phase:** 2
+- **Status:** **S-04.6a shipped** — `/admin/listings` queue (filters: status, channel, search across title/company/id; 50/page) + per-row override (PAUSED / CLOSED / reactivate to ACTIVE) via `/admin/listings/[id]/override?to=...`. Reason ≥5 chars required for Pause / Close; optional for Reactivate. State-machine guarded.
+- **Deferred (S-04.6b):** full admin field-edit (title, audience, dates, etc.). For curate-and-unpublish — the highest-leverage admin action — status override + per-publisher notification is enough.
+- **Audit trail:** until S-12.x ships generic `AuditEntry`, every override creates a `Notification` row per publisher-side user (type `LISTING_DECISION`, body = reason). The override actor is also logged to the server console for retrofit later.
 
 ---
 

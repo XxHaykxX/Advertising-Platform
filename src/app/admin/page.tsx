@@ -46,7 +46,11 @@ export default async function AdminPage() {
           value={openInquiries}
           href="/admin/inquiries"
         />
-        <StatCard label="Active listings" value={listingsTotal} />
+        <StatCard
+          label="Active listings"
+          value={listingsTotal}
+          href="/admin/listings?status=ACTIVE"
+        />
       </section>
 
       <section className="flex flex-col gap-3 rounded-lg border border-info/30 bg-info/10 p-5">
