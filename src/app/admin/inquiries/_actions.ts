@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/admin-guard';
+import { recordAudit } from '@/lib/audit';
 import {
   allowedInquiryTransitions,
   type InquiryStatusInput,
@@ -77,6 +78,15 @@ export async function reassignInquiry(formData: FormData): Promise<void> {
     }),
   ]);
 
+  await recordAudit({
+    actorUserId: admin.userId,
+    action: targetId ? 'INQUIRY_REASSIGNED' : 'INQUIRY_UNASSIGNED',
+    entityType: 'INQUIRY',
+    entityId: inquiry.id,
+    before: { assignedAdminId: inquiry.assignedAdminId },
+    after: { assignedAdminId: targetId },
+  });
+
   revalidatePath('/admin/inquiries');
 }
 
@@ -129,6 +139,15 @@ export async function changeInquiryStatus(formData: FormData): Promise<void> {
       },
     }),
   ]);
+
+  await recordAudit({
+    actorUserId: admin.userId,
+    action: 'INQUIRY_STATUS_CHANGED',
+    entityType: 'INQUIRY',
+    entityId: inquiry.id,
+    before: { status: inquiry.status },
+    after: { status: next },
+  });
 
   revalidatePath('/admin/inquiries');
 }

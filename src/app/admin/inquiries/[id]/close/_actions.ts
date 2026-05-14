@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/admin-guard';
+import { recordAudit } from '@/lib/audit';
 import {
   allowedInquiryTransitions,
   type InquiryStatusInput,
@@ -84,6 +85,15 @@ export async function closeInquiry(
       },
     }),
   ]);
+
+  await recordAudit({
+    actorUserId: admin.userId,
+    action: `INQUIRY_${target}`,
+    entityType: 'INQUIRY',
+    entityId: inquiry.id,
+    before: { status: inquiry.status },
+    after: { status: target, reason: reason || null },
+  });
 
   revalidatePath('/admin/inquiries');
   revalidatePath(`/admin/inquiries/${inquiry.id}`);

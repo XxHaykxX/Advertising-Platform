@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/admin-guard';
+import { recordAudit } from '@/lib/audit';
 import {
   allowedInquiryTransitions,
   type InquiryStatusInput,
@@ -72,6 +73,20 @@ export async function bulkAssignInquiries(formData: FormData): Promise<void> {
       })),
     }),
   ]);
+
+  // Unified audit — one row per inquiry that actually changed.
+  await Promise.all(
+    toUpdate.map((i) =>
+      recordAudit({
+        actorUserId: admin.userId,
+        action: target ? 'INQUIRY_BULK_REASSIGNED' : 'INQUIRY_BULK_UNASSIGNED',
+        entityType: 'INQUIRY',
+        entityId: i.id,
+        before: { assignedAdminId: i.assignedAdminId },
+        after: { assignedAdminId: target },
+      })
+    )
+  );
 
   revalidatePath('/admin/inquiries');
 }
@@ -154,6 +169,19 @@ export async function bulkCloseInquiries(
       })),
     }),
   ]);
+
+  await Promise.all(
+    valid.map((i) =>
+      recordAudit({
+        actorUserId: admin.userId,
+        action: `INQUIRY_BULK_${target}`,
+        entityType: 'INQUIRY',
+        entityId: i.id,
+        before: { status: i.status },
+        after: { status: target, reason: reason || null },
+      })
+    )
+  );
 
   revalidatePath('/admin/inquiries');
   // Hand-off to the queue with a flash via search params; the page picks it up.
