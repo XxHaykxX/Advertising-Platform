@@ -107,14 +107,14 @@ export default async function DashboardPage({ searchParams }: PageProps) {
           {user.role === 'ADVERTISER' ? (
             <>
               <li>Wishlist for saved listings (S-05.6).</li>
-              <li>Per-inquiry chat (E-07).</li>
-              <li>Admin queue + verification review (E-08, E-09).</li>
+              <li>Per-inquiry chat with our team (E-07).</li>
+              <li>Quick-inquiry from the wishlist (S-05.7).</li>
             </>
           ) : (
             <>
               <li>Incoming inquiries cabinet (E-06, Phase 3).</li>
-              <li>Per-inquiry chat (E-07).</li>
-              <li>Admin override on listings (S-04.6).</li>
+              <li>Per-inquiry chat with our team (E-07).</li>
+              <li>Listing edit + status transitions (S-04.2 / S-04.3).</li>
             </>
           )}
         </ul>
