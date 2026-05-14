@@ -83,7 +83,7 @@ export default async function WishlistPage() {
             };
             const isUnavailable = l.status !== 'ACTIVE';
             return (
-              <li key={l.id} className="relative">
+              <li key={l.id} className="relative flex flex-col gap-2">
                 <Link
                   href={`/catalog/listings/${l.id}`}
                   className={`flex h-full flex-col gap-3 rounded-lg border bg-surface p-5 transition-colors duration-200 ease-out-expo ${
@@ -116,6 +116,18 @@ export default async function WishlistPage() {
                   </p>
                 </Link>
                 <WishlistStar listingId={l.id} isSaved />
+                {!isUnavailable ? (
+                  <Link
+                    href={`/inquiries/new?listingId=${l.id}`}
+                    className="inline-flex w-fit items-center rounded bg-accent px-3 py-1.5 text-caption font-medium text-accent-on transition hover:bg-accent/90 motion-safe:hover:-translate-y-0.5 hover:shadow-md hover:shadow-accent/20"
+                  >
+                    Inquire →
+                  </Link>
+                ) : (
+                  <p className="text-caption text-tertiary">
+                    Listing is {l.status.toLowerCase()} — not available for new inquiries.
+                  </p>
+                )}
               </li>
             );
           })}

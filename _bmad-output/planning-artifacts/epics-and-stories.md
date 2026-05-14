@@ -514,6 +514,7 @@ Critical path: E-01 → E-02 → E-03 → E-04 → E-05 → E-07 → E-09. Other
 - **Effort:** S
 - **Depends on:** S-05.6, S-05.1
 - **Phase:** 3
+- **Status:** Listings half shipped — every ACTIVE wishlist row renders an "Inquire →" CTA linking to `/inquiries/new?listingId=...`. Listings that have since paused/closed show a tertiary message instead of the button. Publishers half waits on S-05.6b (saved publishers, which itself waits on publisher detail page).
 
 ---
 
