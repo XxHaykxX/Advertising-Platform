@@ -101,6 +101,8 @@ model User {
   passwordResetTokens PasswordResetToken[]
   inquiriesAdvertiser Inquiry[]            @relation("advertiserInquiries")
   inquiriesAssigned   Inquiry[]            @relation("assignedInquiries")
+  internalNotes       InternalNote[]       @relation("internalNoteAuthor")
+  wishlistItems       WishlistItem[]
 
   @@index([email])
   @@index([role])
@@ -224,6 +226,7 @@ model Listing {
   viewCount            Int            @default(0)
   inquiryCount         Int            @default(0)
   inquiries            Inquiry[]
+  wishlistItems        WishlistItem[]
   createdAt            DateTime       @default(now())
   updatedAt            DateTime       @updatedAt
 
@@ -254,6 +257,7 @@ model Inquiry {
   budgetRangeHigh     Int?
   notes               String?             @db.Text
   auditEntries        InquiryAuditEntry[]
+  internalNotes       InternalNote[]
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt
   closedAt            DateTime?
@@ -276,6 +280,29 @@ model InquiryAuditEntry {
   createdAt   DateTime       @default(now())
 
   @@index([inquiryId, createdAt])
+}
+
+model InternalNote {
+  id            String   @id @default(cuid())
+  inquiryId     String
+  inquiry       Inquiry  @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+  authorAdminId String
+  author        User     @relation("internalNoteAuthor", fields: [authorAdminId], references: [id], onDelete: Restrict)
+  body          String   @db.Text
+  createdAt     DateTime @default(now())
+
+  @@index([inquiryId, createdAt])
+}
+
+model WishlistItem {
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listingId String
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@id([userId, listingId])
+  @@index([userId, createdAt])
 }
 
 model VerificationRequest {

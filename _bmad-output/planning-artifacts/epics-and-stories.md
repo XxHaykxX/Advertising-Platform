@@ -797,6 +797,7 @@ Critical path: E-01 → E-02 → E-03 → E-04 → E-05 → E-07 → E-09. Other
 - **Effort:** M
 - **Depends on:** S-09.5, S-06.4
 - **Phase:** 3
+- **Status:** Notes shipped — schema (`InternalNote`), addInternalNote server action, NoteComposer on the detail page, interleaved into the activity timeline (lime-tinted card to differentiate from audit events). **@-mention autocomplete + ADMIN_MENTION notifications are deferred** — they ride S-06.4 (admin in-app notifications), which isn't built yet. Until then, raw `@name` text in a note is just text.
 
 ### S-09.9 — Log a voice call
 
