@@ -92,6 +92,10 @@ export async function changeInquiryStatus(formData: FormData): Promise<void> {
   const next = String(formData.get('status') ?? '').trim() as InquiryStatusInput;
   if (!inquiryId || !STATUS_VALUES.has(next)) return;
 
+  // Terminal transitions belong to the /close subroute (S-09.7) — they need
+  // a reason. Refuse to fast-path through this inline action.
+  if (CLOSED_STATES.includes(next)) return;
+
   const inquiry = await prisma.inquiry.findUnique({
     where: { id: inquiryId },
     select: { id: true, status: true, closedAt: true },
@@ -104,7 +108,7 @@ export async function changeInquiryStatus(formData: FormData): Promise<void> {
   const allowed = allowedInquiryTransitions[inquiry.status];
   if (!allowed.includes(next)) return;
 
-  const becomesClosed = CLOSED_STATES.includes(next);
+  const becomesClosed = false; // guard above already excluded terminal states
   const wasClosed = inquiry.closedAt !== null;
 
   await prisma.$transaction([

@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useRouter } from 'next/navigation';
 
 import {
   allowedInquiryTransitions,
@@ -9,6 +10,15 @@ import {
 } from '@/lib/validation/inquiry';
 
 import { changeInquiryStatus, reassignInquiry } from './_actions';
+
+// Terminal transitions need a reason capture per S-09.7. Instead of a JS
+// modal we route to /admin/inquiries/[id]/close?as=... and let that page own
+// the form. Same dropdown, different escape hatch.
+const TERMINAL: ReadonlySet<InquiryStatusInput> = new Set([
+  'CONFIRMED',
+  'LOST',
+  'CANCELLED',
+]);
 
 interface ReassignProps {
   inquiryId: string;
@@ -45,6 +55,7 @@ interface StatusProps {
 }
 
 export function StatusControl({ inquiryId, currentStatus }: StatusProps) {
+  const router = useRouter();
   const allowed = allowedInquiryTransitions[currentStatus];
 
   if (allowed.length === 0) {
@@ -58,9 +69,17 @@ export function StatusControl({ inquiryId, currentStatus }: StatusProps) {
         name="status"
         defaultValue=""
         onChange={(event) => {
-          if (event.currentTarget.value) {
-            event.currentTarget.form?.requestSubmit();
+          const value = event.currentTarget.value as InquiryStatusInput | '';
+          if (!value) return;
+          if (TERMINAL.has(value)) {
+            // Reset the select so a re-click on the same option still fires.
+            event.currentTarget.value = '';
+            router.push(
+              `/admin/inquiries/${inquiryId}/close?as=${value.toLowerCase()}`
+            );
+            return;
           }
+          event.currentTarget.form?.requestSubmit();
         }}
         className="rounded border border-border-subtle bg-background px-2 py-1 text-caption text-primary focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/40"
       >
@@ -70,6 +89,7 @@ export function StatusControl({ inquiryId, currentStatus }: StatusProps) {
         {allowed.map((s) => (
           <option key={s} value={s}>
             {inquiryStatusLabels[s]}
+            {TERMINAL.has(s) ? ' (with reason)' : ''}
           </option>
         ))}
       </select>

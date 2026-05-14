@@ -780,6 +780,10 @@ Critical path: E-01 → E-02 → E-03 → E-04 → E-05 → E-07 → E-09. Other
 - **Effort:** M
 - **Depends on:** S-09.5, S-05.5
 - **Phase:** 3
+- **Decisions:**
+  - Implemented as a dedicated `/admin/inquiries/[id]/close?as=lost|cancelled|confirmed` subroute rather than an in-page modal — no client modal library, deep-linkable, plays nicely with the existing useFormState pattern.
+  - Queue's StatusControl intercepts terminal options and `router.push`-es to the close route instead of submitting; the inline `changeInquiryStatus` action also refuses terminal transitions outright (defense in depth — a forged request can't skip reason capture).
+  - Reason written to both `Inquiry.closeReason` and `InquiryAuditEntry.note` so the future timeline (S-09.10) can quote it verbatim. Lost / Cancelled require ≥5 chars; Confirmed is optional per AC.
 
 ### S-09.8 — Internal notes with @-mentions
 
