@@ -828,6 +828,11 @@ Critical path: E-01 → E-02 → E-03 → E-04 → E-05 → E-07 → E-09. Other
 - **Effort:** S
 - **Depends on:** S-09.5
 - **Phase:** 3
+- **Status:** Shipped. New `Call` model (`inquiryId` + `loggedByAdminId` + `occurredAt` + `durationMinutes` + `side` string + optional `notes`). `_call-composer.tsx` toggles open/closed on the inquiry detail page next to the internal-note composer; submit posts a Call row and revalidates. Calls appear in the activity timeline with an info-tinted card, keyed by `occurredAt` so back-dated logs land at the right chronological spot.
+- **Decisions:**
+  - Single composer on the (single-column) inquiry detail page instead of "one per chat column" — the chat columns aren't built (E-07 blocked). The `side` field is a dropdown (Advertiser / Publisher / Other) so admins still record who they spoke to.
+  - `Call.side` is a `String`, not a Prisma enum — keeps the model schema-light when future buckets get added (e.g. "Partner", "Internal call").
+  - `Call.loggedByAdminId` follows the InquiryAuditEntry pattern (no relation declared); the timeline does a single user.findMany covering audit actors, note authors, and call loggers.
 
 ### S-09.10 — Activity timeline & inquiry history
 

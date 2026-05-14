@@ -258,6 +258,7 @@ model Inquiry {
   notes               String?             @db.Text
   auditEntries        InquiryAuditEntry[]
   internalNotes       InternalNote[]
+  calls               Call[]
   createdAt           DateTime            @default(now())
   updatedAt           DateTime            @updatedAt
   closedAt            DateTime?
@@ -292,6 +293,25 @@ model InternalNote {
   createdAt     DateTime @default(now())
 
   @@index([inquiryId, createdAt])
+}
+
+model Call {
+  id              String   @id @default(cuid())
+  inquiryId       String
+  inquiry         Inquiry  @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+  // Admin who logged the call. Not a Prisma relation on purpose — same
+  // append-only pattern as InquiryAuditEntry.actorUserId. Manual lookup
+  // in the timeline keeps the audit feed schema-light.
+  loggedByAdminId String?
+  occurredAt      DateTime
+  durationMinutes Int
+  // 'ADVERTISER' | 'PUBLISHER' | 'OTHER' — string instead of enum so this
+  // table doesn't force a schema migration when we add a new bucket.
+  side            String
+  notes           String?  @db.Text
+  createdAt       DateTime @default(now())
+
+  @@index([inquiryId, occurredAt])
 }
 
 model WishlistItem {

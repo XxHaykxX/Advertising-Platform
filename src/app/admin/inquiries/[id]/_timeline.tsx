@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { inquiryStatusLabels, type InquiryStatusInput } from '@/lib/validation/inquiry';
 
 import { NoteComposer } from './_note-composer';
+import { CallComposer } from './_call-composer';
 
 // Human-readable verb per action. Anything not listed falls back to the raw
 // action string so we never silently drop events.
@@ -35,7 +36,7 @@ interface Props {
 
 interface TimelineEvent {
   id: string;
-  kind: 'audit' | 'note';
+  kind: 'audit' | 'note' | 'call';
   createdAt: Date;
   // audit fields
   action?: string;
@@ -46,10 +47,16 @@ interface TimelineEvent {
   // note fields
   noteBody?: string;
   noteAuthorId?: string;
+  // call fields
+  callSide?: string;
+  callDuration?: number;
+  callNotes?: string | null;
+  callOccurredAt?: Date;
+  callLoggerId?: string | null;
 }
 
 export async function InquiryTimeline({ inquiryId, order }: Props) {
-  const [audits, notes] = await Promise.all([
+  const [audits, notes, calls] = await Promise.all([
     prisma.inquiryAuditEntry.findMany({
       where: { inquiryId },
       orderBy: { createdAt: order },
@@ -70,6 +77,19 @@ export async function InquiryTimeline({ inquiryId, order }: Props) {
         id: true,
         body: true,
         authorAdminId: true,
+        createdAt: true,
+      },
+    }),
+    prisma.call.findMany({
+      where: { inquiryId },
+      orderBy: { occurredAt: order },
+      select: {
+        id: true,
+        side: true,
+        durationMinutes: true,
+        notes: true,
+        loggedByAdminId: true,
+        occurredAt: true,
         createdAt: true,
       },
     }),
@@ -97,6 +117,20 @@ export async function InquiryTimeline({ inquiryId, order }: Props) {
         noteAuthorId: n.authorAdminId,
       })
     ),
+    ...calls.map(
+      (c): TimelineEvent => ({
+        id: `c:${c.id}`,
+        kind: 'call',
+        // Use occurredAt for chronology so a back-dated call lands at the
+        // right spot, not where the row was created.
+        createdAt: c.occurredAt,
+        callSide: c.side,
+        callDuration: c.durationMinutes,
+        callNotes: c.notes,
+        callOccurredAt: c.occurredAt,
+        callLoggerId: c.loggedByAdminId,
+      })
+    ),
   ];
 
   events.sort((a, b) => {
@@ -108,7 +142,7 @@ export async function InquiryTimeline({ inquiryId, order }: Props) {
   const userIds = Array.from(
     new Set(
       events
-        .map((e) => e.actorUserId ?? e.noteAuthorId ?? null)
+        .map((e) => e.actorUserId ?? e.noteAuthorId ?? e.callLoggerId ?? null)
         .filter((id): id is string => Boolean(id))
     )
   );
@@ -136,7 +170,10 @@ export async function InquiryTimeline({ inquiryId, order }: Props) {
         </Link>
       </header>
 
-      <NoteComposer inquiryId={inquiryId} />
+      <div className="flex flex-col gap-3">
+        <NoteComposer inquiryId={inquiryId} />
+        <CallComposer inquiryId={inquiryId} />
+      </div>
 
       {events.length === 0 ? (
         <p className="text-body text-secondary">No activity recorded yet.</p>
@@ -164,6 +201,40 @@ export async function InquiryTimeline({ inquiryId, order }: Props) {
                   <p className="whitespace-pre-line text-body text-primary">
                     {event.noteBody}
                   </p>
+                </li>
+              );
+            }
+
+            if (event.kind === 'call') {
+              const logger = event.callLoggerId ? userById.get(event.callLoggerId) : null;
+              const sideLabel =
+                event.callSide === 'ADVERTISER'
+                  ? 'Call with advertiser'
+                  : event.callSide === 'PUBLISHER'
+                    ? 'Call with publisher'
+                    : 'Call (internal/other)';
+              return (
+                <li
+                  key={event.id}
+                  className="flex flex-col gap-1 rounded border border-info/30 bg-info/5 px-4 py-3"
+                >
+                  <div className="flex flex-wrap items-baseline justify-between gap-2">
+                    <p className="text-body text-primary">
+                      📞 {sideLabel}
+                      <span className="ml-2 text-caption text-tertiary">
+                        · {event.callDuration} min
+                        {logger ? ` · ${logger.name}` : ''}
+                      </span>
+                    </p>
+                    <p className="text-caption text-tertiary">
+                      {event.callOccurredAt ? dateFmt.format(event.callOccurredAt) : ''}
+                    </p>
+                  </div>
+                  {event.callNotes ? (
+                    <p className="whitespace-pre-line text-body text-secondary">
+                      {event.callNotes}
+                    </p>
+                  ) : null}
                 </li>
               );
             }
