@@ -38,8 +38,13 @@ function ageLabel(d: Date): string {
   return durationLabel(Date.now() - d.getTime());
 }
 
-export default async function AdminPage() {
+interface PageProps {
+  searchParams: { denied?: string };
+}
+
+export default async function AdminPage({ searchParams }: PageProps) {
   const admin = await requireAdmin();
+  const denied = searchParams.denied;
 
   const [
     pendingVerifications,
@@ -99,6 +104,17 @@ export default async function AdminPage() {
   return (
     <main className="mx-auto flex min-h-screen max-w-4xl flex-col gap-8 px-8 py-16">
       <AnnouncementBanner />
+      {denied ? (
+        <p
+          role="status"
+          className="rounded-lg border border-warning/30 bg-warning/10 px-4 py-3 text-body text-warning"
+        >
+          Access denied. That page requires {denied.replace(/,/g, ' or ')} sub-role.
+          Your current sub-role is{' '}
+          <span className="text-primary">{admin.subrole ?? 'none'}</span>. Ask an Owner
+          if you need access.
+        </p>
+      ) : null}
       <header className="flex items-start justify-between gap-4">
         <div className="flex flex-col gap-2">
           <p className="text-caption uppercase text-tertiary">Super Admin</p>
@@ -235,14 +251,17 @@ export default async function AdminPage() {
               Taxonomy · Industries →
             </Link>
           </li>
-          <li>
-            <Link
-              href="/admin/team"
-              className="text-secondary underline-offset-4 hover:text-primary hover:underline"
-            >
-              Admin team →
-            </Link>
-          </li>
+          {admin.subrole === 'OWNER' ? (
+            <li>
+              <Link
+                href="/admin/team"
+                className="text-secondary underline-offset-4 hover:text-primary hover:underline"
+              >
+                Admin team →{' '}
+                <span className="text-caption text-tertiary">Owner only</span>
+              </Link>
+            </li>
+          ) : null}
           <li>
             <Link
               href="/admin/users"
@@ -275,14 +294,17 @@ export default async function AdminPage() {
               Announcements →
             </Link>
           </li>
-          <li>
-            <Link
-              href="/admin/audit"
-              className="text-secondary underline-offset-4 hover:text-primary hover:underline"
-            >
-              Audit log →
-            </Link>
-          </li>
+          {admin.subrole === 'OWNER' ? (
+            <li>
+              <Link
+                href="/admin/audit"
+                className="text-secondary underline-offset-4 hover:text-primary hover:underline"
+              >
+                Audit log →{' '}
+                <span className="text-caption text-tertiary">Owner only</span>
+              </Link>
+            </li>
+          ) : null}
           <li>
             <Link
               href="/admin/featured"

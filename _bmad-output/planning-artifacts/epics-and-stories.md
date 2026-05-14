@@ -925,6 +925,7 @@ Critical path: E-01 → E-02 → E-03 → E-04 → E-05 → E-07 → E-09. Other
 - **Self-protection:** every destructive row control is disabled when the row is the current admin (you can't lock yourself out by accident).
 - **Deferred (S-10.4b):** demoting / removing an admin — pulled out because there's no operational pressure yet, and "set role=ADVERTISER on an internal user" would create a fake account. Manual Prisma Studio path until needed.
 - **Note:** sub-roles are informational metadata today. The state-machine for "OWNER can do X, MANAGER can't" lands in S-08.3.
+- **Update (S-08.3a shipped):** OWNER-only gates now live on `/admin/team` (page + all 4 server actions) and `/admin/audit` (forensic data). New `requireAdminSubrole(allowed[])` helper redirects to `/admin?denied=<csv>` so unauthorised admins land on a familiar page with a "you need OWNER" warning. `/admin` Settings list hides those two links from non-Owners. The rest of admin tooling (verifications, inquiries, listings, taxonomy, announcements, featured, users, companies, analytics) stays open to any ADMIN role for MVP — full per-action permission matrix lands in S-08.3b.
 
 
 

@@ -6,7 +6,7 @@ import { z } from 'zod';
 import type { AdminSubrole } from '@prisma/client';
 
 import { prisma } from '@/lib/prisma';
-import { requireAdmin } from '@/lib/admin-guard';
+import { requireAdminSubrole } from '@/lib/admin-guard';
 import { recordAudit } from '@/lib/audit';
 
 const BCRYPT_ROUNDS = 12;
@@ -32,7 +32,7 @@ export async function createAdminUser(
   _prev: CreateAdminState,
   formData: FormData
 ): Promise<CreateAdminState> {
-  const me = await requireAdmin();
+  const me = await requireAdminSubrole(['OWNER']);
 
   const parsed = createSchema.safeParse({
     email: formData.get('email'),
@@ -91,7 +91,7 @@ export async function createAdminUser(
 const subroleSchema = z.enum(['OWNER', 'MANAGER', 'BROKER', 'SUPPORT']);
 
 export async function changeAdminSubrole(formData: FormData): Promise<void> {
-  const me = await requireAdmin();
+  const me = await requireAdminSubrole(['OWNER']);
 
   const userId = String(formData.get('userId') ?? '').trim();
   const next = String(formData.get('subrole') ?? '').trim();
@@ -124,7 +124,7 @@ export async function changeAdminSubrole(formData: FormData): Promise<void> {
 }
 
 export async function resetAdminMfaState(formData: FormData): Promise<void> {
-  const me = await requireAdmin();
+  const me = await requireAdminSubrole(['OWNER']);
 
   const userId = String(formData.get('userId') ?? '').trim();
   if (!userId) return;
@@ -155,7 +155,7 @@ export async function resetAdminMfaState(formData: FormData): Promise<void> {
 }
 
 export async function resetAdminPassword(formData: FormData): Promise<CreateAdminState> {
-  const me = await requireAdmin();
+  const me = await requireAdminSubrole(['OWNER']);
 
   const userId = String(formData.get('userId') ?? '').trim();
   const password = String(formData.get('password') ?? '');

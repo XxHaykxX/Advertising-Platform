@@ -1,7 +1,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 
-import { requireAdmin } from '@/lib/admin-guard';
+import { requireAdminSubrole } from '@/lib/admin-guard';
 import { prisma } from '@/lib/prisma';
 import type { Prisma } from '@prisma/client';
 
@@ -43,7 +43,7 @@ interface PageProps {
 }
 
 export default async function AdminAuditPage({ searchParams }: PageProps) {
-  await requireAdmin();
+  await requireAdminSubrole(['OWNER']);
 
   const actor = asString(searchParams.actor).trim();
   const action = asString(searchParams.action).trim();

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 
-import { requireAdmin } from '@/lib/admin-guard';
+import { requireAdminSubrole } from '@/lib/admin-guard';
 import { prisma } from '@/lib/prisma';
 
 import { CreateAdminForm } from './_create-form';
@@ -24,7 +24,7 @@ const SUBROLE_TONE: Record<string, string> = {
 };
 
 export default async function AdminTeamPage() {
-  const me = await requireAdmin();
+  const me = await requireAdminSubrole(['OWNER']);
 
   const admins = await prisma.user.findMany({
     where: { role: 'ADMIN' },

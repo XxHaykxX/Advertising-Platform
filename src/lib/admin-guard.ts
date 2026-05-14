@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
+import type { AdminSubrole } from '@prisma/client';
 
 // 1-hour sliding window for the 2FA grace per S-08.2. Each admin page hit
 // refreshes mfaVerifiedAt so an active session stays unlocked but an idle
@@ -26,6 +27,7 @@ export type AdminGuardResult = {
   userId: string;
   name: string;
   email: string;
+  subrole: AdminSubrole | null;
 };
 
 /**
@@ -49,6 +51,7 @@ export async function requireAdmin(): Promise<AdminGuardResult> {
       name: true,
       email: true,
       role: true,
+      adminSubrole: true,
       twoFactorEnabled: true,
       mfaVerifiedAt: true,
     },
@@ -72,5 +75,31 @@ export async function requireAdmin(): Promise<AdminGuardResult> {
     });
   }
 
-  return { userId: user.id, name: user.name, email: user.email };
+  return {
+    userId: user.id,
+    name: user.name,
+    email: user.email,
+    subrole: user.adminSubrole,
+  };
+}
+
+/**
+ * Stricter variant — requireAdmin + check that the admin's sub-role is in
+ * the allowed list. Redirects to /admin?denied=<reason> when access is
+ * forbidden so the admin lands on a familiar page with a flash banner.
+ *
+ * Subrole matrix (informal, encoded by callers):
+ *   OWNER    — everything
+ *   MANAGER  — most things except admin-team management + audit log
+ *   BROKER   — inquiry queue + detail only
+ *   SUPPORT  — inquiry queue + detail (read-mostly today; future read-only)
+ */
+export async function requireAdminSubrole(
+  allowed: AdminSubrole[]
+): Promise<AdminGuardResult> {
+  const admin = await requireAdmin();
+  if (!admin.subrole || !allowed.includes(admin.subrole)) {
+    redirect(`/admin?denied=${encodeURIComponent(allowed.join(','))}`);
+  }
+  return admin;
 }
