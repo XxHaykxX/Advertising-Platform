@@ -316,6 +316,8 @@ Critical path: E-01 → E-02 → E-03 → E-04 → E-05 → E-07 → E-09. Other
 - **Effort:** L
 - **Depends on:** S-03.2, S-08.1 (admin auth), S-12.x (audit log)
 - **Phase:** 2
+- **Deferred from MVP:** generic `AuditEntry` table lands in S-12.x. For now the decision audit lives on the `VerificationRequest` row itself (`decision`, `decisionReason`, `reviewedAt`, `reviewedByAdminId`) — enough for "who decided what and why" without a second table.
+- **Also adds:** private-doc serving route at `/admin/files/[...path]` (admin + 2FA-gated) — needed to preview PDFs/images stored in `storage/uploads/companies/<id>/verification/`. Not a separate story; covered here because the queue is useless without document previews.
 
 ### S-03.6 — Resubmit after rejection
 

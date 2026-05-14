@@ -37,17 +37,25 @@ export default async function AdminPage() {
       </header>
 
       <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <StatCard label="Pending verifications" value={pendingVerifications} />
-        <StatCard label="Open inquiries" value={openInquiries} />
+        <StatCard
+          label="Pending verifications"
+          value={pendingVerifications}
+          href="/admin/verifications"
+        />
+        <StatCard
+          label="Open inquiries"
+          value={openInquiries}
+          href="/admin/inquiries"
+        />
         <StatCard label="Active listings" value={listingsTotal} />
       </section>
 
       <section className="flex flex-col gap-3 rounded-lg border border-info/30 bg-info/10 p-5">
         <h2 className="text-h3 text-primary">Coming up</h2>
         <ul className="flex flex-col gap-1 text-body text-secondary">
-          <li>S-03.5 admin verification queue replaces the db:approve script.</li>
-          <li>S-09.1–10 admin inquiry workspace replaces db:inquiry.</li>
+          <li>S-09.3–10 inquiry detail, bulk actions, internal notes.</li>
           <li>S-10.2/3 user + company management.</li>
+          <li>S-12.x generic audit log (current decisions are recorded on each VerificationRequest).</li>
         </ul>
       </section>
 
@@ -71,11 +79,34 @@ export default async function AdminPage() {
   );
 }
 
-function StatCard({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="flex flex-col gap-1 rounded-lg border border-border-subtle bg-surface p-5">
+function StatCard({
+  label,
+  value,
+  href,
+}: {
+  label: string;
+  value: number;
+  href?: string;
+}) {
+  const content = (
+    <>
       <p className="text-caption uppercase text-tertiary">{label}</p>
       <p className="text-display-lg text-primary">{value}</p>
+    </>
+  );
+  if (href) {
+    return (
+      <Link
+        href={href}
+        className="flex flex-col gap-1 rounded-lg border border-border-subtle bg-surface p-5 transition hover:border-accent/40 hover:bg-surface-elevated"
+      >
+        {content}
+      </Link>
+    );
+  }
+  return (
+    <div className="flex flex-col gap-1 rounded-lg border border-border-subtle bg-surface p-5">
+      {content}
     </div>
   );
 }

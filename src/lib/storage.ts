@@ -1,5 +1,5 @@
 import { randomBytes } from 'node:crypto';
-import { mkdir, writeFile, unlink } from 'node:fs/promises';
+import { mkdir, readFile, stat, writeFile, unlink } from 'node:fs/promises';
 import path from 'node:path';
 
 // Architecture ADR-005: file storage on Hostinger filesystem. Public assets
@@ -162,4 +162,45 @@ export async function saveVerificationDocs(
   }
 
   return { ok: true, documents: saved };
+}
+
+const PRIVATE_FILE_MIME_BY_EXT: Record<string, string> = {
+  pdf: 'application/pdf',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  webp: 'image/webp',
+};
+
+export interface PrivateFile {
+  buffer: Buffer;
+  mimeType: string;
+  size: number;
+}
+
+/**
+ * Read a private upload by its relative path (e.g.
+ * "companies/<id>/verification/<random>.pdf"). Returns null when the file is
+ * missing OR when the path attempts to escape PRIVATE_ROOT. The caller MUST
+ * already have established authorisation (admin-only route).
+ */
+export async function readPrivateFile(relPath: string): Promise<PrivateFile | null> {
+  // Reject path traversal. Joining + comparing prefix beats checking
+  // substrings because Windows uses backslashes and normalize() collapses
+  // mixed separators.
+  const safeRel = relPath.replace(/^[/\\]+/, '');
+  const abs = path.normalize(path.join(PRIVATE_ROOT, safeRel));
+  const rootWithSep = PRIVATE_ROOT.endsWith(path.sep) ? PRIVATE_ROOT : PRIVATE_ROOT + path.sep;
+  if (!abs.startsWith(rootWithSep)) return null;
+
+  try {
+    const fileStat = await stat(abs);
+    if (!fileStat.isFile()) return null;
+    const buffer = await readFile(abs);
+    const ext = path.extname(abs).slice(1).toLowerCase();
+    const mimeType = PRIVATE_FILE_MIME_BY_EXT[ext] ?? 'application/octet-stream';
+    return { buffer, mimeType, size: fileStat.size };
+  } catch {
+    return null;
+  }
 }
