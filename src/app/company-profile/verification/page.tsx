@@ -73,9 +73,22 @@ export default async function CompanyVerificationPage() {
         </p>
       </header>
 
-      {latest?.decision === 'REJECTED' && latest.decisionReason ? (
-        <div className="rounded-lg border border-danger/30 bg-danger/10 p-4">
-          <p className="text-caption uppercase text-danger">Previous review</p>
+      {latest?.decisionReason &&
+      (latest.decision === 'REJECTED' || latest.decision === 'NEEDS_INFO') ? (
+        <div
+          className={`rounded-lg border p-4 ${
+            latest.decision === 'REJECTED'
+              ? 'border-danger/30 bg-danger/10'
+              : 'border-warning/30 bg-warning/10'
+          }`}
+        >
+          <p
+            className={`text-caption uppercase ${
+              latest.decision === 'REJECTED' ? 'text-danger' : 'text-warning'
+            }`}
+          >
+            {latest.decision === 'REJECTED' ? 'Previous review' : 'More info needed'}
+          </p>
           <p className="mt-1 text-body text-primary">{latest.decisionReason}</p>
         </div>
       ) : null}

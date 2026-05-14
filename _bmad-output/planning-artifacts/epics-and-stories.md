@@ -329,6 +329,8 @@ Critical path: E-01 → E-02 → E-03 → E-04 → E-05 → E-07 → E-09. Other
 - **Effort:** M
 - **Depends on:** S-03.5
 - **Phase:** 2
+- **Status:** Shipped. Dashboard banner already existed (REJECTED, NEEDS_INFO, PENDING-with-request, PENDING-no-request, APPROVED). The /company-profile/verification page now also surfaces the previous review reason for both REJECTED and NEEDS_INFO. The resubmit Server Action creates a fresh VerificationRequest row (history preserved) and flips Company.verificationStatus back to PENDING.
+- **Out of scope:** the "one resubmission cycle" hard limit — AC explicitly defers it to manual handling. Admins can refuse repeat applicants from the queue if needed.
 
 ### S-03.7 — Edit company profile after verification
 

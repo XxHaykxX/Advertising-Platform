@@ -53,8 +53,9 @@ export async function submitVerificationRequest(
     },
   });
 
-  // Ensure the company is back in PENDING if it was REJECTED/NEEDS_INFO
-  // (resubmission flow — full handling in S-03.6).
+  // Resubmission flow (S-03.6): push the company back to PENDING when the
+  // previous decision was REJECTED or NEEDS_INFO. The old VerificationRequest
+  // rows stay in place so admins can see the resubmission history.
   if (user.company.verificationStatus !== 'PENDING') {
     await prisma.company.update({
       where: { id: user.company.id },
