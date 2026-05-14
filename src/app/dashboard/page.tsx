@@ -123,7 +123,13 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         </ul>
       </section>
 
-      <div className="flex items-center gap-6 text-body text-secondary">
+      <div className="flex flex-wrap items-center gap-6 text-body text-secondary">
+        <Link
+          href="/settings/company"
+          className="underline-offset-4 hover:text-primary hover:underline"
+        >
+          Company profile
+        </Link>
         <Link
           href="/settings/security"
           className="underline-offset-4 hover:text-primary hover:underline"

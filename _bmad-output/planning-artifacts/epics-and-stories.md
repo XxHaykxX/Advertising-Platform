@@ -342,6 +342,9 @@ Critical path: E-01 → E-02 → E-03 → E-04 → E-05 → E-07 → E-09. Other
 - **Effort:** M
 - **Depends on:** S-03.1
 - **Phase:** 2
+- **Status:** Shipped. `/settings/company` prefilled with current company values (basics, industries, channels of interest for advertisers, current logo preview if any). Save replaces all fields atomically; CompanyIndustry rows are wiped and rebuilt in the same transaction. Logo upload runs *after* the transaction (filesystem isn't transactional) and the previous logo file is deleted only after the new write succeeds. Verification status is NOT touched — identity-field changes (legal name OR tax ID) instead fan a notification out to every admin via `Notification.type=VERIFICATION_RESULT` so humans can decide whether the change warrants a re-review.
+- **Decisions:**
+  - Form is a sibling of `CompanyProfileForm` (onboarding), not a refactor — the onboarding flow has different surrounding copy ("Step 3 of 3", "Submit for verification") and changing it would risk the auth flow. ~150 lines of duplication is cheaper than the refactor risk.
 
 ---
 
