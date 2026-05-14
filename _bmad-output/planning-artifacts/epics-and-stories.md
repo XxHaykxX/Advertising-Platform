@@ -902,6 +902,8 @@ Critical path: E-01 → E-02 → E-03 → E-04 → E-05 → E-07 → E-09. Other
   - Reset password for non-admins needs an email flow via Resend (`PasswordResetToken` model exists; we'd reuse it). Done as part of S-10.2b once the email-trigger fan-out is wired.
   - Impersonation is intentionally last — it's a security audit liability if shipped half-baked.
   - Per-user detail page also deferred; the table + cross-links are enough triage signal for MVP.
+- **Update (S-10.2b shipped):** `User.suspended` / `suspendedAt` / `suspendReason` columns added. `auth.ts` blocks `authorize()` for suspended users; `/login` server action mirrors the check with the actual reason in the formError (better than a generic "wrong password"). `/admin/users` row controls: Suspend (with reason input ≥5 chars, hidden until clicked), Unsuspend, Send password reset (creates a fresh `PasswordResetToken` and sends the existing `ResetPasswordEmail` template — same flow as public /forgot-password, just admin-initiated). All four actions audit-logged (`USER_SUSPENDED`, `USER_UNSUSPENDED`, `USER_PASSWORD_RESET_INITIATED`). Admin-role users are excluded from these surfaces — manage them on `/admin/team`. Self-protection prevents suspending yourself.
+- **Still deferred:** Delete (soft-delete) + Impersonation — soft-delete needs careful cascade thinking (inquiries reference user via Restrict), impersonation needs read-only session context and a clear audit trail.
 
 ### S-10.3 — Company management
 

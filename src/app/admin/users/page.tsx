@@ -5,6 +5,8 @@ import { requireAdmin } from '@/lib/admin-guard';
 import { prisma } from '@/lib/prisma';
 import type { Prisma, UserRole } from '@prisma/client';
 
+import { UserRowControls } from './_row-controls';
+
 export const metadata = {
   title: 'Users — Admin',
 };
@@ -24,7 +26,7 @@ interface PageProps {
 }
 
 export default async function AdminUsersPage({ searchParams }: PageProps) {
-  await requireAdmin();
+  const me = await requireAdmin();
 
   const role = asString(searchParams.role) as UserRole | '';
   const q = asString(searchParams.q).trim();
@@ -55,6 +57,8 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
         emailVerified: true,
         lastLoginAt: true,
         createdAt: true,
+        suspended: true,
+        suspendReason: true,
         company: {
           select: { id: true, name: true, verificationStatus: true },
         },
@@ -159,9 +163,9 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
                 <th className="px-4 py-3 font-medium">Name / email</th>
                 <th className="px-4 py-3 font-medium">Role</th>
                 <th className="px-4 py-3 font-medium">Company</th>
-                <th className="px-4 py-3 font-medium">Email verified</th>
+                <th className="px-4 py-3 font-medium">Status</th>
                 <th className="px-4 py-3 font-medium">Last login</th>
-                <th className="px-4 py-3 font-medium">Joined</th>
+                <th className="px-4 py-3 font-medium">Actions</th>
               </tr>
             </thead>
             <tbody className="text-body text-primary">
@@ -194,14 +198,30 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
                       <span className="text-caption text-tertiary">—</span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-caption text-secondary">
-                    {u.emailVerified ? dateFmt.format(u.emailVerified) : '—'}
+                  <td className="px-4 py-3 text-caption">
+                    {u.suspended ? (
+                      <div className="flex flex-col">
+                        <span className="text-danger">Suspended</span>
+                        {u.suspendReason ? (
+                          <span className="text-tertiary">{u.suspendReason}</span>
+                        ) : null}
+                      </div>
+                    ) : u.emailVerified ? (
+                      <span className="text-success">Active</span>
+                    ) : (
+                      <span className="text-warning">Email not verified</span>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-caption text-secondary">
                     {u.lastLoginAt ? dateFmt.format(u.lastLoginAt) : 'never'}
                   </td>
-                  <td className="px-4 py-3 text-caption text-secondary">
-                    {dateFmt.format(u.createdAt)}
+                  <td className="px-4 py-3">
+                    <UserRowControls
+                      userId={u.id}
+                      role={u.role}
+                      suspended={u.suspended}
+                      isSelf={u.id === me.userId}
+                    />
                   </td>
                 </tr>
               ))}

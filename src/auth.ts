@@ -59,6 +59,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         // the user). authorize() returns the user only when fully authorised.
         if (!user.emailVerified) return null;
 
+        // Admin-driven suspension (S-10.2b). The login page mirrors this
+        // check so the user gets a meaningful banner instead of a silent
+        // 401.
+        if (user.suspended) return null;
+
         await prisma.user.update({
           where: { id: user.id },
           data: { lastLoginAt: new Date() },

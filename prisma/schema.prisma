@@ -99,6 +99,12 @@ model User {
   // Per-request gate for /admin/* — set on successful TOTP verify, checked
   // against a 1-hour sliding window per S-08.2. Cleared on signOut.
   mfaVerifiedAt    DateTime?
+  // Admin-driven account suspension. Blocks login at the Credentials
+  // provider. Reason is visible only to admins (and shown to the user as a
+  // login-page banner with the reason).
+  suspended        Boolean       @default(false)
+  suspendedAt      DateTime?
+  suspendReason    String?       @db.Text
   createdAt        DateTime      @default(now())
   updatedAt        DateTime      @updatedAt
   lastLoginAt      DateTime?

@@ -65,13 +65,27 @@ export async function login(
   //    enumeration leak (email exists) in exchange for substantially better UX.
   const user = await prisma.user.findUnique({
     where: { email },
-    select: { emailVerified: true, role: true, companyId: true },
+    select: {
+      emailVerified: true,
+      role: true,
+      companyId: true,
+      suspended: true,
+      suspendReason: true,
+    },
   });
   if (user && !user.emailVerified) {
     return {
       ok: false,
       formError: 'Please verify your email before logging in.',
       unverifiedEmail: email,
+    };
+  }
+  if (user && user.suspended) {
+    return {
+      ok: false,
+      formError: user.suspendReason
+        ? `Account suspended: ${user.suspendReason}`
+        : 'Account suspended. Reach out to the platform team.',
     };
   }
 
