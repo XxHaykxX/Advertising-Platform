@@ -728,6 +728,10 @@ Critical path: E-01 → E-02 → E-03 → E-04 → E-05 → E-07 → E-09. Other
 - **Effort:** M
 - **Depends on:** S-09.1, S-05.5
 - **Phase:** 3
+- **Decisions:**
+  - Controls are native `<form action={serverAction}>` with auto-submit on `onChange` — no client-side transition tracking, no pending-state UI; revalidatePath rerenders the row. Simpler than wrapping every change in useTransition, which in React 18 doesn't await the async server action anyway.
+  - Status `<select>` only lists valid transitions per `allowedInquiryTransitions`; a terminal state (CONFIRMED/LOST/CANCELLED) renders "Terminal" instead of a dropdown.
+  - Audit-log action labels match those already emitted by the `db:inquiry` dev script (`ADMIN_ASSIGN`, `ADMIN_PROGRESS`, etc.) plus new `ADMIN_REASSIGN` / `ADMIN_UNASSIGN`.
 
 ### S-09.4 — Bulk actions
 

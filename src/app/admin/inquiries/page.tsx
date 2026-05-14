@@ -5,6 +5,8 @@ import { requireAdmin } from '@/lib/admin-guard';
 import { prisma } from '@/lib/prisma';
 import type { ChannelType, InquiryStatus, Prisma } from '@prisma/client';
 
+import { ReassignControl, StatusControl } from './_row-actions';
+
 export const metadata = {
   title: 'Inquiries — Admin',
 };
@@ -168,6 +170,7 @@ export default async function AdminInquiriesPage({ searchParams }: PageProps) {
         status: true,
         createdAt: true,
         slaDeadline: true,
+        assignedAdminId: true,
         advertiserCompany: { select: { name: true } },
         publisherCompany: { select: { name: true } },
         listing: { select: { title: true, channelType: true } },
@@ -394,6 +397,7 @@ export default async function AdminInquiriesPage({ searchParams }: PageProps) {
                 <th className="px-4 py-3 font-medium">SLA</th>
                 <th className="px-4 py-3 font-medium">Assigned</th>
                 <th className="px-4 py-3 font-medium">Age</th>
+                <th className="px-4 py-3 font-medium">Actions</th>
               </tr>
             </thead>
             <tbody className="text-body text-primary">
@@ -456,12 +460,20 @@ export default async function AdminInquiriesPage({ searchParams }: PageProps) {
                         <span className="text-tertiary">—</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-secondary">
-                      {inq.assignedAdmin?.name ?? (
-                        <span className="text-tertiary">Unassigned</span>
-                      )}
+                    <td className="px-4 py-3">
+                      <ReassignControl
+                        inquiryId={inq.id}
+                        currentAdminId={inq.assignedAdminId}
+                        admins={admins}
+                      />
                     </td>
                     <td className="px-4 py-3 text-secondary">{ageLabel(inq.createdAt)}</td>
+                    <td className="px-4 py-3">
+                      <StatusControl
+                        inquiryId={inq.id}
+                        currentStatus={inq.status}
+                      />
+                    </td>
                   </tr>
                 );
               })}
