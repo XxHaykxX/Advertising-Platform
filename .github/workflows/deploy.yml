@@ -1,0 +1,80 @@
+name: Deploy to Hostinger
+
+# Auto-deploy on push to main. Builds the Next.js standalone bundle on the
+# runner (fast), ships it to Hostinger over SSH, runs Prisma migrations, and
+# restarts the Passenger Node app.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Build (standalone)
+        env:
+          # Build-time only; real values live in the server .env at runtime.
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: npm run build
+
+      - name: Assemble deploy bundle
+        run: |
+          set -e
+          rm -rf deploy
+          mkdir -p deploy
+          # standalone server + traced node_modules
+          cp -r .next/standalone/. deploy/
+          # static assets Next does NOT bundle into standalone
+          mkdir -p deploy/.next
+          cp -r .next/static deploy/.next/static
+          # public assets (images, fonts, uploads folder)
+          cp -r public deploy/public
+          # prisma schema + migrations for `migrate deploy` on the server
+          cp -r prisma deploy/prisma
+          # Passenger restart trigger dir
+          mkdir -p deploy/tmp
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -p "${{ secrets.SSH_PORT }}" -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Rsync to server
+        run: |
+          rsync -az --delete \
+            --exclude '.env' \
+            --exclude 'public/uploads' \
+            -e "ssh -p ${{ secrets.SSH_PORT }} -i ~/.ssh/id_ed25519" \
+            deploy/ \
+            "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.DEPLOY_PATH }}/"
+
+      - name: Migrate DB + restart app
+        run: |
+          ssh -p "${{ secrets.SSH_PORT }}" -i ~/.ssh/id_ed25519 \
+            "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
+            "cd '${{ secrets.DEPLOY_PATH }}' && \
+             npx --yes prisma migrate deploy && \
+             mkdir -p tmp && touch tmp/restart.txt"
