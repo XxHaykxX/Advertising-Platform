@@ -1,8 +1,9 @@
 name: Deploy to Hostinger
 
 # Auto-deploy on push to main. Builds the Next.js standalone bundle on the
-# runner (fast), ships it to Hostinger over SSH, runs Prisma migrations, and
-# restarts the Passenger Node app.
+# runner, ships .next/standalone (custom unix-socket server + traced deps +
+# public + static + prisma client) to the Hostinger Node app root over SSH,
+# runs Prisma migrations on the server, then restarts the Passenger app.
 
 on:
   push:
@@ -29,52 +30,41 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Generate Prisma client
-        run: npx prisma generate
-
-      - name: Build (standalone)
+      - name: Build (standalone + Hostinger assets)
         env:
-          # Build-time only; real values live in the server .env at runtime.
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: npm run build
 
-      - name: Assemble deploy bundle
-        run: |
-          set -e
-          rm -rf deploy
-          mkdir -p deploy
-          # standalone server + traced node_modules
-          cp -r .next/standalone/. deploy/
-          # static assets Next does NOT bundle into standalone
-          mkdir -p deploy/.next
-          cp -r .next/static deploy/.next/static
-          # public assets (images, fonts, uploads folder)
-          cp -r public deploy/public
-          # prisma schema + migrations for `migrate deploy` on the server
-          cp -r prisma deploy/prisma
-          # Passenger restart trigger dir
-          mkdir -p deploy/tmp
+      - name: Stage prisma for server-side migrate
+        run: cp -r prisma .next/standalone/prisma
 
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_ed25519
+          printf '%s\n' "${{ secrets.SSH_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -p "${{ secrets.SSH_PORT }}" -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
 
-      - name: Rsync to server
+      - name: Rsync standalone bundle to app root
         run: |
           rsync -az --delete \
             --exclude '.env' \
-            --exclude 'public/uploads' \
+            --exclude 'tmp/' \
+            --exclude 'console.log' \
+            --exclude 'stderr.log' \
+            --exclude 'public/uploads/' \
             -e "ssh -p ${{ secrets.SSH_PORT }} -i ~/.ssh/id_ed25519" \
-            deploy/ \
+            .next/standalone/ \
             "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.DEPLOY_PATH }}/"
 
       - name: Migrate DB + restart app
         run: |
           ssh -p "${{ secrets.SSH_PORT }}" -i ~/.ssh/id_ed25519 \
-            "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
-            "cd '${{ secrets.DEPLOY_PATH }}' && \
-             npx --yes prisma migrate deploy && \
-             mkdir -p tmp && touch tmp/restart.txt"
+            "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" bash -lc '"
+              set -e
+              export PATH=/opt/alt/alt-nodejs22/root/bin:$PATH
+              cd \"${{ secrets.DEPLOY_PATH }}\"
+              npx --yes prisma migrate deploy
+              mkdir -p tmp && touch tmp/restart.txt
+              echo deployed
+            "'

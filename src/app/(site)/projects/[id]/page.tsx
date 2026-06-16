@@ -5,8 +5,15 @@ import { getLocale } from "@/lib/data/locale";
 import { ProjectDetail } from "@/components/project-detail";
 
 export async function generateStaticParams() {
-  const ids = await getProjectIds();
-  return ids.map((id) => ({ id: String(id) }));
+  // DB may be unreachable at build time (it lives only on the server). Failing
+  // soft yields zero prebuilt params; pages then render on demand at request
+  // time when the DB is reachable. dynamicParams defaults to true.
+  try {
+    const ids = await getProjectIds();
+    return ids.map((id) => ({ id: String(id) }));
+  } catch {
+    return [];
+  }
 }
 
 export async function generateMetadata({

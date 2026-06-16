@@ -4,6 +4,9 @@
 
 generator client {
   provider = "prisma-client-js"
+  // native = local/CI build platform; debian targets = Hostinger runtime
+  // (glibc, openssl 1.1.x / 3.0.x). Ensures the Linux query engine ships.
+  binaryTargets = ["native", "debian-openssl-1.1.x", "debian-openssl-3.0.x"]
 }
 
 datasource db {
