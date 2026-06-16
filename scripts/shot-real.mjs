@@ -1,0 +1,10 @@
+import { chromium } from "playwright";
+const b = await chromium.launch();
+const p = await b.newPage({ viewport: { width: 1366, height: 850 } });
+await p.goto("http://localhost:3000/", { waitUntil: "networkidle" });
+await p.waitForTimeout(2500);
+await p.screenshot({ path: "scripts/real-hero.png" });
+await p.evaluate(()=>document.querySelector("#catalog")?.scrollIntoView());
+await p.waitForTimeout(2000);
+await p.locator("#catalog").screenshot({ path: "scripts/real-catalog.png" });
+await b.close(); console.log("done");
