@@ -47,7 +47,9 @@ process.chdir(__dirname);
       ) {
         val = val.slice(1, -1);
       }
-      if (process.env[m[1]] === undefined) process.env[m[1]] = val;
+      // .env on the server is our source of truth — override any stale value
+      // injected by Passenger/CloudLinux (e.g. an old DATABASE_URL).
+      process.env[m[1]] = val;
     }
   } catch (_) {
     /* no .env — rely on real environment */
