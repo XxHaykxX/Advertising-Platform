@@ -45,26 +45,28 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -p "${{ secrets.SSH_PORT }}" -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
 
-      - name: Rsync standalone bundle to app root
-        run: |
-          rsync -az --delete \
-            --exclude '.env' \
-            --exclude 'tmp/' \
-            --exclude 'console.log' \
-            --exclude 'stderr.log' \
-            --exclude 'public/uploads/' \
-            -e "ssh -p ${{ secrets.SSH_PORT }} -i ~/.ssh/id_ed25519" \
-            .next/standalone/ \
-            "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.DEPLOY_PATH }}/"
+      - name: Pack bundle
+        run: tar czf bundle.tgz -C .next/standalone .
 
-      - name: Migrate DB + restart app
+      - name: Upload bundle
         run: |
+          scp -P "${{ secrets.SSH_PORT }}" -i ~/.ssh/id_ed25519 \
+            bundle.tgz \
+            "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:~/deploy-bundle.tgz"
+
+      - name: Replace app, migrate, restart
+        run: |
+          DEST='${{ secrets.DEPLOY_PATH }}'
           ssh -p "${{ secrets.SSH_PORT }}" -i ~/.ssh/id_ed25519 \
-            "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" bash -lc '"
-              set -e
-              export PATH=/opt/alt/alt-nodejs22/root/bin:$PATH
-              cd \"${{ secrets.DEPLOY_PATH }}\"
-              npx --yes prisma migrate deploy
-              mkdir -p tmp && touch tmp/restart.txt
-              echo deployed
-            "'
+            "${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}" \
+            "set -e
+             export PATH=/opt/alt/alt-nodejs22/root/bin:\$PATH
+             mkdir -p '$DEST'
+             # wipe old app files but keep the runtime .env
+             find '$DEST' -mindepth 1 -maxdepth 1 ! -name .env -exec rm -rf {} +
+             tar xzf ~/deploy-bundle.tgz -C '$DEST'
+             rm -f ~/deploy-bundle.tgz
+             cd '$DEST'
+             npx --yes prisma migrate deploy
+             mkdir -p tmp && touch tmp/restart.txt
+             echo DEPLOYED_OK"
