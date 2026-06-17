@@ -67,6 +67,6 @@ jobs:
              tar xzf ~/deploy-bundle.tgz -C '$DEST'
              rm -f ~/deploy-bundle.tgz
              cd '$DEST'
-             npx --yes prisma migrate deploy
+             npx --yes prisma@6.19.3 migrate deploy
              mkdir -p tmp && touch tmp/restart.txt
              echo DEPLOYED_OK"
