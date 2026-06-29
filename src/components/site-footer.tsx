@@ -45,10 +45,12 @@ type Contacts = {
 export function SiteFooter({
   contacts,
   tagline,
+  disclaimer,
   locale,
 }: {
   contacts: Contacts;
   tagline?: string;
+  disclaimer?: string;
   locale: Locale;
 }) {
   const phoneDisplay = contacts.phone || PHONE_DISPLAY;
@@ -168,7 +170,7 @@ export function SiteFooter({
 
         <div className="mt-12 flex flex-col items-center justify-between gap-3 border-t border-white/10 pt-6 text-xs text-white/40 sm:flex-row">
           <p>© 2026 AD PLACEMENT. {ui("footer.rights")}</p>
-          <p>Рабочее название · финальный бренд и домен уточняются.</p>
+          {disclaimer && <p>{disclaimer}</p>}
         </div>
       </div>
     </footer>

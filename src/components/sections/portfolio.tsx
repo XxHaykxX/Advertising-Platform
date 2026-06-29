@@ -229,7 +229,7 @@ function Lightbox({ data: c, onClose, ui }: { data: Case | null; onClose: () => 
                   transition={{ duration: 0.2 }}
                   className="absolute inset-0"
                 >
-                  <MediaView media={c.media[idx]} />
+                  <MediaView media={c.media[idx]} ui={ui} />
                 </motion.div>
               </AnimatePresence>
 
@@ -294,7 +294,7 @@ function Lightbox({ data: c, onClose, ui }: { data: Case | null; onClose: () => 
   );
 }
 
-function MediaView({ media }: { media: Media }) {
+function MediaView({ media, ui }: { media: Media; ui: UI }) {
   const [playing, setPlaying] = useState(false);
   useEffect(() => setPlaying(false), [media]);
 
@@ -315,7 +315,7 @@ function MediaView({ media }: { media: Media }) {
       <button
         onClick={() => setPlaying(true)}
         className="group relative h-full w-full"
-        aria-label="Смотреть видео"
+        aria-label={ui("a11y.watchVideo")}
       >
         {media.poster && (
           /* eslint-disable-next-line @next/next/no-img-element */

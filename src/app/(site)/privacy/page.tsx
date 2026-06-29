@@ -3,6 +3,7 @@ import { LegalPage } from "@/components/legal-page";
 
 export const metadata: Metadata = {
   title: "Политика конфиденциальности — AD PLACEMENT",
+  alternates: { canonical: "/privacy" },
 };
 
 export default function PrivacyPage() {

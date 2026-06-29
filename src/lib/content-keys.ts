@@ -75,6 +75,7 @@ export const CONTENT_GROUPS: ContentGroup[] = [
     group: "Футер",
     items: [
       { key: "footer.tagline", label: "Описание", ru: "Маркетплейс product placement в фильмах. Бронируйте размещение бренда в будущих проектах заранее.", en: "A marketplace for product placement in films. Book your brand placement in upcoming projects in advance.", hy: "Ֆիլմերում ապրանքի տեղադրման շուկա։ Ամրագրեք ձեր ապրանքանիշի տեղադրումը ապագա նախագծերում նախապես։", multiline: true },
+      { key: "footer.disclaimer", label: "Дисклеймер (низ)", ru: "Рабочее название · финальный бренд и домен уточняются.", en: "Working title · final brand and domain to be confirmed.", hy: "Աշխատանքային անվանում · վերջնական ապրանքանիշը և դոմենը ճշտվում են։" },
     ],
   },
 ];

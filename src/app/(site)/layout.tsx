@@ -16,7 +16,12 @@ export default async function SiteLayout({
     <SmoothScroll>
       <SiteHeader contacts={contacts} locale={locale} />
       {children}
-      <SiteFooter contacts={contacts} tagline={t["footer.tagline"]} locale={locale} />
+      <SiteFooter
+        contacts={contacts}
+        tagline={t["footer.tagline"]}
+        disclaimer={t["footer.disclaimer"]}
+        locale={locale}
+      />
     </SmoothScroll>
   );
 }

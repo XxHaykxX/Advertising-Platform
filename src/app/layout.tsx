@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Inter, Noto_Sans_Armenian } from "next/font/google";
 import "./globals.css";
 import { getLocale } from "@/lib/data/locale";
+import { getContacts } from "@/lib/data/settings";
+import { JsonLd } from "@/components/json-ld";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -47,12 +49,42 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const locale = await getLocale();
+  const contacts = await getContacts();
+
+  const sameAs = [
+    contacts.whatsapp,
+    contacts.telegram,
+    contacts.instagram,
+    contacts.youtube,
+  ].filter(Boolean);
+
+  const organization = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "AD PLACEMENT",
+    url: SITE_URL,
+    description:
+      "Витрина будущих фильмов и проектов для размещения рекламы. Забронируйте product placement заранее.",
+    ...(contacts.phone || contacts.email
+      ? {
+          contactPoint: {
+            "@type": "ContactPoint",
+            contactType: "sales",
+            ...(contacts.phone ? { telephone: contacts.phone } : {}),
+            ...(contacts.email ? { email: contacts.email } : {}),
+          },
+        }
+      : {}),
+    ...(sameAs.length ? { sameAs } : {}),
+  };
+
   return (
     <html
       lang={locale}
       className={`dark ${inter.variable} ${notoArmenian.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
+        <JsonLd data={organization} />
         {children}
       </body>
     </html>

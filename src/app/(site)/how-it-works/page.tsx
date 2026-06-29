@@ -6,7 +6,12 @@ import { makeUI } from "@/lib/i18n";
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
-  return { title: makeUI(locale)("nav.how") };
+  const t = await getContent(locale);
+  return {
+    title: makeUI(locale)("nav.how"),
+    description: t["how.subtitle"],
+    alternates: { canonical: "/how-it-works" },
+  };
 }
 
 export default async function HowItWorksPage() {

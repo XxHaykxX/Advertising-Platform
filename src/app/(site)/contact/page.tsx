@@ -8,7 +8,12 @@ import { makeUI } from "@/lib/i18n";
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getLocale();
-  return { title: makeUI(locale)("nav.contact") };
+  const t = await getContent(locale);
+  return {
+    title: makeUI(locale)("nav.contact"),
+    description: t["contact.subtitle"],
+    alternates: { canonical: "/contact" },
+  };
 }
 
 export default async function ContactPage({

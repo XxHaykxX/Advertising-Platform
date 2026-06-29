@@ -100,6 +100,12 @@ export const UI: Record<string, Dict> = {
   "a11y.prev": { ru: "Назад", en: "Previous", hy: "Նախորդ" },
   "a11y.next": { ru: "Вперёд", en: "Next", hy: "Հաջորդ" },
   "a11y.scrollDown": { ru: "Прокрутить вниз", en: "Scroll down", hy: "Ոլորել ներքև" },
+  "a11y.home": { ru: "На главную", en: "Home", hy: "Գլխավոր" },
+  "a11y.call": { ru: "Позвонить", en: "Call", hy: "Զանգահարել" },
+  "a11y.openMenu": { ru: "Открыть меню", en: "Open menu", hy: "Բացել մենյուն" },
+  "a11y.menu": { ru: "Меню", en: "Menu", hy: "Մենյու" },
+  "a11y.closeMenu": { ru: "Закрыть меню", en: "Close menu", hy: "Փակել մենյուն" },
+  "a11y.watchVideo": { ru: "Смотреть видео", en: "Watch video", hy: "Դիտել տեսանյութը" },
 };
 
 /** Build a UI translator bound to a locale. */

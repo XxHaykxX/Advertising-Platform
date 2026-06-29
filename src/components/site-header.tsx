@@ -40,9 +40,9 @@ function TelegramIcon({ className }: { className?: string }) {
   );
 }
 
-function Wordmark() {
+function Wordmark({ ariaLabel }: { ariaLabel: string }) {
   return (
-    <Link href="/" className="flex items-center gap-2.5" aria-label="На главную">
+    <Link href="/" className="flex items-center gap-2.5" aria-label={ariaLabel}>
       <span className="grid h-9 w-9 place-items-center rounded-md bg-primary text-primary-foreground shadow-[0_4px_16px_-4px_rgba(229,9,20,0.8)]">
         <Clapperboard className="h-5 w-5" />
       </span>
@@ -104,7 +104,7 @@ export function SiteHeader({
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between gap-4 lg:h-20">
-          <Wordmark />
+          <Wordmark ariaLabel={ui("a11y.home")} />
 
           {/* Desktop nav */}
           <nav className="hidden items-center gap-5 xl:flex">
@@ -135,7 +135,7 @@ export function SiteHeader({
             <div className="flex items-center gap-2">
               <motion.a
                 href={phoneHref}
-                aria-label="Позвонить"
+                aria-label={ui("a11y.call")}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
                 className="grid h-9 w-9 place-items-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
@@ -196,7 +196,7 @@ export function SiteHeader({
               <Button
                 variant="ghost"
                 size="icon"
-                aria-label="Открыть меню"
+                aria-label={ui("a11y.openMenu")}
                 className="text-foreground hover:bg-white/10 xl:hidden"
               >
                 <Menu className="h-6 w-6" />
@@ -206,13 +206,13 @@ export function SiteHeader({
               side="right"
               className="w-full border-l border-white/10 bg-[#0b0b0b]/98 p-0 backdrop-blur-xl sm:max-w-sm [&>button:last-child]:hidden"
             >
-              <SheetTitle className="sr-only">Меню</SheetTitle>
+              <SheetTitle className="sr-only">{ui("a11y.menu")}</SheetTitle>
               <div className="flex h-full flex-col">
                 <div className="flex items-center justify-between border-b border-white/10 p-5">
-                  <Wordmark />
+                  <Wordmark ariaLabel={ui("a11y.home")} />
                   <button
                     onClick={() => setMenuOpen(false)}
-                    aria-label="Закрыть меню"
+                    aria-label={ui("a11y.closeMenu")}
                     className="grid h-10 w-10 place-items-center rounded-md border border-white/15 bg-white/5 text-foreground"
                   >
                     <X className="h-5 w-5" />
@@ -242,7 +242,7 @@ export function SiteHeader({
                   <div className="mt-6 flex items-center gap-4 border-t border-white/10 pt-6">
                     <a
                       href={phoneHref}
-                      aria-label="Позвонить"
+                      aria-label={ui("a11y.call")}
                       className="grid h-12 w-12 place-items-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
                     >
                       <Phone className="h-5 w-5" />

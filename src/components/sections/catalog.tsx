@@ -12,7 +12,6 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { SectionBackdrop } from "@/components/sections/section-backdrop";
-import { GENRES } from "@/lib/constants";
 import { makeUI, type Locale } from "@/lib/i18n";
 import type { ProjectDTO } from "@/lib/types";
 
@@ -36,17 +35,25 @@ export function Catalog({
 }) {
   const ui = makeUI(locale);
   const [query, setQuery] = useState("");
-  const [genre, setGenre] = useState<string>("Все жанры");
+  // "" = all genres (locale-neutral sentinel). Options are derived from the
+  // localized genres present in the loaded projects, so filtering works in any
+  // locale (the old hardcoded Russian "Все жанры" never matched en/hy genres).
+  const [genre, setGenre] = useState("");
   const [genreOpen, setGenreOpen] = useState(false);
   const [deadline, setDeadline] = useState("all");
   const router = useRouter();
+
+  const genres = useMemo(
+    () => Array.from(new Set(projects.map((p) => p.genre).filter(Boolean))).sort(),
+    [projects],
+  );
 
   const filtered = useMemo(() => {
     const now = new Date();
     return projects.filter((p) => {
       if (query && !p.title.toLowerCase().includes(query.toLowerCase()))
         return false;
-      if (genre !== "Все жанры" && p.genre !== genre) return false;
+      if (genre && p.genre !== genre) return false;
       if (deadline !== "all") {
         const months = Number(deadline);
         const limit = new Date(now);
@@ -123,7 +130,7 @@ export function Catalog({
               onClick={() => setGenreOpen((v) => !v)}
               className="flex w-full items-center justify-between gap-3 rounded-lg border border-white/10 bg-black/40 px-4 py-2.5 text-sm text-foreground transition-colors hover:border-white/30 lg:w-48"
             >
-              {genre === "Все жанры" ? ui("catalog.allGenres") : genre}
+              {genre === "" ? ui("catalog.allGenres") : genre}
               <ChevronDown
                 className={`h-4 w-4 text-white/50 transition-transform ${genreOpen ? "rotate-180" : ""}`}
               />
@@ -137,8 +144,8 @@ export function Catalog({
                   transition={{ duration: 0.15 }}
                   className="absolute z-30 mt-1 w-full overflow-hidden rounded-lg border border-white/10 bg-[#141414] p-1 shadow-xl"
                 >
-                  {["Все жанры", ...GENRES].map((g) => (
-                    <li key={g}>
+                  {["", ...genres].map((g) => (
+                    <li key={g || "all"}>
                       <button
                         onClick={() => {
                           setGenre(g);
@@ -146,7 +153,7 @@ export function Catalog({
                         }}
                         className={`w-full rounded px-3 py-2 text-left text-sm transition-colors hover:bg-white/10 ${g === genre ? "text-primary" : "text-white/80"}`}
                       >
-                        {g === "Все жанры" ? ui("catalog.allGenres") : g}
+                        {g === "" ? ui("catalog.allGenres") : g}
                       </button>
                     </li>
                   ))}
