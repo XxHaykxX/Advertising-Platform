@@ -99,7 +99,7 @@ export function HowItWorks({
             />
           </div>
 
-          <div className="space-y-28 lg:space-y-48">
+          <div className="space-y-16 lg:space-y-24">
             {localizedSteps.map((step, index) => (
               <StepItem
                 key={step.id}
@@ -159,7 +159,7 @@ function NodeCircle({
 
 const StepItem: React.FC<StepItemProps> = ({ step, index, isLeft, stepLabel }) => {
   const ref = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref, { once: true, margin: "-100px" });
+  const isInView = useInView(ref, { once: true, margin: "-40px" });
   const Icon = step.icon;
 
   return (
