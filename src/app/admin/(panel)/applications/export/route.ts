@@ -11,17 +11,17 @@ function cell(v: unknown): string {
 
 const HEADERS = [
   "ID",
-  "Дата",
-  "Имя",
-  "Телефон",
+  "Date",
+  "Name",
+  "Phone",
   "Email",
-  "Компания",
-  "Проект",
-  "Бюджет",
-  "Статус",
-  "Сообщение",
-  "Заметка",
-  "Согласие",
+  "Company",
+  "Project",
+  "Budget",
+  "Status",
+  "Message",
+  "Note",
+  "Consent",
 ];
 
 export async function GET() {
@@ -44,7 +44,7 @@ export async function GET() {
         STATUS_LABEL[a.status as AppStatus] ?? a.status,
         a.message,
         a.note,
-        a.consent ? "да" : "нет",
+        a.consent ? "yes" : "no",
       ]
         .map(cell)
         .join(";"),

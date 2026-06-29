@@ -33,16 +33,16 @@ export function PartnerForm({
     <form action={formAction} className="max-w-xl space-y-6">
       <section className="space-y-4 rounded-2xl border border-white/10 bg-white/[0.03] p-6">
         <label className="block">
-          <span className={labelCls}>Название *</span>
+          <span className={labelCls}>Name *</span>
           <input name="name" defaultValue={data.name} className={inputCls} />
         </label>
-        <ImageUpload name="logo" type="partners" defaultValue={data.logo} label="Логотип (опц.)" />
+        <ImageUpload name="logo" type="partners" defaultValue={data.logo} label="Logo (opt.)" />
         <label className="block">
-          <span className={labelCls}>Ссылка на сайт</span>
+          <span className={labelCls}>Website URL</span>
           <input name="url" defaultValue={data.url} placeholder="https://..." className={inputCls} />
         </label>
         <label className="block max-w-[200px]">
-          <span className={labelCls}>Порядок сортировки</span>
+          <span className={labelCls}>Sort order</span>
           <input name="sortOrder" type="number" defaultValue={data.sortOrder} className={inputCls} />
         </label>
       </section>
@@ -56,7 +56,7 @@ export function PartnerForm({
           {pending && <Loader2 className="h-4 w-4 animate-spin" />}
           {submitLabel}
         </button>
-        <Link href="/admin/partners" className="text-sm text-white/60 hover:text-white">Отмена</Link>
+        <Link href="/admin/partners" className="text-sm text-white/60 hover:text-white">Cancel</Link>
       </div>
     </form>
   );

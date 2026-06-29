@@ -34,13 +34,13 @@ export default async function ApplicationDetail({
         className="inline-flex items-center gap-2 text-sm text-white/60 transition-colors hover:text-white"
       >
         <ArrowLeft className="h-4 w-4" />
-        К списку заявок
+        Back to applications
       </Link>
 
       <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">
-            Заявка #{app.id}
+            Application #{app.id}
           </h1>
           <p className="mt-1 text-sm text-white/55">
             {formatDateTime(app.createdAt)}
@@ -50,16 +50,16 @@ export default async function ApplicationDetail({
       </div>
 
       <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-6">
-        <Row label="Имя" value={app.name} />
-        <Row label="Телефон" value={app.phone} />
+        <Row label="Name" value={app.name} />
+        <Row label="Phone" value={app.phone} />
         <Row label="Email" value={app.email} />
-        <Row label="Компания" value={app.company} />
-        <Row label="Проект" value={app.projectTitle} />
-        <Row label="Бюджет" value={app.budget} />
-        <Row label="Согласие на ПД" value={app.consent ? "Да" : "Нет"} />
+        <Row label="Company" value={app.company} />
+        <Row label="Project" value={app.projectTitle} />
+        <Row label="Budget" value={app.budget} />
+        <Row label="PD consent" value={app.consent ? "Yes" : "No"} />
         <div className="pt-3">
           <span className="text-xs uppercase tracking-wide text-white/40">
-            Сообщение
+            Message
           </span>
           <p className="mt-2 whitespace-pre-wrap text-sm text-white/80">
             {app.message || "—"}
@@ -69,7 +69,7 @@ export default async function ApplicationDetail({
 
       <section className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-6">
         <h2 className="mb-4 text-sm font-semibold uppercase tracking-[0.15em] text-primary">
-          Заметка менеджера
+          Manager note
         </h2>
         <NoteForm id={app.id} initial={app.note ?? ""} />
       </section>

@@ -8,10 +8,10 @@ export default function NewProjectPage() {
     <div>
       <Link href="/admin/projects" className="inline-flex items-center gap-2 text-sm text-white/60 hover:text-white">
         <ArrowLeft className="h-4 w-4" />
-        К проектам
+        Back to projects
       </Link>
-      <h1 className="mb-6 mt-4 text-2xl font-bold text-foreground">Новый проект</h1>
-      <ProjectForm action={createProject} submitLabel="Создать проект" />
+      <h1 className="mb-6 mt-4 text-2xl font-bold text-foreground">New project</h1>
+      <ProjectForm action={createProject} submitLabel="Create project" />
     </div>
   );
 }

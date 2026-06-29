@@ -19,25 +19,25 @@ export default async function PortfolioAdminPage() {
     <div>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Портфолио</h1>
-          <p className="mt-1 text-sm text-white/55">{items.length} кейсов</p>
+          <h1 className="text-2xl font-bold text-foreground">Portfolio</h1>
+          <p className="mt-1 text-sm text-white/55">{items.length} cases</p>
         </div>
         <Link href="/admin/portfolio/new" className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-red-600">
           <Plus className="h-4 w-4" />
-          Новый кейс
+          New case
         </Link>
       </div>
 
       {items.length === 0 ? (
-        <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.02] py-16 text-center text-white/50">Кейсов нет.</div>
+        <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.02] py-16 text-center text-white/50">No cases.</div>
       ) : (
         <div className="mt-6 overflow-x-auto rounded-2xl border border-white/10">
           <table className="w-full min-w-[640px] text-sm">
             <thead>
               <tr className="border-b border-white/10 bg-white/[0.03] text-left text-xs uppercase tracking-wide text-white/45">
-                <th className="px-4 py-3 font-medium">Обложка</th>
-                <th className="px-4 py-3 font-medium">Название</th>
-                <th className="px-4 py-3 font-medium">Видео</th>
+                <th className="px-4 py-3 font-medium">Cover</th>
+                <th className="px-4 py-3 font-medium">Title</th>
+                <th className="px-4 py-3 font-medium">Video</th>
                 <th className="px-4 py-3 font-medium"></th>
               </tr>
             </thead>

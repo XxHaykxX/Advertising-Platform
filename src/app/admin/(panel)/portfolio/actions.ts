@@ -41,7 +41,7 @@ function buildData(fd: FormData) {
 
 export async function createPortfolio(_p: FormState, fd: FormData): Promise<FormState> {
   const data = buildData(fd);
-  if (!data.titleRu) return { error: "Название (RU) обязательно." };
+  if (!data.titleRu) return { error: "Title (RU) is required." };
   await prisma.portfolio.create({ data });
   revalidatePath("/admin/portfolio");
   revalidatePath("/");
@@ -50,7 +50,7 @@ export async function createPortfolio(_p: FormState, fd: FormData): Promise<Form
 
 export async function updatePortfolio(id: number, _p: FormState, fd: FormData): Promise<FormState> {
   const data = buildData(fd);
-  if (!data.titleRu) return { error: "Название (RU) обязательно." };
+  if (!data.titleRu) return { error: "Title (RU) is required." };
   await prisma.portfolio.update({ where: { id }, data });
   revalidatePath("/admin/portfolio");
   revalidatePath("/");

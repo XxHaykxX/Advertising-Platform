@@ -11,7 +11,7 @@ export async function saveDefaultLang(
   fd: FormData,
 ): Promise<SaveLangState> {
   const value = String(fd.get("default_lang") ?? "").trim();
-  if (!isLocale(value)) return { error: "Недопустимое значение языка." };
+  if (!isLocale(value)) return { error: "Invalid language value." };
 
   await prisma.setting.upsert({
     where: { key: "default_lang" },

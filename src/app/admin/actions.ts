@@ -46,16 +46,16 @@ export async function login(
 ): Promise<ActionState> {
   const ip = await clientIp();
   if (rateLimited(ip)) {
-    return { error: "Слишком много попыток. Попробуйте через несколько минут." };
+    return { error: "Too many attempts. Try again in a few minutes." };
   }
 
   const password = String(formData.get("password") || "");
-  if (!password) return { error: "Введите пароль." };
+  if (!password) return { error: "Please enter a password." };
 
   const ok = await verifyAdminPassword(password);
   if (!ok) {
     recordFailure(ip);
-    return { error: "Неверный пароль." };
+    return { error: "Incorrect password." };
   }
 
   attempts.delete(ip);
@@ -81,12 +81,12 @@ export async function changePassword(
   const next = String(formData.get("next") || "");
   const confirm = String(formData.get("confirm") || "");
 
-  if (!current || !next) return { error: "Заполните все поля." };
-  if (next.length < 8) return { error: "Новый пароль — минимум 8 символов." };
-  if (next !== confirm) return { error: "Пароли не совпадают." };
+  if (!current || !next) return { error: "Please fill in all fields." };
+  if (next.length < 8) return { error: "New password must be at least 8 characters." };
+  if (next !== confirm) return { error: "Passwords do not match." };
 
   const ok = await verifyAdminPassword(current);
-  if (!ok) return { error: "Текущий пароль неверный." };
+  if (!ok) return { error: "Current password is incorrect." };
 
   await setAdminPassword(next);
   return { ok: true };

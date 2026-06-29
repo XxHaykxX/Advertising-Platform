@@ -20,9 +20,9 @@ export default async function LoginPage({
             AD<span className="text-primary">PLACEMENT</span>
           </span>
         </div>
-        <h1 className="mb-1 text-xl font-bold text-foreground">Вход в админку</h1>
+        <h1 className="mb-1 text-xl font-bold text-foreground">Admin sign-in</h1>
         <p className="mb-6 text-sm text-white/55">
-          Доступ только для администратора.
+          Administrator access only.
         </p>
         <LoginForm from={safeFrom} />
       </div>

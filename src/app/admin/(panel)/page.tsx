@@ -12,16 +12,16 @@ export default async function AdminDashboard() {
   ]);
 
   const cards = [
-    { label: "Новые заявки", value: newApps, sub: `всего ${totalApps}`, icon: Inbox, href: "/admin/applications", accent: true },
-    { label: "Проекты", value: projects, sub: "в каталоге", icon: Film, href: "/admin" },
-    { label: "Портфолио", value: portfolio, sub: "кейсов", icon: ImageIcon, href: "/admin" },
-    { label: "Партнёры", value: partners, sub: "логотипов", icon: Users, href: "/admin" },
+    { label: "New applications", value: newApps, sub: `total ${totalApps}`, icon: Inbox, href: "/admin/applications", accent: true },
+    { label: "Projects", value: projects, sub: "in catalog", icon: Film, href: "/admin" },
+    { label: "Portfolio", value: portfolio, sub: "cases", icon: ImageIcon, href: "/admin" },
+    { label: "Partners", value: partners, sub: "logos", icon: Users, href: "/admin" },
   ];
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-foreground">Дашборд</h1>
-      <p className="mt-1 text-sm text-white/55">Обзор платформы.</p>
+      <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
+      <p className="mt-1 text-sm text-white/55">Platform overview.</p>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {cards.map((c) => (

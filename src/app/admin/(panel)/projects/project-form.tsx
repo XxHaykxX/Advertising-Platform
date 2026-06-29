@@ -81,16 +81,16 @@ export function ProjectForm({
 
   return (
     <form action={formAction} className="max-w-3xl space-y-8">
-      {/* ── Основное ── */}
+      {/* ── General ── */}
       <section className="space-y-4 rounded-2xl border border-white/10 bg-white/[0.03] p-6">
         <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">
-          Основное
+          General
         </h2>
-        <Field label="Название (RU) *">
+        <Field label="Title (RU) *">
           <input name="titleRu" defaultValue={data.titleRu} className={inputCls} />
         </Field>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Жанр (RU)">
+          <Field label="Genre (RU)">
             <input name="genreRu" defaultValue={data.genreRu} list="genres" className={inputCls} />
             <datalist id="genres">
               {GENRES.map((g) => (
@@ -98,16 +98,16 @@ export function ProjectForm({
               ))}
             </datalist>
           </Field>
-          <Field label="Тип размещения (RU)">
+          <Field label="Placement type (RU)">
             <input name="placementTypeRu" defaultValue={data.placementTypeRu} className={inputCls} />
           </Field>
         </div>
-        <Field label="Описание (RU)">
+        <Field label="Description (RU)">
           <textarea name="descriptionRu" defaultValue={data.descriptionRu} rows={3} className={`${inputCls} resize-none`} />
         </Field>
 
         <details className="rounded-lg border border-white/10 bg-black/20 p-4">
-          <summary className="cursor-pointer text-sm text-white/60">Переводы (EN / HY)</summary>
+          <summary className="cursor-pointer text-sm text-white/60">Translations (EN / HY)</summary>
           <div className="mt-4 space-y-3">
             {(["title", "genre", "placementType", "description"] as const).map((f) => (
               <div key={f} className="grid gap-3 sm:grid-cols-2">
@@ -119,42 +119,42 @@ export function ProjectForm({
         </details>
       </section>
 
-      {/* ── Медиа ── */}
+      {/* ── Media ── */}
       <section className="space-y-4 rounded-2xl border border-white/10 bg-white/[0.03] p-6">
-        <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">Медиа</h2>
-        <ImageUpload name="poster" type="posters" defaultValue={data.poster} label="Постер" />
-        <MultiImageUpload name="gallery" type="gallery" defaultValue={data.gallery} label="Галерея кадров" />
+        <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">Media</h2>
+        <ImageUpload name="poster" type="posters" defaultValue={data.poster} label="Poster" />
+        <MultiImageUpload name="gallery" type="gallery" defaultValue={data.gallery} label="Frame gallery" />
       </section>
 
-      {/* ── Параметры ── */}
+      {/* ── Parameters ── */}
       <section className="space-y-4 rounded-2xl border border-white/10 bg-white/[0.03] p-6">
-        <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">Параметры</h2>
+        <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">Parameters</h2>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Цена (опц.)">
-            <input name="price" defaultValue={data.price} placeholder="по запросу" className={inputCls} />
+          <Field label="Price (opt.)">
+            <input name="price" defaultValue={data.price} placeholder="on request" className={inputCls} />
           </Field>
-          <Field label="Валюта (опц.)">
+          <Field label="Currency (opt.)">
             <input name="currency" defaultValue={data.currency} placeholder="RUB" className={inputCls} />
           </Field>
-          <Field label="Слотов всего">
+          <Field label="Total slots">
             <input name="slotsTotal" type="number" min={0} defaultValue={data.slotsTotal} className={inputCls} />
           </Field>
-          <Field label="Слотов доступно">
+          <Field label="Available slots">
             <input name="slotsAvailable" type="number" min={0} defaultValue={data.slotsAvailable} className={inputCls} />
           </Field>
-          <Field label="Дата выхода">
+          <Field label="Release date">
             <input name="releaseDate" type="date" defaultValue={data.releaseDate} className={inputCls} />
           </Field>
-          <Field label="Дедлайн заявок">
+          <Field label="Application deadline">
             <input name="bookingDeadline" type="date" defaultValue={data.bookingDeadline} className={inputCls} />
           </Field>
-          <Field label="Порядок сортировки">
+          <Field label="Sort order">
             <input name="sortOrder" type="number" defaultValue={data.sortOrder} className={inputCls} />
           </Field>
         </div>
 
         <div>
-          <span className={labelCls}>Площадки</span>
+          <span className={labelCls}>Platforms</span>
           <div className="flex flex-wrap gap-3">
             {PLATFORMS.map((pl) => (
               <label key={pl} className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm text-white/80">
@@ -167,28 +167,28 @@ export function ProjectForm({
 
         <label className="inline-flex items-center gap-2 text-sm text-white/80">
           <input type="checkbox" name="isActive" defaultChecked={data.isActive} className="h-4 w-4 accent-primary" />
-          Активен (показывать на сайте)
+          Active (show on site)
         </label>
       </section>
 
-      {/* ── Актёры ── */}
+      {/* ── Cast ── */}
       <section className="space-y-4 rounded-2xl border border-white/10 bg-white/[0.03] p-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">Актёры</h2>
+          <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">Cast</h2>
           <button type="button" onClick={() => setActors((a) => [...a, { firstName: "", firstNameEn: "", firstNameHy: "", lastName: "", lastNameEn: "", lastNameHy: "", role: "", roleEn: "", roleHy: "", photo: "" }])} className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 px-3 py-1.5 text-xs text-white/80 hover:border-primary/40">
-            <Plus className="h-3.5 w-3.5" /> Добавить
+            <Plus className="h-3.5 w-3.5" /> Add
           </button>
         </div>
         <input type="hidden" name="actors" value={JSON.stringify(actors)} />
-        {actors.length === 0 && <p className="text-sm text-white/40">Актёров нет.</p>}
+        {actors.length === 0 && <p className="text-sm text-white/40">No cast.</p>}
         {actors.map((a, i) => (
           <div key={i} className="flex items-start gap-3 rounded-xl border border-white/10 bg-black/20 p-3">
             <ImagePicker value={a.photo} onChange={(p) => setActors((arr) => arr.map((x, idx) => (idx === i ? { ...x, photo: p } : x)))} type="actors" />
             <div className="flex-1 space-y-2">
               <div className="grid gap-2 sm:grid-cols-3">
-                <input value={a.firstName} onChange={(e) => setActors((arr) => arr.map((x, idx) => (idx === i ? { ...x, firstName: e.target.value } : x)))} placeholder="Имя (RU)" className={inputCls} />
-                <input value={a.lastName} onChange={(e) => setActors((arr) => arr.map((x, idx) => (idx === i ? { ...x, lastName: e.target.value } : x)))} placeholder="Фамилия (RU)" className={inputCls} />
-                <input value={a.role} onChange={(e) => setActors((arr) => arr.map((x, idx) => (idx === i ? { ...x, role: e.target.value } : x)))} placeholder="Роль (RU)" className={inputCls} />
+                <input value={a.firstName} onChange={(e) => setActors((arr) => arr.map((x, idx) => (idx === i ? { ...x, firstName: e.target.value } : x)))} placeholder="First name (RU)" className={inputCls} />
+                <input value={a.lastName} onChange={(e) => setActors((arr) => arr.map((x, idx) => (idx === i ? { ...x, lastName: e.target.value } : x)))} placeholder="Last name (RU)" className={inputCls} />
+                <input value={a.role} onChange={(e) => setActors((arr) => arr.map((x, idx) => (idx === i ? { ...x, role: e.target.value } : x)))} placeholder="Role (RU)" className={inputCls} />
               </div>
               {/* EN / HY translations for actor */}
               <details className="rounded-md border border-white/10 bg-black/20 px-3 py-2">
@@ -203,33 +203,33 @@ export function ProjectForm({
                 </div>
               </details>
             </div>
-            <button type="button" onClick={() => setActors((arr) => arr.filter((_, idx) => idx !== i))} className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-white/40 hover:bg-white/5 hover:text-primary" aria-label="Удалить">
+            <button type="button" onClick={() => setActors((arr) => arr.filter((_, idx) => idx !== i))} className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-white/40 hover:bg-white/5 hover:text-primary" aria-label="Delete">
               <Trash2 className="h-4 w-4" />
             </button>
           </div>
         ))}
       </section>
 
-      {/* ── Сцены ── */}
+      {/* ── Placement scenes ── */}
       <section className="space-y-4 rounded-2xl border border-white/10 bg-white/[0.03] p-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">Сцены для плейсмента</h2>
+          <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">Placement scenes</h2>
           <button type="button" onClick={() => setScenes((s) => [...s, { title: "", titleEn: "", titleHy: "", description: "", descriptionEn: "", descriptionHy: "", placement: "", placementEn: "", placementHy: "" }])} className="inline-flex items-center gap-1.5 rounded-lg border border-white/15 px-3 py-1.5 text-xs text-white/80 hover:border-primary/40">
-            <Plus className="h-3.5 w-3.5" /> Добавить
+            <Plus className="h-3.5 w-3.5" /> Add
           </button>
         </div>
         <input type="hidden" name="scenes" value={JSON.stringify(scenes)} />
-        {scenes.length === 0 && <p className="text-sm text-white/40">Сцен нет.</p>}
+        {scenes.length === 0 && <p className="text-sm text-white/40">No scenes.</p>}
         {scenes.map((s, i) => (
           <div key={i} className="space-y-2 rounded-xl border border-white/10 bg-black/20 p-3">
             <div className="flex items-center gap-2">
-              <input value={s.title} onChange={(e) => setScenes((arr) => arr.map((x, idx) => (idx === i ? { ...x, title: e.target.value } : x)))} placeholder="Название сцены (RU)" className={inputCls} />
-              <button type="button" onClick={() => setScenes((arr) => arr.filter((_, idx) => idx !== i))} className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-white/40 hover:bg-white/5 hover:text-primary" aria-label="Удалить">
+              <input value={s.title} onChange={(e) => setScenes((arr) => arr.map((x, idx) => (idx === i ? { ...x, title: e.target.value } : x)))} placeholder="Scene title (RU)" className={inputCls} />
+              <button type="button" onClick={() => setScenes((arr) => arr.filter((_, idx) => idx !== i))} className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-white/40 hover:bg-white/5 hover:text-primary" aria-label="Delete">
                 <Trash2 className="h-4 w-4" />
               </button>
             </div>
-            <textarea value={s.description} onChange={(e) => setScenes((arr) => arr.map((x, idx) => (idx === i ? { ...x, description: e.target.value } : x)))} placeholder="Описание сцены (RU)" rows={2} className={`${inputCls} resize-none`} />
-            <textarea value={s.placement} onChange={(e) => setScenes((arr) => arr.map((x, idx) => (idx === i ? { ...x, placement: e.target.value } : x)))} placeholder="Что и где можно разместить (RU)" rows={2} className={`${inputCls} resize-none`} />
+            <textarea value={s.description} onChange={(e) => setScenes((arr) => arr.map((x, idx) => (idx === i ? { ...x, description: e.target.value } : x)))} placeholder="Scene description (RU)" rows={2} className={`${inputCls} resize-none`} />
+            <textarea value={s.placement} onChange={(e) => setScenes((arr) => arr.map((x, idx) => (idx === i ? { ...x, placement: e.target.value } : x)))} placeholder="What and where to place (RU)" rows={2} className={`${inputCls} resize-none`} />
             {/* EN / HY translations for scene */}
             <details className="rounded-md border border-white/10 bg-black/20 px-3 py-2">
               <summary className="cursor-pointer text-xs text-white/50">EN / HY</summary>
@@ -264,7 +264,7 @@ export function ProjectForm({
           {submitLabel}
         </button>
         <Link href="/admin/projects" className="text-sm text-white/60 hover:text-white">
-          Отмена
+          Cancel
         </Link>
       </div>
     </form>

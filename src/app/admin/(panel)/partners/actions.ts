@@ -25,7 +25,7 @@ function buildData(fd: FormData) {
 
 export async function createPartner(_p: FormState, fd: FormData): Promise<FormState> {
   const data = buildData(fd);
-  if (!data.name) return { error: "Название обязательно." };
+  if (!data.name) return { error: "Name is required." };
   await prisma.partner.create({ data });
   revalidatePath("/admin/partners");
   revalidatePath("/");
@@ -34,7 +34,7 @@ export async function createPartner(_p: FormState, fd: FormData): Promise<FormSt
 
 export async function updatePartner(id: number, _p: FormState, fd: FormData): Promise<FormState> {
   const data = buildData(fd);
-  if (!data.name) return { error: "Название обязательно." };
+  if (!data.name) return { error: "Name is required." };
   await prisma.partner.update({ where: { id }, data });
   revalidatePath("/admin/partners");
   revalidatePath("/");

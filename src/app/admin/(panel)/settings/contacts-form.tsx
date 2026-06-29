@@ -8,12 +8,12 @@ const inputCls =
   "w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-primary/50";
 
 const FIELDS: { key: string; label: string; placeholder: string }[] = [
-  { key: "contact_phone", label: "Телефон", placeholder: "+7 999 000-00-00" },
+  { key: "contact_phone", label: "Phone", placeholder: "+7 999 000-00-00" },
   { key: "contact_email", label: "Email", placeholder: "hello@..." },
-  { key: "contact_whatsapp", label: "WhatsApp (ссылка)", placeholder: "https://wa.me/7999..." },
-  { key: "contact_telegram", label: "Telegram (ссылка)", placeholder: "https://t.me/..." },
-  { key: "social_instagram", label: "Instagram (ссылка)", placeholder: "https://instagram.com/..." },
-  { key: "social_youtube", label: "YouTube (ссылка)", placeholder: "https://youtube.com/@..." },
+  { key: "contact_whatsapp", label: "WhatsApp (URL)", placeholder: "https://wa.me/7999..." },
+  { key: "contact_telegram", label: "Telegram (URL)", placeholder: "https://t.me/..." },
+  { key: "social_instagram", label: "Instagram (URL)", placeholder: "https://instagram.com/..." },
+  { key: "social_youtube", label: "YouTube (URL)", placeholder: "https://youtube.com/@..." },
 ];
 
 export function ContactsForm({ values }: { values: Record<string, string> }) {
@@ -35,12 +35,12 @@ export function ContactsForm({ values }: { values: Record<string, string> }) {
       <div className="flex items-center gap-3">
         <button type="submit" disabled={pending} className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-red-600 disabled:opacity-70">
           {pending && <Loader2 className="h-4 w-4 animate-spin" />}
-          Сохранить контакты
+          Save contacts
         </button>
         {state.ok && (
           <span className="inline-flex items-center gap-1.5 text-sm text-emerald-400">
             <CheckCircle2 className="h-4 w-4" />
-            Сохранено
+            Saved
           </span>
         )}
       </div>

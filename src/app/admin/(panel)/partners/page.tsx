@@ -10,25 +10,25 @@ export default async function PartnersAdminPage() {
     <div>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Партнёры</h1>
-          <p className="mt-1 text-sm text-white/55">{partners.length} логотипов</p>
+          <h1 className="text-2xl font-bold text-foreground">Partners</h1>
+          <p className="mt-1 text-sm text-white/55">{partners.length} logos</p>
         </div>
         <Link href="/admin/partners/new" className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-red-600">
           <Plus className="h-4 w-4" />
-          Новый партнёр
+          New partner
         </Link>
       </div>
 
       {partners.length === 0 ? (
-        <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.02] py-16 text-center text-white/50">Партнёров нет.</div>
+        <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.02] py-16 text-center text-white/50">No partners.</div>
       ) : (
         <div className="mt-6 overflow-x-auto rounded-2xl border border-white/10">
           <table className="w-full min-w-[560px] text-sm">
             <thead>
               <tr className="border-b border-white/10 bg-white/[0.03] text-left text-xs uppercase tracking-wide text-white/45">
-                <th className="px-4 py-3 font-medium">Лого</th>
-                <th className="px-4 py-3 font-medium">Название</th>
-                <th className="px-4 py-3 font-medium">Ссылка</th>
+                <th className="px-4 py-3 font-medium">Logo</th>
+                <th className="px-4 py-3 font-medium">Title</th>
+                <th className="px-4 py-3 font-medium">URL</th>
                 <th className="px-4 py-3 font-medium"></th>
               </tr>
             </thead>

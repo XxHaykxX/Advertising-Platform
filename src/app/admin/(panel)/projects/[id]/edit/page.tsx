@@ -64,12 +64,12 @@ export default async function EditProjectPage({
     <div>
       <Link href="/admin/projects" className="inline-flex items-center gap-2 text-sm text-white/60 hover:text-white">
         <ArrowLeft className="h-4 w-4" />
-        К проектам
+        Back to projects
       </Link>
       <h1 className="mb-6 mt-4 text-2xl font-bold text-foreground">
-        Редактировать: {p.titleRu}
+        Edit: {p.titleRu}
       </h1>
-      <ProjectForm action={action} initial={initial} submitLabel="Сохранить" />
+      <ProjectForm action={action} initial={initial} submitLabel="Save" />
     </div>
   );
 }

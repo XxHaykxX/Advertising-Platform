@@ -37,10 +37,10 @@ export default async function EditPortfolioPage({
     <div>
       <Link href="/admin/portfolio" className="inline-flex items-center gap-2 text-sm text-white/60 hover:text-white">
         <ArrowLeft className="h-4 w-4" />
-        К портфолио
+        Back to portfolio
       </Link>
-      <h1 className="mb-6 mt-4 text-2xl font-bold text-foreground">Редактировать: {it.titleRu}</h1>
-      <PortfolioForm action={updatePortfolio.bind(null, it.id)} initial={initial} submitLabel="Сохранить" />
+      <h1 className="mb-6 mt-4 text-2xl font-bold text-foreground">Edit: {it.titleRu}</h1>
+      <PortfolioForm action={updatePortfolio.bind(null, it.id)} initial={initial} submitLabel="Save" />
     </div>
   );
 }

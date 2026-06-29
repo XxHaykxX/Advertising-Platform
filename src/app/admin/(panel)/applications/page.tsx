@@ -10,7 +10,7 @@ import { APP_STATUSES, STATUS_LABEL, type AppStatus } from "@/lib/constants";
 import { StatusSelect } from "./status-select";
 
 const TABS: { key: string; label: string }[] = [
-  { key: "all", label: "Все" },
+  { key: "all", label: "All" },
   ...APP_STATUSES.map((s) => ({ key: s, label: STATUS_LABEL[s] })),
 ];
 
@@ -32,9 +32,9 @@ export default async function ApplicationsPage({
     <div>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Заявки</h1>
+          <h1 className="text-2xl font-bold text-foreground">Applications</h1>
           <p className="mt-1 text-sm text-white/55">
-            Всего {counts.all ?? 0} · показано {apps.length}
+            Total {counts.all ?? 0} · showing {apps.length}
           </p>
         </div>
         <a
@@ -42,7 +42,7 @@ export default async function ApplicationsPage({
           className="inline-flex items-center gap-2 rounded-lg border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-white/80 transition-colors hover:border-white/30 hover:text-white"
         >
           <Download className="h-4 w-4" />
-          Экспорт CSV
+          Export CSV
         </a>
       </div>
 
@@ -70,18 +70,18 @@ export default async function ApplicationsPage({
       {/* table */}
       {apps.length === 0 ? (
         <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.02] py-16 text-center text-white/50">
-          Заявок нет.
+          No applications.
         </div>
       ) : (
         <div className="mt-6 overflow-x-auto rounded-2xl border border-white/10">
           <table className="w-full min-w-[760px] text-sm">
             <thead>
               <tr className="border-b border-white/10 bg-white/[0.03] text-left text-xs uppercase tracking-wide text-white/45">
-                <th className="px-4 py-3 font-medium">Дата</th>
-                <th className="px-4 py-3 font-medium">Имя</th>
-                <th className="px-4 py-3 font-medium">Телефон</th>
-                <th className="px-4 py-3 font-medium">Проект</th>
-                <th className="px-4 py-3 font-medium">Статус</th>
+                <th className="px-4 py-3 font-medium">Date</th>
+                <th className="px-4 py-3 font-medium">Name</th>
+                <th className="px-4 py-3 font-medium">Phone</th>
+                <th className="px-4 py-3 font-medium">Project</th>
+                <th className="px-4 py-3 font-medium">Status</th>
               </tr>
             </thead>
             <tbody>

@@ -6,13 +6,13 @@ import { SESSION_COOKIE, verifySessionToken } from "@/lib/auth/session";
 import { logout } from "@/app/admin/actions";
 
 const NAV = [
-  { href: "/admin", label: "Дашборд", icon: LayoutDashboard },
-  { href: "/admin/applications", label: "Заявки", icon: Inbox },
-  { href: "/admin/projects", label: "Проекты", icon: Film },
-  { href: "/admin/portfolio", label: "Портфолио", icon: ImageIcon },
-  { href: "/admin/partners", label: "Партнёры", icon: Users },
-  { href: "/admin/content", label: "Тексты", icon: Type },
-  { href: "/admin/settings", label: "Настройки", icon: Settings },
+  { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/admin/applications", label: "Applications", icon: Inbox },
+  { href: "/admin/projects", label: "Projects", icon: Film },
+  { href: "/admin/portfolio", label: "Portfolio", icon: ImageIcon },
+  { href: "/admin/partners", label: "Partners", icon: Users },
+  { href: "/admin/content", label: "Content", icon: Type },
+  { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
 export default async function PanelLayout({
@@ -31,7 +31,7 @@ export default async function PanelLayout({
           <span className="text-base font-bold tracking-tight">
             AD<span className="text-primary">PLACEMENT</span>
           </span>
-          <p className="mt-0.5 text-xs text-white/40">Админка</p>
+          <p className="mt-0.5 text-xs text-white/40">Admin</p>
         </div>
         <nav className="flex-1 space-y-1 p-3">
           {NAV.map((item) => (
@@ -51,7 +51,7 @@ export default async function PanelLayout({
             className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-white/60 transition-colors hover:bg-white/5 hover:text-foreground"
           >
             <LogOut className="h-4 w-4" />
-            Выйти
+            Sign out
           </button>
         </form>
       </aside>

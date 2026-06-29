@@ -109,7 +109,7 @@ export async function createProject(
   fd: FormData,
 ): Promise<ProjectFormState> {
   const data = buildData(fd);
-  if (!data.titleRu) return { error: "Название (RU) обязательно." };
+  if (!data.titleRu) return { error: "Title (RU) is required." };
 
   await prisma.project.create({
     data: {
@@ -129,7 +129,7 @@ export async function updateProject(
   fd: FormData,
 ): Promise<ProjectFormState> {
   const data = buildData(fd);
-  if (!data.titleRu) return { error: "Название (RU) обязательно." };
+  if (!data.titleRu) return { error: "Title (RU) is required." };
 
   await prisma.project.update({
     where: { id },

@@ -16,7 +16,7 @@ export function LoginForm({ from }: { from: string }) {
 
       <label className="block">
         <span className="mb-1.5 block text-sm font-medium text-white/80">
-          Пароль администратора
+          Admin password
         </span>
         <input
           name="password"
@@ -42,12 +42,12 @@ export function LoginForm({ from }: { from: string }) {
         {pending ? (
           <>
             <Loader2 className="h-4 w-4 animate-spin" />
-            Вход…
+            Signing in…
           </>
         ) : (
           <>
             <Lock className="h-4 w-4" />
-            Войти
+            Sign in
           </>
         )}
       </button>

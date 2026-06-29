@@ -15,9 +15,9 @@ export const APP_STATUSES = ["new", "in_progress", "closed"] as const;
 export type AppStatus = (typeof APP_STATUSES)[number];
 
 export const STATUS_LABEL: Record<AppStatus, string> = {
-  new: "Новая",
-  in_progress: "В работе",
-  closed: "Закрыта",
+  new: "New",
+  in_progress: "In progress",
+  closed: "Closed",
 };
 
 export const STATUS_STYLE: Record<AppStatus, string> = {

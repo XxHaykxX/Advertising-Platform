@@ -43,15 +43,15 @@ export function PortfolioForm({
     <form action={formAction} className="max-w-2xl space-y-6">
       <section className="space-y-4 rounded-2xl border border-white/10 bg-white/[0.03] p-6">
         <label className="block">
-          <span className={labelCls}>Название (RU) * — формат «Бренд × Фильм»</span>
-          <input name="titleRu" defaultValue={data.titleRu} placeholder="AuraDrinks × Северный ветер" className={inputCls} />
+          <span className={labelCls}>Title (RU) * — format «Brand × Film»</span>
+          <input name="titleRu" defaultValue={data.titleRu} placeholder="AuraDrinks × Northern Wind" className={inputCls} />
         </label>
         <label className="block">
-          <span className={labelCls}>Описание (RU)</span>
+          <span className={labelCls}>Description (RU)</span>
           <textarea name="descriptionRu" defaultValue={data.descriptionRu} rows={3} className={`${inputCls} resize-none`} />
         </label>
         <details className="rounded-lg border border-white/10 bg-black/20 p-4">
-          <summary className="cursor-pointer text-sm text-white/60">Переводы (EN / HY)</summary>
+          <summary className="cursor-pointer text-sm text-white/60">Translations (EN / HY)</summary>
           <div className="mt-4 space-y-3">
             <div className="grid gap-3 sm:grid-cols-2">
               <input name="titleEn" defaultValue={data.titleEn} placeholder="title EN" className={inputCls} />
@@ -66,16 +66,16 @@ export function PortfolioForm({
       </section>
 
       <section className="space-y-4 rounded-2xl border border-white/10 bg-white/[0.03] p-6">
-        <MultiImageUpload name="images" type="portfolio" defaultValue={data.images} label="Фото кейса" />
+        <MultiImageUpload name="images" type="portfolio" defaultValue={data.images} label="Case photo" />
       </section>
 
       <section className="space-y-4 rounded-2xl border border-white/10 bg-white/[0.03] p-6">
-        <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">Видео</h2>
+        <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">Video</h2>
         <label className="block">
-          <span className={labelCls}>Тип видео</span>
+          <span className={labelCls}>Video type</span>
           <select name="videoType" value={videoType} onChange={(e) => setVideoType(e.target.value)} className={`${inputCls} appearance-none`}>
-            <option value="youtube" className="bg-[#141414]">YouTube-ссылка</option>
-            <option value="file" className="bg-[#141414]">Файл (URL)</option>
+            <option value="youtube" className="bg-[#141414]">YouTube link</option>
+            <option value="file" className="bg-[#141414]">File (URL)</option>
           </select>
         </label>
         {videoType === "youtube" ? (
@@ -85,15 +85,15 @@ export function PortfolioForm({
           </label>
         ) : (
           <label className="block">
-            <span className={labelCls}>URL файла видео</span>
-            <input name="videoFile" defaultValue={data.videoFile} placeholder="/uploads/... или внешний URL" className={inputCls} />
+            <span className={labelCls}>Video file URL</span>
+            <input name="videoFile" defaultValue={data.videoFile} placeholder="/uploads/... or external URL" className={inputCls} />
           </label>
         )}
       </section>
 
       <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
         <label className="block max-w-[200px]">
-          <span className={labelCls}>Порядок сортировки</span>
+          <span className={labelCls}>Sort order</span>
           <input name="sortOrder" type="number" defaultValue={data.sortOrder} className={inputCls} />
         </label>
       </section>
@@ -107,7 +107,7 @@ export function PortfolioForm({
           {pending && <Loader2 className="h-4 w-4 animate-spin" />}
           {submitLabel}
         </button>
-        <Link href="/admin/portfolio" className="text-sm text-white/60 hover:text-white">Отмена</Link>
+        <Link href="/admin/portfolio" className="text-sm text-white/60 hover:text-white">Cancel</Link>
       </div>
     </form>
   );

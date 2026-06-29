@@ -23,7 +23,7 @@ export function NoteForm({
         name="note"
         rows={4}
         defaultValue={initial}
-        placeholder="Заметка менеджера…"
+        placeholder="Manager note…"
         className="w-full resize-none rounded-lg border border-white/10 bg-black/40 px-4 py-2.5 text-sm text-foreground placeholder:text-white/35 outline-none transition-colors focus:border-primary/50"
       />
       <div className="flex items-center gap-3">
@@ -33,12 +33,12 @@ export function NoteForm({
           className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-red-600 disabled:opacity-70"
         >
           {pending && <Loader2 className="h-4 w-4 animate-spin" />}
-          Сохранить заметку
+          Save note
         </button>
         {state.ok && (
           <span className="inline-flex items-center gap-1.5 text-sm text-emerald-400">
             <CheckCircle2 className="h-4 w-4" />
-            Сохранено
+            Saved
           </span>
         )}
       </div>

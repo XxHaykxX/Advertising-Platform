@@ -22,19 +22,19 @@ export function PasswordForm() {
     <form ref={ref} action={formAction} className="max-w-md space-y-4">
       <label className="block">
         <span className="mb-1.5 block text-sm font-medium text-white/80">
-          Текущий пароль
+          Current password
         </span>
         <input name="current" type="password" autoComplete="current-password" className={inputCls} />
       </label>
       <label className="block">
         <span className="mb-1.5 block text-sm font-medium text-white/80">
-          Новый пароль
+          New password
         </span>
-        <input name="next" type="password" autoComplete="new-password" placeholder="минимум 8 символов" className={inputCls} />
+        <input name="next" type="password" autoComplete="new-password" placeholder="at least 8 characters" className={inputCls} />
       </label>
       <label className="block">
         <span className="mb-1.5 block text-sm font-medium text-white/80">
-          Повторите новый пароль
+          Repeat new password
         </span>
         <input name="confirm" type="password" autoComplete="new-password" className={inputCls} />
       </label>
@@ -47,7 +47,7 @@ export function PasswordForm() {
       {state.ok && (
         <p className="flex items-center gap-2 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-4 py-2.5 text-sm text-emerald-400">
           <CheckCircle2 className="h-4 w-4" />
-          Пароль обновлён.
+          Password updated.
         </p>
       )}
 
@@ -57,7 +57,7 @@ export function PasswordForm() {
         className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-70"
       >
         {pending && <Loader2 className="h-4 w-4 animate-spin" />}
-        Сменить пароль
+        Change password
       </button>
     </form>
   );

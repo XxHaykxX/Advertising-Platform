@@ -25,10 +25,10 @@ export default async function EditPartnerPage({
     <div>
       <Link href="/admin/partners" className="inline-flex items-center gap-2 text-sm text-white/60 hover:text-white">
         <ArrowLeft className="h-4 w-4" />
-        К партнёрам
+        Back to partners
       </Link>
-      <h1 className="mb-6 mt-4 text-2xl font-bold text-foreground">Редактировать: {p.name}</h1>
-      <PartnerForm action={updatePartner.bind(null, p.id)} initial={initial} submitLabel="Сохранить" />
+      <h1 className="mb-6 mt-4 text-2xl font-bold text-foreground">Edit: {p.name}</h1>
+      <PartnerForm action={updatePartner.bind(null, p.id)} initial={initial} submitLabel="Save" />
     </div>
   );
 }
