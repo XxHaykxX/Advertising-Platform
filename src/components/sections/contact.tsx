@@ -78,6 +78,7 @@ export function Contact({
   t,
   contacts,
   projectTitles = [],
+  initialProject = "",
   locale,
 }: {
   t: Record<string, string>;
@@ -88,6 +89,7 @@ export function Contact({
     telegram: string;
   };
   projectTitles?: string[];
+  initialProject?: string;
   locale: Locale;
 }) {
   const ui = makeUI(locale);
@@ -97,7 +99,7 @@ export function Contact({
   const whatsapp = contacts.whatsapp || WHATSAPP;
   const telegram = contacts.telegram || TELEGRAM;
 
-  const [project, setProject] = useState("");
+  const [project, setProject] = useState(initialProject);
   const [consent, setConsent] = useState(false);
   const [status, setStatus] = useState<"idle" | "sending" | "done">("idle");
   const [errors, setErrors] = useState<{ name?: boolean; phone?: boolean; consent?: boolean }>({});

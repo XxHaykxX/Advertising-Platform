@@ -4,7 +4,6 @@ import { useState, useEffect, useTransition } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { useLenis } from "lenis/react";
 import { Phone, Menu, X, Clapperboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -13,17 +12,17 @@ import { setLocale } from "@/app/actions/locale";
 
 /* ── Config ──────── */
 const NAV = [
-  { key: "nav.how", href: "#how" },
-  { key: "nav.catalog", href: "#catalog" },
-  { key: "nav.portfolio", href: "#portfolio" },
-  { key: "nav.partners", href: "#partners" },
-  { key: "nav.contact", href: "#contact" },
+  { key: "nav.how", href: "/how-it-works" },
+  { key: "nav.catalog", href: "/catalog" },
+  { key: "nav.portfolio", href: "/portfolio" },
+  { key: "nav.partners", href: "/partners" },
+  { key: "nav.contact", href: "/contact" },
 ] as const;
 const PHONE = "+7 999 000-00-00";
 const PHONE_HREF = `tel:${PHONE.replace(/\D/g, "")}`;
 const WHATSAPP = "https://wa.me/79990000000";
 const TELEGRAM = "https://t.me/placeholder";
-const CTA_HREF = "#contact";
+const CTA_HREF = "/contact";
 
 /* lucide has no WhatsApp/Telegram brand marks → inline SVG */
 function WhatsAppIcon({ className }: { className?: string }) {
@@ -75,7 +74,6 @@ export function SiteHeader({
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [, startLang] = useTransition();
-  const lenis = useLenis();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -91,19 +89,6 @@ export function SiteHeader({
       await setLocale(l);
       router.refresh();
     });
-  }
-
-  function go(e: React.MouseEvent, href: string) {
-    e.preventDefault();
-    setMenuOpen(false);
-    // Anchors live on the home page. From any other route, navigate home with
-    // the hash so the section is reachable; on home, smooth-scroll in place.
-    if (pathname !== "/") {
-      router.push(`/${href}`);
-      return;
-    }
-    if (lenis) lenis.scrollTo(href, { offset: -80 });
-    else document.querySelector(href)?.scrollIntoView({ behavior: "smooth" });
   }
 
   return (
@@ -123,20 +108,26 @@ export function SiteHeader({
 
           {/* Desktop nav */}
           <nav className="hidden items-center gap-5 xl:flex">
-            {NAV.map((item, i) => (
-              <motion.a
-                key={item.href}
-                href={item.href}
-                onClick={(e) => go(e, item.href)}
-                initial={{ opacity: 0, y: -16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 + i * 0.08 }}
-                whileHover={{ y: -2 }}
-                className="text-sm font-medium text-white/75 transition-colors hover:text-foreground"
-              >
-                {ui(item.key)}
-              </motion.a>
-            ))}
+            {NAV.map((item, i) => {
+              const active = pathname === item.href;
+              return (
+                <motion.div
+                  key={item.href}
+                  initial={{ opacity: 0, y: -16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 + i * 0.08 }}
+                >
+                  <Link
+                    href={item.href}
+                    className={`text-sm font-medium transition-colors hover:text-foreground ${
+                      active ? "text-foreground" : "text-white/75"
+                    }`}
+                  >
+                    {ui(item.key)}
+                  </Link>
+                </motion.div>
+              );
+            })}
           </nav>
 
           {/* Right cluster */}
@@ -191,15 +182,12 @@ export function SiteHeader({
                 </button>
               ))}
             </div>
-            <motion.a
+            <Link
               href={CTA_HREF}
-              onClick={(e) => go(e, CTA_HREF)}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="rounded-full bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground shadow-[0_6px_20px_-8px_rgba(229,9,20,0.7)] transition-colors hover:bg-red-600"
+              className="rounded-full bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground shadow-[0_6px_20px_-8px_rgba(229,9,20,0.7)] transition-all hover:scale-105 hover:bg-red-600"
             >
               {ui("nav.cta")}
-            </motion.a>
+            </Link>
           </div>
 
           {/* Mobile burger + Sheet */}
@@ -234,17 +222,20 @@ export function SiteHeader({
                 <div className="flex-1 overflow-y-auto p-6">
                   <div className="space-y-4">
                     {NAV.map((item, i) => (
-                      <motion.a
+                      <motion.div
                         key={item.href}
-                        href={item.href}
-                        onClick={(e) => go(e, item.href)}
                         initial={{ opacity: 0, x: -16 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.05 * i + 0.1 }}
-                        className="block border-b border-white/5 pb-4 text-lg font-medium text-foreground transition-colors hover:text-primary"
                       >
-                        {ui(item.key)}
-                      </motion.a>
+                        <Link
+                          href={item.href}
+                          onClick={() => setMenuOpen(false)}
+                          className="block border-b border-white/5 pb-4 text-lg font-medium text-foreground transition-colors hover:text-primary"
+                        >
+                          {ui(item.key)}
+                        </Link>
+                      </motion.div>
                     ))}
                   </div>
 
@@ -293,13 +284,13 @@ export function SiteHeader({
                     ))}
                   </div>
 
-                  <a
+                  <Link
                     href={CTA_HREF}
-                    onClick={(e) => go(e, CTA_HREF)}
+                    onClick={() => setMenuOpen(false)}
                     className="mt-6 block w-full rounded-full bg-primary py-4 text-center text-lg font-semibold text-primary-foreground"
                   >
                     {ui("nav.cta")}
-                  </a>
+                  </Link>
                 </div>
               </div>
             </SheetContent>

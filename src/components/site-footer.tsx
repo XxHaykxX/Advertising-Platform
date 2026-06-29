@@ -3,17 +3,16 @@
 import { useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useLenis } from "lenis/react";
 import { Clapperboard, Phone, Mail } from "lucide-react";
 import { LOCALES, makeUI, type Locale } from "@/lib/i18n";
 import { setLocale } from "@/app/actions/locale";
 
 const NAV = [
-  { key: "nav.how", href: "#how" },
-  { key: "nav.catalog", href: "#catalog" },
-  { key: "nav.portfolio", href: "#portfolio" },
-  { key: "nav.partners", href: "#partners" },
-  { key: "nav.contact", href: "#contact" },
+  { key: "nav.how", href: "/how-it-works" },
+  { key: "nav.catalog", href: "/catalog" },
+  { key: "nav.portfolio", href: "/portfolio" },
+  { key: "nav.partners", href: "/partners" },
+  { key: "nav.contact", href: "/contact" },
 ];
 const PHONE_DISPLAY = "+7 999 000-00-00";
 const PHONE_HREF = "tel:+79990000000";
@@ -59,7 +58,6 @@ export function SiteFooter({
   const telegram = contacts.telegram || TELEGRAM;
   const ui = makeUI(locale);
 
-  const lenis = useLenis();
   const router = useRouter();
   const [, startLang] = useTransition();
 
@@ -68,15 +66,6 @@ export function SiteFooter({
       await setLocale(l);
       router.refresh();
     });
-  }
-
-  function go(e: React.MouseEvent, href: string) {
-    if (typeof document !== "undefined" && document.querySelector(href)) {
-      e.preventDefault();
-      if (lenis) lenis.scrollTo(href, { offset: -80 });
-      else document.querySelector(href)?.scrollIntoView({ behavior: "smooth" });
-    }
-    // on legal pages the anchors don't exist → fall back to navigating home
   }
 
   return (
@@ -107,13 +96,12 @@ export function SiteFooter({
             <ul className="mt-4 space-y-2.5">
               {NAV.map((n) => (
                 <li key={n.href}>
-                  <a
+                  <Link
                     href={n.href}
-                    onClick={(e) => go(e, n.href)}
                     className="text-sm text-white/55 transition-colors hover:text-foreground"
                   >
                     {ui(n.key)}
-                  </a>
+                  </Link>
                 </li>
               ))}
             </ul>

@@ -8,6 +8,7 @@ import {
   useReducedMotion,
   type MotionValue,
 } from "framer-motion";
+import Link from "next/link";
 import { ArrowRight, Play, ChevronDown } from "lucide-react";
 import { makeUI, type Locale } from "@/lib/i18n";
 
@@ -176,26 +177,26 @@ export function Hero({
           transition={{ duration: 0.7, ease: "easeOut", delay: 0.24 }}
           className="mt-9 flex flex-col items-center justify-center gap-4 sm:flex-row"
         >
-          <a
-            href="#contact"
+          <Link
+            href="/contact"
             className="group inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-7 py-3.5 text-sm font-semibold text-primary-foreground shadow-[0_8px_30px_-8px_rgba(229,9,20,0.7)] transition-all duration-200 hover:scale-[1.03] hover:bg-red-600 sm:w-auto"
           >
             {t["hero.ctaPrimary"]}
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-          </a>
-          <a
-            href="#catalog"
+          </Link>
+          <Link
+            href="/catalog"
             className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-white/15 bg-white/5 px-7 py-3.5 text-sm font-semibold text-foreground backdrop-blur transition-all duration-200 hover:border-white/30 hover:bg-white/10 sm:w-auto"
           >
             <Play className="h-4 w-4 fill-current" />
             {t["hero.ctaSecondary"]}
-          </a>
+          </Link>
         </motion.div>
       </motion.div>
 
       {/* ── Scroll indicator ─────────────────────────────────── */}
       <motion.a
-        href="#how"
+        href="#explore"
         aria-label={ui("a11y.scrollDown")}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

@@ -3,7 +3,6 @@
 import React, { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { useLenis } from "lenis/react";
 import {
   Search,
   ChevronDown,
@@ -41,7 +40,6 @@ export function Catalog({
   const [genreOpen, setGenreOpen] = useState(false);
   const [deadline, setDeadline] = useState("all");
   const router = useRouter();
-  const lenis = useLenis();
 
   const filtered = useMemo(() => {
     const now = new Date();
@@ -60,17 +58,10 @@ export function Catalog({
   }, [projects, query, genre, deadline]);
 
   function goContact(projectTitle?: string) {
-    if (projectTitle) {
-      window.dispatchEvent(
-        new CustomEvent("advplatform:select-project", { detail: projectTitle }),
-      );
-    }
-    if (lenis) {
-      lenis.start();
-      lenis.scrollTo("#contact", { offset: -80 });
-    } else {
-      document.querySelector("#contact")?.scrollIntoView({ behavior: "smooth" });
-    }
+    const qs = projectTitle
+      ? `?project=${encodeURIComponent(projectTitle)}`
+      : "";
+    router.push(`/contact${qs}`);
   }
 
   return (
