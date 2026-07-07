@@ -152,6 +152,9 @@ function CaseCard({
         <h3 className={`mt-1 font-bold text-foreground ${featured ? "text-2xl" : "text-lg"}`}>
           {c.film}
         </h3>
+        {c.publisherName && (
+          <p className="mt-1 text-xs text-white/50">{c.publisherName}</p>
+        )}
         {featured && (
           <p className="mt-2 max-w-md text-sm text-white/70 line-clamp-2">
             {c.description}
@@ -282,6 +285,9 @@ function Lightbox({ data: c, onClose, ui }: { data: Case | null; onClose: () => 
               <p className="text-xs uppercase tracking-wide text-primary">
                 {c.brand} × {c.film}
               </p>
+              {c.publisherName && (
+                <p className="mt-1 text-xs text-white/50">{c.publisherName}</p>
+              )}
               <p className="mt-2 text-sm leading-relaxed text-white/75">
                 {c.description}
               </p>

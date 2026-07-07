@@ -43,6 +43,7 @@ export type PortfolioDTO = {
   description: string;
   cover: string;
   media: PortfolioMediaDTO[];
+  publisherName: string | null;
 };
 
 export type PartnerDTO = {

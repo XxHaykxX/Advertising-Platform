@@ -1,10 +1,16 @@
 import { SignJWT, jwtVerify } from "jose";
+import type { Role } from "@prisma/client";
 
-/* Stateless admin session: a signed JWT stored in an httpOnly cookie.
-   Edge-safe (jose) so it can be verified in middleware. */
+/* Stateless session: a signed JWT stored in an httpOnly cookie, carrying the
+   user id + role. Edge-safe (jose) so it can be verified in middleware.
+   NOTE: this only proves the token is a validly-signed, unexpired session for
+   that uid — it does NOT confirm the user is still active. The authoritative
+   isActive gate lives in requireUser() (Node runtime, hits the DB). */
 
 export const SESSION_COOKIE = "adm_session";
 const MAX_AGE_SECONDS = 60 * 60 * 24 * 7; // 7 days
+
+export type SessionPayload = { uid: number; role: Role };
 
 function secret() {
   const s = process.env.SESSION_SECRET;
@@ -14,25 +20,29 @@ function secret() {
   return new TextEncoder().encode(s);
 }
 
-/** Create a signed session token for the single admin. */
-export async function createSessionToken(): Promise<string> {
-  return new SignJWT({ admin: true })
+/** Create a signed session token for a logged-in user. */
+export async function createSessionToken(uid: number, role: Role): Promise<string> {
+  return new SignJWT({ uid, role })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(`${MAX_AGE_SECONDS}s`)
     .sign(secret());
 }
 
-/** Returns true if the token is a valid, unexpired admin session. */
+/** Verifies signature + expiry only (edge-safe, no DB access). Returns the
+   decoded { uid, role } payload, or null if missing/invalid/expired. */
 export async function verifySessionToken(
   token: string | undefined | null,
-): Promise<boolean> {
-  if (!token) return false;
+): Promise<SessionPayload | null> {
+  if (!token) return null;
   try {
     const { payload } = await jwtVerify(token, secret());
-    return payload.admin === true;
+    if (typeof payload.uid !== "number" || typeof payload.role !== "string") {
+      return null;
+    }
+    return { uid: payload.uid, role: payload.role as Role };
   } catch {
-    return false;
+    return null;
   }
 }
 

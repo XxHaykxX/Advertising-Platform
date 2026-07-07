@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { requireSuperadmin } from "@/lib/auth/require";
 
 export type SaveState = { ok?: boolean };
 
@@ -18,6 +19,7 @@ export async function saveContacts(
   _prev: SaveState,
   fd: FormData,
 ): Promise<SaveState> {
+  await requireSuperadmin();
   for (const key of KEYS) {
     const value = String(fd.get(key) ?? "").trim();
     await prisma.setting.upsert({

@@ -22,7 +22,7 @@ export default async function LoginPage({
         </div>
         <h1 className="mb-1 text-xl font-bold text-foreground">Admin sign-in</h1>
         <p className="mb-6 text-sm text-white/55">
-          Administrator access only.
+          Sign in with your admin or publisher account.
         </p>
         <LoginForm from={safeFrom} />
       </div>

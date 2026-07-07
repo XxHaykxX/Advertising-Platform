@@ -7,7 +7,12 @@ import {
   createSessionToken,
   sessionCookieOptions,
 } from "@/lib/auth/session";
-import { verifyAdminPassword, setAdminPassword } from "@/lib/auth/password";
+import {
+  verifyUserPassword,
+  verifyUserPasswordById,
+  setUserPassword,
+} from "@/lib/auth/password";
+import { requireSuperadmin } from "@/lib/auth/require";
 
 export type ActionState = { error?: string; ok?: boolean };
 
@@ -49,17 +54,18 @@ export async function login(
     return { error: "Too many attempts. Try again in a few minutes." };
   }
 
+  const email = String(formData.get("email") || "").trim().toLowerCase();
   const password = String(formData.get("password") || "");
-  if (!password) return { error: "Please enter a password." };
+  if (!email || !password) return { error: "Please enter your email and password." };
 
-  const ok = await verifyAdminPassword(password);
-  if (!ok) {
+  const user = await verifyUserPassword(email, password);
+  if (!user) {
     recordFailure(ip);
-    return { error: "Incorrect password." };
+    return { error: "Incorrect email or password." };
   }
 
   attempts.delete(ip);
-  const token = await createSessionToken();
+  const token = await createSessionToken(user.id, user.role);
   const c = await cookies();
   c.set(SESSION_COOKIE, token, sessionCookieOptions);
 
@@ -77,6 +83,9 @@ export async function changePassword(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  // Settings is super-admin-only; also re-verifies isActive (instant deactivation).
+  const user = await requireSuperadmin();
+
   const current = String(formData.get("current") || "");
   const next = String(formData.get("next") || "");
   const confirm = String(formData.get("confirm") || "");
@@ -85,9 +94,9 @@ export async function changePassword(
   if (next.length < 8) return { error: "New password must be at least 8 characters." };
   if (next !== confirm) return { error: "Passwords do not match." };
 
-  const ok = await verifyAdminPassword(current);
+  const ok = await verifyUserPasswordById(user.id, current);
   if (!ok) return { error: "Current password is incorrect." };
 
-  await setAdminPassword(next);
+  await setUserPassword(user.id, next);
   return { ok: true };
 }

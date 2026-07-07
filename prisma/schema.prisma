@@ -20,6 +20,25 @@ model Setting {
   value String
 }
 
+enum Role {
+  SUPERADMIN
+  PUBLISHER
+}
+
+/// Admin-panel accounts: the super-admin plus per-publisher logins
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(PUBLISHER)
+  name         String // for PUBLISHER = company name (shown in portfolio); for SUPERADMIN = "Admin"
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  projects  Project[]
+  portfolio Portfolio[]
+}
+
 /// Editable landing texts, one row per content key, three languages
 model Content {
   key String @id
@@ -55,9 +74,13 @@ model Project {
   sortOrder       Int       @default(0)
   isActive        Boolean   @default(true)
   createdAt       DateTime  @default(now())
+  ownerId         Int
 
+  owner  User    @relation(fields: [ownerId], references: [id])
   actors Actor[]
   scenes Scene[]
+
+  @@index([ownerId])
 }
 
 /// Cast member shown on a project's detail page
@@ -116,6 +139,11 @@ model Portfolio {
   videoFile     String?
   sortOrder     Int      @default(0)
   createdAt     DateTime @default(now())
+  publisherId   Int?
+
+  publisher User? @relation(fields: [publisherId], references: [id], onDelete: SetNull)
+
+  @@index([publisherId])
 }
 
 /// Partner logos for the marquee

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { isLocale } from "@/lib/i18n";
+import { requireSuperadmin } from "@/lib/auth/require";
 
 export type SaveLangState = { ok?: boolean; error?: string };
 
@@ -10,6 +11,7 @@ export async function saveDefaultLang(
   _prev: SaveLangState,
   fd: FormData,
 ): Promise<SaveLangState> {
+  await requireSuperadmin();
   const value = String(fd.get("default_lang") ?? "").trim();
   if (!isLocale(value)) return { error: "Invalid language value." };
 

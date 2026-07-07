@@ -65,16 +65,45 @@ export function ProjectForm({
   action,
   initial,
   submitLabel,
+  isSuperadmin,
 }: {
   action: (prev: ProjectFormState, fd: FormData) => Promise<ProjectFormState>;
   initial?: ProjectFormInitial;
   submitLabel: string;
+  // sortOrder is SUPERADMIN-only (design decision 9): hidden from Publishers
+  // so they can't push themselves to the top of the catalog. The server
+  // ignores any posted "sortOrder" for non-superadmins regardless.
+  isSuperadmin: boolean;
 }) {
-  const data = initial ?? EMPTY;
   const [state, formAction, pending] = useActionState<ProjectFormState, FormData>(
     action,
     {},
   );
+
+  // On a failed submit (validation error), the server echoes back exactly
+  // what the user typed in state.values — merge it over the loaded/empty
+  // baseline so re-rendering the form never wipes the fields (Task #11).
+  // Edit mode still preboots from `initial`, create mode from `EMPTY`; a
+  // returned `state.values` always wins once present.
+  const base = initial ?? EMPTY;
+  const v = state.values;
+  const data: ProjectFormInitial = v
+    ? {
+        ...base,
+        titleRu: v.titleRu, titleEn: v.titleEn, titleHy: v.titleHy,
+        genreRu: v.genreRu, genreEn: v.genreEn, genreHy: v.genreHy,
+        descriptionRu: v.descriptionRu, descriptionEn: v.descriptionEn, descriptionHy: v.descriptionHy,
+        placementTypeRu: v.placementTypeRu, placementTypeEn: v.placementTypeEn, placementTypeHy: v.placementTypeHy,
+        price: v.price, currency: v.currency,
+        slotsTotal: v.slotsTotal, slotsAvailable: v.slotsAvailable,
+        releaseDate: v.releaseDate, bookingDeadline: v.bookingDeadline,
+        platforms: v.platforms,
+        sortOrder: v.sortOrder,
+        isActive: v.isActive,
+        actors: v.actors,
+        scenes: v.scenes,
+      }
+    : base;
 
   const [actors, setActors] = useState(data.actors);
   const [scenes, setScenes] = useState(data.scenes);
@@ -106,7 +135,7 @@ export function ProjectForm({
           <textarea name="descriptionRu" defaultValue={data.descriptionRu} rows={3} className={`${inputCls} resize-none`} />
         </Field>
 
-        <details className="rounded-lg border border-white/10 bg-black/20 p-4">
+        <details open={!!state.error} className="rounded-lg border border-white/10 bg-black/20 p-4">
           <summary className="cursor-pointer text-sm text-white/60">Translations (EN / HY)</summary>
           <div className="mt-4 space-y-3">
             {(["title", "genre", "placementType", "description"] as const).map((f) => (
@@ -148,9 +177,11 @@ export function ProjectForm({
           <Field label="Application deadline">
             <input name="bookingDeadline" type="date" defaultValue={data.bookingDeadline} className={inputCls} />
           </Field>
-          <Field label="Sort order">
-            <input name="sortOrder" type="number" defaultValue={data.sortOrder} className={inputCls} />
-          </Field>
+          {isSuperadmin && (
+            <Field label="Sort order">
+              <input name="sortOrder" type="number" defaultValue={data.sortOrder} className={inputCls} />
+            </Field>
+          )}
         </div>
 
         <div>
@@ -191,7 +222,7 @@ export function ProjectForm({
                 <input value={a.role} onChange={(e) => setActors((arr) => arr.map((x, idx) => (idx === i ? { ...x, role: e.target.value } : x)))} placeholder="Role (RU)" className={inputCls} />
               </div>
               {/* EN / HY translations for actor */}
-              <details className="rounded-md border border-white/10 bg-black/20 px-3 py-2">
+              <details open={!!state.error} className="rounded-md border border-white/10 bg-black/20 px-3 py-2">
                 <summary className="cursor-pointer text-xs text-white/50">EN / HY</summary>
                 <div className="mt-2 grid gap-2 sm:grid-cols-2">
                   <input value={a.firstNameEn} onChange={(e) => setActors((arr) => arr.map((x, idx) => (idx === i ? { ...x, firstNameEn: e.target.value } : x)))} placeholder="First name EN" className={inputCls} />
@@ -231,7 +262,7 @@ export function ProjectForm({
             <textarea value={s.description} onChange={(e) => setScenes((arr) => arr.map((x, idx) => (idx === i ? { ...x, description: e.target.value } : x)))} placeholder="Scene description (RU)" rows={2} className={`${inputCls} resize-none`} />
             <textarea value={s.placement} onChange={(e) => setScenes((arr) => arr.map((x, idx) => (idx === i ? { ...x, placement: e.target.value } : x)))} placeholder="What and where to place (RU)" rows={2} className={`${inputCls} resize-none`} />
             {/* EN / HY translations for scene */}
-            <details className="rounded-md border border-white/10 bg-black/20 px-3 py-2">
+            <details open={!!state.error} className="rounded-md border border-white/10 bg-black/20 px-3 py-2">
               <summary className="cursor-pointer text-xs text-white/50">EN / HY</summary>
               <div className="mt-2 space-y-2">
                 <div className="grid gap-2 sm:grid-cols-2">

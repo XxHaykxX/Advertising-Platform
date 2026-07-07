@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { STATUS_LABEL, type AppStatus } from "@/lib/constants";
+import { requireSuperadmin } from "@/lib/auth/require";
 
 /* CSV export of all applications. Protected by admin middleware.
    Semicolon-delimited + UTF-8 BOM so Excel (RU locale) opens it cleanly. */
@@ -25,6 +26,8 @@ const HEADERS = [
 ];
 
 export async function GET() {
+  await requireSuperadmin();
+
   const apps = await prisma.application.findMany({
     orderBy: { createdAt: "desc" },
   });

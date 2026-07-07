@@ -8,7 +8,10 @@ export async function middleware(req: NextRequest) {
   const isLogin = pathname === "/admin/login";
 
   const token = req.cookies.get(SESSION_COOKIE)?.value;
-  const authed = await verifySessionToken(token);
+  // Edge-safe check only (signature + expiry) — cannot query Prisma here.
+  // The authoritative isActive gate is enforced by requireUser() server-side.
+  const session = await verifySessionToken(token);
+  const authed = session !== null;
 
   if (!authed && !isLogin) {
     const url = req.nextUrl.clone();

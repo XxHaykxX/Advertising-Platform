@@ -14,12 +14,16 @@ export type PortfolioInitial = {
   videoUrl: string;
   videoFile: string;
   sortOrder: number;
+  publisherId: number | null;
 };
+
+export type PublisherOption = { id: number; name: string };
 
 const EMPTY: PortfolioInitial = {
   titleRu: "", titleEn: "", titleHy: "",
   descriptionRu: "", descriptionEn: "", descriptionHy: "",
   images: [], videoType: "youtube", videoUrl: "", videoFile: "", sortOrder: 0,
+  publisherId: null,
 };
 
 const inputCls =
@@ -30,10 +34,12 @@ export function PortfolioForm({
   action,
   initial,
   submitLabel,
+  publishers,
 }: {
   action: (prev: FormState, fd: FormData) => Promise<FormState>;
   initial?: PortfolioInitial;
   submitLabel: string;
+  publishers: PublisherOption[];
 }) {
   const data = initial ?? EMPTY;
   const [state, formAction, pending] = useActionState<FormState, FormData>(action, {});
@@ -91,10 +97,19 @@ export function PortfolioForm({
         )}
       </section>
 
-      <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
+      <section className="grid gap-4 rounded-2xl border border-white/10 bg-white/[0.03] p-6 sm:grid-cols-2">
         <label className="block max-w-[200px]">
           <span className={labelCls}>Sort order</span>
           <input name="sortOrder" type="number" defaultValue={data.sortOrder} className={inputCls} />
+        </label>
+        <label className="block">
+          <span className={labelCls}>Publisher (optional)</span>
+          <select name="publisherId" defaultValue={data.publisherId ?? ""} className={`${inputCls} appearance-none`}>
+            <option value="" className="bg-[#141414]">— None —</option>
+            {publishers.map((p) => (
+              <option key={p.id} value={p.id} className="bg-[#141414]">{p.name}</option>
+            ))}
+          </select>
         </label>
       </section>
 

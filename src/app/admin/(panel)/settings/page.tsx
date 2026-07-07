@@ -1,9 +1,11 @@
 import { getSettings } from "@/lib/data/settings";
+import { requireSuperadmin } from "@/lib/auth/require";
 import { PasswordForm } from "./password-form";
 import { ContactsForm } from "./contacts-form";
 import { LangForm } from "./lang-form";
 
 export default async function SettingsPage() {
+  await requireSuperadmin();
   const settings = await getSettings();
 
   return (

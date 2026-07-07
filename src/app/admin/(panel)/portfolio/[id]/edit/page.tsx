@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { requireSuperadmin } from "@/lib/auth/require";
 import { updatePortfolio } from "../../actions";
 import { PortfolioForm, type PortfolioInitial } from "../../portfolio-form";
 
@@ -19,9 +20,16 @@ export default async function EditPortfolioPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requireSuperadmin();
   const { id } = await params;
   const it = await prisma.portfolio.findUnique({ where: { id: Number(id) } });
   if (!it) notFound();
+
+  const publishers = await prisma.user.findMany({
+    where: { role: "PUBLISHER" },
+    select: { id: true, name: true },
+    orderBy: { name: "asc" },
+  });
 
   const initial: PortfolioInitial = {
     titleRu: it.titleRu, titleEn: it.titleEn, titleHy: it.titleHy,
@@ -31,6 +39,7 @@ export default async function EditPortfolioPage({
     videoUrl: it.videoUrl ?? "",
     videoFile: it.videoFile ?? "",
     sortOrder: it.sortOrder,
+    publisherId: it.publisherId,
   };
 
   return (
@@ -40,7 +49,7 @@ export default async function EditPortfolioPage({
         Back to portfolio
       </Link>
       <h1 className="mb-6 mt-4 text-2xl font-bold text-foreground">Edit: {it.titleRu}</h1>
-      <PortfolioForm action={updatePortfolio.bind(null, it.id)} initial={initial} submitLabel="Save" />
+      <PortfolioForm action={updatePortfolio.bind(null, it.id)} initial={initial} submitLabel="Save" publishers={publishers} />
     </div>
   );
 }

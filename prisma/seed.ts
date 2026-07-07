@@ -39,11 +39,33 @@ const PARTNERS = [
 ];
 
 async function main() {
+  // 0. SUPERADMIN account — idempotent upsert. Reuses the existing
+  //    admin_password_hash Setting if present (set by an earlier seed run or
+  //    a password change); falls back to hashing ADMIN_PASSWORD/"admin1234".
+  const existingHash = await prisma.setting.findUnique({ where: { key: "admin_password_hash" } });
+  let superadminPasswordHash = existingHash?.value;
+  if (!superadminPasswordHash) {
+    console.warn("⚠ no admin_password_hash Setting found — hashing default password for SUPERADMIN");
+    superadminPasswordHash = await bcrypt.hash(process.env.ADMIN_PASSWORD || "admin1234", 10);
+  }
+  const superadmin = await prisma.user.upsert({
+    where: { email: "admin@admin.com" },
+    update: { role: "SUPERADMIN", name: "Admin" }, // never overwrite passwordHash here
+    create: {
+      email: "admin@admin.com",
+      passwordHash: superadminPasswordHash,
+      role: "SUPERADMIN",
+      name: "Admin",
+    },
+  });
+  console.log(`✓ superadmin: id=${superadmin.id}`);
+
   // 1. Catalog (cascade removes actors + scenes)
   await prisma.project.deleteMany();
   for (const [i, p] of PROJECTS.entries()) {
     await prisma.project.create({
       data: {
+        ownerId: superadmin.id,
         titleRu: p.title,
         genreRu: p.genre,
         descriptionRu: p.description,

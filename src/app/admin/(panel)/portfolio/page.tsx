@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { requireSuperadmin } from "@/lib/auth/require";
 import { RowActions } from "./row-actions";
 
 function firstImage(images: string): string | null {
@@ -13,7 +14,11 @@ function firstImage(images: string): string | null {
 }
 
 export default async function PortfolioAdminPage() {
-  const items = await prisma.portfolio.findMany({ orderBy: { sortOrder: "asc" } });
+  await requireSuperadmin();
+  const items = await prisma.portfolio.findMany({
+    orderBy: { sortOrder: "asc" },
+    include: { publisher: true },
+  });
 
   return (
     <div>
@@ -38,6 +43,7 @@ export default async function PortfolioAdminPage() {
                 <th className="px-4 py-3 font-medium">Cover</th>
                 <th className="px-4 py-3 font-medium">Title</th>
                 <th className="px-4 py-3 font-medium">Video</th>
+                <th className="px-4 py-3 font-medium">Publisher</th>
                 <th className="px-4 py-3 font-medium"></th>
               </tr>
             </thead>
@@ -62,6 +68,7 @@ export default async function PortfolioAdminPage() {
                     <td className="px-4 py-3 text-white/55">
                       {it.videoUrl || it.videoFile ? it.videoType : "—"}
                     </td>
+                    <td className="px-4 py-3 text-white/55">{it.publisher?.name ?? "—"}</td>
                     <td className="px-4 py-3"><RowActions id={it.id} title={it.titleRu} /></td>
                   </tr>
                 );

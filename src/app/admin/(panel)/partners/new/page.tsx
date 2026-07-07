@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { requireSuperadmin } from "@/lib/auth/require";
 import { createPartner } from "../actions";
 import { PartnerForm } from "../partner-form";
 
-export default function NewPartnerPage() {
+export default async function NewPartnerPage() {
+  await requireSuperadmin();
+
   return (
     <div>
       <Link href="/admin/partners" className="inline-flex items-center gap-2 text-sm text-white/60 hover:text-white">

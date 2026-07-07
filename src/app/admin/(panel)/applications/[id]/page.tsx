@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { getApplication } from "@/lib/data/applications";
 import { formatDateTime } from "@/lib/data/format";
 import { type AppStatus } from "@/lib/constants";
+import { requireSuperadmin } from "@/lib/auth/require";
 import { StatusSelect } from "../status-select";
 import { NoteForm } from "./note-form";
 
@@ -23,6 +24,8 @@ export default async function ApplicationDetail({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requireSuperadmin();
+
   const { id } = await params;
   const app = await getApplication(Number(id));
   if (!app) notFound();

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { requireSuperadmin } from "@/lib/auth/require";
 
 export type FormState = { error?: string };
 
@@ -24,6 +25,7 @@ function buildData(fd: FormData) {
 }
 
 export async function createPartner(_p: FormState, fd: FormData): Promise<FormState> {
+  await requireSuperadmin();
   const data = buildData(fd);
   if (!data.name) return { error: "Name is required." };
   await prisma.partner.create({ data });
@@ -33,6 +35,7 @@ export async function createPartner(_p: FormState, fd: FormData): Promise<FormSt
 }
 
 export async function updatePartner(id: number, _p: FormState, fd: FormData): Promise<FormState> {
+  await requireSuperadmin();
   const data = buildData(fd);
   if (!data.name) return { error: "Name is required." };
   await prisma.partner.update({ where: { id }, data });
@@ -42,6 +45,7 @@ export async function updatePartner(id: number, _p: FormState, fd: FormData): Pr
 }
 
 export async function deletePartner(id: number) {
+  await requireSuperadmin();
   await prisma.partner.delete({ where: { id } });
   revalidatePath("/admin/partners");
   revalidatePath("/");

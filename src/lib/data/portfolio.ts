@@ -12,7 +12,10 @@ function L(ru: string, en: string, hy: string, locale: Locale): string {
 export async function getPortfolioCases(
   locale: Locale = DEFAULT_LOCALE,
 ): Promise<PortfolioDTO[]> {
-  const rows = await prisma.portfolio.findMany({ orderBy: { sortOrder: "asc" } });
+  const rows = await prisma.portfolio.findMany({
+    orderBy: { sortOrder: "asc" },
+    include: { publisher: true },
+  });
   return rows.map((row) => {
     const title = L(row.titleRu, row.titleEn, row.titleHy, locale);
     const [brand, film] = title.split("×").map((s) => s.trim());
@@ -32,6 +35,7 @@ export async function getPortfolioCases(
       description: L(row.descriptionRu, row.descriptionEn, row.descriptionHy, locale),
       cover: images[0] ?? "",
       media,
+      publisherName: row.publisher?.name ?? null,
     };
   });
 }

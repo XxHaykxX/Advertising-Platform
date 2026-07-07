@@ -1,7 +1,10 @@
 import { getContentRows } from "@/lib/data/content";
+import { requireSuperadmin } from "@/lib/auth/require";
 import { ContentForm } from "./content-form";
 
 export default async function ContentAdminPage() {
+  await requireSuperadmin();
+
   const rows = await getContentRows();
   return (
     <div>

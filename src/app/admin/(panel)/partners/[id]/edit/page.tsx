@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { requireSuperadmin } from "@/lib/auth/require";
 import { updatePartner } from "../../actions";
 import { PartnerForm, type PartnerInitial } from "../../partner-form";
 
@@ -10,6 +11,8 @@ export default async function EditPartnerPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  await requireSuperadmin();
+
   const { id } = await params;
   const p = await prisma.partner.findUnique({ where: { id: Number(id) } });
   if (!p) notFound();

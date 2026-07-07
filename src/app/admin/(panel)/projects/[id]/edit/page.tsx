@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { requireUser } from "@/lib/auth/require";
 import { updateProject } from "../../actions";
 import { ProjectForm, type ProjectFormInitial } from "../../project-form";
 
@@ -22,6 +23,9 @@ export default async function EditProjectPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  const user = await requireUser();
+  const isSuperadmin = user.role === "SUPERADMIN";
+
   const { id } = await params;
   const pid = Number(id);
   const p = await prisma.project.findUnique({
@@ -32,6 +36,9 @@ export default async function EditProjectPage({
     },
   });
   if (!p) notFound();
+  // Ownership scoping: a Publisher navigating directly to another owner's
+  // edit URL gets a 404 (indistinguishable from "doesn't exist").
+  if (!isSuperadmin && p.ownerId !== user.id) notFound();
 
   const initial: ProjectFormInitial = {
     titleRu: p.titleRu, titleEn: p.titleEn, titleHy: p.titleHy,
@@ -69,7 +76,7 @@ export default async function EditProjectPage({
       <h1 className="mb-6 mt-4 text-2xl font-bold text-foreground">
         Edit: {p.titleRu}
       </h1>
-      <ProjectForm action={action} initial={initial} submitLabel="Save" />
+      <ProjectForm action={action} initial={initial} submitLabel="Save" isSuperadmin={isSuperadmin} />
     </div>
   );
 }

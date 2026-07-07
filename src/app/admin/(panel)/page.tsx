@@ -1,8 +1,15 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Inbox, Film, Image as ImageIcon, Users } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { requireUser } from "@/lib/auth/require";
 
 export default async function AdminDashboard() {
+  // Publishers don't get a platform-wide dashboard — send them straight to
+  // their own projects list.
+  const user = await requireUser();
+  if (user.role !== "SUPERADMIN") redirect("/admin/projects");
+
   const [newApps, totalApps, projects, portfolio, partners] = await Promise.all([
     prisma.application.count({ where: { status: "new" } }),
     prisma.application.count(),

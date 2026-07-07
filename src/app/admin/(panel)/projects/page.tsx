@@ -1,12 +1,22 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { requireUser } from "@/lib/auth/require";
 import { ActiveToggle, DeleteButton } from "./row-actions";
 
 export default async function ProjectsAdminPage() {
+  const user = await requireUser();
+  const isSuperadmin = user.role === "SUPERADMIN";
+
   const projects = await prisma.project.findMany({
+    // Publisher scoping (design decision A): a Publisher only ever sees
+    // their own projects. SUPERADMIN sees everything.
+    where: isSuperadmin ? undefined : { ownerId: user.id },
     orderBy: { sortOrder: "asc" },
-    include: { _count: { select: { actors: true, scenes: true } } },
+    include: {
+      _count: { select: { actors: true, scenes: true } },
+      owner: { select: { name: true } },
+    },
   });
 
   return (
@@ -37,6 +47,7 @@ export default async function ProjectsAdminPage() {
                 <th className="px-4 py-3 font-medium">Poster</th>
                 <th className="px-4 py-3 font-medium">Title</th>
                 <th className="px-4 py-3 font-medium">Genre</th>
+                {isSuperadmin && <th className="px-4 py-3 font-medium">Owner</th>}
                 <th className="px-4 py-3 font-medium">Slots</th>
                 <th className="px-4 py-3 font-medium">Cast / Scenes</th>
                 <th className="px-4 py-3 font-medium">Active</th>
@@ -60,6 +71,9 @@ export default async function ProjectsAdminPage() {
                     </Link>
                   </td>
                   <td className="px-4 py-3 text-white/60">{p.genreRu || "—"}</td>
+                  {isSuperadmin && (
+                    <td className="px-4 py-3 text-white/60">{p.owner.name}</td>
+                  )}
                   <td className="px-4 py-3 text-white/60">{p.slotsAvailable}/{p.slotsTotal}</td>
                   <td className="px-4 py-3 text-white/60">{p._count.actors} / {p._count.scenes}</td>
                   <td className="px-4 py-3"><ActiveToggle id={p.id} active={p.isActive} /></td>

@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { requireSuperadmin } from "@/lib/auth/require";
 import { RowActions } from "./row-actions";
 
 export default async function PartnersAdminPage() {
+  await requireSuperadmin();
+
   const partners = await prisma.partner.findMany({ orderBy: { sortOrder: "asc" } });
 
   return (

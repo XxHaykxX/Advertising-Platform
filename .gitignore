@@ -47,3 +47,7 @@ next-env.d.ts
 # local dev artifacts
 /prisma/dev.db
 .next-dev.log
+.gstack/
+
+# playwright test output
+.playwright-mcp/

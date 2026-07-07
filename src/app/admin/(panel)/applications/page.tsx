@@ -7,6 +7,7 @@ import {
 } from "@/lib/data/applications";
 import { formatDateTime } from "@/lib/data/format";
 import { APP_STATUSES, STATUS_LABEL, type AppStatus } from "@/lib/constants";
+import { requireSuperadmin } from "@/lib/auth/require";
 import { StatusSelect } from "./status-select";
 
 const TABS: { key: string; label: string }[] = [
@@ -19,6 +20,10 @@ export default async function ApplicationsPage({
 }: {
   searchParams: Promise<{ status?: string }>;
 }) {
+  // Brand-lead applications are super-admin only (Publishers never see leads
+  // for their films) — 404s a Publisher hitting this URL directly.
+  await requireSuperadmin();
+
   const { status: raw } = await searchParams;
   const filter: AppStatus | undefined =
     raw && isAppStatus(raw) ? raw : undefined;
