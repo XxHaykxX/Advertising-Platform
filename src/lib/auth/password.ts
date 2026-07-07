@@ -17,18 +17,27 @@ export async function verifyAdminPassword(password: string): Promise<boolean> {
   return bcrypt.compare(password, hash);
 }
 
-/** Verify email + plaintext password against `User.passwordHash`. Rejects
-   unknown emails and deactivated accounts (same 403-by-obscurity error either
-   way, so login never reveals which part was wrong). */
+export type VerifyResult =
+  | { ok: true; user: { id: number; email: string; role: Role; name: string } }
+  | { ok: false; reason: "invalid" | "deactivated" };
+
+/** Verify email + plaintext password against `User.passwordHash`.
+   Unknown email or wrong password → "invalid" (never reveals which part was
+   wrong). A correct password on a disabled account → "deactivated", so the
+   user gets an accurate message instead of a misleading "wrong password". */
 export async function verifyUserPassword(
   email: string,
   plain: string,
-): Promise<{ id: number; email: string; role: Role; name: string } | null> {
+): Promise<VerifyResult> {
   const user = await prisma.user.findUnique({ where: { email } });
-  if (!user || !user.isActive) return null;
-  const ok = await bcrypt.compare(plain, user.passwordHash);
-  if (!ok) return null;
-  return { id: user.id, email: user.email, role: user.role, name: user.name };
+  if (!user) return { ok: false, reason: "invalid" };
+  const passOk = await bcrypt.compare(plain, user.passwordHash);
+  if (!passOk) return { ok: false, reason: "invalid" };
+  if (!user.isActive) return { ok: false, reason: "deactivated" };
+  return {
+    ok: true,
+    user: { id: user.id, email: user.email, role: user.role, name: user.name },
+  };
 }
 
 /** Replace the admin password hash. */

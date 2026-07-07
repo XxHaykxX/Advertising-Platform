@@ -58,13 +58,17 @@ export async function login(
   const password = String(formData.get("password") || "");
   if (!email || !password) return { error: "Please enter your email and password." };
 
-  const user = await verifyUserPassword(email, password);
-  if (!user) {
+  const result = await verifyUserPassword(email, password);
+  if (!result.ok) {
+    if (result.reason === "deactivated") {
+      return { error: "This account has been deactivated. Contact the administrator." };
+    }
     recordFailure(ip);
     return { error: "Incorrect email or password." };
   }
 
   attempts.delete(ip);
+  const user = result.user;
   const token = await createSessionToken(user.id, user.role);
   const c = await cookies();
   c.set(SESSION_COOKIE, token, sessionCookieOptions);
