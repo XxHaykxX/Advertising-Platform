@@ -176,9 +176,17 @@ export async function getProject(
 }
 
 export async function getProjectIds(): Promise<number[]> {
-  const rows = await prisma.project.findMany({
-    where: { isActive: true },
-    select: { id: true },
-  });
-  return rows.map((r) => r.id);
+  // Used by generateStaticParams at build time. If the DB is unreachable during
+  // the build (e.g. env not injected into the Hostinger build step), fall back
+  // to an empty list — report pages are `dynamicParams`, so they still render
+  // on demand at runtime. This keeps the build from failing on a DB hiccup.
+  try {
+    const rows = await prisma.project.findMany({
+      where: { isActive: true },
+      select: { id: true },
+    });
+    return rows.map((r) => r.id);
+  } catch {
+    return [];
+  }
 }
