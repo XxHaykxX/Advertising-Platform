@@ -20,7 +20,14 @@ const FALLBACK_RATES: Rates = {
  *  day rather than once per request. Never throws. */
 export async function getRates(): Promise<Rates> {
   try {
-    const res = await fetch(RATES_URL, { next: { revalidate: 86400 } });
+    // Hard 3s timeout: on shared hosting outbound can hang instead of failing,
+    // and a hanging await (unlike a thrown error) is NOT caught below — it would
+    // stall the SSR render and 503 the page. AbortSignal.timeout rejects the
+    // fetch after 3s, which the catch turns into the fallback snapshot.
+    const res = await fetch(RATES_URL, {
+      next: { revalidate: 86400 },
+      signal: AbortSignal.timeout(3000),
+    });
     if (!res.ok) return FALLBACK_RATES;
     const data = await res.json();
     if (data?.result !== "success" || typeof data?.rates !== "object") return FALLBACK_RATES;
