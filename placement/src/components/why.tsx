@@ -1,4 +1,3 @@
-import { ExternalLink } from 'lucide-react';
 import { Container } from './ui/container';
 import { Section } from './ui/section';
 import { Reveal } from './ui/reveal';
@@ -63,15 +62,6 @@ export default function Why({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
                     </div>
                   </div>
                   <p className="text-sm leading-relaxed text-muted-foreground">{founder.bio}</p>
-                  <div className="flex gap-3 pt-2">
-                    <a
-                      href="#"
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border text-muted-foreground transition-all hover:text-primary hover:border-primary"
-                      aria-label={`${founder.name} LinkedIn`}
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                    </a>
-                  </div>
                 </div>
               </Reveal>
             ))}

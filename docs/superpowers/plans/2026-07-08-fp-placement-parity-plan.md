@@ -50,48 +50,74 @@
 
 ### WAVE 0 — Схема + данные (sonnet, последовательно)
 **Файлы:** `placement/prisma/schema.prisma`, `seed-data.ts`, `seed.ts`, `placement/src/lib/data/*`
-- [ ] 0.1 Расширить `Project`: `slotsTotal Int`, `slotsTaken Int`, `applicationDeadline DateTime?`, `releaseDate DateTime?`, `platforms Json` (string[]), `placementType String?`, `priceNote String?`
-- [ ] 0.2 Новые модели: `Actor` (projectId, name, role, sortOrder), `Portfolio` (title, brand, description, image, metrics, publisherId?, sortOrder), `Partner` (name, logo, url, sortOrder)
-- [ ] 0.3 `db push` + сид: актёры (по 3 на проект), 6 портфолио-кейсов, 8–10 партнёров, слоты/дедлайны/площадки на все 6 проектов
-- [ ] 0.4 DTO в `src/lib/data/`: `actors`, `portfolio`, `partners`; расширить `projects` DTO
+- [x] 0.1 Расширить `Project`: `slotsTotal Int`, `slotsTaken Int`, `applicationDeadline DateTime?`, `releaseDate DateTime?`, `platforms Json` (string[]), `placementType String?`, `priceNote String?`
+- [x] 0.2 Новые модели: `Actor` (projectId, name, role, sortOrder), `Portfolio` (title, brand, description, image, metrics, publisherId?, sortOrder), `Partner` (name, logo, url, sortOrder)
+- [x] 0.3 `db push` + сид: актёры (по 3 на проект), 6 портфолио-кейсов, 8–10 партнёров, слоты/дедлайны/площадки на все 6 проектов
+- [x] 0.4 DTO в `src/lib/data/`: `actors`, `portfolio`, `partners`; расширить `projects` DTO
 - **Gate:** architect-review схемы (не ломает ли существующие поля/сид/отчёты)
 
 ### WAVE 1 — Лид-flow + i18n инфра (параллельно, sonnet)
-- [ ] 1.A Заявка: server action `submitApplication` (name*, phone*, email, company, budget, message, projectId-преселект, honeypot, consent, IP rate-limit 5/10мин — по образцу 3000 и `submitLead`), модалка/форма `ApplyDialog` в стиле 3001 + success-модалка; подключить к «Request details» (каталог, карточки, отчёт) и «Express Interest»
-- [ ] 1.B i18n: порт `lib/i18n.ts` (ru/en/hy, cookie), словарь для существующего UI 3001, `LocaleSwitcher` (хедер+футер), server-обвязка (`getLocale`)
+- [x] 1.A Заявка: server action `submitApplication` (name*, phone*, email, company, budget, message, projectId-преселект, honeypot, consent, IP rate-limit 5/10мин — по образцу 3000 и `submitLead`), модалка/форма `ApplyDialog` в стиле 3001 + success-модалка; подключить к «Request details» (каталог, карточки, отчёт) и «Express Interest»
+- [x] 1.B i18n: порт `lib/i18n.ts` (ru/en/hy, cookie), словарь для существующего UI 3001, `LocaleSwitcher` (хедер+футер), server-обвязка (`getLocale`)
 - **Gate:** review server action (валидация, rate-limit, honeypot)
 
 ### WAVE 2 — Страницы (параллельно; haiku — статичные, sonnet — data-bound)
-- [ ] 2.A `/how-it-works` — страница: расширенная версия секции (шаги, CTA) — haiku
-- [ ] 2.B `/portfolio` — сетка кейсов из DB + видео/галерея-лайтбокс (модалка), JSON-LD VideoObject — sonnet
-- [ ] 2.C `/partners` — логотипы + марки-лента (CSS marquee-x, pause-on-hover, иконка-фоллбек по имени) из DB — sonnet
-- [ ] 2.D `/contact` — страница: форма (`submitLead` + селектор проекта + success-модалка) + телефон/WhatsApp/Telegram + email, лёгкий индиго-фон (аналог DotGridBackdrop) — haiku
-- [ ] 2.E `/privacy`, `/terms` — легал-страницы (порт `legal-page.tsx`-паттерна, стиль 3001) — haiku
+- [x] 2.A `/how-it-works` — страница: расширенная версия секции (шаги, CTA) — haiku
+- [x] 2.B `/portfolio` — сетка кейсов из DB + видео/галерея-лайтбокс (модалка), JSON-LD VideoObject — sonnet
+- [x] 2.C `/partners` — логотипы + марки-лента (CSS marquee-x, pause-on-hover, иконка-фоллбек по имени) из DB — sonnet
+- [x] 2.D `/contact` — страница: форма (`submitLead` + селектор проекта + success-модалка) + телефон/WhatsApp/Telegram + email, лёгкий индиго-фон (аналог DotGridBackdrop) — haiku
+- [x] 2.E `/privacy`, `/terms` — легал-страницы (порт `legal-page.tsx`-паттерна, стиль 3001) — haiku
 - Всё — палитра/типографика 3001, `Section`/`Container`/`Reveal` примитивы
 
 ### WAVE 3 — Паритет карточек и детальной (sonnet)
-- [ ] 3.A Карточка каталога + featured: бейдж `placementType`, слоты-прогресс «X из Y», дедлайн, площадки-теги, `releaseDate`
-- [ ] 3.B `/reports/[id]`: блок «Актёры», сайдбар (слоты, выход, дедлайн, площадки, цена, CTA «Express Interest»), кнопка назад к каталогу
-- [ ] 3.C Хедер: иконки phone/WhatsApp/Telegram + LocaleSwitcher; футер: контакты, документы, локали, соц
-- [ ] 3.D i18n-проводка: ВСЕ публичные компоненты (лендинг-секции, каталог, отчёт, формы, хедер/футер, новые страницы) переведены на `makeUI`/`getLocale`; сайт полностью работает на ru/en/hy, свитчер реально переключает язык (cookie + revalidate)
+- [x] 3.A Карточка каталога + featured: бейдж `placementType`, слоты-прогресс «X из Y», дедлайн, площадки-теги, `releaseDate`
+- [x] 3.B `/reports/[id]`: блок «Актёры», сайдбар (слоты, выход, дедлайн, площадки, цена, CTA «Express Interest»), кнопка назад к каталогу
+- [x] 3.C Хедер: иконки phone/WhatsApp/Telegram + LocaleSwitcher; футер: контакты, документы, локали, соц
+- [x] 3.D i18n-проводка: ВСЕ публичные компоненты (лендинг-секции, каталог, отчёт, формы, хедер/футер, новые страницы) переведены на `makeUI`/`getLocale`; сайт полностью работает на ru/en/hy, свитчер реально переключает язык (cookie + revalidate)
 
 ### WAVE 4 — Хром и полировка (параллельно)
-- [ ] 4.A Каталог: реализовать фильтры «Product Category» и «Status» (сейчас «Coming soon»); футер: убрать/оживить мёртвые соц-ссылки — sonnet
-- [ ] 4.B SEO: metadata/canonical/json-ld на все публичные страницы — sonnet
-- [ ] 4.C Админка: CRUD Portfolio, Partners, поля проекта (actors, slots, deadline, platforms, placementType) — sonnet
+- [x] 4.A Каталог: реализовать фильтры «Product Category» и «Status» (сейчас «Coming soon»); футер: убрать/оживить мёртвые соц-ссылки — sonnet
+- [x] 4.B SEO: metadata/canonical/json-ld на все публичные страницы — sonnet
+- [x] 4.C Админка: CRUD Portfolio, Partners, поля проекта (actors, slots, deadline, platforms, placementType) — sonnet
 - **Gate:** architect-review админ-CRUD (authz, ownerId-скоупинг)
 
 ### WAVE 5 — Реальные данные (sonnet)
 Источник: `kinodaran-catalog.json` (реальные тайтлы Kinodaran: названия, год, жанр MOVIE/TV_SHOW, длительность, возраст) + локальные кадры `/public/kino/`.
-- [ ] 5.A Пересобрать сид-проекты: реальные названия/года/жанры вместо вымышленных «Bandwidth» и т.п.; постеры/галереи — уже локальные кадры; форматы/аудитории — правдоподобные, синопсисы — краткие реальные описания; название и синопсис — на 3 языках (через `lang`-поле/Content-механику, минимум EN+RU)
-- [ ] 5.B Реальные партнёры (Kinodaran, студии из тайтлов) и портфолио-кейсы на базе реальных проектов
-- [ ] 5.C Контакты (phone/email/Telegram/WhatsApp) — из реальных настроек (Setting), не хардкод
+- [x] 5.A Пересобрать сид-проекты: реальные названия/года/жанры вместо вымышленных «Bandwidth» и т.п.; постеры/галереи — локальные кадры. ⚠️ Синопсисы пока EN-only (DB-контент не локализован — отложено вместе с Content-механикой)
+- [x] 5.B Реальные партнёры (Kinodaran Studios) и портфолио-кейсы на базе реальных проектов (бренды вымышленные)
+- [ ] 5.C Контакты (phone/email/Telegram/WhatsApp) из Setting — НЕ сделано, захардкожены плейсхолдеры (+374 00 000 000, hello@fpplacement.com, t.me/fpplacement). Ждём реальные контакты от владельца
 
 ### WAVE 6 — Тотальный QA кнопок (оркестратор + Playwright + coder на фиксы)
-- [ ] 6.A Обойти ВСЕ страницы 3001 и прокликать КАЖДУЮ кнопку/ссылку: хедер (все пункты, mobile-меню), лендинг (все CTA всех секций, FAQ-аккордеон, hero-стрелка), каталог (фильтры все до одного, сортировка, grid/list, поиск, карточки: View Report / Request details), отчёт (tabs, все CTA), формы (submit с валидацией и успехом), футер (все ссылки), login/register, локале-свитчер на каждой странице
-- [ ] 6.B Составить таблицу: кнопка → работает / битая / не связана с бэком; всё битое — чинить (coder), «не связано с бэком» — связать или осознанно пометить
-- [ ] 6.C Финал: консоль без ошибок на всех страницах, `tsc --noEmit`, скриншоты, коммит
+- [x] 6.A Обойти ВСЕ страницы 3001 и прокликать КАЖДУЮ кнопку/ссылку: хедер (все пункты, mobile-меню), лендинг (все CTA всех секций, FAQ-аккордеон, hero-стрелка), каталог (фильтры все до одного, сортировка, grid/list, поиск, карточки: View Report / Request details), отчёт (tabs, все CTA), формы (submit с валидацией и успехом), футер (все ссылки), login/register, локале-свитчер на каждой странице
+- [x] 6.B Составить таблицу: кнопка → работает / битая / не связана с бэком; всё битое — чинить (coder), «не связано с бэком» — связать или осознанно пометить
+- [x] 6.C Финал: консоль без ошибок на всех страницах, `tsc --noEmit`, скриншоты, коммит
 
 ## Статус
 - [x] Сравнение и документ
-- [ ] W0 … W6 — см. чекбоксы
+- [x] W0 … W6 — см. чекбоксы (кроме 5.C — реальные контакты)
+
+## Результаты QA-обхода (2026-07-08, Playwright, все страницы)
+
+**Ссылки:** все внутренние (19 маршрутов, вкл. /reports/19-24, /admin/login) → 200. Якоря /#faq /#about /#contact /#stats существуют. Внешние: tel:, t.me, wa.me, mailto, youtube — префиксы валидны (номера/адреса — плейсхолдеры, см. 5.C). Единственная мёртвая `href="#"` (LinkedIn у фаундеров в why.tsx) — удалена.
+
+**Кнопки/интерактив (всё работает):**
+| Элемент | Результат |
+|---|---|
+| Каталог: фильтр жанра | 6 → 1 проектов |
+| Каталог: фильтр статуса (Filming) | 6 → 2 |
+| Каталог: поиск («Мхитарян») | 6 → 1 |
+| Каталог: Clear All | сброс до 6 |
+| Каталог: сортировка (4 опции), grid/list | переключаются |
+| Request details (карточка) | модалка, валидация consent, запись в Application (проверено в БД) |
+| Отчёт: табы Overview/Cast/Safety/Investment/More | рендерятся |
+| Отчёт: Express Interest | модалка открывается |
+| Портфолио: карточка кейса → лайтбокс, prev/next, ESC | работает |
+| Контакт-форма (+ селектор проекта) | success-стейт |
+| FAQ-аккордеон | aria-expanded toggle |
+| Мобильное меню (390px) | открывается, все пункты + свитчер |
+| Локале-свитчер | живое EN→RU→HY→EN кликами |
+| Login → /admin/login, Register-заглушка | ок |
+
+**Консоль:** 0 ошибок на всех 12 страницах. `tsc --noEmit` чистый.
+
+**Не связано с бэком (осознанно):** контакты-плейсхолдеры (5.C), логотипы партнёров (монограммы до загрузки логотипов через админку), i18n DB-контента (синопсисы/сцены — EN).
