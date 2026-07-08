@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3001",
-    "build": "NODE_OPTIONS=--v8-pool-size=2 UV_THREADPOOL_SIZE=2 TOKIO_WORKER_THREADS=2 next build",
-    "start": "NODE_OPTIONS=--v8-pool-size=2 UV_THREADPOOL_SIZE=2 TOKIO_WORKER_THREADS=2 next start",
+    "build": "NODE_OPTIONS=--v8-pool-size=2 UV_THREADPOOL_SIZE=4 TOKIO_WORKER_THREADS=4 next build",
+    "start": "NODE_OPTIONS=--v8-pool-size=2 UV_THREADPOOL_SIZE=4 TOKIO_WORKER_THREADS=4 next start",
     "lint": "eslint",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
