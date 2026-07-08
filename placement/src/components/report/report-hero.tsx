@@ -14,14 +14,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/ui/reveal";
 import { parseStringArray, splitCountries } from "@/lib/data/format";
+import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
 import type { ProjectDetailDTO } from "@/lib/types";
-
-const STATUS_LABEL: Record<string, string> = {
-  PRE_PRODUCTION: "Pre-Production",
-  FILMING: "Filming",
-  POST_PRODUCTION: "Post-Production",
-  RELEASED: "Released",
-};
 
 function safetyColor(score: number) {
   if (score >= 80) return "text-success";
@@ -29,11 +23,18 @@ function safetyColor(score: number) {
   return "text-danger";
 }
 
-export function ReportHero({ project }: { project: ProjectDetailDTO }) {
+export function ReportHero({
+  project,
+  locale = DEFAULT_LOCALE,
+}: {
+  project: ProjectDetailDTO;
+  locale?: Locale;
+}) {
+  const t = makeUI(locale);
   const countries = splitCountries(project.countries).join(", ");
   const thumbnails = parseStringArray(project.gallery).slice(0, 5);
   const placeholderCount = Math.max(0, 5 - thumbnails.length);
-  const statusLabel = STATUS_LABEL[project.status] ?? project.status;
+  const statusLabel = t(`report.status.${project.status}`);
   const safetyClass = safetyColor(project.safetyScore);
 
   const metaItems = [
@@ -55,20 +56,20 @@ export function ReportHero({ project }: { project: ProjectDetailDTO }) {
               className="inline-flex items-center gap-1.5 font-medium text-foreground transition-colors hover:text-primary"
             >
               <ArrowLeft className="h-4 w-4" />
-              Back to Catalog
+              {t("report.backToCatalog")}
             </Link>
             <span className="text-muted-foreground">
-              Catalog | {project.code}
+              {t("report.catalogLabel")} | {project.code}
             </span>
           </div>
           <div className="flex items-center gap-3">
             <Button variant="secondary" size="sm">
               <Share2 className="mr-1.5 h-4 w-4" />
-              Share
+              {t("report.share")}
             </Button>
             <Button variant="secondary" size="sm">
               <Download className="mr-1.5 h-4 w-4" />
-              Download PDF
+              {t("report.downloadPdf")}
             </Button>
           </div>
         </div>
@@ -106,7 +107,7 @@ export function ReportHero({ project }: { project: ProjectDetailDTO }) {
               <div className="rounded-xl border border-border bg-card p-4">
                 <Eye className="h-4 w-4 text-primary" />
                 <div className="mt-2 text-lg font-bold text-foreground">{project.projViews}</div>
-                <div className="text-xs text-muted-foreground">Projected Views</div>
+                <div className="text-xs text-muted-foreground">{t("report.projectedViews")}</div>
               </div>
               <div className="rounded-xl border border-border bg-card p-4">
                 {project.safetyScore >= 80 ? (
@@ -117,17 +118,17 @@ export function ReportHero({ project }: { project: ProjectDetailDTO }) {
                 <div className={`mt-2 text-lg font-bold ${safetyClass}`}>
                   {project.safetyScore}/100
                 </div>
-                <div className="text-xs text-muted-foreground">Brand Safety</div>
+                <div className="text-xs text-muted-foreground">{t("report.brandSafety")}</div>
               </div>
               <div className="rounded-xl border border-border bg-card p-4">
                 <DollarSign className="h-4 w-4 text-primary" />
                 <div className="mt-2 text-lg font-bold text-foreground">{project.cpmRange}</div>
-                <div className="text-xs text-muted-foreground">CPM</div>
+                <div className="text-xs text-muted-foreground">{t("report.cpm")}</div>
               </div>
               <div className="rounded-xl border border-border bg-card p-4">
                 <Wallet className="h-4 w-4 text-primary" />
                 <div className="mt-2 text-lg font-bold text-foreground">{project.budgetRange}</div>
-                <div className="text-xs text-muted-foreground">Budget Range</div>
+                <div className="text-xs text-muted-foreground">{t("report.budgetRange")}</div>
               </div>
             </div>
           </div>

@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { getProject, getProjectIds } from "@/lib/data/projects";
+import { getLocale } from "@/lib/data/locale";
 import { Footer } from "@/components/footer";
 import { ReportHero } from "@/components/report/report-hero";
 import { KeyFacts } from "@/components/report/key-facts";
@@ -26,22 +27,22 @@ export default async function ReportPage({
   const pid = Number(id);
   if (!Number.isInteger(pid)) notFound();
 
-  const project = await getProject(pid, true);
+  const [project, locale] = await Promise.all([getProject(pid, true), getLocale()]);
   if (!project) notFound();
 
   return (
     <>
-      <ReportTabs hasCast={project.actors.length > 0} />
+      <ReportTabs hasCast={project.actors.length > 0} locale={locale} />
       <div id="overview">
-        <ReportHero project={project} />
-        <KeyFacts project={project} />
+        <ReportHero project={project} locale={locale} />
+        <KeyFacts project={project} locale={locale} />
       </div>
-      <Cast project={project} />
-      <RoiSnapshot project={project} />
-      <SafetyAssessment project={project} />
-      <Investment project={project} />
-      <DeepDive project={project} />
-      <Footer />
+      <Cast project={project} locale={locale} />
+      <RoiSnapshot project={project} locale={locale} />
+      <SafetyAssessment project={project} locale={locale} />
+      <Investment project={project} locale={locale} />
+      <DeepDive project={project} locale={locale} />
+      <Footer locale={locale} />
     </>
   );
 }

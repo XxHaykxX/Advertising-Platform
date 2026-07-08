@@ -1,4 +1,5 @@
 import { Reveal } from "@/components/ui/reveal";
+import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
 import type { ActorDTO, ProjectDetailDTO } from "@/lib/types";
 
 function initials(name: string): string {
@@ -25,16 +26,23 @@ function ActorCard({ actor }: { actor: ActorDTO }) {
   );
 }
 
-export function Cast({ project }: { project: ProjectDetailDTO }) {
+export function Cast({
+  project,
+  locale = DEFAULT_LOCALE,
+}: {
+  project: ProjectDetailDTO;
+  locale?: Locale;
+}) {
   if (project.actors.length === 0) return null;
+  const t = makeUI(locale);
 
   return (
     <section id="cast" className="py-10">
       <div className="mx-auto w-full max-w-[1200px] px-6 max-sm:px-4">
         <Reveal>
-          <h2 className="text-2xl font-bold text-foreground">Cast</h2>
+          <h2 className="text-2xl font-bold text-foreground">{t("cast.title")}</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Actors attached to this production
+            {t("cast.subtitle")}
           </p>
         </Reveal>
 

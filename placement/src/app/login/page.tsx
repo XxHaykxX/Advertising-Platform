@@ -2,8 +2,12 @@ import Link from "next/link";
 import { Film, Lock, Mail } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
+import { getLocale } from "@/lib/data/locale";
+import { makeUI } from "@/lib/i18n";
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  const locale = await getLocale();
+  const t = makeUI(locale);
   return (
     <section className="relative flex min-h-screen items-center justify-center overflow-hidden py-20">
       <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden>
@@ -16,27 +20,27 @@ export default function LoginPage() {
             <span className="text-primary">FP</span> Placement
           </Link>
 
-          <h1 className="text-center text-2xl font-bold text-foreground">Brand Sign In</h1>
+          <h1 className="text-center text-2xl font-bold text-foreground">{t("login.title")}</h1>
           <p className="mt-2 text-center text-sm text-muted-foreground">
-            Brand accounts coming soon.
+            {t("login.subtitle")}
           </p>
 
           <form className="mt-8 space-y-5">
             <label className="block">
-              <span className="mb-1.5 block text-sm font-semibold text-foreground">Email</span>
+              <span className="mb-1.5 block text-sm font-semibold text-foreground">{t("form.email")}</span>
               <div className="relative">
                 <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <input
                   type="email"
                   disabled
-                  placeholder="you@brand.com"
+                  placeholder={t("login.emailPlaceholder")}
                   className="w-full rounded-xl border border-border bg-muted py-3 pl-10 pr-4 text-sm text-muted-foreground outline-none"
                 />
               </div>
             </label>
 
             <label className="block">
-              <span className="mb-1.5 block text-sm font-semibold text-foreground">Password</span>
+              <span className="mb-1.5 block text-sm font-semibold text-foreground">{t("login.password")}</span>
               <div className="relative">
                 <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <input
@@ -49,22 +53,22 @@ export default function LoginPage() {
             </label>
 
             <Button type="button" variant="primary" size="lg" disabled className="w-full">
-              Sign In
+              {t("login.signIn")}
             </Button>
           </form>
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
-            Not a brand account yet?{" "}
+            {t("login.notBrandYet")}{" "}
             <Link href="/#contact" className="font-medium text-primary hover:underline">
-              Express Interest instead
+              {t("login.expressInterestInstead")}
             </Link>
           </p>
 
           <div className="mt-6 flex items-center gap-2 rounded-xl border border-border bg-muted/60 px-4 py-3 text-xs text-muted-foreground">
             <Film className="h-4 w-4 shrink-0 text-primary" />
-            Filmmaker or admin?{" "}
+            {t("login.filmmakerOrAdmin")}{" "}
             <Link href="/admin/login" className="font-medium text-primary hover:underline">
-              Go to admin login
+              {t("login.goToAdminLogin")}
             </Link>
           </div>
         </div>

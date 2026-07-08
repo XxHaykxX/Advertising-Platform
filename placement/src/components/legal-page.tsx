@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Container } from "@/components/ui/container";
+import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
 
 export type LegalSection = { heading: string; body: string[] };
 
@@ -9,12 +10,15 @@ export function LegalPage({
   updated,
   intro,
   sections,
+  locale = DEFAULT_LOCALE,
 }: {
   title: string;
   updated: string;
   intro: string;
   sections: LegalSection[];
+  locale?: Locale;
 }) {
+  const t = makeUI(locale);
   return (
     <main className="relative min-h-screen bg-background">
       <div className="pointer-events-none absolute left-1/2 top-0 h-64 w-[60%] -translate-x-1/2 rounded-full bg-primary/5 blur-[140px]" />
@@ -25,13 +29,13 @@ export function LegalPage({
             className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
             <ArrowLeft className="h-4 w-4" />
-            Back to home
+            {t("legal.backToHome")}
           </Link>
 
           <h1 className="mt-8 text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
             {title}
           </h1>
-          <p className="mt-3 text-sm text-muted-foreground">Updated: {updated}</p>
+          <p className="mt-3 text-sm text-muted-foreground">{t("legal.updated")} {updated}</p>
           <p className="mt-6 text-base leading-relaxed text-foreground">{intro}</p>
 
           <div className="mt-10 space-y-8">
@@ -50,8 +54,7 @@ export function LegalPage({
           </div>
 
           <p className="mt-12 rounded-xl border border-border bg-muted/40 p-4 text-xs text-muted-foreground">
-            This policy is effective as of the date listed above. We reserve the right to modify
-            these terms at any time. Continued use constitutes acceptance of changes.
+            {t("legal.effectiveNotice")}
           </p>
         </article>
       </Container>

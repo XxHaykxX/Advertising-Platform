@@ -7,6 +7,8 @@ import { PartnersMarquee } from "@/components/partners-page/partners-marquee";
 import { PartnersGrid } from "@/components/partners-page/partners-grid";
 import { PartnersCta } from "@/components/partners-page/partners-cta";
 import { getPartners } from "@/lib/data/partners";
+import { getLocale } from "@/lib/data/locale";
+import { makeUI } from "@/lib/i18n";
 
 export const metadata = {
   title: "Partners — FP Placement",
@@ -15,11 +17,12 @@ export const metadata = {
 };
 
 export default async function PartnersPage() {
-  const partners = await getPartners();
+  const [partners, locale] = await Promise.all([getPartners(), getLocale()]);
+  const t = makeUI(locale);
 
   return (
     <>
-      <Header />
+      <Header locale={locale} />
       <main className="relative min-h-screen bg-background">
         {/* Intro */}
         <div className="border-b border-border/50 bg-gradient-to-b from-background to-background/50 py-12 sm:py-16">
@@ -27,12 +30,12 @@ export default async function PartnersPage() {
             <div className="mx-auto max-w-2xl text-center">
               <Reveal>
                 <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
-                  Our Partners
+                  {t("partners.title")}
                 </h1>
               </Reveal>
               <Reveal delay={0.1}>
                 <p className="mt-4 text-lg text-muted-foreground">
-                  Production studios and distribution networks building the FP Placement catalog.
+                  {t("partners.subtitle")}
                 </p>
               </Reveal>
             </div>
@@ -51,16 +54,16 @@ export default async function PartnersPage() {
           <Container>
             <div className="mb-12 text-center">
               <Reveal>
-                <h2 className="text-3xl font-bold md:text-4xl">Full Network</h2>
+                <h2 className="text-3xl font-bold md:text-4xl">{t("partners.fullNetwork")}</h2>
               </Reveal>
             </div>
             <PartnersGrid partners={partners} />
           </Container>
         </Section>
 
-        <PartnersCta />
+        <PartnersCta locale={locale} />
       </main>
-      <Footer />
+      <Footer locale={locale} />
     </>
   );
 }

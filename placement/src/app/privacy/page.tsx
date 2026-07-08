@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { LegalPage, type LegalSection } from "@/components/legal-page";
+import { getLocale } from "@/lib/data/locale";
+import { makeUI } from "@/lib/i18n";
 
 export const metadata: Metadata = {
   title: "Privacy Policy — FP Placement",
@@ -54,17 +56,20 @@ const privacySections: LegalSection[] = [
   },
 ];
 
-export default function PrivacyPage() {
+export default async function PrivacyPage() {
+  const locale = await getLocale();
+  const t = makeUI(locale);
   return (
     <>
-      <Header />
+      <Header locale={locale} />
       <LegalPage
-        title="Privacy Policy"
+        title={t("legal.privacyTitle")}
         updated="July 2026"
         intro="This Privacy Policy explains how FP Placement collects, uses, and protects your personal information. We are committed to transparency and compliance with applicable data protection laws. By using FP Placement, you agree to the practices outlined below."
         sections={privacySections}
+        locale={locale}
       />
-      <Footer />
+      <Footer locale={locale} />
     </>
   );
 }

@@ -3,15 +3,19 @@ import { Button } from "@/components/ui/button";
 import { ApplyDialog } from "@/components/apply-dialog";
 import { Reveal } from "@/components/ui/reveal";
 import { moneyShort } from "@/lib/data/format";
+import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
 import type { ProjectDetailDTO } from "@/lib/types";
 
 export function ExpressInterestBanner({
   project,
   className,
+  locale = DEFAULT_LOCALE,
 }: {
   project: Pick<ProjectDetailDTO, "id" | "title">;
   className?: string;
+  locale?: Locale;
 }) {
+  const t = makeUI(locale);
   return (
     <div
       className={`flex flex-wrap items-center justify-between gap-4 rounded-xl border border-primary/20 bg-primary/5 px-5 py-4 ${className ?? ""}`}
@@ -19,15 +23,16 @@ export function ExpressInterestBanner({
       <div className="flex items-center gap-3">
         <Lock className="h-4 w-4 shrink-0 text-primary" />
         <p className="text-sm text-foreground">
-          Full details unlocked after mutual interest
+          {t("express.lockedNotice")}
         </p>
       </div>
       <ApplyDialog
         projectId={project.id}
         projectTitle={project.title}
+        locale={locale}
         trigger={
           <Button variant="primary" size="sm">
-            Express Interest
+            {t("btn.expressInterest")}
           </Button>
         }
       />
@@ -46,7 +51,14 @@ function MetricLabel({ children, tooltip }: { children: string; tooltip: string 
   );
 }
 
-export function RoiSnapshot({ project }: { project: ProjectDetailDTO }) {
+export function RoiSnapshot({
+  project,
+  locale = DEFAULT_LOCALE,
+}: {
+  project: ProjectDetailDTO;
+  locale?: Locale;
+}) {
+  const t = makeUI(locale);
   const uniqueTypes = new Set(project.opportunities.map((o) => o.category)).size;
 
   return (
@@ -56,7 +68,7 @@ export function RoiSnapshot({ project }: { project: ProjectDetailDTO }) {
           <div className="rounded-2xl border border-primary/20 bg-primary/5 p-6 md:p-8">
             <div className="flex items-center gap-2 text-sm font-semibold text-primary">
               <TrendingUp className="h-4 w-4" />
-              Estimated ROI Snapshot
+              {t("roi.title")}
             </div>
 
             <div className="mt-6 grid grid-cols-4 gap-6 max-sm:grid-cols-2">
@@ -64,42 +76,40 @@ export function RoiSnapshot({ project }: { project: ProjectDetailDTO }) {
                 <div className="text-2xl font-extrabold text-foreground">
                   {moneyShort(project.exposureTotal)}
                 </div>
-                <MetricLabel tooltip="Methodology: sum of estimated exposure value across all identified placement opportunities.">
-                  Estimated Exposure Value
+                <MetricLabel tooltip={t("roi.exposureTooltip")}>
+                  {t("roi.exposureValue")}
                 </MetricLabel>
               </div>
               <div>
                 <div className="text-2xl font-extrabold text-foreground">{project.projViews}</div>
-                <MetricLabel tooltip="Methodology: modeled viewership derived from format, genre, and audience benchmarks.">
-                  Projected Viewers
+                <MetricLabel tooltip={t("roi.projectedViewersTooltip")}>
+                  {t("roi.projectedViewers")}
                 </MetricLabel>
               </div>
               <div>
                 <div className="text-2xl font-extrabold text-foreground">{project.cpmRange}</div>
-                <MetricLabel tooltip="Methodology: cost-per-thousand-impressions range benchmarked against comparable placements.">
-                  CPM
+                <MetricLabel tooltip={t("roi.cpmTooltip")}>
+                  {t("roi.cpm")}
                 </MetricLabel>
               </div>
               <div>
                 <div className="text-2xl font-extrabold text-foreground">
-                  {project.opportunitiesCount} <span className="text-base font-medium text-muted-foreground">across {uniqueTypes} types</span>
+                  {project.opportunitiesCount} <span className="text-base font-medium text-muted-foreground">{t("roi.acrossTypes", { n: uniqueTypes })}</span>
                 </div>
-                <MetricLabel tooltip="Methodology: distinct placement opportunities identified across scene-level script analysis.">
-                  Placements
+                <MetricLabel tooltip={t("roi.placementsTooltip")}>
+                  {t("roi.placements")}
                 </MetricLabel>
               </div>
             </div>
 
             <p className="mt-6 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-              This project offers {moneyShort(project.exposureTotal)} in estimated brand exposure
-              across {project.opportunitiesCount} scene-level placement opportunities, with pricing
-              benchmarked against comparable format, genre, and audience profiles.
+              {t("roi.summary", { value: moneyShort(project.exposureTotal), count: project.opportunitiesCount })}
             </p>
             <p className="mt-2 text-xs text-muted-foreground">
-              Projections powered by industry benchmark data.
+              {t("roi.poweredBy")}
             </p>
 
-            <ExpressInterestBanner project={project} className="mt-6" />
+            <ExpressInterestBanner project={project} className="mt-6" locale={locale} />
           </div>
         </Reveal>
       </div>

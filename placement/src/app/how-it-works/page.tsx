@@ -6,6 +6,8 @@ import { Section } from "@/components/ui/section";
 import { Container } from "@/components/ui/container";
 import { Reveal } from "@/components/ui/reveal";
 import { Button } from "@/components/ui/button";
+import { getLocale } from "@/lib/data/locale";
+import { makeUI } from "@/lib/i18n";
 
 export const metadata: Metadata = {
   title: "How It Works — FP Placement",
@@ -15,80 +17,42 @@ export const metadata: Metadata = {
 
 interface Step {
   number: number;
-  title: string;
-  description: string;
+  titleKey: string;
+  descKey: string;
 }
 
 const brandsSteps: Step[] = [
-  {
-    number: 1,
-    title: "Browse Catalog",
-    description:
-      "Explore available film and TV productions with placement opportunities. Browse anonymously until you're ready to express interest.",
-  },
-  {
-    number: 2,
-    title: "View Scene-Level Report",
-    description:
-      "Access detailed placement reports for each project, including scene descriptions, audience metrics, and brand safety scores.",
-  },
-  {
-    number: 3,
-    title: "Express Interest & Negotiate",
-    description:
-      "Submit placement requirements and budget details to filmmakers. Collaborate directly to craft authentic placements that fit your brand.",
-  },
-  {
-    number: 4,
-    title: "Close the Deal",
-    description:
-      "Finalize placement agreements with transparent terms. Platform fee only applies when deals close — no upfront costs.",
-  },
+  { number: 1, titleKey: "hiw.brand1Title", descKey: "hiw.brand1Desc" },
+  { number: 2, titleKey: "hiw.brand2Title", descKey: "hiw.brand2Desc" },
+  { number: 3, titleKey: "hiw.brand3Title", descKey: "hiw.brand3Desc" },
+  { number: 4, titleKey: "hiw.brand4Title", descKey: "hiw.brand4Desc" },
 ];
 
 const filmmakerSteps: Step[] = [
-  {
-    number: 1,
-    title: "Register as Publisher",
-    description:
-      "Create your filmmaker profile and verify your credentials. Unlock access to brand partnerships and funding opportunities.",
-  },
-  {
-    number: 2,
-    title: "List Project & Placement Opportunities",
-    description:
-      "Upload your screenplay and clearly mark placement opportunities. Share details about target audience and creative requirements.",
-  },
-  {
-    number: 3,
-    title: "Receive Brand Applications",
-    description:
-      "Browse incoming applications from brands interested in your project. Review their requirements and negotiate placement terms.",
-  },
-  {
-    number: 4,
-    title: "Get Funded",
-    description:
-      "Close deals and unlock additional production funding through brand partnerships. Maintain creative control throughout the process.",
-  },
+  { number: 1, titleKey: "hiw.film1Title", descKey: "hiw.film1Desc" },
+  { number: 2, titleKey: "hiw.film2Title", descKey: "hiw.film2Desc" },
+  { number: 3, titleKey: "hiw.film3Title", descKey: "hiw.film3Desc" },
+  { number: 4, titleKey: "hiw.film4Title", descKey: "hiw.film4Desc" },
 ];
 
-export default function HowItWorksPage() {
+export default async function HowItWorksPage() {
+  const locale = await getLocale();
+  const t = makeUI(locale);
+
   return (
     <>
-      <Header />
+      <Header locale={locale} />
 
       {/* Hero section */}
       <Section className="border-b border-border">
         <Container>
           <div className="mx-auto max-w-3xl text-center">
             <Reveal>
-              <h1 className="text-5xl font-bold md:text-6xl">How It Works</h1>
+              <h1 className="text-5xl font-bold md:text-6xl">{t("hiw.heroTitle")}</h1>
             </Reveal>
             <Reveal delay={0.1}>
               <p className="mt-6 text-lg text-muted-foreground">
-                FP Placement connects brands with filmmakers through a transparent, fair process.
-                Discover how to get started in just four simple steps.
+                {t("hiw.heroSubtitle")}
               </p>
             </Reveal>
           </div>
@@ -102,11 +66,11 @@ export default function HowItWorksPage() {
             {/* For Brands */}
             <div>
               <Reveal>
-                <h2 className="text-2xl font-bold text-foreground">For Brands</h2>
+                <h2 className="text-2xl font-bold text-foreground">{t("hiw.forBrandsTitle")}</h2>
               </Reveal>
               <Reveal delay={0.1}>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Find authentic placement opportunities in premium film and TV productions.
+                  {t("hiw.forBrandsSubtitle")}
                 </p>
               </Reveal>
 
@@ -118,8 +82,8 @@ export default function HowItWorksPage() {
                         {step.number}
                       </div>
                       <div>
-                        <h3 className="text-lg font-semibold text-foreground">{step.title}</h3>
-                        <p className="mt-2 text-sm text-muted-foreground">{step.description}</p>
+                        <h3 className="text-lg font-semibold text-foreground">{t(step.titleKey)}</h3>
+                        <p className="mt-2 text-sm text-muted-foreground">{t(step.descKey)}</p>
                       </div>
                     </div>
                   </Reveal>
@@ -130,11 +94,11 @@ export default function HowItWorksPage() {
             {/* For Filmmakers */}
             <div>
               <Reveal>
-                <h2 className="text-2xl font-bold text-foreground">For Filmmakers</h2>
+                <h2 className="text-2xl font-bold text-foreground">{t("hiw.forFilmmakersTitle")}</h2>
               </Reveal>
               <Reveal delay={0.1}>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Unlock funding opportunities by monetizing placement in your projects.
+                  {t("hiw.forFilmmakersSubtitle")}
                 </p>
               </Reveal>
 
@@ -146,8 +110,8 @@ export default function HowItWorksPage() {
                         {step.number}
                       </div>
                       <div>
-                        <h3 className="text-lg font-semibold text-foreground">{step.title}</h3>
-                        <p className="mt-2 text-sm text-muted-foreground">{step.description}</p>
+                        <h3 className="text-lg font-semibold text-foreground">{t(step.titleKey)}</h3>
+                        <p className="mt-2 text-sm text-muted-foreground">{t(step.descKey)}</p>
                       </div>
                     </div>
                   </Reveal>
@@ -164,18 +128,17 @@ export default function HowItWorksPage() {
           <div className="mx-auto max-w-2xl">
             <Reveal>
               <div className="rounded-2xl border border-primary/20 bg-primary/5 px-8 py-12 text-center">
-                <h2 className="text-2xl font-bold text-foreground">Fair Deals. Authentic Placements.</h2>
+                <h2 className="text-2xl font-bold text-foreground">{t("hiw.trustTitle")}</h2>
                 <p className="mt-4 text-muted-foreground">
-                  FP Placement is built on transparency and trust. No hidden fees for brands, creative control
-                  for filmmakers, and platform fees only when deals close.
+                  {t("hiw.trustBody")}
                 </p>
 
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
                   <Button asChild variant="primary" size="md">
-                    <Link href="/catalog">Browse Projects</Link>
+                    <Link href="/catalog">{t("btn.browseProjects")}</Link>
                   </Button>
                   <Button asChild variant="ghost" size="md">
-                    <Link href="/register">Register as Publisher</Link>
+                    <Link href="/register">{t("btn.registerAsPublisher")}</Link>
                   </Button>
                 </div>
               </div>
@@ -184,7 +147,7 @@ export default function HowItWorksPage() {
         </Container>
       </Section>
 
-      <Footer />
+      <Footer locale={locale} />
     </>
   );
 }

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ApplyDialog } from "@/components/apply-dialog";
 import { Reveal } from "@/components/ui/reveal";
 import { formatFullDate, formatMonthYear, parseStringArray } from "@/lib/data/format";
+import { DEFAULT_LOCALE, intlLocale, makeUI, type Locale } from "@/lib/i18n";
 import type { ProjectDetailDTO } from "@/lib/types";
 
 function Fact({
@@ -26,15 +27,22 @@ function Fact({
   );
 }
 
-export function KeyFacts({ project }: { project: ProjectDetailDTO }) {
+export function KeyFacts({
+  project,
+  locale = DEFAULT_LOCALE,
+}: {
+  project: ProjectDetailDTO;
+  locale?: Locale;
+}) {
+  const t = makeUI(locale);
   const platforms = parseStringArray(project.platforms);
   const available = Math.max(0, project.slotsTotal - project.slotsTaken);
   const pct =
     project.slotsTotal > 0
       ? Math.min(100, Math.round((project.slotsTaken / project.slotsTotal) * 100))
       : 0;
-  const release = formatMonthYear(project.releaseDate);
-  const deadline = formatFullDate(project.applicationDeadline);
+  const release = formatMonthYear(project.releaseDate, intlLocale(locale));
+  const deadline = formatFullDate(project.applicationDeadline, intlLocale(locale));
 
   return (
     <section className="pb-4">
@@ -45,10 +53,10 @@ export function KeyFacts({ project }: { project: ProjectDetailDTO }) {
               <div>
                 <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                   <Ticket className="h-3.5 w-3.5" />
-                  Placement Slots
+                  {t("keyFacts.placementSlots")}
                 </div>
                 <div className="mt-1.5 text-sm font-semibold text-foreground">
-                  {available} of {project.slotsTotal} available
+                  {available} {t("keyFacts.available", { b: project.slotsTotal })}
                 </div>
                 <div className="mt-2 h-2 w-full max-w-[220px] overflow-hidden rounded-full bg-muted">
                   <div
@@ -59,27 +67,27 @@ export function KeyFacts({ project }: { project: ProjectDetailDTO }) {
               </div>
 
               {release ? (
-                <Fact icon={<CalendarDays className="h-3.5 w-3.5" />} label="Release" value={release} />
+                <Fact icon={<CalendarDays className="h-3.5 w-3.5" />} label={t("keyFacts.release")} value={release} />
               ) : null}
 
               {deadline ? (
                 <Fact
                   icon={<CalendarClock className="h-3.5 w-3.5" />}
-                  label="Application Deadline"
+                  label={t("keyFacts.applicationDeadline")}
                   value={deadline}
                 />
               ) : null}
 
               <Fact
                 icon={<DollarSign className="h-3.5 w-3.5" />}
-                label="Price"
-                value={project.priceNote ?? "On request"}
+                label={t("keyFacts.price")}
+                value={project.priceNote ?? t("keyFacts.onRequest")}
               />
 
               {platforms.length > 0 ? (
                 <div className="sm:col-span-2">
                   <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Platforms
+                    {t("keyFacts.platforms")}
                   </div>
                   <div className="mt-2 flex flex-wrap gap-1.5">
                     {platforms.map((p) => (
@@ -100,9 +108,10 @@ export function KeyFacts({ project }: { project: ProjectDetailDTO }) {
               <ApplyDialog
                 projectId={project.id}
                 projectTitle={project.title}
+                locale={locale}
                 trigger={
                   <Button variant="primary" size="lg" className="whitespace-nowrap">
-                    Express Interest
+                    {t("btn.expressInterest")}
                   </Button>
                 }
               />

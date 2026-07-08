@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { CheckCircle, Loader2, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { submitLead, type LeadState } from "@/lib/actions/leads";
+import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
 import type { ProjectListDTO } from "@/lib/types";
 
 const initialState: LeadState = { ok: false };
@@ -12,7 +13,14 @@ const fieldClass =
   "w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20";
 const labelClass = "mb-1.5 block text-sm font-semibold text-foreground";
 
-export function ContactForm({ projects }: { projects: ProjectListDTO[] }) {
+export function ContactForm({
+  projects,
+  locale = DEFAULT_LOCALE,
+}: {
+  projects: ProjectListDTO[];
+  locale?: Locale;
+}) {
+  const t = makeUI(locale);
   const [state, formAction, pending] = useActionState<LeadState, FormData>(
     submitLead,
     initialState,
@@ -21,9 +29,9 @@ export function ContactForm({ projects }: { projects: ProjectListDTO[] }) {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h2 className="mb-2 text-2xl font-bold text-foreground">Send us a Message</h2>
+        <h2 className="mb-2 text-2xl font-bold text-foreground">{t("contactPage.formTitle")}</h2>
         <p className="text-muted-foreground">
-          Tell us about your brand and placement goals. We'll review and get back to you shortly.
+          {t("contactPage.formSubtitle")}
         </p>
       </div>
 
@@ -31,28 +39,28 @@ export function ContactForm({ projects }: { projects: ProjectListDTO[] }) {
         <div className="flex flex-col items-center gap-4 rounded-2xl border border-border bg-card p-10 text-center card-lift">
           <CheckCircle className="h-12 w-12 text-success" />
           <p className="text-lg font-semibold text-foreground">
-            Thanks — we'll get back to you shortly.
+            {t("contactPage.thanks")}
           </p>
           <p className="text-sm text-muted-foreground">
-            Check your email for confirmation.
+            {t("contactPage.thanksSubtitle")}
           </p>
         </div>
       ) : (
         <form action={formAction} className="space-y-5 rounded-2xl border border-border bg-card p-8 card-lift">
           <label className="block">
-            <span className={labelClass}>Name</span>
+            <span className={labelClass}>{t("form.name")}</span>
             <input
               name="name"
               type="text"
               autoComplete="name"
               defaultValue={state.values?.name}
-              placeholder="Your name"
+              placeholder={t("form.namePlaceholder")}
               className={fieldClass}
             />
           </label>
 
           <label className="block">
-            <span className={labelClass}>Email</span>
+            <span className={labelClass}>{t("form.email")}</span>
             <input
               name="email"
               type="email"
@@ -64,13 +72,13 @@ export function ContactForm({ projects }: { projects: ProjectListDTO[] }) {
           </label>
 
           <label className="block">
-            <span className={labelClass}>Project (Optional)</span>
+            <span className={labelClass}>{t("contactPage.projectOptional")}</span>
             <select
               name="projectTitle"
               className={fieldClass}
               defaultValue=""
             >
-              <option value="">Select a project...</option>
+              <option value="">{t("contactPage.selectProject")}</option>
               {projects.map((project) => (
                 <option key={project.id} value={project.title}>
                   {project.title}
@@ -80,12 +88,12 @@ export function ContactForm({ projects }: { projects: ProjectListDTO[] }) {
           </label>
 
           <label className="block">
-            <span className={labelClass}>Message</span>
+            <span className={labelClass}>{t("form.message")}</span>
             <textarea
               name="message"
               rows={5}
               defaultValue={state.values?.message}
-              placeholder="Tell us about your brand, goals, and any specific projects or placements you're interested in…"
+              placeholder={t("contactPage.messagePlaceholder")}
               className={`${fieldClass} resize-none`}
             />
           </label>
@@ -104,18 +112,18 @@ export function ContactForm({ projects }: { projects: ProjectListDTO[] }) {
             {pending ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Sending…
+                {t("btn.sending")}
               </>
             ) : (
               <>
                 <Send className="h-4 w-4" />
-                Send Message
+                {t("form.send")}
               </>
             )}
           </Button>
 
           <p className="text-xs text-muted-foreground text-center">
-            We'll review your message and respond to your email within 24 hours.
+            {t("contactPage.respondNote")}
           </p>
         </form>
       )}

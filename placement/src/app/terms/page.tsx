@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { LegalPage, type LegalSection } from "@/components/legal-page";
+import { getLocale } from "@/lib/data/locale";
+import { makeUI } from "@/lib/i18n";
 
 export const metadata: Metadata = {
   title: "Terms of Service — FP Placement",
@@ -54,17 +56,20 @@ const termsSections: LegalSection[] = [
   },
 ];
 
-export default function TermsPage() {
+export default async function TermsPage() {
+  const locale = await getLocale();
+  const t = makeUI(locale);
   return (
     <>
-      <Header />
+      <Header locale={locale} />
       <LegalPage
-        title="Terms of Service"
+        title={t("legal.termsTitle")}
         updated="July 2026"
         intro="These Terms of Service govern your access to and use of FP Placement, our website, mobile applications, and services. By accessing or using FP Placement, you agree to be bound by these Terms. If you do not agree, you may not use the platform. Please read carefully."
         sections={termsSections}
+        locale={locale}
       />
-      <Footer />
+      <Footer locale={locale} />
     </>
   );
 }

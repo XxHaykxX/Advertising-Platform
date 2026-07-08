@@ -9,6 +9,7 @@ import { Gauge } from "@/components/ui/gauge";
 import { ScoreBar } from "@/components/ui/score-bar";
 import { Reveal } from "@/components/ui/reveal";
 import { moneyShort } from "@/lib/data/format";
+import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
 import type { ProjectDetailDTO } from "@/lib/types";
 import { OpportunityItem } from "./opportunity-item";
 import { ExpressInterestBanner } from "./roi-snapshot";
@@ -22,10 +23,10 @@ function safetyColor(score: number) {
   return "text-danger";
 }
 
-function verdict(score: number) {
-  if (score >= 80) return "Suitable";
-  if (score >= 60) return "Needs Review";
-  return "High Risk";
+function verdict(score: number, t: (key: string) => string) {
+  if (score >= 80) return t("deepDive.suitable");
+  if (score >= 60) return t("deepDive.needsReview");
+  return t("deepDive.highRisk");
 }
 
 function formatScreenTime(totalSec: number) {
@@ -80,7 +81,14 @@ function AccordionItem({ title, isOpen, onToggle, children }: AccordionItemProps
   );
 }
 
-export function DeepDive({ project }: { project: ProjectDetailDTO }) {
+export function DeepDive({
+  project,
+  locale = DEFAULT_LOCALE,
+}: {
+  project: ProjectDetailDTO;
+  locale?: Locale;
+}) {
+  const t = makeUI(locale);
   const [openId, setOpenId] = useState<string | null>("opportunities");
   const [showAllOpps, setShowAllOpps] = useState(false);
   const [showGarm, setShowGarm] = useState(false);
@@ -91,28 +99,28 @@ export function DeepDive({ project }: { project: ProjectDetailDTO }) {
   const uniqueScenes = new Set(project.opportunities.map((o) => o.sceneNo)).size;
   const totalScreenTime = project.opportunities.reduce((sum, o) => sum + o.durationSec, 0);
   const risks = project.safetyCats.filter((cat) => cat.score < 80);
-  const safetyLabel = verdict(project.safetyScore);
+  const safetyLabel = verdict(project.safetyScore, t);
   const safetyClass = safetyColor(project.safetyScore);
 
   return (
     <section id="more" className="py-10">
       <div className="mx-auto w-full max-w-[1200px] px-6 max-sm:px-4">
         <Reveal>
-          <h2 className="text-2xl font-bold text-foreground">Deep Dive</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Explore detailed analysis and data</p>
+          <h2 className="text-2xl font-bold text-foreground">{t("deepDive.title")}</h2>
+          <p className="mt-1 text-sm text-muted-foreground">{t("deepDive.subtitle")}</p>
         </Reveal>
 
         <div className="mt-6 flex flex-col gap-3">
           <Reveal delay={0.05}>
             <AccordionItem
-              title={`All Placement Opportunities (${project.opportunitiesCount})`}
+              title={t("deepDive.allOpportunities", { n: project.opportunitiesCount })}
               isOpen={openId === "opportunities"}
               onToggle={() => toggle("opportunities")}
             >
               <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                <AccentBadge>Category Exclusive</AccentBadge>
+                <AccentBadge>{t("deepDive.categoryExclusive")}</AccentBadge>
                 <span className="text-sm text-muted-foreground">
-                  Total Est. Exposure{" "}
+                  {t("deepDive.totalExposure")}{" "}
                   <span className="font-semibold text-foreground">
                     {moneyShort(project.exposureTotal)}
                   </span>
@@ -128,11 +136,13 @@ export function DeepDive({ project }: { project: ProjectDetailDTO }) {
               {project.opportunities.length > 4 ? (
                 <div className="mt-4 flex items-center justify-center gap-3">
                   <span className="text-sm text-muted-foreground">
-                    Showing {showAllOpps ? project.opportunities.length : 4} of{" "}
-                    {project.opportunities.length}
+                    {t("deepDive.showing", {
+                      shown: showAllOpps ? project.opportunities.length : 4,
+                      total: project.opportunities.length,
+                    })}
                   </span>
                   <Button variant="secondary" size="sm" onClick={() => setShowAllOpps((v) => !v)}>
-                    {showAllOpps ? "Show Less" : "Show All"}
+                    {showAllOpps ? t("btn.showLess") : t("btn.showAll")}
                   </Button>
                 </div>
               ) : null}
@@ -141,29 +151,29 @@ export function DeepDive({ project }: { project: ProjectDetailDTO }) {
 
           <Reveal delay={0.08}>
             <AccordionItem
-              title="Audience Psychographics"
+              title={t("deepDive.psychographicsTitle")}
               isOpen={openId === "psychographics"}
               onToggle={() => toggle("psychographics")}
             >
               <p className="text-sm text-muted-foreground">
-                No data available for this report.
+                {t("deepDive.noData")}
               </p>
             </AccordionItem>
           </Reveal>
 
           <Reveal delay={0.11}>
             <AccordionItem
-              title="Value Alignment Details"
+              title={t("deepDive.valueAlignmentTitle")}
               isOpen={openId === "value-alignment"}
               onToggle={() => toggle("value-alignment")}
             >
-              <ExpressInterestBanner project={project} />
+              <ExpressInterestBanner project={project} locale={locale} />
             </AccordionItem>
           </Reveal>
 
           <Reveal delay={0.14}>
             <AccordionItem
-              title="Project Signals"
+              title={t("deepDive.signalsTitle")}
               isOpen={openId === "signals"}
               onToggle={() => toggle("signals")}
             >
@@ -172,21 +182,21 @@ export function DeepDive({ project }: { project: ProjectDetailDTO }) {
                   <div className="text-lg font-bold text-foreground">
                     {project.opportunitiesCount}
                   </div>
-                  <div className="text-xs text-muted-foreground">Placements</div>
+                  <div className="text-xs text-muted-foreground">{t("deepDive.placements")}</div>
                 </div>
                 <div>
                   <div className="text-lg font-bold text-foreground">{uniqueScenes}</div>
-                  <div className="text-xs text-muted-foreground">Unique scenes</div>
+                  <div className="text-xs text-muted-foreground">{t("deepDive.uniqueScenes")}</div>
                 </div>
                 <div>
                   <div className="text-lg font-bold text-foreground">
                     {formatScreenTime(totalScreenTime)}
                   </div>
-                  <div className="text-xs text-muted-foreground">Total screen time</div>
+                  <div className="text-xs text-muted-foreground">{t("deepDive.totalScreenTime")}</div>
                 </div>
                 <div>
                   <div className="text-lg font-bold text-foreground">Q2 2026</div>
-                  <div className="text-xs text-muted-foreground">Analysis date</div>
+                  <div className="text-xs text-muted-foreground">{t("deepDive.analysisDate")}</div>
                 </div>
               </div>
             </AccordionItem>
@@ -194,7 +204,7 @@ export function DeepDive({ project }: { project: ProjectDetailDTO }) {
 
           <Reveal delay={0.17}>
             <AccordionItem
-              title="Full Safety Analysis"
+              title={t("deepDive.fullSafetyTitle")}
               isOpen={openId === "full-safety"}
               onToggle={() => toggle("full-safety")}
             >
@@ -206,8 +216,7 @@ export function DeepDive({ project }: { project: ProjectDetailDTO }) {
                     {safetyLabel} <span className="text-sm font-normal text-muted-foreground">({project.safetyScore}/100)</span>
                   </div>
                   <p className="mt-1 text-sm text-muted-foreground">
-                    No significant brand-safety blockers identified. Cleared for most brand
-                    partnerships pending full script review.
+                    {t("deepDive.clearedNote")}
                   </p>
                 </div>
               </div>
@@ -218,7 +227,7 @@ export function DeepDive({ project }: { project: ProjectDetailDTO }) {
                 className="mt-4 flex w-full items-center justify-between rounded-lg border border-border px-4 py-3 text-sm font-medium text-foreground"
                 aria-expanded={showGarm}
               >
-                View detailed GARM category breakdown ({project.safetyCats.length} categories)
+                {t("deepDive.viewGarmBreakdown", { n: project.safetyCats.length })}
                 <ChevronDown
                   className={`h-4 w-4 shrink-0 transition-transform duration-300 ${showGarm ? "rotate-180" : ""}`}
                 />
@@ -233,7 +242,7 @@ export function DeepDive({ project }: { project: ProjectDetailDTO }) {
 
               {risks.length > 0 ? (
                 <div className="mt-5">
-                  <h4 className="text-sm font-semibold text-foreground">Potential Risks</h4>
+                  <h4 className="text-sm font-semibold text-foreground">{t("deepDive.potentialRisks")}</h4>
                   <ul className="mt-2 space-y-1.5">
                     {risks.map((cat) => (
                       <li key={cat.name} className="text-sm text-muted-foreground">
@@ -246,16 +255,16 @@ export function DeepDive({ project }: { project: ProjectDetailDTO }) {
               ) : null}
 
               <div className="mt-5">
-                <h4 className="text-sm font-semibold text-foreground">Recommendations</h4>
+                <h4 className="text-sm font-semibold text-foreground">{t("deepDive.recommendations")}</h4>
                 <ul className="mt-2 list-disc space-y-1.5 pl-5 text-sm text-muted-foreground">
-                  <li>Review the full script before finalizing any brand deal.</li>
-                  <li>Coordinate scene-level approval with the production&apos;s legal team.</li>
-                  <li>Monitor edits during post-production for late content changes.</li>
+                  <li>{t("deepDive.rec1")}</li>
+                  <li>{t("deepDive.rec2")}</li>
+                  <li>{t("deepDive.rec3")}</li>
                 </ul>
               </div>
 
               <div className="mt-5 flex flex-wrap items-center gap-2">
-                <span className="text-sm font-medium text-foreground">Recommended for:</span>
+                <span className="text-sm font-medium text-foreground">{t("deepDive.recommendedFor")}</span>
                 {RECOMMENDED_FOR.map((tag) => (
                   <span
                     key={tag}
@@ -266,7 +275,7 @@ export function DeepDive({ project }: { project: ProjectDetailDTO }) {
                 ))}
               </div>
               <div className="mt-2 flex flex-wrap items-center gap-2">
-                <span className="text-sm font-medium text-foreground">Use caution with:</span>
+                <span className="text-sm font-medium text-foreground">{t("deepDive.useCautionWith")}</span>
                 {USE_CAUTION_WITH.map((tag) => (
                   <span
                     key={tag}

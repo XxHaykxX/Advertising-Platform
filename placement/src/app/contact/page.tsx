@@ -3,6 +3,8 @@ import { Footer } from "@/components/footer";
 import { ContactForm } from "@/components/contact-page/contact-form";
 import { ContactMethods } from "@/components/contact-page/contact-methods";
 import { getProjects } from "@/lib/data/projects";
+import { getLocale } from "@/lib/data/locale";
+import { makeUI } from "@/lib/i18n";
 
 export const metadata = {
   title: "Contact — FP Placement",
@@ -10,11 +12,12 @@ export const metadata = {
 };
 
 export default async function ContactPage() {
-  const projects = await getProjects();
+  const [projects, locale] = await Promise.all([getProjects(), getLocale()]);
+  const t = makeUI(locale);
 
   return (
     <>
-      <Header />
+      <Header locale={locale} />
       <main className="relative min-h-screen bg-background">
         {/* Subtle decorative background */}
         <div className="pointer-events-none fixed inset-0 overflow-hidden">
@@ -28,10 +31,10 @@ export default async function ContactPage() {
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
               <div className="mx-auto max-w-2xl text-center">
                 <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
-                  Get in Touch
+                  {t("contactPage.title")}
                 </h1>
                 <p className="mt-4 text-lg text-muted-foreground">
-                  Have a project or brand in mind? Let's talk about your placement opportunities.
+                  {t("contactPage.subtitle")}
                 </p>
               </div>
             </div>
@@ -41,15 +44,15 @@ export default async function ContactPage() {
           <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
             <div className="grid gap-12 lg:grid-cols-2">
               {/* Left: Contact Methods */}
-              <ContactMethods />
+              <ContactMethods locale={locale} />
 
               {/* Right: Contact Form */}
-              <ContactForm projects={projects} />
+              <ContactForm projects={projects} locale={locale} />
             </div>
           </div>
         </div>
       </main>
-      <Footer />
+      <Footer locale={locale} />
     </>
   );
 }

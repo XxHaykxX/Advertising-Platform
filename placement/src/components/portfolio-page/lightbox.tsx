@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, Film, X } from "lucide-react";
+import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
 import type { PortfolioDTO } from "@/lib/types";
 import { formatMetricLabel, parseMetrics } from "./metrics";
 
@@ -12,12 +13,15 @@ export function CaseLightbox({
   activeIndex,
   onClose,
   onNavigate,
+  locale = DEFAULT_LOCALE,
 }: {
   cases: PortfolioDTO[];
   activeIndex: number | null;
   onClose: () => void;
   onNavigate: (index: number) => void;
+  locale?: Locale;
 }) {
+  const t = makeUI(locale);
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -62,7 +66,7 @@ export function CaseLightbox({
           >
             <button
               onClick={onClose}
-              aria-label="Close"
+              aria-label={t("btn.close")}
               className="absolute right-4 top-4 z-10 grid h-9 w-9 place-items-center rounded-full bg-card/90 text-foreground shadow-sm transition-colors hover:bg-muted"
             >
               <X className="h-5 w-5" />
@@ -97,14 +101,14 @@ export function CaseLightbox({
                 <>
                   <button
                     onClick={() => onNavigate((activeIndex - 1 + cases.length) % cases.length)}
-                    aria-label="Previous case"
+                    aria-label={t("portfolio.previousCase")}
                     className="absolute left-3 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-card/90 text-foreground shadow-sm transition-colors hover:bg-muted"
                   >
                     <ChevronLeft className="h-5 w-5" />
                   </button>
                   <button
                     onClick={() => onNavigate((activeIndex + 1) % cases.length)}
-                    aria-label="Next case"
+                    aria-label={t("portfolio.nextCase")}
                     className="absolute right-3 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-full bg-card/90 text-foreground shadow-sm transition-colors hover:bg-muted"
                   >
                     <ChevronRight className="h-5 w-5" />

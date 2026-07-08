@@ -3,17 +3,25 @@
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Container } from "@/components/ui/container";
+import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
 
 const BASE_TABS = [
-  { id: "overview", label: "Overview" },
-  { id: "cast", label: "Cast" },
-  { id: "safety", label: "Safety" },
-  { id: "investment", label: "Investment" },
-  { id: "more", label: "More" },
+  { id: "overview", labelKey: "report.tabs.overview" },
+  { id: "cast", labelKey: "report.tabs.cast" },
+  { id: "safety", labelKey: "report.tabs.safety" },
+  { id: "investment", labelKey: "report.tabs.investment" },
+  { id: "more", labelKey: "report.tabs.more" },
 ] as const;
 
-export function ReportTabs({ hasCast = true }: { hasCast?: boolean }) {
-  const TABS = hasCast ? BASE_TABS : BASE_TABS.filter((t) => t.id !== "cast");
+export function ReportTabs({
+  hasCast = true,
+  locale = DEFAULT_LOCALE,
+}: {
+  hasCast?: boolean;
+  locale?: Locale;
+}) {
+  const t = makeUI(locale);
+  const TABS = hasCast ? BASE_TABS : BASE_TABS.filter((tab) => tab.id !== "cast");
   const [active, setActive] = useState<string>("overview");
 
   useEffect(() => {
@@ -52,7 +60,7 @@ export function ReportTabs({ hasCast = true }: { hasCast?: boolean }) {
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
-              {tab.label}
+              {t(tab.labelKey)}
             </a>
           ))}
         </nav>

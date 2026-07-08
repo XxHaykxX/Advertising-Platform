@@ -21,6 +21,7 @@ import { ApplyDialog } from "@/components/apply-dialog";
 import { Footer } from "@/components/footer";
 import { daysUntil, formatFullDate, splitCountries } from "@/lib/data/format";
 import { cn } from "@/lib/utils";
+import { DEFAULT_LOCALE, intlLocale, makeUI, type Locale } from "@/lib/i18n";
 import type { ProjectListDTO } from "@/lib/types";
 
 type Gender = "All" | "Male" | "Female";
@@ -44,7 +45,8 @@ function parseViews(v: string): number {
   return num;
 }
 
-function ProjectRow({ project }: { project: ProjectListDTO }) {
+function ProjectRow({ project, locale = DEFAULT_LOCALE }: { project: ProjectListDTO; locale?: Locale }) {
+  const t = makeUI(locale);
   const countries = splitCountries(project.countries);
   const slotsLeft = Math.max(project.slotsTotal - project.slotsTaken, 0);
   const deadlineDays = daysUntil(project.applicationDeadline);
@@ -80,10 +82,12 @@ function ProjectRow({ project }: { project: ProjectListDTO }) {
           <span>{project.format}</span>
           <span>{countries.slice(0, 3).join(", ")}</span>
           <span>{project.audienceGender}, {project.audienceAge}</span>
-          <span className="text-primary">{project.opportunitiesCount} opportunities</span>
+          <span className="text-primary">{project.opportunitiesCount} {t("card.opportunities")}</span>
           <span>{project.budgetRange}</span>
-          <span>{project.projViews} projected views</span>
-          {project.slotsTotal > 0 ? <span>{slotsLeft} of {project.slotsTotal} slots</span> : null}
+          <span>{project.projViews} {t("card.projectedViews")}</span>
+          {project.slotsTotal > 0 ? (
+            <span>{slotsLeft} {t("card.slotsShort", { b: project.slotsTotal })}</span>
+          ) : null}
           {project.applicationDeadline ? (
             <span
               className={cn(
@@ -92,7 +96,7 @@ function ProjectRow({ project }: { project: ProjectListDTO }) {
               )}
             >
               <Clock className="h-3 w-3 shrink-0" />
-              Until {formatFullDate(project.applicationDeadline)}
+              {t("catalog.until")} {formatFullDate(project.applicationDeadline, intlLocale(locale))}
             </span>
           ) : null}
         </div>
@@ -100,14 +104,15 @@ function ProjectRow({ project }: { project: ProjectListDTO }) {
 
       <div className="flex shrink-0 gap-3">
         <Button asChild variant="primary" size="sm">
-          <Link href={`/reports/${project.id}`}>View Report</Link>
+          <Link href={`/reports/${project.id}`}>{t("btn.viewReport")}</Link>
         </Button>
         <ApplyDialog
           projectId={project.id}
           projectTitle={project.title}
+          locale={locale}
           trigger={
             <Button variant="ghost" size="sm">
-              Request details
+              {t("btn.requestDetails")}
             </Button>
           }
         />
@@ -116,7 +121,7 @@ function ProjectRow({ project }: { project: ProjectListDTO }) {
   );
 }
 
-function StubFilter({ label }: { label: string }) {
+function StubFilter({ label, comingSoon }: { label: string; comingSoon: string }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="border-t border-border py-4">
@@ -129,13 +134,20 @@ function StubFilter({ label }: { label: string }) {
         {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
       </button>
       {open ? (
-        <p className="mt-3 text-xs text-muted-foreground">Coming soon.</p>
+        <p className="mt-3 text-xs text-muted-foreground">{comingSoon}</p>
       ) : null}
     </div>
   );
 }
 
-export function CatalogView({ projects }: { projects: ProjectListDTO[] }) {
+export function CatalogView({
+  projects,
+  locale = DEFAULT_LOCALE,
+}: {
+  projects: ProjectListDTO[];
+  locale?: Locale;
+}) {
+  const t = makeUI(locale);
   const genres = useMemo(
     () => Array.from(new Set(projects.map((p) => p.genre))).sort(),
     [projects],
@@ -223,10 +235,10 @@ export function CatalogView({ projects }: { projects: ProjectListDTO[] }) {
               href="/login"
               className="rounded-xl px-4 py-2 font-semibold text-foreground transition-colors hover:bg-muted"
             >
-              Sign In
+              {t("catalog.signIn")}
             </Link>
             <Button asChild variant="primary" size="sm">
-              <Link href="/register?redirect=/catalog">Register</Link>
+              <Link href="/register?redirect=/catalog">{t("catalog.register")}</Link>
             </Button>
           </div>
         </Container>
@@ -235,7 +247,7 @@ export function CatalogView({ projects }: { projects: ProjectListDTO[] }) {
       <Container className="pt-6">
         <div className="mb-8 flex items-center gap-2 rounded-xl border border-border bg-muted/60 px-4 py-3 text-sm text-muted-foreground">
           <ShieldCheck className="h-4 w-4 shrink-0 text-primary" />
-          Reports are anonymized until mutual interest is confirmed
+          {t("catalog.anonymizedNotice")}
         </div>
       </Container>
 
@@ -244,11 +256,11 @@ export function CatalogView({ projects }: { projects: ProjectListDTO[] }) {
           {/* Sidebar filters */}
           <aside>
             <h2 className="mb-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
-              Filters
+              {t("catalog.filters")}
             </h2>
 
             <div className="border-t border-border py-4">
-              <h3 className="mb-3 text-sm font-semibold text-foreground">Genre</h3>
+              <h3 className="mb-3 text-sm font-semibold text-foreground">{t("catalog.genre")}</h3>
               <div className="flex flex-col gap-2.5">
                 {genres.map((g) => (
                   <label key={g} className="flex items-center gap-2 text-sm text-foreground">
@@ -265,9 +277,9 @@ export function CatalogView({ projects }: { projects: ProjectListDTO[] }) {
             </div>
 
             <div className="border-t border-border py-4">
-              <h3 className="mb-1 text-sm font-semibold text-foreground">Target Audience</h3>
+              <h3 className="mb-1 text-sm font-semibold text-foreground">{t("catalog.targetAudience")}</h3>
               <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Gender
+                {t("catalog.gender")}
               </p>
               <div className="inline-flex rounded-xl border border-border bg-muted p-1">
                 {(["All", "Male", "Female"] as Gender[]).map((g) => (
@@ -282,19 +294,19 @@ export function CatalogView({ projects }: { projects: ProjectListDTO[] }) {
                         : "text-muted-foreground hover:text-foreground",
                     )}
                   >
-                    {g}
+                    {g === "All" ? t("catalog.genderAll") : g === "Male" ? t("catalog.genderMale") : t("catalog.genderFemale")}
                   </button>
                 ))}
               </div>
             </div>
 
             <div className="border-t border-border py-4">
-              <h3 className="mb-3 text-sm font-semibold text-foreground">Budget Range</h3>
+              <h3 className="mb-3 text-sm font-semibold text-foreground">{t("catalog.budgetRange")}</h3>
               <div className="flex items-center gap-2">
                 <input
                   type="number"
                   inputMode="numeric"
-                  placeholder="Min"
+                  placeholder={t("catalog.min")}
                   value={budgetMin}
                   onChange={(e) => setBudgetMin(e.target.value)}
                   className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
@@ -303,7 +315,7 @@ export function CatalogView({ projects }: { projects: ProjectListDTO[] }) {
                 <input
                   type="number"
                   inputMode="numeric"
-                  placeholder="Max"
+                  placeholder={t("catalog.max")}
                   value={budgetMax}
                   onChange={(e) => setBudgetMax(e.target.value)}
                   className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
@@ -311,11 +323,11 @@ export function CatalogView({ projects }: { projects: ProjectListDTO[] }) {
               </div>
             </div>
 
-            <StubFilter label="Product Category" />
+            <StubFilter label={t("catalog.productCategory")} comingSoon={t("catalog.comingSoon")} />
 
             <div className="border-t border-border py-4">
               <div className="mb-1 flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-foreground">Brand Safety</h3>
+                <h3 className="text-sm font-semibold text-foreground">{t("catalog.brandSafety")}</h3>
               </div>
               <label className="mt-2 flex items-center gap-2.5 text-sm text-foreground">
                 <button
@@ -335,11 +347,11 @@ export function CatalogView({ projects }: { projects: ProjectListDTO[] }) {
                     )}
                   />
                 </button>
-                Safe only <span className="text-muted-foreground">(80+)</span>
+                {t("catalog.safeOnly")} <span className="text-muted-foreground">(80+)</span>
               </label>
             </div>
 
-            <StubFilter label="Status" />
+            <StubFilter label={t("catalog.status")} comingSoon={t("catalog.comingSoon")} />
 
             <div className="pt-4">
               <button
@@ -348,7 +360,7 @@ export function CatalogView({ projects }: { projects: ProjectListDTO[] }) {
                 disabled={!hasFilters}
                 className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
               >
-                Clear All
+                {t("catalog.clearAll")}
               </button>
             </div>
           </aside>
@@ -362,7 +374,7 @@ export function CatalogView({ projects }: { projects: ProjectListDTO[] }) {
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search by genre, market, keyword…"
+                  placeholder={t("catalog.searchPlaceholder")}
                   className="w-full rounded-xl border border-border bg-card py-2.5 pl-10 pr-4 text-sm text-foreground outline-none focus:border-primary"
                 />
               </div>
@@ -372,16 +384,16 @@ export function CatalogView({ projects }: { projects: ProjectListDTO[] }) {
                 onChange={(e) => setSort(e.target.value as SortKey)}
                 className="rounded-xl border border-border bg-card px-3 py-2.5 text-sm text-foreground outline-none focus:border-primary"
               >
-                <option value="relevant">Most relevant</option>
-                <option value="views">Views</option>
-                <option value="budget">Budget</option>
-                <option value="safety">Safety</option>
+                <option value="relevant">{t("catalog.sortMostRelevant")}</option>
+                <option value="views">{t("catalog.sortViews")}</option>
+                <option value="budget">{t("catalog.sortBudget")}</option>
+                <option value="safety">{t("catalog.sortSafety")}</option>
               </select>
 
               <div className="inline-flex rounded-xl border border-border bg-card p-1">
                 <button
                   type="button"
-                  aria-label="Grid view"
+                  aria-label={t("catalog.gridView")}
                   onClick={() => setView("grid")}
                   className={cn(
                     "grid h-8 w-8 place-items-center rounded-lg",
@@ -392,7 +404,7 @@ export function CatalogView({ projects }: { projects: ProjectListDTO[] }) {
                 </button>
                 <button
                   type="button"
-                  aria-label="List view"
+                  aria-label={t("catalog.listView")}
                   onClick={() => setView("list")}
                   className={cn(
                     "grid h-8 w-8 place-items-center rounded-lg",
@@ -405,24 +417,25 @@ export function CatalogView({ projects }: { projects: ProjectListDTO[] }) {
             </div>
 
             <p className="mb-4 text-sm text-muted-foreground">
-              Showing <span className="font-semibold text-foreground">{filtered.length}</span>{" "}
-              {filtered.length === 1 ? "project" : "projects"}
+              {t("catalog.showingProjectsPrefix")}{" "}
+              <span className="font-semibold text-foreground">{filtered.length}</span>{" "}
+              {filtered.length === 1 ? t("catalog.projectSingular") : t("catalog.projectPlural")}
             </p>
 
             {filtered.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-border p-16 text-center text-muted-foreground">
-                No projects match your filters.
+                {t("catalog.noResults")}
               </div>
             ) : view === "grid" ? (
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
                 {filtered.map((project) => (
-                  <ProjectCard key={project.id} project={project} />
+                  <ProjectCard key={project.id} project={project} locale={locale} />
                 ))}
               </div>
             ) : (
               <div className="flex flex-col gap-4">
                 {filtered.map((project) => (
-                  <ProjectRow key={project.id} project={project} />
+                  <ProjectRow key={project.id} project={project} locale={locale} />
                 ))}
               </div>
             )}
@@ -430,7 +443,7 @@ export function CatalogView({ projects }: { projects: ProjectListDTO[] }) {
         </div>
       </Container>
 
-      <Footer />
+      <Footer locale={locale} />
     </>
   );
 }

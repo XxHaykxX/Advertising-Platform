@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getPortfolio } from "@/lib/data/portfolio";
+import { getLocale } from "@/lib/data/locale";
 import { PortfolioView } from "@/components/portfolio-page/portfolio-view";
 import { PortfolioJsonLd } from "@/components/portfolio-page/portfolio-json-ld";
 
@@ -10,12 +11,12 @@ export const metadata: Metadata = {
 };
 
 export default async function PortfolioPage() {
-  const cases = await getPortfolio();
+  const [cases, locale] = await Promise.all([getPortfolio(), getLocale()]);
 
   return (
     <>
       <PortfolioJsonLd cases={cases} />
-      <PortfolioView cases={cases} />
+      <PortfolioView cases={cases} locale={locale} />
     </>
   );
 }

@@ -453,6 +453,8 @@ export const UI: Record<string, Dict> = {
     en: "Explore active productions currently accepting brand placement applications.",
     hy: "Ուսումնասիրեք ակտիվ նախագծերը, որոնք այժմ ընդունում են բրենդային տեղադրման հայտեր։",
   },
+  "portfolio.previousCase": { ru: "Предыдущий кейс", en: "Previous case", hy: "Նախորդ դեպքը" },
+  "portfolio.nextCase": { ru: "Следующий кейс", en: "Next case", hy: "Հաջորդ դեպքը" },
 
   // ── partners page ──────────────────────────────
   "partners.title": { ru: "Наши партнёры", en: "Our Partners", hy: "Մեր գործընկերները" },

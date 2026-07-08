@@ -7,16 +7,24 @@ import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
+import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
 import type { PortfolioDTO } from "@/lib/types";
 import { CaseCard } from "./case-card";
 import { CaseLightbox } from "./lightbox";
 
-export function PortfolioView({ cases }: { cases: PortfolioDTO[] }) {
+export function PortfolioView({
+  cases,
+  locale = DEFAULT_LOCALE,
+}: {
+  cases: PortfolioDTO[];
+  locale?: Locale;
+}) {
+  const t = makeUI(locale);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   return (
     <>
-      <Header />
+      <Header locale={locale} />
 
       <main className="bg-background">
         <div className="border-b border-border bg-gradient-to-b from-muted/60 to-background py-16 sm:py-20">
@@ -30,7 +38,7 @@ export function PortfolioView({ cases }: { cases: PortfolioDTO[] }) {
                 className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-primary"
               >
                 <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-                Portfolio
+                {t("portfolio.eyebrow")}
               </motion.span>
               <motion.h1
                 initial={{ opacity: 0, y: 20 }}
@@ -39,7 +47,7 @@ export function PortfolioView({ cases }: { cases: PortfolioDTO[] }) {
                 transition={{ duration: 0.6, delay: 0.05 }}
                 className="mt-5 text-4xl font-bold tracking-tight text-foreground sm:text-5xl"
               >
-                Case Studies
+                {t("portfolio.title")}
               </motion.h1>
               <motion.p
                 initial={{ opacity: 0, y: 20 }}
@@ -48,8 +56,7 @@ export function PortfolioView({ cases }: { cases: PortfolioDTO[] }) {
                 transition={{ duration: 0.6, delay: 0.1 }}
                 className="mt-4 text-base text-muted-foreground sm:text-lg"
               >
-                Real brand placements, real results — a look at campaigns delivered across
-                our film and TV catalog.
+                {t("portfolio.subtitle")}
               </motion.p>
             </div>
           </Container>
@@ -58,7 +65,7 @@ export function PortfolioView({ cases }: { cases: PortfolioDTO[] }) {
         <Container className="py-16 sm:py-20">
           {cases.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-border p-16 text-center text-muted-foreground">
-              No case studies yet — check back soon.
+              {t("portfolio.empty")}
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
@@ -72,25 +79,26 @@ export function PortfolioView({ cases }: { cases: PortfolioDTO[] }) {
         <div className="border-t border-border bg-section">
           <Container className="flex flex-col items-center gap-5 py-16 text-center sm:py-20">
             <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-              Want results like these for your brand?
+              {t("portfolio.ctaTitle")}
             </h2>
             <p className="max-w-xl text-sm text-muted-foreground sm:text-base">
-              Explore active productions currently accepting brand placement applications.
+              {t("portfolio.ctaBody")}
             </p>
             <Button asChild variant="primary" size="lg">
-              <Link href="/catalog">Browse current projects</Link>
+              <Link href="/catalog">{t("btn.browseCurrentProjects")}</Link>
             </Button>
           </Container>
         </div>
       </main>
 
-      <Footer />
+      <Footer locale={locale} />
 
       <CaseLightbox
         cases={cases}
         activeIndex={activeIndex}
         onClose={() => setActiveIndex(null)}
         onNavigate={setActiveIndex}
+        locale={locale}
       />
     </>
   );
