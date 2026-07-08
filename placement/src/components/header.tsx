@@ -78,10 +78,8 @@ export function Header({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
-                  onDark
-                    ? "text-white/75 hover:bg-white/10 hover:text-white"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors hover:bg-primary/10 hover:text-primary",
+                  onDark ? "text-white/75" : "text-muted-foreground"
                 )}
               >
                 {item.label}
@@ -100,7 +98,7 @@ export function Header({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
                   rel={item.href.startsWith("http") ? "noopener noreferrer" : undefined}
                   aria-label={item.label}
                   className={cn(
-                    "grid h-9 w-9 place-items-center rounded-xl transition-colors hover:bg-primary hover:text-primary-foreground",
+                    "grid h-9 w-9 place-items-center rounded-xl transition-colors hover:bg-primary/10 hover:text-primary",
                     onDark ? "text-white/75" : "text-muted-foreground"
                   )}
                 >
@@ -158,7 +156,7 @@ export function Header({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
                   key={item.href}
                   href={item.href}
                   onClick={() => setMenuOpen(false)}
-                  className="rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  className="rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
                 >
                   {item.label}
                 </Link>
@@ -171,7 +169,7 @@ export function Header({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
                     target={item.href.startsWith("http") ? "_blank" : undefined}
                     rel={item.href.startsWith("http") ? "noopener noreferrer" : undefined}
                     aria-label={item.label}
-                    className="grid h-10 w-10 place-items-center rounded-xl text-muted-foreground transition-colors hover:bg-primary hover:text-primary-foreground"
+                    className="grid h-10 w-10 place-items-center rounded-xl text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
                   >
                     <item.icon className="h-4 w-4" />
                   </a>

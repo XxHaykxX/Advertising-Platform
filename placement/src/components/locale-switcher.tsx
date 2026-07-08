@@ -69,7 +69,7 @@ export function LocaleSwitcher({
         aria-expanded={open}
         aria-label="Language"
         className={cn(
-          "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold uppercase transition-colors hover:bg-primary hover:text-primary-foreground disabled:cursor-not-allowed disabled:opacity-70",
+          "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold uppercase transition-colors hover:bg-primary/10 hover:text-primary disabled:cursor-not-allowed disabled:opacity-70",
           onDark ? "bg-white/10 text-white" : "bg-muted text-foreground"
         )}
       >

@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Mail, MessageCircle, Phone, Send, Video } from "lucide-react";
+import { Mail, Phone } from "lucide-react";
+import { TelegramIcon, WhatsAppIcon, YouTubeIcon } from "@/components/brand-icons";
 import { Container } from "@/components/ui/container";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
@@ -7,14 +8,14 @@ import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
 const CONTACTS = [
   { icon: Mail, label: "hello@igovazd.am", href: "mailto:hello@igovazd.am" },
   { icon: Phone, label: "+374 00 000 000", href: "tel:+37400000000" },
-  { icon: Send, label: "@igovazd", href: "https://t.me/igovazd" },
-  { icon: MessageCircle, label: "+374 00 000 000", href: "https://wa.me/37400000000" },
+  { icon: TelegramIcon, label: "@igovazd", href: "https://t.me/igovazd" },
+  { icon: WhatsAppIcon, label: "+374 00 000 000", href: "https://wa.me/37400000000" },
 ] as const;
 
 const SOCIALS = [
-  { icon: Send, label: "Telegram", href: "https://t.me/igovazd" },
-  { icon: MessageCircle, label: "WhatsApp", href: "https://wa.me/37400000000" },
-  { icon: Video, label: "YouTube", href: "https://youtube.com/@kinodaran" },
+  { icon: TelegramIcon, label: "Telegram", href: "https://t.me/igovazd" },
+  { icon: WhatsAppIcon, label: "WhatsApp", href: "https://wa.me/37400000000" },
+  { icon: YouTubeIcon, label: "YouTube", href: "https://youtube.com/@kinodaran" },
 ] as const;
 
 /** Footer is rendered per-page by a server component (no shared root layout
@@ -50,7 +51,7 @@ export function Footer({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
               <li>
                 <Link
                   href="/catalog"
-                  className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                  className="text-sm text-muted-foreground transition-colors hover:text-primary"
                 >
                   {t("footer.browseProjects")}
                 </Link>
@@ -58,7 +59,7 @@ export function Footer({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
               <li>
                 <Link
                   href="/how-it-works"
-                  className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                  className="text-sm text-muted-foreground transition-colors hover:text-primary"
                 >
                   {t("footer.howItWorks")}
                 </Link>
@@ -66,7 +67,7 @@ export function Footer({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
               <li>
                 <Link
                   href="/portfolio"
-                  className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                  className="text-sm text-muted-foreground transition-colors hover:text-primary"
                 >
                   {t("footer.portfolio")}
                 </Link>
@@ -74,7 +75,7 @@ export function Footer({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
               <li>
                 <Link
                   href="/partners"
-                  className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                  className="text-sm text-muted-foreground transition-colors hover:text-primary"
                 >
                   {t("footer.partners")}
                 </Link>
@@ -82,7 +83,7 @@ export function Footer({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
               <li>
                 <Link
                   href="/#faq"
-                  className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                  className="text-sm text-muted-foreground transition-colors hover:text-primary"
                 >
                   {t("footer.faq")}
                 </Link>
@@ -99,7 +100,7 @@ export function Footer({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
               <li>
                 <Link
                   href="/#about"
-                  className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                  className="text-sm text-muted-foreground transition-colors hover:text-primary"
                 >
                   {t("footer.about")}
                 </Link>
@@ -107,7 +108,7 @@ export function Footer({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
               <li>
                 <Link
                   href="/contact"
-                  className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                  className="text-sm text-muted-foreground transition-colors hover:text-primary"
                 >
                   {t("footer.contact")}
                 </Link>
@@ -124,7 +125,7 @@ export function Footer({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
               <li>
                 <Link
                   href="/terms"
-                  className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                  className="text-sm text-muted-foreground transition-colors hover:text-primary"
                 >
                   {t("footer.terms")}
                 </Link>
@@ -132,7 +133,7 @@ export function Footer({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
               <li>
                 <Link
                   href="/privacy"
-                  className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                  className="text-sm text-muted-foreground transition-colors hover:text-primary"
                 >
                   {t("footer.privacy")}
                 </Link>
@@ -152,7 +153,7 @@ export function Footer({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
                     href={item.href}
                     target={item.href.startsWith("http") ? "_blank" : undefined}
                     rel={item.href.startsWith("http") ? "noopener noreferrer" : undefined}
-                    className="flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                    className="flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-primary"
                   >
                     <item.icon className="h-4 w-4 shrink-0" />
                     <span className="break-all">{item.label}</span>
@@ -174,7 +175,7 @@ export function Footer({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
               className="text-muted-foreground transition-colors hover:text-primary"
               aria-label={item.label}
             >
-              <item.icon size={20} />
+              <item.icon className="h-5 w-5" />
             </a>
           ))}
         </div>
