@@ -1,4 +1,5 @@
 import "server-only";
+import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import type { ProjectListDTO, ProjectDetailDTO } from "@/lib/types";
 import type { Locale } from "@/lib/i18n";
@@ -66,12 +67,23 @@ function localizeCountries(locale: Locale, countries: string): string {
     .join(", ");
 }
 
-export async function getProjects(
-  locale: Locale,
-  currency: CurrencyCode,
-  activeOnly = true,
-): Promise<ProjectListDTO[]> {
-  const rows = await prisma.project.findMany({
+// Cache DB-backed reads. On the shared host every uncached request opens a
+// Prisma connection + spins engine threads; caching keeps the DB pool (capped
+// at 2) idle between revalidations and makes pages fast, which is what keeps us
+// under the CloudLinux process limit under load. Output DTOs are already
+// JSON-safe (dates are ISO strings, everything else scalar), so the whole
+// mapped result caches cleanly. Cache key = keyParts + the (locale, currency,
+// activeOnly) args. Tagged `projects` so admin mutations can invalidate on
+// demand via revalidateTag("projects") instead of waiting out the window.
+const REVALIDATE_SECONDS = 300;
+
+const getProjectsCached = unstable_cache(
+  async (
+    locale: Locale,
+    currency: CurrencyCode,
+    activeOnly: boolean,
+  ): Promise<ProjectListDTO[]> => {
+    const rows = await prisma.project.findMany({
     where: activeOnly ? { isActive: true } : undefined,
     orderBy: { sortOrder: "asc" },
     include: { opportunities: { select: { category: true } } },
@@ -108,14 +120,26 @@ export async function getProjects(
         ? formatMoneyRange(p.priceMinAmd, p.priceMaxAmd, currency, rates, locale)
         : null,
   }));
-}
+  },
+  ["projects-list"],
+  { revalidate: REVALIDATE_SECONDS, tags: ["projects"] },
+);
 
-export async function getProject(
-  id: number,
+export async function getProjects(
   locale: Locale,
   currency: CurrencyCode,
-  activeOnly = false,
-): Promise<ProjectDetailDTO | null> {
+  activeOnly = true,
+): Promise<ProjectListDTO[]> {
+  return getProjectsCached(locale, currency, activeOnly);
+}
+
+const getProjectCached = unstable_cache(
+  async (
+    id: number,
+    locale: Locale,
+    currency: CurrencyCode,
+    activeOnly: boolean,
+  ): Promise<ProjectDetailDTO | null> => {
   const p = await prisma.project.findFirst({
     where: activeOnly ? { id, isActive: true } : { id },
     include: {
@@ -173,6 +197,18 @@ export async function getProject(
         : null,
     actors: p.actors.map((a) => ({ id: a.id, name: a.name, role: a.role })),
   };
+  },
+  ["project-detail"],
+  { revalidate: REVALIDATE_SECONDS, tags: ["projects"] },
+);
+
+export async function getProject(
+  id: number,
+  locale: Locale,
+  currency: CurrencyCode,
+  activeOnly = false,
+): Promise<ProjectDetailDTO | null> {
+  return getProjectCached(id, locale, currency, activeOnly);
 }
 
 export async function getProjectIds(): Promise<number[]> {

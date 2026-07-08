@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect, notFound } from "next/navigation";
 import { Prisma } from "@prisma/client";
 import type { ProjectStatus } from "@prisma/client";
@@ -177,6 +177,12 @@ function validate(data: ProjectFormValues): string | null {
 }
 
 function revalidateProjectPaths(id?: number) {
+  // Drop the cached DB reads in src/lib/data/projects.ts (tagged "projects") so
+  // an admin edit is visible immediately instead of after the revalidate window.
+  // `{ expire: 0 }` expires the tag now (blocking revalidate on next request) —
+  // the Next 16 two-arg replacement for the deprecated single-arg call, and the
+  // behavior we want here so a publisher sees their save reflected right away.
+  revalidateTag("projects", { expire: 0 });
   revalidatePath("/admin/projects");
   revalidatePath("/");
   revalidatePath("/catalog");
