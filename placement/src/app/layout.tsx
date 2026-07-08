@@ -9,9 +9,11 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://fpplacement.com"),
   title: "FP Placement — Brand Placement Marketplace",
   description:
     "Discover and place your brand in film and TV productions — scene-level safety, transparent pricing, direct access to filmmakers.",
+  alternates: { canonical: "/" },
 };
 
 export default function RootLayout({

@@ -1,4 +1,5 @@
 import { Header } from "@/components/header";
+import { OrganizationJsonLd } from "@/components/organization-json-ld";
 import { Hero } from "@/components/hero";
 import { Stats } from "@/components/stats";
 import { Featured } from "@/components/featured";
@@ -17,6 +18,7 @@ export default async function Home() {
 
   return (
     <>
+      <OrganizationJsonLd />
       <Header locale={locale} />
       <main>
         <Hero locale={locale} />

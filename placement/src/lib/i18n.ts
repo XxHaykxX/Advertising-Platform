@@ -112,7 +112,6 @@ export const UI: Record<string, Dict> = {
   "catalog.min": { ru: "Мин", en: "Min", hy: "Նվազ." },
   "catalog.max": { ru: "Макс", en: "Max", hy: "Առավ." },
   "catalog.productCategory": { ru: "Категория продукта", en: "Product Category", hy: "Ապրանքի կատեգորիա" },
-  "catalog.comingSoon": { ru: "Скоро.", en: "Coming soon.", hy: "Շուտով։" },
   "catalog.brandSafety": { ru: "Безопасность бренда", en: "Brand Safety", hy: "Բրենդի անվտանգություն" },
   "catalog.safeOnly": { ru: "Только безопасные", en: "Safe only", hy: "Միայն անվտանգ" },
   "catalog.status": { ru: "Статус", en: "Status", hy: "Կարգավիճակ" },

@@ -35,7 +35,9 @@ export interface ProjectListDTO {
   budgetRange: string;
   safety: BrandSafetyLevel;
   safetyScore: number;
+  status: string;
   opportunitiesCount: number;
+  productCategories: string[];
   slotsTotal: number;
   slotsTaken: number;
   applicationDeadline: string | null;

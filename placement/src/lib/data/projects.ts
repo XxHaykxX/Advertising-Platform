@@ -6,7 +6,7 @@ export async function getProjects(activeOnly = true): Promise<ProjectListDTO[]> 
   const rows = await prisma.project.findMany({
     where: activeOnly ? { isActive: true } : undefined,
     orderBy: { sortOrder: "asc" },
-    include: { _count: { select: { opportunities: true } } },
+    include: { opportunities: { select: { category: true } } },
   });
   return rows.map((p) => ({
     id: p.id,
@@ -24,7 +24,9 @@ export async function getProjects(activeOnly = true): Promise<ProjectListDTO[]> 
     budgetRange: p.budgetRange,
     safety: p.safety,
     safetyScore: p.safetyScore,
-    opportunitiesCount: p._count.opportunities,
+    status: p.status,
+    opportunitiesCount: p.opportunities.length,
+    productCategories: Array.from(new Set(p.opportunities.map((o) => o.category))).sort(),
     slotsTotal: p.slotsTotal,
     slotsTaken: p.slotsTaken,
     applicationDeadline: p.applicationDeadline?.toISOString() ?? null,
@@ -81,6 +83,7 @@ export async function getProject(id: number, activeOnly = false): Promise<Projec
     })),
     exposureTotal,
     opportunitiesCount: p.opportunities.length,
+    productCategories: Array.from(new Set(p.opportunities.map((o) => o.category))).sort(),
     slotsTotal: p.slotsTotal,
     slotsTaken: p.slotsTaken,
     applicationDeadline: p.applicationDeadline?.toISOString() ?? null,

@@ -14,6 +14,7 @@ export const metadata = {
   title: "Partners — FP Placement",
   description:
     "The production studios and distribution networks that trust FP Placement to connect their projects with brand partners.",
+  alternates: { canonical: "/partners" },
 };
 
 export default async function PartnersPage() {

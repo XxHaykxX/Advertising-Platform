@@ -121,8 +121,20 @@ function ProjectRow({ project, locale = DEFAULT_LOCALE }: { project: ProjectList
   );
 }
 
-function StubFilter({ label, comingSoon }: { label: string; comingSoon: string }) {
-  const [open, setOpen] = useState(false);
+function CheckboxFilter({
+  label,
+  options,
+  selected,
+  onToggle,
+  defaultOpen = true,
+}: {
+  label: string;
+  options: { value: string; label: string }[];
+  selected: string[];
+  onToggle: (value: string) => void;
+  defaultOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
   return (
     <div className="border-t border-border py-4">
       <button
@@ -134,7 +146,19 @@ function StubFilter({ label, comingSoon }: { label: string; comingSoon: string }
         {open ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
       </button>
       {open ? (
-        <p className="mt-3 text-xs text-muted-foreground">{comingSoon}</p>
+        <div className="mt-3 flex flex-col gap-2.5">
+          {options.map((o) => (
+            <label key={o.value} className="flex items-center gap-2 text-sm text-foreground">
+              <input
+                type="checkbox"
+                checked={selected.includes(o.value)}
+                onChange={() => onToggle(o.value)}
+                className="h-4 w-4 rounded border-border accent-primary"
+              />
+              {o.label}
+            </label>
+          ))}
+        </div>
       ) : null}
     </div>
   );
@@ -152,8 +176,22 @@ export function CatalogView({
     () => Array.from(new Set(projects.map((p) => p.genre))).sort(),
     [projects],
   );
+  const categories = useMemo(
+    () => Array.from(new Set(projects.flatMap((p) => p.productCategories))).sort(),
+    [projects],
+  );
+  const statuses = useMemo(
+    () => Array.from(new Set(projects.map((p) => p.status))).sort(),
+    [projects],
+  );
+  const statusOptions = useMemo(
+    () => statuses.map((s) => ({ value: s, label: t(`report.status.${s}`) })),
+    [statuses, t],
+  );
 
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [gender, setGender] = useState<Gender>("All");
   const [budgetMin, setBudgetMin] = useState("");
   const [budgetMax, setBudgetMax] = useState("");
@@ -164,6 +202,8 @@ export function CatalogView({
 
   const hasFilters =
     selectedGenres.length > 0 ||
+    selectedCategories.length > 0 ||
+    selectedStatuses.length > 0 ||
     gender !== "All" ||
     budgetMin !== "" ||
     budgetMax !== "" ||
@@ -172,6 +212,8 @@ export function CatalogView({
 
   const clearAll = () => {
     setSelectedGenres([]);
+    setSelectedCategories([]);
+    setSelectedStatuses([]);
     setGender("All");
     setBudgetMin("");
     setBudgetMax("");
@@ -183,6 +225,14 @@ export function CatalogView({
     setSelectedGenres((prev) => (prev.includes(g) ? prev.filter((x) => x !== g) : [...prev, g]));
   };
 
+  const toggleCategory = (c: string) => {
+    setSelectedCategories((prev) => (prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c]));
+  };
+
+  const toggleStatus = (s: string) => {
+    setSelectedStatuses((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]));
+  };
+
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
     const min = budgetMin ? Number(budgetMin) : null;
@@ -190,6 +240,12 @@ export function CatalogView({
 
     let list = projects.filter((p) => {
       if (selectedGenres.length > 0 && !selectedGenres.includes(p.genre)) return false;
+      if (
+        selectedCategories.length > 0 &&
+        !p.productCategories.some((c) => selectedCategories.includes(c))
+      )
+        return false;
+      if (selectedStatuses.length > 0 && !selectedStatuses.includes(p.status)) return false;
       if (gender !== "All" && p.audienceGender !== gender) return false;
       if (safeOnly && p.safetyScore < 80) return false;
 
@@ -220,7 +276,18 @@ export function CatalogView({
     }
 
     return list;
-  }, [projects, selectedGenres, gender, budgetMin, budgetMax, safeOnly, search, sort]);
+  }, [
+    projects,
+    selectedGenres,
+    selectedCategories,
+    selectedStatuses,
+    gender,
+    budgetMin,
+    budgetMax,
+    safeOnly,
+    search,
+    sort,
+  ]);
 
   return (
     <>
@@ -323,7 +390,12 @@ export function CatalogView({
               </div>
             </div>
 
-            <StubFilter label={t("catalog.productCategory")} comingSoon={t("catalog.comingSoon")} />
+            <CheckboxFilter
+              label={t("catalog.productCategory")}
+              options={categories.map((c) => ({ value: c, label: c }))}
+              selected={selectedCategories}
+              onToggle={toggleCategory}
+            />
 
             <div className="border-t border-border py-4">
               <div className="mb-1 flex items-center justify-between">
@@ -351,7 +423,12 @@ export function CatalogView({
               </label>
             </div>
 
-            <StubFilter label={t("catalog.status")} comingSoon={t("catalog.comingSoon")} />
+            <CheckboxFilter
+              label={t("catalog.status")}
+              options={statusOptions}
+              selected={selectedStatuses}
+              onToggle={toggleStatus}
+            />
 
             <div className="pt-4">
               <button

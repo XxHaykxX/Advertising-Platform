@@ -8,6 +8,7 @@ export const metadata: Metadata = {
   title: "Case Studies — FP Placement",
   description:
     "Real brand placements, real results — explore case studies from film and TV productions in the FP Placement catalog.",
+  alternates: { canonical: "/portfolio" },
 };
 
 export default async function PortfolioPage() {

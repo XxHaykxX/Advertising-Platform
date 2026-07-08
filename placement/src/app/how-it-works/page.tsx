@@ -13,6 +13,7 @@ export const metadata: Metadata = {
   title: "How It Works — FP Placement",
   description:
     "Explore how FP Placement connects brands with filmmakers. Browse projects anonymously, express interest, and close authentic placements.",
+  alternates: { canonical: "/how-it-works" },
 };
 
 interface Step {
