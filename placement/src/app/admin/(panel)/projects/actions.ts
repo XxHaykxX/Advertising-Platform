@@ -38,8 +38,14 @@ export type ProjectFormValues = {
 export type ProjectFormState = { error?: string; values?: ProjectFormValues };
 export type SubEditorState = { error?: string; ok?: boolean };
 
-function str(fd: FormData, key: string) {
-  return String(fd.get(key) || "").trim();
+// MySQL caps a plain (non-@db.Text) Prisma String column at VarChar(191);
+// anything longer throws an unhandled P2000 ("value too long"). Truncate at
+// the form-parsing boundary so a save always succeeds instead of 500ing.
+const VARCHAR_MAX = 191;
+
+function str(fd: FormData, key: string, maxLen?: number) {
+  const v = String(fd.get(key) || "").trim();
+  return maxLen ? v.slice(0, maxLen) : v;
 }
 function int(fd: FormData, key: string, fallback = 0) {
   const n = parseInt(String(fd.get(key) || ""), 10);
@@ -66,21 +72,21 @@ function jsonArray<T>(fd: FormData, key: string): T[] {
 
 function buildData(fd: FormData): ProjectFormValues {
   return {
-    title: str(fd, "title"),
-    code: str(fd, "code"),
-    genre: str(fd, "genre"),
+    title: str(fd, "title", VARCHAR_MAX),
+    code: str(fd, "code", VARCHAR_MAX),
+    genre: str(fd, "genre", VARCHAR_MAX),
     synopsis: str(fd, "synopsis"),
-    poster: str(fd, "poster"),
-    format: str(fd, "format"),
-    studio: str(fd, "studio"),
+    poster: str(fd, "poster", VARCHAR_MAX),
+    format: str(fd, "format", VARCHAR_MAX),
+    studio: str(fd, "studio", VARCHAR_MAX),
     status: enumVal(fd, "status", STATUS_VALUES, "PRE_PRODUCTION"),
-    releaseLabel: str(fd, "releaseLabel"),
-    countries: str(fd, "countries"),
+    releaseLabel: str(fd, "releaseLabel", VARCHAR_MAX),
+    countries: str(fd, "countries", VARCHAR_MAX),
     audienceGender: enumVal(fd, "audienceGender", GENDER_VALUES, "All"),
-    audienceAge: str(fd, "audienceAge"),
-    projViews: str(fd, "projViews"),
-    cpmRange: str(fd, "cpmRange"),
-    budgetRange: str(fd, "budgetRange"),
+    audienceAge: str(fd, "audienceAge", VARCHAR_MAX),
+    projViews: str(fd, "projViews", VARCHAR_MAX),
+    cpmRange: str(fd, "cpmRange", VARCHAR_MAX),
+    budgetRange: str(fd, "budgetRange", VARCHAR_MAX),
     safetyScore: clamp(int(fd, "safetyScore"), 0, 100),
     safety: enumVal(fd, "safety", SAFETY_VALUES, "REVIEW"),
     isActive: bool(fd, "isActive"),
@@ -267,7 +273,7 @@ export async function saveOpportunities(
     prisma.placementOpportunity.createMany({
       data: rows.map((r, i) => ({
         projectId,
-        sceneNo: Number(r.sceneNo) || 1,
+        sceneNo: Math.max(0, Number(r.sceneNo) || 1),
         description: (r.description || "").trim(),
         mood: (r.mood || "").trim(),
         rationale: (r.rationale || "").trim(),
@@ -276,8 +282,8 @@ export async function saveOpportunities(
           ? r.prominence
           : "background",
         category: (r.category || "").trim(),
-        estValue: Number(r.estValue) || 0,
-        durationSec: Number(r.durationSec) || 0,
+        estValue: Math.max(0, Number(r.estValue) || 0),
+        durationSec: Math.max(0, Number(r.durationSec) || 0),
         safety: clamp(Number(r.safety) || 0, 0, 100),
         sortOrder: i,
       })),

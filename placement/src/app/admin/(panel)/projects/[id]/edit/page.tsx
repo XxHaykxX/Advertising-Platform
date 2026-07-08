@@ -18,6 +18,7 @@ export default async function EditProjectPage({
 
   const { id } = await params;
   const pid = Number(id);
+  if (!Number.isInteger(pid)) notFound();
   const p = await prisma.project.findUnique({
     where: { id: pid },
     include: {
