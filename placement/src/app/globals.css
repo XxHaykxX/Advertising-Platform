@@ -55,3 +55,23 @@ html.lenis, html.lenis body { height: auto; }
 @media (prefers-reduced-motion: reduce) {
   .marquee-col { animation: none !important; }
 }
+
+/* horizontal marquee (partners logo slider) */
+@keyframes marquee-left {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@keyframes marquee-right {
+  from { transform: translateX(-50%); }
+  to { transform: translateX(0); }
+}
+.marquee-x {
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+.marquee-row:hover .marquee-x {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .marquee-x { animation: none !important; }
+}

@@ -46,6 +46,36 @@ export interface ProjectDetailDTO extends ProjectListDTO {
   safetyCats: SafetyCatDTO[];
   opportunities: OpportunityDTO[];
   exposureTotal: number;
+  slotsTotal: number;
+  slotsTaken: number;
+  applicationDeadline: string | null;
+  releaseDate: string | null;
+  platforms: string; // JSON string[]; parse with parseStringArray
+  placementType: string | null;
+  priceNote: string | null;
+  actors: ActorDTO[];
+}
+
+export interface ActorDTO {
+  id: number;
+  name: string;
+  role: string;
+}
+
+export interface PortfolioDTO {
+  id: number;
+  title: string;
+  brand: string;
+  description: string;
+  image: string | null;
+  metrics: string; // JSON object; parse on demand
+}
+
+export interface PartnerDTO {
+  id: number;
+  name: string;
+  logo: string | null;
+  url: string | null;
 }
 
 export interface ApplicationDTO {

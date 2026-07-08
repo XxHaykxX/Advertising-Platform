@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
-import { GARM_CATEGORIES, SEED_PROJECTS } from "./seed-data";
+import { GARM_CATEGORIES, SEED_PROJECTS, SEED_PORTFOLIO, SEED_PARTNERS } from "./seed-data";
 
 const prisma = new PrismaClient();
 
@@ -28,6 +28,9 @@ async function main() {
         audienceGender: p.audienceGender, audienceAge: p.audienceAge,
         projViews: p.projViews, cpmRange: p.cpmRange, budgetRange: p.budgetRange,
         safetyScore: p.safetyScore, safety: p.safety, sortOrder: i, ownerId: admin.id,
+        slotsTotal: p.slotsTotal, slotsTaken: p.slotsTaken,
+        applicationDeadline: new Date(p.applicationDeadline), releaseDate: new Date(p.releaseDate),
+        platforms: JSON.stringify(p.platforms), placementType: p.placementType, priceNote: p.priceNote,
         safetyCats: {
           create: GARM_CATEGORIES.map((name, idx) => ({
             name, score: p.catScores[idx] ?? 90, aiText: "", sortOrder: idx,
@@ -36,16 +39,40 @@ async function main() {
         opportunities: {
           create: p.opps.map((o, idx) => ({ ...o, sortOrder: idx })),
         },
+        actors: {
+          create: p.actors.map((a, idx) => ({ ...a, sortOrder: idx })),
+        },
       },
     });
   }
 
-  // 3. Settings (default locale)
+  // 3. Portfolio case studies
+  await prisma.portfolio.deleteMany();
+  for (const [i, c] of SEED_PORTFOLIO.entries()) {
+    await prisma.portfolio.create({
+      data: {
+        title: c.title, brand: c.brand, description: c.description,
+        image: c.image, metrics: JSON.stringify(c.metrics), sortOrder: i,
+      },
+    });
+  }
+
+  // 4. Partners
+  await prisma.partner.deleteMany();
+  for (const [i, p] of SEED_PARTNERS.entries()) {
+    await prisma.partner.create({
+      data: { name: p.name, logo: p.logo, url: p.url, sortOrder: i },
+    });
+  }
+
+  // 5. Settings (default locale)
   await prisma.setting.upsert({
     where: { key: "default_lang" }, update: {}, create: { key: "default_lang", value: "en" },
   });
 
-  console.log(`Seeded: admin + ${SEED_PROJECTS.length} projects`);
+  console.log(
+    `Seeded: admin + ${SEED_PROJECTS.length} projects + ${SEED_PORTFOLIO.length} portfolio cases + ${SEED_PARTNERS.length} partners`
+  );
 }
 
 main().then(() => prisma.$disconnect()).catch(async (e) => { console.error(e); await prisma.$disconnect(); process.exit(1); });

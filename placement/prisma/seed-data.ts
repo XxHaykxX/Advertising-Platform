@@ -44,6 +44,28 @@ type SeedProject = {
     durationSec: number;
     safety: number;
   }[];
+  slotsTotal: number;
+  slotsTaken: number;
+  applicationDeadline: string; // ISO date
+  releaseDate: string; // ISO date
+  platforms: string[];
+  placementType: "In-Frame" | "Story Integration" | "Mention";
+  priceNote: string;
+  actors: { name: string; role: string }[];
+};
+
+export type SeedPortfolio = {
+  title: string;
+  brand: string;
+  description: string;
+  image: string | null;
+  metrics: Record<string, string>;
+};
+
+export type SeedPartner = {
+  name: string;
+  logo: string | null;
+  url: string | null;
 };
 
 export const SEED_PROJECTS: SeedProject[] = [
@@ -125,6 +147,18 @@ export const SEED_PROJECTS: SeedProject[] = [
         safety: 95,
       },
     ],
+    slotsTotal: 6,
+    slotsTaken: 2,
+    applicationDeadline: "2026-08-15",
+    releaseDate: "2026-12-20",
+    platforms: ["YouTube", "Kinodaran"],
+    placementType: "In-Frame",
+    priceNote: "Price on request",
+    actors: [
+      { name: "Mia Sinclair", role: "Lead — Teen Influencer" },
+      { name: "Grant Okafor", role: "Talent Agent" },
+      { name: "Priya Anand", role: "Best Friend / Rival Creator" },
+    ],
   },
   {
     code: "#PP-2026-5657",
@@ -202,6 +236,18 @@ export const SEED_PROJECTS: SeedProject[] = [
         durationSec: 30,
         safety: 90,
       },
+    ],
+    slotsTotal: 8,
+    slotsTaken: 5,
+    applicationDeadline: "2026-07-30",
+    releaseDate: "2026-09-15",
+    platforms: ["Kinodaran", "TV"],
+    placementType: "Story Integration",
+    priceNote: "Price on request",
+    actors: [
+      { name: "Dr. Elena Foster", role: "Lead — Pediatric Oncologist" },
+      { name: "Caleb Whitmore", role: "Resident / Former Patient" },
+      { name: "Dr. Robert Nash", role: "Chief of Medicine" },
     ],
   },
   {
@@ -281,6 +327,18 @@ export const SEED_PROJECTS: SeedProject[] = [
         safety: 88,
       },
     ],
+    slotsTotal: 5,
+    slotsTaken: 3,
+    applicationDeadline: "2026-08-20",
+    releaseDate: "2026-11-10",
+    platforms: ["Kinodaran", "TV", "YouTube"],
+    placementType: "In-Frame",
+    priceNote: "Price on request",
+    actors: [
+      { name: "Dana Kowalski", role: "Lead — Behavioral Profiler" },
+      { name: "Marcus Reyes", role: "Detective Partner" },
+      { name: "Tom Kowalski", role: "Her Estranged Brother" },
+    ],
   },
   {
     code: "#PP-2026-9012",
@@ -358,6 +416,18 @@ export const SEED_PROJECTS: SeedProject[] = [
         durationSec: 45,
         safety: 92,
       },
+    ],
+    slotsTotal: 7,
+    slotsTaken: 1,
+    applicationDeadline: "2026-09-25",
+    releaseDate: "2026-12-28",
+    platforms: ["YouTube", "Kinodaran"],
+    placementType: "Story Integration",
+    priceNote: "Price on request",
+    actors: [
+      { name: "Captain Ilsa Voss", role: "Mission Commander" },
+      { name: "Theo Marsh", role: "Systems Engineer" },
+      { name: "ARIA", role: "Ship AI (voice)" },
     ],
   },
   {
@@ -437,6 +507,18 @@ export const SEED_PROJECTS: SeedProject[] = [
         safety: 100,
       },
     ],
+    slotsTotal: 4,
+    slotsTaken: 4,
+    applicationDeadline: "2026-07-25",
+    releaseDate: "2026-08-01",
+    platforms: ["Kinodaran", "YouTube"],
+    placementType: "Mention",
+    priceNote: "Price on request",
+    actors: [
+      { name: "Sofia Marchetti", role: "Lead — Food-Truck Chef" },
+      { name: "James Calloway", role: "Michelin Critic" },
+      { name: "Noor Haddad", role: "Sous Chef / Best Friend" },
+    ],
   },
   {
     code: "#PP-2026-7788",
@@ -515,5 +597,79 @@ export const SEED_PROJECTS: SeedProject[] = [
         safety: 88,
       },
     ],
+    slotsTotal: 6,
+    slotsTaken: 2,
+    applicationDeadline: "2026-09-10",
+    releaseDate: "2026-12-15",
+    platforms: ["Kinodaran", "TV"],
+    placementType: "In-Frame",
+    priceNote: "Price on request",
+    actors: [
+      { name: "Wade Calder", role: "Eldest Son" },
+      { name: "Ruth Calder", role: "Family Matriarch" },
+      { name: "Josie Calder", role: "Youngest Daughter" },
+    ],
   },
+];
+
+export const SEED_PORTFOLIO: SeedPortfolio[] = [
+  {
+    title: "Streaming Sneakers on the Fast Track",
+    brand: "Voltrun Athletics",
+    description:
+      "A hero sneaker drop was woven into three chase sequences of a top-10 microdrama, with the product visible in every close-up of the lead's morning run ritual.",
+    image: "/kino/frame-01.jpg",
+    metrics: { views: "2.1M", recall: "+38%", ctr: "4.2%" },
+  },
+  {
+    title: "Coffee Brand Becomes a Character Beat",
+    brand: "Ember Roasters",
+    description:
+      "A recurring café scene turned a mid-size coffee brand into a running visual motif across an entire medical-drama season, driving a measurable lift in local store visits.",
+    image: "/kino/frame-06.jpg",
+    metrics: { views: "1.6M", recall: "+29%", storeVisits: "+14%" },
+  },
+  {
+    title: "SUV Hero Shot in a Procedural Finale",
+    brand: "Ridgemont Motors",
+    description:
+      "A dawn stakeout sequence placed the client's flagship SUV at the center of a crime procedural's most-shared clip, generating outsized organic reach.",
+    image: "/kino/frame-12.jpg",
+    metrics: { views: "3.4M", recall: "+41%", shares: "58K" },
+  },
+  {
+    title: "Consumer Tech in a Sci-Fi World-Build",
+    brand: "Halcyon Devices",
+    description:
+      "Near-future console displays and comms hardware were designed around the client's real product line, embedding the brand into the show's futuristic identity.",
+    image: "/kino/frame-17.jpg",
+    metrics: { views: "2.8M", recall: "+33%", sentiment: "92% positive" },
+  },
+  {
+    title: "Espresso Machine Steals the Finale",
+    brand: "Marchetti Home",
+    description:
+      "A single appliance reveal at the emotional climax of a romance series became the most-replayed moment of the season, boosting brand search volume overnight.",
+    image: "/kino/frame-24.jpg",
+    metrics: { views: "1.9M", recall: "+35%", searchLift: "+62%" },
+  },
+  {
+    title: "Workwear Woven Into Family Legacy",
+    brand: "Ironclad Workwear",
+    description:
+      "Three generations of a ranching family wore the client's boots and denim across a full season, tying the brand to themes of heritage and durability.",
+    image: "/kino/frame-27.jpg",
+    metrics: { views: "1.3M", recall: "+27%", recallDurability: "+45%" },
+  },
+];
+
+export const SEED_PARTNERS: SeedPartner[] = [
+  { name: "Verita Vertical", logo: null, url: null },
+  { name: "Helix Stories", logo: null, url: null },
+  { name: "Echo Microdrama", logo: null, url: null },
+  { name: "Nova Frame", logo: null, url: null },
+  { name: "Amber Lane", logo: null, url: null },
+  { name: "Ridgeline", logo: null, url: null },
+  { name: "Kinodaran Studios", logo: null, url: null },
+  { name: "Prism Vertical Network", logo: null, url: null },
 ];

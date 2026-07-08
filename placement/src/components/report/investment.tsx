@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { BarChart3, Check, Download, Share2 } from "lucide-react";
 import { AccentBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ApplyDialog } from "@/components/apply-dialog";
 import { Reveal } from "@/components/ui/reveal";
 import type { ProjectDetailDTO } from "@/lib/types";
 
@@ -110,9 +110,15 @@ export function Investment({ project }: { project: ProjectDetailDTO }) {
                 <Share2 className="mr-1.5 h-4 w-4" />
                 Share
               </Button>
-              <Button asChild variant="primary" size="sm">
-                <Link href="/#contact">Express Interest</Link>
-              </Button>
+              <ApplyDialog
+                projectId={project.id}
+                projectTitle={project.title}
+                trigger={
+                  <Button variant="primary" size="sm">
+                    Express Interest
+                  </Button>
+                }
+              />
             </div>
           </div>
         </Reveal>

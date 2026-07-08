@@ -1,11 +1,17 @@
-import Link from "next/link";
 import { Info, Lock, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ApplyDialog } from "@/components/apply-dialog";
 import { Reveal } from "@/components/ui/reveal";
 import { moneyShort } from "@/lib/data/format";
 import type { ProjectDetailDTO } from "@/lib/types";
 
-export function ExpressInterestBanner({ className }: { className?: string }) {
+export function ExpressInterestBanner({
+  project,
+  className,
+}: {
+  project: Pick<ProjectDetailDTO, "id" | "title">;
+  className?: string;
+}) {
   return (
     <div
       className={`flex flex-wrap items-center justify-between gap-4 rounded-xl border border-primary/20 bg-primary/5 px-5 py-4 ${className ?? ""}`}
@@ -16,9 +22,15 @@ export function ExpressInterestBanner({ className }: { className?: string }) {
           Full details unlocked after mutual interest
         </p>
       </div>
-      <Button asChild variant="primary" size="sm">
-        <Link href="/#contact">Express Interest</Link>
-      </Button>
+      <ApplyDialog
+        projectId={project.id}
+        projectTitle={project.title}
+        trigger={
+          <Button variant="primary" size="sm">
+            Express Interest
+          </Button>
+        }
+      />
     </div>
   );
 }
@@ -87,7 +99,7 @@ export function RoiSnapshot({ project }: { project: ProjectDetailDTO }) {
               Projections powered by industry benchmark data.
             </p>
 
-            <ExpressInterestBanner className="mt-6" />
+            <ExpressInterestBanner project={project} className="mt-6" />
           </div>
         </Reveal>
       </div>

@@ -16,6 +16,7 @@ import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { GenreBadge, SafetyBadge } from "@/components/ui/badge";
 import { ProjectCard } from "@/components/project-card";
+import { ApplyDialog } from "@/components/apply-dialog";
 import { Footer } from "@/components/footer";
 import { splitCountries } from "@/lib/data/format";
 import { cn } from "@/lib/utils";
@@ -84,9 +85,15 @@ function ProjectRow({ project }: { project: ProjectListDTO }) {
         <Button asChild variant="primary" size="sm">
           <Link href={`/reports/${project.id}`}>View Report</Link>
         </Button>
-        <Button asChild variant="ghost" size="sm">
-          <Link href="/#contact">Request details</Link>
-        </Button>
+        <ApplyDialog
+          projectId={project.id}
+          projectTitle={project.title}
+          trigger={
+            <Button variant="ghost" size="sm">
+              Request details
+            </Button>
+          }
+        />
       </div>
     </div>
   );

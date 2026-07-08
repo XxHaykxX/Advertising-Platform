@@ -34,6 +34,7 @@ export async function getProject(id: number, activeOnly = false): Promise<Projec
     include: {
       safetyCats: { orderBy: { sortOrder: "asc" } },
       opportunities: { orderBy: { sortOrder: "asc" } },
+      actors: { orderBy: { sortOrder: "asc" } },
     },
   });
   if (!p) return null;
@@ -73,6 +74,14 @@ export async function getProject(id: number, activeOnly = false): Promise<Projec
     })),
     exposureTotal,
     opportunitiesCount: p.opportunities.length,
+    slotsTotal: p.slotsTotal,
+    slotsTaken: p.slotsTaken,
+    applicationDeadline: p.applicationDeadline?.toISOString() ?? null,
+    releaseDate: p.releaseDate?.toISOString() ?? null,
+    platforms: p.platforms ?? "[]",
+    placementType: p.placementType,
+    priceNote: p.priceNote,
+    actors: p.actors.map((a) => ({ id: a.id, name: a.name, role: a.role })),
   };
 }
 

@@ -157,7 +157,7 @@ export function DeepDive({ project }: { project: ProjectDetailDTO }) {
               isOpen={openId === "value-alignment"}
               onToggle={() => toggle("value-alignment")}
             >
-              <ExpressInterestBanner />
+              <ExpressInterestBanner project={project} />
             </AccordionItem>
           </Reveal>
 
