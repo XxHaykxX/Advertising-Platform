@@ -39,7 +39,7 @@ async function main() {
     });
   }
 
-  // 3. Settings (default locale + admin hash marker)
+  // 3. Settings (default locale)
   await prisma.setting.upsert({
     where: { key: "default_lang" }, update: {}, create: { key: "default_lang", value: "en" },
   });
@@ -47,4 +47,4 @@ async function main() {
   console.log(`Seeded: admin + ${SEED_PROJECTS.length} projects`);
 }
 
-main().then(() => prisma.$disconnect()).catch((e) => { console.error(e); prisma.$disconnect(); process.exit(1); });
+main().then(() => prisma.$disconnect()).catch(async (e) => { console.error(e); await prisma.$disconnect(); process.exit(1); });

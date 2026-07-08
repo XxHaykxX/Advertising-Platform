@@ -59,7 +59,7 @@ model Project {
   genre          String
   synopsis       String        @db.Text
   poster         String?
-  gallery        String        @default("[]") @db.VarChar(2048) // JSON string[]
+  gallery        String?       @db.Text // JSON string[]; nullable — MySQL forbids literal defaults on TEXT columns
   format         String        @default("") // "50 ep × 1m 15s"
   studio         String        @default("")
   status         ProjectStatus @default(PRE_PRODUCTION)
