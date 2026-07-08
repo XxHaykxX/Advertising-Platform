@@ -16,6 +16,9 @@ export const metadata: Metadata = {
   description:
     "Discover and place your brand in film and TV productions — scene-level placement insights, transparent pricing, direct access to filmmakers.",
   alternates: { canonical: "/" },
+  // Site-wide noindex — kept OFF the index until the owner explicitly says to
+  // enable it. Remove this (and app/robots.ts disallow) to go public.
+  robots: { index: false, follow: false },
 };
 
 export default async function RootLayout({
