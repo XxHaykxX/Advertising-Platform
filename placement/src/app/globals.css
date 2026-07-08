@@ -37,3 +37,21 @@
 html.lenis, html.lenis body { height: auto; }
 .lenis.lenis-smooth { scroll-behavior: auto !important; }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+/* continuous cinematic poster marquee (always-on motion) */
+@keyframes marquee-up {
+  from { transform: translateY(0); }
+  to { transform: translateY(-50%); }
+}
+@keyframes marquee-down {
+  from { transform: translateY(-50%); }
+  to { transform: translateY(0); }
+}
+.marquee-col {
+  animation-name: marquee-up;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .marquee-col { animation: none !important; }
+}

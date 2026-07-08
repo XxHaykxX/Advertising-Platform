@@ -11,7 +11,7 @@ const STATS = [
 
 export function Stats() {
   return (
-    <Section muted>
+    <Section muted id="stats">
       <Container>
         <div className="grid grid-cols-4 gap-8 md:grid-cols-2 max-sm:grid-cols-1">
           {STATS.map((stat, idx) => (

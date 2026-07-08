@@ -1,0 +1,466 @@
+{
+ "projects": [
+  {
+   "id": 1168,
+   "title": "Фул Хаус։ Посадка",
+   "year": 2026,
+   "genre": "MOVIE",
+   "durationSec": 5697,
+   "age": 12,
+   "thumb": "https://cdn.kinodaran.com/MEDIA/48/MOVIE/1168/thumbnail_THUMBNAIL.jpg",
+   "detail": "https://cdn.kinodaran.com/MEDIA/48/MOVIE/1168/thumbnail_DETAIL_TV.jpg"
+  },
+  {
+   "id": 1105,
+   "title": "Святой 3",
+   "year": 2026,
+   "genre": "TV_SHOW",
+   "durationSec": null,
+   "age": 18,
+   "thumb": "https://cdn.kinodaran.com/MEDIA/1/TV_SHOW/1105/thumbnail_THUMBNAIL.jpg",
+   "detail": "https://cdn.kinodaran.com/MEDIA/1/TV_SHOW/1105/thumbnail_DETAIL_TV.jpg"
+  },
+  {
+   "id": 1162,
+   "title": "Валдакар",
+   "year": 2026,
+   "genre": "TV_SHOW",
+   "durationSec": null,
+   "age": 4,
+   "thumb": "https://cdn.kinodaran.com/MEDIA/1/TV_SHOW/1162/thumbnail_THUMBNAIL.jpg",
+   "detail": "https://cdn.kinodaran.com/MEDIA/1/TV_SHOW/1162/thumbnail_DETAIL_TV.jpg"
+  },
+  {
+   "id": 1161,
+   "title": "Мхитарян. Эксклюзив",
+   "year": 2026,
+   "genre": "MOVIE",
+   "durationSec": 2655,
+   "age": null,
+   "thumb": "https://cdn.kinodaran.com/MEDIA/49/MOVIE/1161/thumbnail_THUMBNAIL.jpg",
+   "detail": "https://cdn.kinodaran.com/MEDIA/49/MOVIE/1161/thumbnail_DETAIL_TV.jpg"
+  },
+  {
+   "id": 1095,
+   "title": "Артист КомедЯан",
+   "year": 2026,
+   "genre": "TV_SHOW",
+   "durationSec": null,
+   "age": 16,
+   "thumb": "https://cdn.kinodaran.com/MEDIA/1/TV_SHOW/1095/thumbnail_THUMBNAIL.jpg",
+   "detail": "https://cdn.kinodaran.com/MEDIA/1/TV_SHOW/1095/thumbnail_DETAIL_TV.jpg"
+  },
+  {
+   "id": 1106,
+   "title": "Закрытая улица",
+   "year": 2026,
+   "genre": "MOVIE",
+   "durationSec": 1365,
+   "age": 18,
+   "thumb": "https://cdn.kinodaran.com/MEDIA/1/MOVIE/1106/thumbnail_THUMBNAIL.jpg",
+   "detail": "https://cdn.kinodaran.com/MEDIA/1/MOVIE/1106/thumbnail_DETAIL_TV.jpg"
+  }
+ ],
+ "galleryPool": [
+  {
+   "id": 1155,
+   "title": "Эдуард Сперцян: интервью",
+   "year": 2026,
+   "genre": "MOVIE",
+   "durationSec": 2459,
+   "age": null,
+   "thumb": "https://cdn.kinodaran.com/MEDIA/49/MOVIE/1155/thumbnail_THUMBNAIL.jpg",
+   "detail": "https://cdn.kinodaran.com/MEDIA/49/MOVIE/1155/thumbnail_DETAIL_TV.jpg"
+  },
+  {
+   "id": 1165,
+   "title": "Наир Тикнизян: эксклюзивное интервью",
+   "year": 2026,
+   "genre": "MOVIE",
+   "durationSec": 3057,
+   "age": null,
+   "thumb": "https://cdn.kinodaran.com/MEDIA/49/MOVIE/1165/thumbnail_THUMBNAIL.jpg",
+   "detail": "https://cdn.kinodaran.com/MEDIA/49/MOVIE/1165/thumbnail_DETAIL_TV.jpg"
+  },
+  {
+   "id": 1167,
+   "title": "Наследие героев: Монте",
+   "year": 2025,
+   "genre": "MOVIE",
+   "durationSec": 3343,
+   "age": 16,
+   "thumb": "https://cdn.kinodaran.com/MEDIA/1/MOVIE/1167/thumbnail_THUMBNAIL.jpg",
+   "detail": "https://cdn.kinodaran.com/MEDIA/1/MOVIE/1167/thumbnail_DETAIL_TV.jpg"
+  },
+  {
+   "id": 1083,
+   "title": "Вазген. Последний Спарапет",
+   "year": 2025,
+   "genre": "MOVIE",
+   "durationSec": 5551,
+   "age": 12,
+   "thumb": "https://cdn.kinodaran.com/MEDIA/53/MOVIE/1083/thumbnail_THUMBNAIL.jpg",
+   "detail": "https://cdn.kinodaran.com/MEDIA/53/MOVIE/1083/thumbnail_DETAIL_TV.jpg"
+  },
+  {
+   "id": 1098,
+   "title": "Дорогие мальчики",
+   "year": 2025,
+   "genre": "MOVIE",
+   "durationSec": 5784,
+   "age": 6,
+   "thumb": "https://cdn.kinodaran.com/MEDIA/3/MOVIE/1098/thumbnail_THUMBNAIL.jpg",
+   "detail": "https://cdn.kinodaran.com/MEDIA/3/MOVIE/1098/thumbnail_DETAIL_TV.jpg"
+  },
+  {
+   "id": 1081,
+   "title": "Добрый день 2",
+   "year": 2025,
+   "genre": "MOVIE",
+   "durationSec": 5428,
+   "age": 12,
+   "thumb": "https://cdn.kinodaran.com/MEDIA/44/MOVIE/1081/thumbnail_THUMBNAIL.jpg",
+   "detail": "https://cdn.kinodaran.com/MEDIA/44/MOVIE/1081/thumbnail_DETAIL_TV.jpg"
+  },
+  {
+   "id": 1087,
+   "title": "Мишо: Эксклюзивный концерт",
+   "year": 2025,
+   "genre": "MOVIE",
+   "durationSec": 5453,
+   "age": 12,
+   "thumb": "https://cdn.kinodaran.com/MEDIA/1/MOVIE/1087/thumbnail_THUMBNAIL.jpg",
+   "detail": "https://cdn.kinodaran.com/MEDIA/1/MOVIE/1087/thumbnail_DETAIL_TV.jpg"
+  },
+  {
+   "id": 1090,
+   "title": "Эдо Овсепян: Чемпион",
+   "year": 2025,
+   "genre": "MOVIE",
+   "durationSec": 3557,
+   "age": 18,
+   "thumb": "https://cdn.kinodaran.com/MEDIA/1/MOVIE/1090/thumbnail_THUMBNAIL.jpg",
+   "detail": "https://cdn.kinodaran.com/MEDIA/1/MOVIE/1090/thumbnail_DETAIL_TV.jpg"
+  },
+  {
+   "id": 1094,
+   "title": "Зимняя песня",
+   "year": 2025,
+   "genre": "MOVIE",
+   "durationSec": 5117,
+   "age": 8,
+   "thumb": "https://cdn.kinodaran.com/MEDIA/18/MOVIE/1094/thumbnail_THUMBNAIL.jpg",
+   "detail": "https://cdn.kinodaran.com/MEDIA/18/MOVIE/1094/thumbnail_DETAIL_TV.jpg"
+  },
+  {
+   "id": 1080,
+   "title": "Раунд",
+   "year": 2025,
+   "genre": "TV_SHOW",
+   "durationSec": null,
+   "age": 16,
+   "thumb": "https://cdn.kinodaran.com/MEDIA/1/TV_SHOW/1080/thumbnail_THUMBNAIL.jpg",
+   "detail": "https://cdn.kinodaran.com/MEDIA/1/TV_SHOW/1080/thumbnail_DETAIL_TV.jpg"
+  },
+  {
+   "id": 1065,
+   "title": "11",
+   "year": 2025,
+   "genre": "TV_SHOW",
+   "durationSec": null,
+   "age": 16,
+   "thumb": "https://cdn.kinodaran.com/MEDIA/1/TV_SHOW/1065/thumbnail_THUMBNAIL.jpg",
+   "detail": "https://cdn.kinodaran.com/MEDIA/1/TV_SHOW/1065/thumbnail_DETAIL_TV.jpg"
+  },
+  {
+   "id": 1049,
+   "title": "Шахматист",
+   "year": 2025,
+   "genre": "TV_SHOW",
+   "durationSec": null,
+   "age": 18,
+   "thumb": "https://cdn.kinodaran.com/MEDIA/1/TV_SHOW/1049/thumbnail_THUMBNAIL.jpg",
+   "detail": "https://cdn.kinodaran.com/MEDIA/1/TV_SHOW/1049/thumbnail_DETAIL_TV.jpg"
+  },
+  {
+   "id": 1067,
+   "title": "Домашняя девочка",
+   "year": 2025,
+   "genre": "TV_SHOW",
+   "durationSec": null,
+   "age": 12,
+   "thumb": "https://cdn.kinodaran.com/MEDIA/1/TV_SHOW/1067/thumbnail_THUMBNAIL.jpg",
+   "detail": "https://cdn.kinodaran.com/MEDIA/1/TV_SHOW/1067/thumbnail_DETAIL_TV.jpg"
+  },
+  {
+   "id": 1050,
+   "title": "Раскрытые дела",
+   "year": 2025,
+   "genre": "TV_SHOW",
+   "durationSec": null,
+   "age": null,
+   "thumb": "https://cdn.kinodaran.com/MEDIA/46/TV_SHOW/1050/thumbnail_THUMBNAIL.jpg",
+   "detail": "https://cdn.kinodaran.com/MEDIA/46/TV_SHOW/1050/thumbnail_DETAIL_TV.jpg"
+  },
+  {
+   "id": 1073,
+   "title": "IT-стартап",
+   "year": 2025,
+   "genre": "TV_SHOW",
+   "durationSec": null,
+   "age": null,
+   "thumb": "https://cdn.kinodaran.com/MEDIA/52/TV_SHOW/1073/thumbnail_THUMBNAIL.jpg",
+   "detail": "https://cdn.kinodaran.com/MEDIA/52/TV_SHOW/1073/thumbnail_DETAIL_TV.jpg"
+  },
+  {
+   "id": 1088,
+   "title": "Антивирус",
+   "year": 2025,
+   "genre": "TV_SHOW",
+   "durationSec": null,
+   "age": 18,
+   "thumb": "https://cdn.kinodaran.com/MEDIA/1/TV_SHOW/1088/thumbnail_THUMBNAIL.jpg",
+   "detail": "https://cdn.kinodaran.com/MEDIA/1/TV_SHOW/1088/thumbnail_DETAIL_TV.jpg"
+  },
+  {
+   "id": 1092,
+   "title": "Айб Бен Гим",
+   "year": 2025,
+   "genre": "MOVIE",
+   "durationSec": 245,
+   "age": null,
+   "thumb": "https://cdn.kinodaran.com/MEDIA/55/MOVIE/1092/thumbnail_THUMBNAIL.jpg",
+   "detail": "https://cdn.kinodaran.com/MEDIA/55/MOVIE/1092/thumbnail_DETAIL_TV.jpg"
+  },
+  {
+   "id": 1058,
+   "title": "Эмоджи Скетч Шоу",
+   "year": 2025,
+   "genre": "TV_SHOW",
+   "durationSec": null,
+   "age": 6,
+   "thumb": "https://cdn.kinodaran.com/MEDIA/48/TV_SHOW/1058/thumbnail_THUMBNAIL.jpg",
+   "detail": "https://cdn.kinodaran.com/MEDIA/48/TV_SHOW/1058/thumbnail_DETAIL_TV.jpg"
+  },
+  {
+   "id": 1053,
+   "title": "Воля встать: Самоуважение",
+   "year": 2025,
+   "genre": "MOVIE",
+   "durationSec": 3002,
+   "age": null,
+   "thumb": "https://cdn.kinodaran.com/MEDIA/1/MOVIE/1053/thumbnail_THUMBNAIL.jpg",
+   "detail": "https://cdn.kinodaran.com/MEDIA/1/MOVIE/1053/thumbnail_DETAIL_TV.jpg"
+  },
+  {
+   "id": 1062,
+   "title": "Месье Азнавур",
+   "year": 2024,
+   "genre": "MOVIE",
+   "durationSec": 8045,
+   "age": 16,
+   "thumb": "https://cdn.kinodaran.com/MEDIA/50/MOVIE/1062/thumbnail_THUMBNAIL.jpg",
+   "detail": "https://cdn.kinodaran.com/MEDIA/50/MOVIE/1062/thumbnail_DETAIL_TV.jpg"
+  },
+  {
+   "id": 1096,
+   "title": "Хозяйка судьбы",
+   "year": 2024,
+   "genre": "MOVIE",
+   "durationSec": 6364,
+   "age": 12,
+   "thumb": "https://cdn.kinodaran.com/MEDIA/3/MOVIE/1096/thumbnail_THUMBNAIL.jpg",
+   "detail": "https://cdn.kinodaran.com/MEDIA/3/MOVIE/1096/thumbnail_DETAIL_TV.jpg"
+  },
+  {
+   "id": 1043,
+   "title": "Добрый день",
+   "year": 2024,
+   "genre": "MOVIE",
+   "durationSec": 6146,
+   "age": 12,
+   "thumb": "https://cdn.kinodaran.com/MEDIA/44/MOVIE/1043/thumbnail_THUMBNAIL.jpg",
+   "detail": "https://cdn.kinodaran.com/MEDIA/44/MOVIE/1043/thumbnail_DETAIL_TV.jpg"
+  },
+  {
+   "id": 1068,
+   "title": "В лагерь: Специальный Отряд",
+   "year": 2024,
+   "genre": "MOVIE",
+   "durationSec": 6228,
+   "age": 12,
+   "thumb": "https://cdn.kinodaran.com/MEDIA/48/MOVIE/1068/thumbnail_THUMBNAIL.jpg",
+   "detail": "https://cdn.kinodaran.com/MEDIA/48/MOVIE/1068/thumbnail_DETAIL_TV.jpg"
+  },
+  {
+   "id": 1103,
+   "title": "Война и музыка",
+   "year": 2024,
+   "genre": "MOVIE",
+   "durationSec": 7173,
+   "age": 12,
+   "thumb": "https://cdn.kinodaran.com/MEDIA/3/MOVIE/1103/thumbnail_THUMBNAIL.jpg",
+   "detail": "https://cdn.kinodaran.com/MEDIA/3/MOVIE/1103/thumbnail_DETAIL_TV.jpg"
+  },
+  {
+   "id": 1051,
+   "title": "Ереван блюз 25 лет спустя или Ереваниада",
+   "year": 2024,
+   "genre": "MOVIE",
+   "durationSec": 5496,
+   "age": 12,
+   "thumb": "https://cdn.kinodaran.com/MEDIA/10/MOVIE/1051/thumbnail_THUMBNAIL.jpg",
+   "detail": "https://cdn.kinodaran.com/MEDIA/10/MOVIE/1051/thumbnail_DETAIL_TV.jpg"
+  },
+  {
+   "id": 991,
+   "title": "Неожиданный поворот",
+   "year": 2024,
+   "genre": "MOVIE",
+   "durationSec": 4327,
+   "age": 14,
+   "thumb": "https://cdn.kinodaran.com/MEDIA/41/MOVIE/991/thumbnail_THUMBNAIL.jpg",
+   "detail": "https://cdn.kinodaran.com/MEDIA/41/MOVIE/991/thumbnail_DETAIL_TV.jpg"
+  },
+  {
+   "id": 1042,
+   "title": "Святой 2",
+   "year": 2024,
+   "genre": "TV_SHOW",
+   "durationSec": null,
+   "age": 18,
+   "thumb": "https://cdn.kinodaran.com/MEDIA/1/TV_SHOW/1042/thumbnail_THUMBNAIL.jpg",
+   "detail": "https://cdn.kinodaran.com/MEDIA/1/TV_SHOW/1042/thumbnail_DETAIL_TV.jpg"
+  },
+  {
+   "id": 1045,
+   "title": "Лето 84-го",
+   "year": 2024,
+   "genre": "TV_SHOW",
+   "durationSec": null,
+   "age": 12,
+   "thumb": "https://cdn.kinodaran.com/MEDIA/1/TV_SHOW/1045/thumbnail_THUMBNAIL.jpg",
+   "detail": "https://cdn.kinodaran.com/MEDIA/1/TV_SHOW/1045/thumbnail_DETAIL_TV.jpg"
+  },
+  {
+   "id": 971,
+   "title": "Коко",
+   "year": 2024,
+   "genre": "TV_SHOW",
+   "durationSec": null,
+   "age": 14,
+   "thumb": "https://cdn.kinodaran.com/MEDIA/1/TV_SHOW/971/thumbnail_THUMBNAIL.jpg",
+   "detail": "https://cdn.kinodaran.com/MEDIA/1/TV_SHOW/971/thumbnail_DETAIL_TV.jpg"
+  },
+  {
+   "id": 1010,
+   "title": "Карма",
+   "year": 2024,
+   "genre": "TV_SHOW",
+   "durationSec": null,
+   "age": 16,
+   "thumb": "https://cdn.kinodaran.com/MEDIA/1/TV_SHOW/1010/thumbnail_THUMBNAIL.jpg",
+   "detail": "https://cdn.kinodaran.com/MEDIA/1/TV_SHOW/1010/thumbnail_DETAIL_TV.jpg"
+  },
+  {
+   "id": 1163,
+   "title": "Дом",
+   "year": 2024,
+   "genre": "MOVIE",
+   "durationSec": 825,
+   "age": null,
+   "thumb": "https://cdn.kinodaran.com/MEDIA/1/MOVIE/1163/thumbnail_THUMBNAIL.jpg",
+   "detail": "https://cdn.kinodaran.com/MEDIA/1/MOVIE/1163/thumbnail_DETAIL_TV.jpg"
+  },
+  {
+   "id": 1086,
+   "title": "Банимация",
+   "year": 2024,
+   "genre": "TV_SHOW",
+   "durationSec": null,
+   "age": null,
+   "thumb": "https://cdn.kinodaran.com/MEDIA/54/TV_SHOW/1086/thumbnail_THUMBNAIL.jpg",
+   "detail": "https://cdn.kinodaran.com/MEDIA/54/TV_SHOW/1086/thumbnail_DETAIL_TV.jpg"
+  },
+  {
+   "id": 1075,
+   "title": "Профессионал",
+   "year": 2024,
+   "genre": "MOVIE",
+   "durationSec": 6717,
+   "age": 18,
+   "thumb": "https://cdn.kinodaran.com/MEDIA/50/MOVIE/1075/thumbnail_THUMBNAIL.jpg",
+   "detail": "https://cdn.kinodaran.com/MEDIA/50/MOVIE/1075/thumbnail_DETAIL_TV.jpg"
+  },
+  {
+   "id": 1076,
+   "title": "Безмолвное братство",
+   "year": 2024,
+   "genre": "MOVIE",
+   "durationSec": 6940,
+   "age": 18,
+   "thumb": "https://cdn.kinodaran.com/MEDIA/50/MOVIE/1076/thumbnail_THUMBNAIL.jpg",
+   "detail": "https://cdn.kinodaran.com/MEDIA/50/MOVIE/1076/thumbnail_DETAIL_TV.jpg"
+  },
+  {
+   "id": 1057,
+   "title": "Слабость",
+   "year": 2024,
+   "genre": "MOVIE",
+   "durationSec": 1214,
+   "age": null,
+   "thumb": "https://cdn.kinodaran.com/MEDIA/1/MOVIE/1057/thumbnail_THUMBNAIL.jpg",
+   "detail": "https://cdn.kinodaran.com/MEDIA/1/MOVIE/1057/thumbnail_DETAIL_TV.jpg"
+  },
+  {
+   "id": 1079,
+   "title": "Армат ",
+   "year": 2024,
+   "genre": "MOVIE",
+   "durationSec": 813,
+   "age": null,
+   "thumb": "https://cdn.kinodaran.com/MEDIA/1/MOVIE/1079/thumbnail_THUMBNAIL.jpg",
+   "detail": "https://cdn.kinodaran.com/MEDIA/1/MOVIE/1079/thumbnail_DETAIL_TV.jpg"
+  },
+  {
+   "id": 1060,
+   "title": "#Corner",
+   "year": 2024,
+   "genre": "TV_SHOW",
+   "durationSec": null,
+   "age": null,
+   "thumb": "https://cdn.kinodaran.com/MEDIA/49/TV_SHOW/1060/thumbnail_THUMBNAIL.jpg",
+   "detail": "https://cdn.kinodaran.com/MEDIA/49/TV_SHOW/1060/thumbnail_DETAIL_TV.jpg"
+  },
+  {
+   "id": 976,
+   "title": "Гейм зон",
+   "year": 2024,
+   "genre": "TV_SHOW",
+   "durationSec": null,
+   "age": 18,
+   "thumb": "https://cdn.kinodaran.com/MEDIA/1/TV_SHOW/976/thumbnail_THUMBNAIL.jpg",
+   "detail": "https://cdn.kinodaran.com/MEDIA/1/TV_SHOW/976/thumbnail_DETAIL_TV.jpg"
+  },
+  {
+   "id": 996,
+   "title": "Честно говоря",
+   "year": 2024,
+   "genre": "TV_SHOW",
+   "durationSec": null,
+   "age": null,
+   "thumb": "https://cdn.kinodaran.com/MEDIA/37/TV_SHOW/996/thumbnail_THUMBNAIL.jpg",
+   "detail": "https://cdn.kinodaran.com/MEDIA/37/TV_SHOW/996/thumbnail_DETAIL_TV.jpg"
+  },
+  {
+   "id": 1034,
+   "title": "Операция «Высокочтимые попрошайки»",
+   "year": 2023,
+   "genre": "MOVIE",
+   "durationSec": 5761,
+   "age": 16,
+   "thumb": "https://cdn.kinodaran.com/MEDIA/27/MOVIE/1034/thumbnail_THUMBNAIL.jpg",
+   "detail": "https://cdn.kinodaran.com/MEDIA/27/MOVIE/1034/thumbnail_DETAIL_TV.jpg"
+  }
+ ]
+}

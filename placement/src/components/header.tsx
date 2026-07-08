@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,10 +16,16 @@ const NAV = [
   { label: "Contact", href: "/#contact" },
 ] as const;
 
-function Wordmark() {
+function Wordmark({ onDark }: { onDark: boolean }) {
   return (
-    <Link href="/" className="flex items-center gap-1 text-lg font-bold tracking-tight text-foreground">
-      <span className="text-primary">FP</span> Placement
+    <Link
+      href="/"
+      className={cn(
+        "flex items-center gap-1 text-lg font-bold tracking-tight",
+        onDark ? "text-white" : "text-foreground"
+      )}
+    >
+      <span className={onDark ? "text-indigo-300" : "text-primary"}>FP</span> Placement
     </Link>
   );
 }
@@ -26,6 +33,10 @@ function Wordmark() {
 export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const pathname = usePathname();
+  // Landing hero is a dark cinematic poster wall — while the transparent
+  // header floats over it, switch text to a light-on-dark scheme.
+  const onDark = pathname === "/" && !scrolled && !menuOpen;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -43,7 +54,7 @@ export function Header() {
     >
       <Container>
         <div className="flex h-16 items-center justify-between gap-4">
-          <Wordmark />
+          <Wordmark onDark={onDark} />
 
           {/* Desktop nav */}
           <nav className="hidden items-center gap-8 md:flex">
@@ -51,7 +62,12 @@ export function Header() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                className={cn(
+                  "text-sm font-medium transition-colors",
+                  onDark
+                    ? "text-white/75 hover:text-white"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
               >
                 {item.label}
               </Link>
@@ -62,7 +78,10 @@ export function Header() {
           <div className="hidden items-center gap-3 md:flex">
             <Link
               href="/login"
-              className="rounded-xl px-4 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
+              className={cn(
+                "rounded-xl px-4 py-2 text-sm font-semibold transition-colors",
+                onDark ? "text-white hover:bg-white/10" : "text-foreground hover:bg-muted"
+              )}
             >
               Sign In
             </Link>
@@ -77,7 +96,10 @@ export function Header() {
             onClick={() => setMenuOpen((v) => !v)}
             aria-expanded={menuOpen}
             aria-label={menuOpen ? "Close menu" : "Open menu"}
-            className="grid h-10 w-10 place-items-center rounded-xl text-foreground transition-colors hover:bg-muted md:hidden"
+            className={cn(
+              "grid h-10 w-10 place-items-center rounded-xl transition-colors md:hidden",
+              onDark ? "text-white hover:bg-white/10" : "text-foreground hover:bg-muted"
+            )}
           >
             {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
