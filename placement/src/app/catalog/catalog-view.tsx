@@ -19,6 +19,7 @@ import { AccentBadge, GenreBadge, SafetyBadge } from "@/components/ui/badge";
 import { ProjectCard } from "@/components/project-card";
 import { ApplyDialog } from "@/components/apply-dialog";
 import { Footer } from "@/components/footer";
+import { Header } from "@/components/header";
 import { daysUntil, formatFullDate, splitCountries } from "@/lib/data/format";
 import { cn } from "@/lib/utils";
 import { DEFAULT_LOCALE, intlLocale, makeUI, type Locale } from "@/lib/i18n";
@@ -291,25 +292,7 @@ export function CatalogView({
 
   return (
     <>
-      {/* Light sub-header */}
-      <header className="border-b border-border bg-background">
-        <Container className="flex h-16 items-center justify-between">
-          <Link href="/" className="flex items-center gap-1 text-lg font-bold tracking-tight text-foreground">
-            <span className="text-primary">FP</span> Placement
-          </Link>
-          <div className="flex items-center gap-3 text-sm">
-            <Link
-              href="/login"
-              className="rounded-xl px-4 py-2 font-semibold text-foreground transition-colors hover:bg-muted"
-            >
-              {t("catalog.signIn")}
-            </Link>
-            <Button asChild variant="primary" size="sm">
-              <Link href="/register?redirect=/catalog">{t("catalog.register")}</Link>
-            </Button>
-          </div>
-        </Container>
-      </header>
+      <Header locale={locale} />
 
       <Container className="pt-6">
         <div className="mb-8 flex items-center gap-2 rounded-xl border border-border bg-muted/60 px-4 py-3 text-sm text-muted-foreground">

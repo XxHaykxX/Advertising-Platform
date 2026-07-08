@@ -4,7 +4,7 @@ import { getLocale } from "@/lib/data/locale";
 import { CatalogView } from "./catalog-view";
 
 export const metadata: Metadata = {
-  title: "Catalog — FP Placement",
+  title: "Catalog — iGovazd",
   description:
     "Browse film and TV productions open for brand placement — filter by genre, product category, status, and brand safety.",
   alternates: { canonical: "/catalog" },

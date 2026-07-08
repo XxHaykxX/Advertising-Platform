@@ -46,7 +46,7 @@ export function ReportTabs({
   }, []);
 
   return (
-    <div className="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur-md">
+    <div className="sticky top-16 z-40 border-b border-border bg-background/90 backdrop-blur-md">
       <Container>
         <nav className="flex gap-1 overflow-x-auto py-2">
           {TABS.map((tab) => (

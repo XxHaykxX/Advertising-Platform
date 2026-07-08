@@ -11,8 +11,8 @@ export function OrganizationJsonLd() {
   const data = {
     "@context": "https://schema.org",
     "@type": "Organization",
-    name: "FP Placement",
-    url: "https://fpplacement.com",
+    name: "iGovazd",
+    url: "https://igovazd.am",
     description:
       "Brand placement marketplace connecting brands with film & TV productions through scene-level, brand-safe placement reports.",
   };

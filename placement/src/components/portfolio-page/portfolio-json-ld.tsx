@@ -13,7 +13,7 @@ export function PortfolioJsonLd({ cases }: { cases: PortfolioDTO[] }) {
   const data = {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    name: "FP Placement Case Studies",
+    name: "iGovazd Case Studies",
     itemListElement: cases.map((c, i) => ({
       "@type": "ListItem",
       position: i + 1,

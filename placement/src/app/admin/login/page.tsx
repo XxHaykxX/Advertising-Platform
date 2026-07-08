@@ -17,7 +17,7 @@ export default async function LoginPage({
             <Clapperboard className="h-5 w-5" />
           </span>
           <span className="text-base font-bold tracking-tight text-foreground">
-            FP<span className="text-primary">PLACEMENT</span>
+            <span className="text-primary">i</span>Govazd
           </span>
         </div>
         <h1 className="mb-1 text-xl font-bold text-foreground">Admin sign-in</h1>

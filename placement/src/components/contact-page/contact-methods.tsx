@@ -5,8 +5,8 @@ const methods = [
   {
     icon: Mail,
     labelKey: "contactPage.methodEmail",
-    value: "hello@fpplacement.com",
-    href: "mailto:hello@fpplacement.com",
+    value: "hello@igovazd.am",
+    href: "mailto:hello@igovazd.am",
   },
   {
     icon: Phone,
@@ -17,8 +17,8 @@ const methods = [
   {
     icon: Send,
     labelKey: "contactPage.methodTelegram",
-    value: "@fpplacement",
-    href: "https://t.me/fpplacement",
+    value: "@igovazd",
+    href: "https://t.me/igovazd",
   },
   {
     icon: MessageCircle,

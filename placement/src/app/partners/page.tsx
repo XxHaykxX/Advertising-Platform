@@ -11,9 +11,9 @@ import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
 
 export const metadata = {
-  title: "Partners — FP Placement",
+  title: "Partners — iGovazd",
   description:
-    "The production studios and distribution networks that trust FP Placement to connect their projects with brand partners.",
+    "The production studios and distribution networks that trust iGovazd to connect their projects with brand partners.",
   alternates: { canonical: "/partners" },
 };
 

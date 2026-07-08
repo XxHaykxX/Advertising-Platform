@@ -23,6 +23,7 @@ type Dict = Record<Locale, string>;
 
 export const UI: Record<string, Dict> = {
   // ── header nav ──────────────────────────────
+  "nav.catalog": { ru: "Каталог", en: "Catalog", hy: "Կատալոգ" },
   "nav.how": { ru: "Как это работает", en: "How It Works", hy: "Ինչպես է աշխատում" },
   "nav.portfolio": { ru: "Портфолио", en: "Portfolio", hy: "Պորտֆոլիո" },
   "nav.partners": { ru: "Партнёры", en: "Partners", hy: "Գործընկերներ" },
@@ -247,9 +248,9 @@ export const UI: Record<string, Dict> = {
     hy: "Փրոդակթ փլեյսմենթը տասնամյակներ շարունակ մնացել է խափանված համակարգ։ Ռեժիսորները դժվարանում են մոնետիզացնել իրենց պատմությունները, իսկ բրենդները շրջում են անթափանց ցանցերում՝ վճարելով գերագնահատված գումարներ այն տեղադրումների համար, որոնք գուցե երբեք չհասնեն էկրան։ Ամեն ինչ արվում է ձեռքով, անարդյունավետ և հասանելի է միայն կապերի միջոցով։",
   },
   "why.paragraph2": {
-    ru: "Мы создали FP Placement, чтобы это изменить. Делая плейсмент прозрачным, основанным на данных и доступным, мы даём создателям возможность контролировать свою судьбу и помогаем брендам делать более разумный, аутентичный выбор о том, где появляется их продукт.",
-    en: "We built FP Placement to change that. By making placement transparent, data-driven, and accessible, we empower creators to control their own destiny and help brands make smarter, more authentic choices about where their products appear.",
-    hy: "Մենք ստեղծել ենք FP Placement-ը՝ դա փոխելու համար։ Դարձնելով տեղադրումը թափանցիկ, տվյալահեն և հասանելի, մենք հնարավորություն ենք տալիս ստեղծագործողներին վերահսկել իրենց ճակատագիրը և օգնում ենք բրենդներին ավելի խելացի, ինքնատիպ ընտրություն կատարել այն մասին, թե որտեղ է հայտնվում իրենց ապրանքը։",
+    ru: "Мы создали iGovazd, чтобы это изменить. Делая плейсмент прозрачным, основанным на данных и доступным, мы даём создателям возможность контролировать свою судьбу и помогаем брендам делать более разумный, аутентичный выбор о том, где появляется их продукт.",
+    en: "We built iGovazd to change that. By making placement transparent, data-driven, and accessible, we empower creators to control their own destiny and help brands make smarter, more authentic choices about where their products appear.",
+    hy: "Մենք ստեղծել ենք iGovazd-ը՝ դա փոխելու համար։ Դարձնելով տեղադրումը թափանցիկ, տվյալահեն և հասանելի, մենք հնարավորություն ենք տալիս ստեղծագործողներին վերահսկել իրենց ճակատագիրը և օգնում ենք բրենդներին ավելի խելացի, ինքնատիպ ընտրություն կատարել այն մասին, թե որտեղ է հայտնվում իրենց ապրանքը։",
   },
   "why.paragraph3": {
     ru: "Наша миссия проста: создать более справедливый рынок, где отличные истории встречаются с отличными брендами, и выигрывают все.",
@@ -366,9 +367,9 @@ export const UI: Record<string, Dict> = {
   // ── how it works (full page) ──────────────────
   "hiw.heroTitle": { ru: "Как это работает", en: "How It Works", hy: "Ինչպես է աշխատում" },
   "hiw.heroSubtitle": {
-    ru: "FP Placement связывает бренды с режиссёрами через прозрачный, честный процесс. Узнайте, как начать всего за четыре простых шага.",
-    en: "FP Placement connects brands with filmmakers through a transparent, fair process. Discover how to get started in just four simple steps.",
-    hy: "FP Placement-ը կապում է բրենդներին ռեժիսորների հետ թափանցիկ, արդար գործընթացի միջոցով։ Իմացեք, թե ինչպես սկսել ընդամենը չորս պարզ քայլով։",
+    ru: "iGovazd связывает бренды с режиссёрами через прозрачный, честный процесс. Узнайте, как начать всего за четыре простых шага.",
+    en: "iGovazd connects brands with filmmakers through a transparent, fair process. Discover how to get started in just four simple steps.",
+    hy: "iGovazd-ը կապում է բրենդներին ռեժիսորների հետ թափանցիկ, արդար գործընթացի միջոցով։ Իմացեք, թե ինչպես սկսել ընդամենը չորս պարզ քայլով։",
   },
   "hiw.forBrandsTitle": { ru: "Для брендов", en: "For Brands", hy: "Բրենդների համար" },
   "hiw.forBrandsSubtitle": {
@@ -432,9 +433,9 @@ export const UI: Record<string, Dict> = {
   },
   "hiw.trustTitle": { ru: "Честные сделки. Аутентичный плейсмент.", en: "Fair Deals. Authentic Placements.", hy: "Արդար գործարքներ։ Ինքնատիպ տեղադրումներ։" },
   "hiw.trustBody": {
-    ru: "FP Placement построен на прозрачности и доверии. Никаких скрытых комиссий для брендов, творческий контроль для режиссёров и комиссия платформы — только при закрытии сделок.",
-    en: "FP Placement is built on transparency and trust. No hidden fees for brands, creative control for filmmakers, and platform fees only when deals close.",
-    hy: "FP Placement-ը կառուցված է թափանցիկության և վստահության վրա։ Ոչ մի թաքնված վճար բրենդների համար, ստեղծագործական վերահսկողություն ռեժիսորների համար, և հարթակի վճարներ միայն գործարքների կնքման դեպքում։",
+    ru: "iGovazd построен на прозрачности и доверии. Никаких скрытых комиссий для брендов, творческий контроль для режиссёров и комиссия платформы — только при закрытии сделок.",
+    en: "iGovazd is built on transparency and trust. No hidden fees for brands, creative control for filmmakers, and platform fees only when deals close.",
+    hy: "iGovazd-ը կառուցված է թափանցիկության և վստահության վրա։ Ոչ մի թաքնված վճար բրենդների համար, ստեղծագործական վերահսկողություն ռեժիսորների համար, և հարթակի վճարներ միայն գործարքների կնքման դեպքում։",
   },
 
   // ── portfolio page ─────────────────────────────
@@ -458,16 +459,16 @@ export const UI: Record<string, Dict> = {
   // ── partners page ──────────────────────────────
   "partners.title": { ru: "Наши партнёры", en: "Our Partners", hy: "Մեր գործընկերները" },
   "partners.subtitle": {
-    ru: "Продакшен-студии и дистрибьюторские сети, формирующие каталог FP Placement.",
-    en: "Production studios and distribution networks building the FP Placement catalog.",
-    hy: "Արտադրական ստուդիաներ և բաշխման ցանցեր, որոնք կառուցում են FP Placement-ի կատալոգը։",
+    ru: "Продакшен-студии и дистрибьюторские сети, формирующие каталог iGovazd.",
+    en: "Production studios and distribution networks building the iGovazd catalog.",
+    hy: "Արտադրական ստուդիաներ և բաշխման ցանցեր, որոնք կառուցում են iGovazd-ի կատալոգը։",
   },
   "partners.fullNetwork": { ru: "Вся сеть", en: "Full Network", hy: "Ամբողջ ցանցը" },
   "partners.ctaTitle": { ru: "Хотите видеть здесь свой бренд?", en: "Want to see your brand here?", hy: "Ցանկանու՞մ եք տեսնել ձեր բրենդն այստեղ" },
   "partners.ctaBody": {
-    ru: "Присоединяйтесь к партнёрской сети FP Placement и получите прямой доступ к проверенным кино- и ТВ-проектам.",
-    en: "Join the FP Placement partner network and get direct access to vetted film and TV productions.",
-    hy: "Միացեք FP Placement-ի գործընկերային ցանցին և ստացեք ուղղակի հասանելիություն ստուգված կինո և հեռուստատեսային նախագծերին։",
+    ru: "Присоединяйтесь к партнёрской сети iGovazd и получите прямой доступ к проверенным кино- и ТВ-проектам.",
+    en: "Join the iGovazd partner network and get direct access to vetted film and TV productions.",
+    hy: "Միացեք iGovazd-ի գործընկերային ցանցին և ստացեք ուղղակի հասանելիություն ստուգված կինո և հեռուստատեսային նախագծերին։",
   },
 
   // ── report: hero / key facts / cast ────────────

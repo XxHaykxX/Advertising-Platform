@@ -5,14 +5,14 @@ import { LocaleSwitcher } from "@/components/locale-switcher";
 import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
 
 const CONTACTS = [
-  { icon: Mail, label: "hello@fpplacement.com", href: "mailto:hello@fpplacement.com" },
+  { icon: Mail, label: "hello@igovazd.am", href: "mailto:hello@igovazd.am" },
   { icon: Phone, label: "+374 00 000 000", href: "tel:+37400000000" },
-  { icon: Send, label: "@fpplacement", href: "https://t.me/fpplacement" },
+  { icon: Send, label: "@igovazd", href: "https://t.me/igovazd" },
   { icon: MessageCircle, label: "+374 00 000 000", href: "https://wa.me/37400000000" },
 ] as const;
 
 const SOCIALS = [
-  { icon: Send, label: "Telegram", href: "https://t.me/fpplacement" },
+  { icon: Send, label: "Telegram", href: "https://t.me/igovazd" },
   { icon: MessageCircle, label: "WhatsApp", href: "https://wa.me/37400000000" },
   { icon: Video, label: "YouTube", href: "https://youtube.com/@kinodaran" },
 ] as const;
@@ -31,7 +31,7 @@ export function Footer({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
         <div className="mb-12">
           <div className="flex items-baseline gap-2">
             <h2 className="text-xl font-bold text-foreground">
-              <span className="text-primary">FP</span> Placement
+              <span className="text-primary">i</span>Govazd
             </h2>
           </div>
           <p className="mt-2 text-sm text-muted-foreground">
@@ -182,9 +182,9 @@ export function Footer({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
         {/* Bottom: Copyright + locale */}
         <div className="flex flex-col gap-4 border-t border-border pt-6 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-[13px] text-muted-foreground">
-            © 2026 FP Placement. {t("footer.rights")}
+            © 2026 iGovazd. {t("footer.rights")}
           </p>
-          <LocaleSwitcher current={locale} />
+          <LocaleSwitcher current={locale} openUp />
         </div>
       </Container>
     </footer>

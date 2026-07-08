@@ -5,9 +5,9 @@ import { PortfolioView } from "@/components/portfolio-page/portfolio-view";
 import { PortfolioJsonLd } from "@/components/portfolio-page/portfolio-json-ld";
 
 export const metadata: Metadata = {
-  title: "Case Studies — FP Placement",
+  title: "Case Studies — iGovazd",
   description:
-    "Real brand placements, real results — explore case studies from film and TV productions in the FP Placement catalog.",
+    "Real brand placements, real results — explore case studies from film and TV productions in the iGovazd catalog.",
   alternates: { canonical: "/portfolio" },
 };
 

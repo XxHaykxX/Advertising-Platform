@@ -11,10 +11,10 @@ const TAGLINE: Record<string, string> = {
   "Nova Frame": "Boutique studio focused on high-concept vertical thrillers.",
   "Amber Lane": "Independent studio crafting romance and family-drama vertical series.",
   Ridgeline: "Production partner specializing in action and suspense microdramas.",
-  "Kinodaran Studios": "In-house studio behind the FP Placement catalog of original productions.",
+  "Kinodaran Studios": "In-house studio behind the iGovazd catalog of original productions.",
   "Prism Vertical Network": "Distribution network syndicating vertical drama across regional platforms.",
 };
-const DEFAULT_TAGLINE = "Production and distribution partner in the FP Placement network.";
+const DEFAULT_TAGLINE = "Production and distribution partner in the iGovazd network.";
 
 export function PartnersGrid({ partners }: { partners: PartnerDTO[] }) {
   return (

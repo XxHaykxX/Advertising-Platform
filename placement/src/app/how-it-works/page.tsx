@@ -10,9 +10,9 @@ import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
 
 export const metadata: Metadata = {
-  title: "How It Works — FP Placement",
+  title: "How It Works — iGovazd",
   description:
-    "Explore how FP Placement connects brands with filmmakers. Browse projects anonymously, express interest, and close authentic placements.",
+    "Explore how iGovazd connects brands with filmmakers. Browse projects anonymously, express interest, and close authentic placements.",
   alternates: { canonical: "/how-it-works" },
 };
 

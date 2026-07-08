@@ -109,8 +109,8 @@ export default function Contact({ locale = DEFAULT_LOCALE }: { locale?: Locale }
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
             {t("contact.emailDirectly")}{" "}
-            <a href="mailto:hello@fpplacement.com" className="text-primary hover:underline">
-              hello@fpplacement.com
+            <a href="mailto:hello@igovazd.am" className="text-primary hover:underline">
+              hello@igovazd.am
             </a>
           </p>
         </div>

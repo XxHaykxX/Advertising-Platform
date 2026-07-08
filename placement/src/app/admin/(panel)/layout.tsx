@@ -25,7 +25,7 @@ export default async function PanelLayout({
           </span>
           <div>
             <span className="text-sm font-bold tracking-tight text-foreground">
-              FP<span className="text-primary">Admin</span>
+              <span className="text-primary">i</span>Govazd Admin
             </span>
           </div>
         </div>

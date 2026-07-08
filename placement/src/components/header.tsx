@@ -13,10 +13,9 @@ import { cn } from "@/lib/utils";
 
 function useNav(t: ReturnType<typeof makeUI>) {
   return [
-    { label: t("nav.how"), href: "/how-it-works" },
+    { label: t("nav.catalog"), href: "/catalog" },
     { label: t("nav.portfolio"), href: "/portfolio" },
     { label: t("nav.partners"), href: "/partners" },
-    { label: t("nav.faq"), href: "/#faq" },
     { label: t("nav.contact"), href: "/contact" },
   ] as const;
 }
@@ -24,7 +23,7 @@ function useNav(t: ReturnType<typeof makeUI>) {
 function useContactLinks(t: ReturnType<typeof makeUI>) {
   return [
     { icon: Phone, label: t("nav.callUs"), href: "tel:+37400000000" },
-    { icon: Send, label: "Telegram", href: "https://t.me/fpplacement" },
+    { icon: Send, label: "Telegram", href: "https://t.me/igovazd" },
     { icon: MessageCircle, label: "WhatsApp", href: "https://wa.me/37400000000" },
   ] as const;
 }
@@ -34,11 +33,11 @@ function Wordmark({ onDark }: { onDark: boolean }) {
     <Link
       href="/"
       className={cn(
-        "flex items-center gap-1 text-lg font-bold tracking-tight",
+        "text-lg font-bold tracking-tight",
         onDark ? "text-white" : "text-foreground"
       )}
     >
-      <span className={onDark ? "text-indigo-300" : "text-primary"}>FP</span> Placement
+      <span className="text-primary">i</span>Govazd
     </Link>
   );
 }
@@ -79,10 +78,8 @@ export function Header({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "text-sm font-medium transition-colors",
-                  onDark
-                    ? "text-white/75 hover:text-white"
-                    : "text-muted-foreground hover:text-foreground"
+                  "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors hover:bg-primary hover:text-primary-foreground",
+                  onDark ? "text-white/75" : "text-muted-foreground"
                 )}
               >
                 {item.label}
@@ -101,8 +98,8 @@ export function Header({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
                   rel={item.href.startsWith("http") ? "noopener noreferrer" : undefined}
                   aria-label={item.label}
                   className={cn(
-                    "grid h-9 w-9 place-items-center rounded-xl transition-colors",
-                    onDark ? "text-white/75 hover:bg-white/10 hover:text-white" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                    "grid h-9 w-9 place-items-center rounded-xl transition-colors hover:bg-primary hover:text-primary-foreground",
+                    onDark ? "text-white/75" : "text-muted-foreground"
                   )}
                 >
                   <item.icon className="h-4 w-4" />
@@ -156,7 +153,7 @@ export function Header({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
                   key={item.href}
                   href={item.href}
                   onClick={() => setMenuOpen(false)}
-                  className="rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  className="rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-primary hover:text-primary-foreground"
                 >
                   {item.label}
                 </Link>
@@ -169,7 +166,7 @@ export function Header({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
                     target={item.href.startsWith("http") ? "_blank" : undefined}
                     rel={item.href.startsWith("http") ? "noopener noreferrer" : undefined}
                     aria-label={item.label}
-                    className="grid h-10 w-10 place-items-center rounded-xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    className="grid h-10 w-10 place-items-center rounded-xl text-muted-foreground transition-colors hover:bg-primary hover:text-primary-foreground"
                   >
                     <item.icon className="h-4 w-4" />
                   </a>

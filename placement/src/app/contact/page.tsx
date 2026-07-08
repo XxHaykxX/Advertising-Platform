@@ -7,8 +7,8 @@ import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
 
 export const metadata = {
-  title: "Contact — FP Placement",
-  description: "Get in touch with FP Placement. We're here to help with your brand placement needs.",
+  title: "Contact — iGovazd",
+  description: "Get in touch with iGovazd. We're here to help with your brand placement needs.",
   alternates: { canonical: "/contact" },
 };
 

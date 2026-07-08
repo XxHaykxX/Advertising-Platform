@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { getProject, getProjectIds } from "@/lib/data/projects";
 import { getLocale } from "@/lib/data/locale";
+import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ReportHero } from "@/components/report/report-hero";
 import { KeyFacts } from "@/components/report/key-facts";
@@ -32,6 +33,7 @@ export default async function ReportPage({
 
   return (
     <>
+      <Header locale={locale} />
       <ReportTabs hasCast={project.actors.length > 0} locale={locale} />
       <div id="overview">
         <ReportHero project={project} locale={locale} />
