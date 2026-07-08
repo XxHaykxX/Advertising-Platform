@@ -22,7 +22,8 @@ async function main() {
     await prisma.project.create({
       data: {
         code: p.code, title: p.title, genre: p.genre, synopsis: p.synopsis,
-        poster: p.poster, format: p.format, studio: p.studio, status: p.status,
+        poster: p.poster, gallery: JSON.stringify(p.gallery),
+        format: p.format, studio: p.studio, status: p.status,
         releaseLabel: p.releaseLabel, countries: p.countries,
         audienceGender: p.audienceGender, audienceAge: p.audienceAge,
         projViews: p.projViews, cpmRange: p.cpmRange, budgetRange: p.budgetRange,

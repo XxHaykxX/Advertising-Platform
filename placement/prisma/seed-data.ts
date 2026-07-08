@@ -18,6 +18,7 @@ type SeedProject = {
   genre: string;
   synopsis: string;
   poster: string;
+  gallery: string[];
   format: string;
   studio: string;
   status: "PRE_PRODUCTION" | "FILMING" | "POST_PRODUCTION" | "RELEASED";
@@ -52,8 +53,14 @@ export const SEED_PROJECTS: SeedProject[] = [
     genre: "Coming-of-age",
     synopsis:
       "A small-town high-school senior with twelve million followers signs with a powerhouse LA talent agency and discovers a hidden file that turns every future decision into leverage.",
-    poster:
-      "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=800&q=70",
+    poster: "/posters/poster-01.jpg",
+    gallery: [
+      "/posters/poster-02.jpg",
+      "/posters/poster-03.jpg",
+      "/posters/poster-05.jpg",
+      "/posters/poster-06.jpg",
+      "/posters/poster-08.jpg",
+    ],
     format: "50 ep × 1m 15s",
     studio: "Verita Vertical",
     status: "PRE_PRODUCTION",
@@ -125,8 +132,14 @@ export const SEED_PROJECTS: SeedProject[] = [
     genre: "Medical Drama",
     synopsis:
       "After a sabbatical that ended a marriage and a research program, a pediatric oncologist returns to her floor to find her former patient — cured eleven years ago, now a resident — has come in with a fresh tumor and a secret request.",
-    poster:
-      "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=800&q=70",
+    poster: "/posters/poster-04.jpg",
+    gallery: [
+      "/posters/poster-09.jpg",
+      "/posters/poster-11.jpg",
+      "/posters/poster-12.jpg",
+      "/posters/poster-14.jpg",
+      "/posters/poster-15.jpg",
+    ],
     format: "80 ep × 1m 30s",
     studio: "Helix Stories",
     status: "FILMING",
@@ -197,8 +210,14 @@ export const SEED_PROJECTS: SeedProject[] = [
     genre: "Crime Procedural",
     synopsis:
       "A behavioral profiler is pulled into a homicide that mirrors the unsolved murder of her own father twenty-five years ago. Closing the case will cost her every certainty about who in her family told the truth that summer.",
-    poster:
-      "https://images.unsplash.com/photo-1509347528160-9a9e33742cdb?auto=format&fit=crop&w=800&q=70",
+    poster: "/posters/poster-07.jpg",
+    gallery: [
+      "/posters/poster-17.jpg",
+      "/posters/poster-18.jpg",
+      "/posters/poster-19.jpg",
+      "/posters/poster-20.jpg",
+      "/posters/poster-21.jpg",
+    ],
     format: "100 ep × 1m 40s",
     studio: "Echo Microdrama",
     status: "POST_PRODUCTION",
@@ -269,8 +288,14 @@ export const SEED_PROJECTS: SeedProject[] = [
     genre: "Sci-Fi Thriller",
     synopsis:
       "When a deep-space maintenance crew wakes from cryo two hundred years early, they must decide whether the AI that saved them is protecting the mission — or replacing it.",
-    poster:
-      "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=800&q=70",
+    poster: "/posters/poster-10.jpg",
+    gallery: [
+      "/posters/poster-22.jpg",
+      "/posters/poster-23.jpg",
+      "/posters/poster-24.jpg",
+      "/posters/poster-02.jpg",
+      "/posters/poster-03.jpg",
+    ],
     format: "40 ep × 2m 00s",
     studio: "Nova Frame",
     status: "PRE_PRODUCTION",
@@ -341,8 +366,14 @@ export const SEED_PROJECTS: SeedProject[] = [
     genre: "Romance",
     synopsis:
       "A food-truck chef and a Michelin critic keep colliding across one unforgettable summer of markets, feuds and second chances in a coastal town that never forgets a recipe.",
-    poster:
-      "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=70",
+    poster: "/posters/poster-13.jpg",
+    gallery: [
+      "/posters/poster-05.jpg",
+      "/posters/poster-06.jpg",
+      "/posters/poster-08.jpg",
+      "/posters/poster-09.jpg",
+      "/posters/poster-11.jpg",
+    ],
     format: "60 ep × 1m 20s",
     studio: "Amber Lane",
     status: "RELEASED",
@@ -413,8 +444,14 @@ export const SEED_PROJECTS: SeedProject[] = [
     genre: "Western Drama",
     synopsis:
       "Three generations of a ranching family fight a mining conglomerate, a drought and each other over the last unfenced valley in the state.",
-    poster:
-      "https://images.unsplash.com/photo-1500534623283-312aade485b7?auto=format&fit=crop&w=800&q=70",
+    poster: "/posters/poster-16.jpg",
+    gallery: [
+      "/posters/poster-12.jpg",
+      "/posters/poster-14.jpg",
+      "/posters/poster-15.jpg",
+      "/posters/poster-17.jpg",
+      "/posters/poster-18.jpg",
+    ],
     format: "70 ep × 1m 45s",
     studio: "Ridgeline",
     status: "FILMING",
