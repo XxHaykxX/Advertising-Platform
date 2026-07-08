@@ -3,13 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireSuperadmin } from "@/lib/auth/require";
-
-export const APP_STATUSES = ["new", "in_progress", "closed"] as const;
-export type AppStatus = (typeof APP_STATUSES)[number];
-
-export function isAppStatus(value: string): value is AppStatus {
-  return (APP_STATUSES as readonly string[]).includes(value);
-}
+import { isAppStatus } from "./statuses";
 
 export async function setApplicationStatus(id: number, status: string) {
   // Server Actions are reachable via direct POST, not just through the UI —

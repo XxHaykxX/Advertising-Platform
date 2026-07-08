@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { listApplications, statusCounts } from "@/lib/data/applications";
 import { requireSuperadmin } from "@/lib/auth/require";
-import { APP_STATUSES, isAppStatus, setApplicationStatus, type AppStatus } from "./actions";
+import { setApplicationStatus } from "./actions";
+import { APP_STATUSES, isAppStatus, type AppStatus } from "./statuses";
 
 const STATUS_LABEL: Record<AppStatus, string> = {
   new: "New",
