@@ -1,0 +1,135 @@
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-1.1.x", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Setting {
+  key   String @id
+  value String
+}
+
+enum Role {
+  SUPERADMIN
+  PUBLISHER
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(PUBLISHER)
+  name         String
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  projects Project[]
+}
+
+/// UI translation strings (ru/en/hy) — interface i18n only
+model Content {
+  key String @id
+  ru  String @db.Text
+  en  String @db.Text
+  hy  String @db.Text
+}
+
+enum ProjectStatus {
+  PRE_PRODUCTION
+  FILMING
+  POST_PRODUCTION
+  RELEASED
+}
+
+enum BrandSafety {
+  SAFE
+  REVIEW
+  RISK
+}
+
+/// A film/series project listed for product placement
+model Project {
+  id             Int           @id @default(autoincrement())
+  code           String        @unique // "#PP-2026-8540"
+  title          String
+  genre          String
+  synopsis       String        @db.Text
+  poster         String?
+  gallery        String        @default("[]") @db.VarChar(2048) // JSON string[]
+  format         String        @default("") // "50 ep × 1m 15s"
+  studio         String        @default("")
+  status         ProjectStatus @default(PRE_PRODUCTION)
+  releaseLabel   String        @default("") // "Q1 2027"
+  countries      String        @default("") // "US, UK, …"
+  audienceGender String        @default("All") // All | Male | Female
+  audienceAge    String        @default("") // "16-30"
+  projViews      String        @default("") // "2.4M"
+  cpmRange       String        @default("") // "$3.60-$5.40"
+  budgetRange    String        @default("") // "$6,000,000 — $10,000,000"
+  safetyScore    Int           @default(0) // 0-100
+  safety         BrandSafety   @default(REVIEW)
+  isActive       Boolean       @default(true)
+  sortOrder      Int           @default(0)
+  createdAt      DateTime      @default(now())
+  ownerId        Int
+
+  owner         User                  @relation(fields: [ownerId], references: [id])
+  safetyCats    SafetyCategory[]
+  opportunities PlacementOpportunity[]
+
+  @@index([ownerId])
+}
+
+/// GARM brand-safety category score for a project
+model SafetyCategory {
+  id        Int    @id @default(autoincrement())
+  projectId Int
+  name      String // "Crime", "Drugs", …
+  score     Int    @default(0) // 0-100
+  aiText    String @db.Text
+  sortOrder Int    @default(0)
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+/// A scene-level placement opportunity
+model PlacementOpportunity {
+  id          Int    @id @default(autoincrement())
+  projectId   Int
+  sceneNo     Int    @default(1)
+  description String @db.Text
+  mood        String @default("")
+  rationale   String @db.Text
+  type        String @default("visual") // visual | audio
+  prominence  String @default("background") // background | active
+  category    String @default("") // "Beverages", "Technology", …
+  estValue    Int    @default(0) // dollars
+  durationSec Int    @default(0)
+  safety      Int    @default(100) // 0-100
+  sortOrder   Int    @default(0)
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+/// Lead applications (Express Interest + contact form)
+model Application {
+  id           Int      @id @default(autoincrement())
+  name         String
+  email        String?
+  company      String?
+  projectId    Int?
+  projectTitle String?
+  budget       String?
+  message      String?  @db.Text
+  status       String   @default("new") // new | in_progress | closed
+  note         String?  @db.Text
+  createdAt    DateTime @default(now())
+}
