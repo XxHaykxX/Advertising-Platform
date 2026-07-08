@@ -3,10 +3,11 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth/require";
-import { updateProject } from "../../actions";
+import { formatDateInput, parsePlatformsInput, updateProject } from "../../actions";
 import { ProjectForm, type ProjectFormInitial } from "../../project-form";
 import { SafetyEditor } from "../../safety-editor";
 import { OpportunitiesEditor } from "../../opportunities-editor";
+import { ActorsEditor } from "../../actors-editor";
 
 export default async function EditProjectPage({
   params,
@@ -24,6 +25,7 @@ export default async function EditProjectPage({
     include: {
       safetyCats: { orderBy: { sortOrder: "asc" } },
       opportunities: { orderBy: { sortOrder: "asc" } },
+      actors: { orderBy: { sortOrder: "asc" } },
     },
   });
   if (!p) notFound();
@@ -51,6 +53,13 @@ export default async function EditProjectPage({
     safety: p.safety,
     isActive: p.isActive,
     sortOrder: p.sortOrder,
+    slotsTotal: p.slotsTotal,
+    slotsTaken: p.slotsTaken,
+    applicationDeadline: formatDateInput(p.applicationDeadline),
+    releaseDate: formatDateInput(p.releaseDate),
+    platforms: parsePlatformsInput(p.platforms),
+    placementType: p.placementType ?? "",
+    priceNote: p.priceNote ?? "",
   };
 
   const action = updateProject.bind(null, pid);
@@ -92,6 +101,14 @@ export default async function EditProjectPage({
             durationSec: o.durationSec,
             safety: o.safety,
           }))}
+        />
+      </div>
+
+      <div className="mt-10 max-w-3xl">
+        <h2 className="mb-4 text-lg font-bold text-foreground">Actors</h2>
+        <ActorsEditor
+          projectId={pid}
+          actors={p.actors.map((a) => ({ id: a.id, name: a.name, role: a.role }))}
         />
       </div>
     </div>

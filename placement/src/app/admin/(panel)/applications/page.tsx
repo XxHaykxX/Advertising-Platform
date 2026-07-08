@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { listApplications, statusCounts } from "@/lib/data/applications";
 import { requireSuperadmin } from "@/lib/auth/require";
+import { prisma } from "@/lib/prisma";
 import { setApplicationStatus } from "./actions";
 import { APP_STATUSES, isAppStatus, type AppStatus } from "./statuses";
 
@@ -48,6 +49,14 @@ export default async function ApplicationsPage({
     statusCounts(),
   ]);
   const total = counts.new + counts.in_progress + counts.closed;
+
+  // ApplicationDTO doesn't carry `phone` — fetched directly here rather than
+  // widening the shared DTO, since this admin view is the only phone reader.
+  const phoneRows = await prisma.application.findMany({
+    where: { id: { in: apps.map((a) => a.id) } },
+    select: { id: true, phone: true },
+  });
+  const phoneById = new Map(phoneRows.map((r) => [r.id, r.phone]));
 
   return (
     <div>
@@ -103,6 +112,7 @@ export default async function ApplicationsPage({
                   </div>
                   <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
                     {a.email && <span>{a.email}</span>}
+                    {phoneById.get(a.id) && <span>{phoneById.get(a.id)}</span>}
                     {a.company && <span>{a.company}</span>}
                     {a.projectTitle && <span>Project: {a.projectTitle}</span>}
                     {a.budget && <span>Budget: {a.budget}</span>}

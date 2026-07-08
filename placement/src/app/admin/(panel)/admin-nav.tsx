@@ -2,15 +2,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Film, Inbox, Users } from "lucide-react";
+import { LayoutDashboard, Film, Inbox, Users, Images, Handshake } from "lucide-react";
 import type { Role } from "@prisma/client";
 
 // Full nav for SUPERADMIN. A PUBLISHER only sees Dashboard + Projects —
-// Applications and Users are platform-wide, super-admin-only views.
+// Applications, Users, Portfolio and Partners are platform-wide, super-admin-
+// only views (Portfolio/Partners have no ownerId to scope by Publisher).
 const NAV = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, superadminOnly: false },
   { href: "/admin/projects", label: "Projects", icon: Film, superadminOnly: false },
   { href: "/admin/applications", label: "Applications", icon: Inbox, superadminOnly: true },
+  { href: "/admin/portfolio", label: "Portfolio", icon: Images, superadminOnly: true },
+  { href: "/admin/partners", label: "Partners", icon: Handshake, superadminOnly: true },
   { href: "/admin/users", label: "Users", icon: Users, superadminOnly: true },
 ];
 

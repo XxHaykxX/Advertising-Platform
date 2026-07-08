@@ -12,6 +12,7 @@ const SAFETY_VALUES = ["SAFE", "REVIEW", "RISK"] as const;
 const GENDER_VALUES = ["All", "Male", "Female"] as const;
 const OPP_TYPE_VALUES = ["visual", "audio"] as const;
 const OPP_PROMINENCE_VALUES = ["background", "active"] as const;
+export const PLACEMENT_TYPE_VALUES = ["In-Frame", "Story Integration", "Mention"] as const;
 
 export type ProjectFormValues = {
   title: string;
@@ -33,6 +34,14 @@ export type ProjectFormValues = {
   safety: BrandSafety;
   isActive: boolean;
   sortOrder: number;
+  // ── Placement parity fields ──
+  slotsTotal: number;
+  slotsTaken: number;
+  applicationDeadline: string; // <input type=date> value, "" when unset
+  releaseDate: string; // <input type=date> value, "" when unset
+  platforms: string; // comma-separated in the form; JSON string[] at rest
+  placementType: string; // "" | one of PLACEMENT_TYPE_VALUES
+  priceNote: string;
 };
 
 export type ProjectFormState = { error?: string; values?: ProjectFormValues };
@@ -70,6 +79,45 @@ function jsonArray<T>(fd: FormData, key: string): T[] {
   }
 }
 
+// ── Slots/deadline/platforms form <-> DB conversions ──────────────────────
+// The form works with plain strings (date-input values, comma-separated
+// platform lists); the DB stores DateTime? / JSON-string columns. Converting
+// at this boundary keeps ProjectFormValues serializable and round-trippable
+// through useActionState's echoed `values` on a failed submit.
+
+/** "YYYY-MM-DD" (or "") -> Date | null for a Prisma DateTime? column. */
+function dateOrNull(value: string): Date | null {
+  if (!value) return null;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+/** Date | null -> "YYYY-MM-DD" for prefilling an <input type=date>. */
+export function formatDateInput(d: Date | null): string {
+  return d ? d.toISOString().slice(0, 10) : "";
+}
+
+/** "YouTube, Kinodaran, TV" -> JSON string[] (or null when empty) for the
+   nullable @db.Text Json column. */
+function platformsToJson(csv: string): string | null {
+  const arr = csv
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return arr.length ? JSON.stringify(arr) : null;
+}
+
+/** JSON string[] (or null) -> "YouTube, Kinodaran, TV" for the form. */
+export function parsePlatformsInput(json: string | null): string {
+  if (!json) return "";
+  try {
+    const arr = JSON.parse(json);
+    return Array.isArray(arr) ? arr.join(", ") : "";
+  } catch {
+    return "";
+  }
+}
+
 function buildData(fd: FormData): ProjectFormValues {
   return {
     title: str(fd, "title", VARCHAR_MAX),
@@ -91,6 +139,13 @@ function buildData(fd: FormData): ProjectFormValues {
     safety: enumVal(fd, "safety", SAFETY_VALUES, "REVIEW"),
     isActive: bool(fd, "isActive"),
     sortOrder: int(fd, "sortOrder"),
+    slotsTotal: Math.max(0, int(fd, "slotsTotal", 5)),
+    slotsTaken: Math.max(0, int(fd, "slotsTaken", 0)),
+    applicationDeadline: str(fd, "applicationDeadline"),
+    releaseDate: str(fd, "releaseDate"),
+    platforms: str(fd, "platforms", VARCHAR_MAX),
+    placementType: enumVal(fd, "placementType", [...PLACEMENT_TYPE_VALUES, ""] as const, ""),
+    priceNote: str(fd, "priceNote", VARCHAR_MAX),
   };
 }
 
@@ -123,6 +178,11 @@ export async function createProject(
       data: {
         ...data,
         poster: data.poster || null,
+        applicationDeadline: dateOrNull(data.applicationDeadline),
+        releaseDate: dateOrNull(data.releaseDate),
+        platforms: platformsToJson(data.platforms),
+        placementType: data.placementType || null,
+        priceNote: data.priceNote || null,
         // ownerId is always the creating user — never trusted from the form.
         ownerId: user.id,
       },
@@ -162,7 +222,15 @@ export async function updateProject(
   try {
     await prisma.project.update({
       where: { id },
-      data: { ...data, poster: data.poster || null },
+      data: {
+        ...data,
+        poster: data.poster || null,
+        applicationDeadline: dateOrNull(data.applicationDeadline),
+        releaseDate: dateOrNull(data.releaseDate),
+        platforms: platformsToJson(data.platforms),
+        placementType: data.placementType || null,
+        priceNote: data.priceNote || null,
+      },
     });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
@@ -285,6 +353,34 @@ export async function saveOpportunities(
         estValue: Math.max(0, Number(r.estValue) || 0),
         durationSec: Math.max(0, Number(r.durationSec) || 0),
         safety: clamp(Number(r.safety) || 0, 0, 100),
+        sortOrder: i,
+      })),
+    }),
+  ]);
+
+  revalidateProjectPaths(projectId);
+  return { ok: true };
+}
+
+type ActorRow = { name: string; role: string };
+
+export async function saveActors(
+  projectId: number,
+  _prev: SubEditorState,
+  fd: FormData,
+): Promise<SubEditorState> {
+  const authError = await authorizeProject(projectId);
+  if (authError) return { error: authError };
+
+  const rows = jsonArray<ActorRow>(fd, "rows").filter((r) => (r.name || "").trim());
+
+  await prisma.$transaction([
+    prisma.actor.deleteMany({ where: { projectId } }),
+    prisma.actor.createMany({
+      data: rows.map((r, i) => ({
+        projectId,
+        name: (r.name || "").trim(),
+        role: (r.role || "").trim(),
         sortOrder: i,
       })),
     }),

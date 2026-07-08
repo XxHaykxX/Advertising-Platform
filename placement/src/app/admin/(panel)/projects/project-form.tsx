@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
-import type { ProjectFormState, ProjectFormValues } from "./actions";
+import { PLACEMENT_TYPE_VALUES, type ProjectFormState, type ProjectFormValues } from "./actions";
 
 export type ProjectFormInitial = ProjectFormValues;
 
@@ -27,6 +27,13 @@ const EMPTY: ProjectFormInitial = {
   safety: "REVIEW",
   isActive: true,
   sortOrder: 0,
+  slotsTotal: 5,
+  slotsTaken: 0,
+  applicationDeadline: "",
+  releaseDate: "",
+  platforms: "",
+  placementType: "",
+  priceNote: "",
 };
 
 const STATUS_OPTIONS = [
@@ -126,6 +133,68 @@ export function ProjectForm({
           </Field>
           <Field label="Countries">
             <input name="countries" defaultValue={data.countries} placeholder="US, UK, …" className={inputCls} />
+          </Field>
+        </div>
+      </section>
+
+      {/* ── Placement ── */}
+      <section className="space-y-4 rounded-2xl border border-border bg-card p-6">
+        <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">Placement</h2>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Slots total">
+            <input
+              name="slotsTotal"
+              type="number"
+              min={0}
+              defaultValue={data.slotsTotal}
+              className={inputCls}
+            />
+          </Field>
+          <Field label="Slots taken">
+            <input
+              name="slotsTaken"
+              type="number"
+              min={0}
+              defaultValue={data.slotsTaken}
+              className={inputCls}
+            />
+          </Field>
+          <Field label="Application deadline">
+            <input
+              name="applicationDeadline"
+              type="date"
+              defaultValue={data.applicationDeadline}
+              className={inputCls}
+            />
+          </Field>
+          <Field label="Release date">
+            <input name="releaseDate" type="date" defaultValue={data.releaseDate} className={inputCls} />
+          </Field>
+          <Field label="Platforms">
+            <input
+              name="platforms"
+              defaultValue={data.platforms}
+              placeholder="YouTube, Kinodaran, TV"
+              className={inputCls}
+            />
+          </Field>
+          <Field label="Placement type">
+            <select name="placementType" defaultValue={data.placementType} className={inputCls}>
+              <option value="">—</option>
+              {PLACEMENT_TYPE_VALUES.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Price note">
+            <input
+              name="priceNote"
+              defaultValue={data.priceNote}
+              placeholder="Price on request"
+              className={inputCls}
+            />
           </Field>
         </div>
       </section>
