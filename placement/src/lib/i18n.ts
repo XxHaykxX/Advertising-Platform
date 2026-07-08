@@ -7,7 +7,7 @@
 
 export const LOCALES = ["ru", "en", "hy"] as const;
 export type Locale = (typeof LOCALES)[number];
-export const DEFAULT_LOCALE: Locale = "en";
+export const DEFAULT_LOCALE: Locale = "hy";
 export const LOCALE_COOKIE = "locale";
 
 export function isLocale(v: unknown): v is Locale {

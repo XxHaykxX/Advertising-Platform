@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { SmoothScroll } from "@/components/smooth-scroll";
+import { getLocale } from "@/lib/data/locale";
 import "./globals.css";
 
 const inter = Inter({
   variable: "--font-sans",
-  subsets: ["latin"],
+  // Armenian glyphs fall back to system fonts; latin+cyrillic cover en/ru.
+  subsets: ["latin", "cyrillic"],
 });
 
 export const metadata: Metadata = {
@@ -16,13 +18,14 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
   return (
-    <html lang="en">
+    <html lang={locale}>
       <body className={`${inter.variable} font-sans antialiased`}>
         <SmoothScroll>{children}</SmoothScroll>
       </body>
