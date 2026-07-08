@@ -209,11 +209,6 @@ export function CatalogView({ projects }: { projects: ProjectListDTO[] }) {
       </header>
 
       <Container className="pt-6">
-        <div className="mb-4 rounded-xl border border-warn/30 bg-warn/10 px-4 py-3 text-sm text-warn">
-          <span className="font-semibold">Demo data.</span> These are sample reports for
-          demonstration only. Once your brand is approved, you&apos;ll see real placement reports
-          here.
-        </div>
         <div className="mb-8 flex items-center gap-2 rounded-xl border border-border bg-muted/60 px-4 py-3 text-sm text-muted-foreground">
           <ShieldCheck className="h-4 w-4 shrink-0 text-primary" />
           Reports are anonymized until mutual interest is confirmed

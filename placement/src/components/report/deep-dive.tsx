@@ -146,7 +146,7 @@ export function DeepDive({ project }: { project: ProjectDetailDTO }) {
               onToggle={() => toggle("psychographics")}
             >
               <p className="text-sm text-muted-foreground">
-                No data available for this demo report.
+                No data available for this report.
               </p>
             </AccordionItem>
           </Reveal>
