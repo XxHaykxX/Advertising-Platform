@@ -1,11 +1,3 @@
-export type BrandSafetyLevel = "SAFE" | "REVIEW" | "RISK";
-
-export interface SafetyCatDTO {
-  name: string;
-  score: number;
-  aiText: string;
-}
-
 export interface OpportunityDTO {
   sceneNo: number;
   description: string;
@@ -16,7 +8,6 @@ export interface OpportunityDTO {
   category: string;
   estValue: number;
   durationSec: number;
-  safety: number;
 }
 
 export interface ProjectListDTO {
@@ -32,9 +23,13 @@ export interface ProjectListDTO {
   audienceGender: string;
   audienceAge: string;
   projViews: string;
-  budgetRange: string;
-  safety: BrandSafetyLevel;
-  safetyScore: number;
+  // Budget is preformatted (converted + symbol) by the data layer — a single
+  // formatting point so display components never touch currency math.
+  budgetDisplay: string; // "" when both bounds are unset
+  // Raw AMD bounds, alongside budgetDisplay, for numeric filtering/sorting
+  // (catalog budget filter) — always AMD regardless of the chosen currency.
+  budgetMinAmd: number | null;
+  budgetMaxAmd: number | null;
   status: string;
   opportunitiesCount: number;
   productCategories: string[];
@@ -45,14 +40,16 @@ export interface ProjectListDTO {
   platforms: string; // JSON string[]; parse with parseStringArray
   placementType: string | null;
   priceNote: string | null;
+  // Preformatted placement price — null means "no price set", i.e. render
+  // the "on request" label. priceNote is a separate optional caption.
+  priceDisplay: string | null;
 }
 
 export interface ProjectDetailDTO extends ProjectListDTO {
   gallery: string;
   status: string;
   releaseLabel: string;
-  cpmRange: string;
-  safetyCats: SafetyCatDTO[];
+  cpmDisplay: string; // "" when both bounds are unset
   opportunities: OpportunityDTO[];
   exposureTotal: number;
   actors: ActorDTO[];

@@ -15,7 +15,6 @@ const EMPTY_ROW: OpportunityDTO = {
   category: "",
   estValue: 0,
   durationSec: 0,
-  safety: 100,
 };
 
 const inputCls =
@@ -127,7 +126,7 @@ export function OpportunitiesEditor({
             />
           </label>
 
-          <div className="grid gap-3 sm:grid-cols-4">
+          <div className="grid gap-3 sm:grid-cols-3">
             <label className="block">
               <span className={miniLabelCls}>Mood</span>
               <input value={r.mood} onChange={(e) => update(i, { mood: e.target.value })} className={inputCls} />
@@ -149,17 +148,6 @@ export function OpportunitiesEditor({
                 min={0}
                 value={r.durationSec}
                 onChange={(e) => update(i, { durationSec: Number(e.target.value) })}
-                className={inputCls}
-              />
-            </label>
-            <label className="block">
-              <span className={miniLabelCls}>Safety (0-100)</span>
-              <input
-                type="number"
-                min={0}
-                max={100}
-                value={r.safety}
-                onChange={(e) => update(i, { safety: Number(e.target.value) })}
                 className={inputCls}
               />
             </label>

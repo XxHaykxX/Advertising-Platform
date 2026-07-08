@@ -15,25 +15,27 @@ import {
 } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
-import { AccentBadge, GenreBadge, SafetyBadge } from "@/components/ui/badge";
+import { AccentBadge, GenreBadge } from "@/components/ui/badge";
 import { ProjectCard } from "@/components/project-card";
 import { ApplyDialog } from "@/components/apply-dialog";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
 import { daysUntil, formatFullDate, splitCountries } from "@/lib/data/format";
 import { cn } from "@/lib/utils";
-import { DEFAULT_LOCALE, intlLocale, makeUI, type Locale } from "@/lib/i18n";
+import { DEFAULT_LOCALE, intlLocale, localizeValue, makeUI, UI, LOCALES, type Locale } from "@/lib/i18n";
+import { DEFAULT_CURRENCY, type CurrencyCode } from "@/lib/currency";
 import type { ProjectListDTO } from "@/lib/types";
 
 type Gender = "All" | "Male" | "Female";
-type SortKey = "relevant" | "views" | "budget" | "safety";
+type SortKey = "relevant" | "views" | "budget";
 type ViewMode = "grid" | "list";
 
-function parseBudgetRange(range: string): [number, number] {
-  const nums = range.match(/[\d,]+/g)?.map((s) => Number(s.replace(/,/g, ""))) ?? [];
-  if (nums.length === 0) return [0, 0];
-  if (nums.length === 1) return [nums[0], nums[0]];
-  return [nums[0], nums[1]];
+// Budget filtering/sorting always compares the raw AMD bounds (budgetMinAmd/
+// budgetMaxAmd), never the currency-converted budgetDisplay string — that
+// keeps the min/max filter inputs meaningful regardless of which currency
+// the visitor has selected for display.
+function budgetBoundsAmd(p: ProjectListDTO): [number, number] {
+  return [p.budgetMinAmd ?? 0, p.budgetMaxAmd ?? 0];
 }
 
 function parseViews(v: string): number {
@@ -73,18 +75,19 @@ function ProjectRow({ project, locale = DEFAULT_LOCALE }: { project: ProjectList
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <h3 className="text-lg font-semibold text-foreground">{project.title}</h3>
-          <GenreBadge>{project.genre}</GenreBadge>
-          <SafetyBadge safety={project.safety} />
-          {project.placementType ? <AccentBadge>{project.placementType}</AccentBadge> : null}
+          <GenreBadge>{localizeValue(locale, "genre", project.genre)}</GenreBadge>
+          {project.placementType ? (
+            <AccentBadge>{localizeValue(locale, "placement", project.placementType)}</AccentBadge>
+          ) : null}
         </div>
         <code className="text-xs text-muted-foreground">{project.code}</code>
         <p className="mt-2 line-clamp-1 text-sm text-muted-foreground">{project.synopsis}</p>
         <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
           <span>{project.format}</span>
           <span>{countries.slice(0, 3).join(", ")}</span>
-          <span>{project.audienceGender}, {project.audienceAge}</span>
+          <span>{localizeValue(locale, "gender", project.audienceGender)}, {project.audienceAge}</span>
           <span className="text-primary">{project.opportunitiesCount} {t("card.opportunities")}</span>
-          <span>{project.budgetRange}</span>
+          {project.budgetDisplay ? <span>{project.budgetDisplay}</span> : null}
           <span>{project.projViews} {t("card.projectedViews")}</span>
           {project.slotsTotal > 0 ? (
             <span>{slotsLeft} {t("card.slotsShort", { b: project.slotsTotal })}</span>
@@ -168,9 +171,11 @@ function CheckboxFilter({
 export function CatalogView({
   projects,
   locale = DEFAULT_LOCALE,
+  currency = DEFAULT_CURRENCY,
 }: {
   projects: ProjectListDTO[];
   locale?: Locale;
+  currency?: CurrencyCode;
 }) {
   const t = makeUI(locale);
   const genres = useMemo(
@@ -196,7 +201,6 @@ export function CatalogView({
   const [gender, setGender] = useState<Gender>("All");
   const [budgetMin, setBudgetMin] = useState("");
   const [budgetMax, setBudgetMax] = useState("");
-  const [safeOnly, setSafeOnly] = useState(false);
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortKey>("relevant");
   const [view, setView] = useState<ViewMode>("grid");
@@ -208,7 +212,6 @@ export function CatalogView({
     gender !== "All" ||
     budgetMin !== "" ||
     budgetMax !== "" ||
-    safeOnly ||
     search !== "";
 
   const clearAll = () => {
@@ -218,7 +221,6 @@ export function CatalogView({
     setGender("All");
     setBudgetMin("");
     setBudgetMax("");
-    setSafeOnly(false);
     setSearch("");
   };
 
@@ -248,16 +250,19 @@ export function CatalogView({
         return false;
       if (selectedStatuses.length > 0 && !selectedStatuses.includes(p.status)) return false;
       if (gender !== "All" && p.audienceGender !== gender) return false;
-      if (safeOnly && p.safetyScore < 80) return false;
 
       if (min !== null || max !== null) {
-        const [pMin, pMax] = parseBudgetRange(p.budgetRange);
+        const [pMin, pMax] = budgetBoundsAmd(p);
         if (min !== null && pMax < min) return false;
         if (max !== null && pMin > max) return false;
       }
 
       if (term) {
-        const haystack = `${p.title} ${p.genre} ${p.countries} ${p.synopsis}`.toLowerCase();
+        const statusLabels = LOCALES.map(
+          (l) => UI[`report.status.${p.status}`]?.[l] ?? "",
+        ).join(" ");
+        const haystack =
+          `${p.title} ${p.genre} ${p.countries} ${p.synopsis} ${statusLabels}`.toLowerCase();
         if (!haystack.includes(term)) return false;
       }
 
@@ -268,12 +273,10 @@ export function CatalogView({
       list = [...list].sort((a, b) => parseViews(b.projViews) - parseViews(a.projViews));
     } else if (sort === "budget") {
       list = [...list].sort((a, b) => {
-        const [, aMax] = parseBudgetRange(a.budgetRange);
-        const [, bMax] = parseBudgetRange(b.budgetRange);
+        const [, aMax] = budgetBoundsAmd(a);
+        const [, bMax] = budgetBoundsAmd(b);
         return bMax - aMax;
       });
-    } else if (sort === "safety") {
-      list = [...list].sort((a, b) => b.safetyScore - a.safetyScore);
     }
 
     return list;
@@ -285,14 +288,13 @@ export function CatalogView({
     gender,
     budgetMin,
     budgetMax,
-    safeOnly,
     search,
     sort,
   ]);
 
   return (
     <>
-      <Header locale={locale} />
+      <Header locale={locale} currency={currency} />
 
       <Container className="pt-6">
         <div className="mb-8 flex items-center gap-2 rounded-xl border border-border bg-muted/60 px-4 py-3 text-sm text-muted-foreground">
@@ -320,7 +322,7 @@ export function CatalogView({
                       onChange={() => toggleGenre(g)}
                       className="h-4 w-4 rounded border-border accent-primary"
                     />
-                    {g}
+                    {localizeValue(locale, "genre", g)}
                   </label>
                 ))}
               </div>
@@ -375,36 +377,10 @@ export function CatalogView({
 
             <CheckboxFilter
               label={t("catalog.productCategory")}
-              options={categories.map((c) => ({ value: c, label: c }))}
+              options={categories.map((c) => ({ value: c, label: localizeValue(locale, "category", c) }))}
               selected={selectedCategories}
               onToggle={toggleCategory}
             />
-
-            <div className="border-t border-border py-4">
-              <div className="mb-1 flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-foreground">{t("catalog.brandSafety")}</h3>
-              </div>
-              <label className="mt-2 flex items-center gap-2.5 text-sm text-foreground">
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={safeOnly}
-                  onClick={() => setSafeOnly((v) => !v)}
-                  className={cn(
-                    "relative h-5 w-9 shrink-0 rounded-full transition-colors",
-                    safeOnly ? "bg-primary" : "bg-muted",
-                  )}
-                >
-                  <span
-                    className={cn(
-                      "absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform",
-                      safeOnly ? "translate-x-4 left-0.5" : "left-0.5",
-                    )}
-                  />
-                </button>
-                {t("catalog.safeOnly")} <span className="text-muted-foreground">(80+)</span>
-              </label>
-            </div>
 
             <CheckboxFilter
               label={t("catalog.status")}
@@ -414,14 +390,15 @@ export function CatalogView({
             />
 
             <div className="pt-4">
-              <button
+              <Button
                 type="button"
+                variant="primary"
+                size="sm"
                 onClick={clearAll}
                 disabled={!hasFilters}
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {t("catalog.clearAll")}
-              </button>
+              </Button>
             </div>
           </aside>
 
@@ -447,7 +424,6 @@ export function CatalogView({
                 <option value="relevant">{t("catalog.sortMostRelevant")}</option>
                 <option value="views">{t("catalog.sortViews")}</option>
                 <option value="budget">{t("catalog.sortBudget")}</option>
-                <option value="safety">{t("catalog.sortSafety")}</option>
               </select>
 
               <div className="inline-flex rounded-xl border border-border bg-card p-1">
@@ -503,7 +479,7 @@ export function CatalogView({
         </div>
       </Container>
 
-      <Footer locale={locale} />
+      <Footer locale={locale} currency={currency} />
     </>
   );
 }

@@ -2,7 +2,6 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth/require";
-import { SafetyBadge } from "@/components/ui/badge";
 import { ActiveToggle, DeleteButton } from "./row-actions";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -55,7 +54,6 @@ export default async function ProjectsAdminPage() {
                 <th className="px-4 py-3 font-medium">Poster</th>
                 <th className="px-4 py-3 font-medium">Title / Code</th>
                 <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium">Safety</th>
                 <th className="px-4 py-3 font-medium">Opportunities</th>
                 <th className="px-4 py-3 font-medium">Active</th>
                 {isSuperadmin && <th className="px-4 py-3 font-medium">Owner</th>}
@@ -84,12 +82,6 @@ export default async function ProjectsAdminPage() {
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">
                     {STATUS_LABEL[p.status] ?? p.status}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <SafetyBadge safety={p.safety} />
-                      <span className="text-xs text-muted-foreground">{p.safetyScore}</span>
-                    </div>
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">{p._count.opportunities}</td>
                   <td className="px-4 py-3">

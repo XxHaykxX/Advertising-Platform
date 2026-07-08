@@ -126,7 +126,6 @@ export function Hero({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
       {/* focused scrim directly behind the headline for legibility */}
       <div className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[70%] w-[min(900px,92%)] -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(ellipse_at_center,rgba(8,8,16,0.85)_0%,rgba(8,8,16,0.55)_45%,transparent_72%)] blur-xl" />
       {/* bottom fade → seamless blend into next (light) section */}
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 z-0 h-[26%] bg-[linear-gradient(180deg,rgba(255,255,255,0)_0%,rgba(255,255,255,1)_96%)]" />
 
       {/* ── Foreground content ───────────────────────────────── */}
       <motion.div

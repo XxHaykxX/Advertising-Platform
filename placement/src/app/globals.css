@@ -37,6 +37,9 @@
 html.lenis, html.lenis body { height: auto; }
 .lenis.lenis-smooth { scroll-behavior: auto !important; }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+/* Reserve the scrollbar gutter so router.refresh() (locale/currency switch)
+   never toggles the vertical scrollbar and shifts the nav a few px sideways. */
+html { scrollbar-gutter: stable; }
 
 /* continuous cinematic poster marquee (always-on motion) */
 @keyframes marquee-up {
@@ -74,4 +77,11 @@ html.lenis, html.lenis body { height: auto; }
 }
 @media (prefers-reduced-motion: reduce) {
   .marquee-x { animation: none !important; }
+}
+
+/* Report "Download PDF" = browser print. Hide site chrome and action
+   buttons so the printed/saved page is a clean report. */
+@media print {
+  header, footer, .no-print { display: none !important; }
+  body { background: #fff !important; }
 }

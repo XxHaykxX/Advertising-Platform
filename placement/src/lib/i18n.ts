@@ -42,9 +42,9 @@ export const UI: Record<string, Dict> = {
   "hero.titleHighlight": { ru: "Брендированный плейсмент", en: "Brand Placement", hy: "Բրենդային տեղադրում" },
   "hero.titleRest": { ru: "Маркетплейс", en: "Marketplace", hy: "Շուկա" },
   "hero.subtitle": {
-    ru: "Соединяем бренды с кино- и сериальными продакшенами через посценовые, безопасные для бренда отчёты о плейсменте.",
-    en: "Connect brands with film & series productions through scene-level, brand-safe placement reports.",
-    hy: "Կապում ենք բրենդներին կինոնախագծերի և սերիալների հետ՝ տեսարան առ տեսարան, բրենդի համար անվտանգ տեղադրման հաշվետվությունների միջոցով։",
+    ru: "Соединяем бренды с кино- и сериальными продакшенами через посценовые отчёты о плейсменте.",
+    en: "Connect brands with film & series productions through scene-level placement reports.",
+    hy: "Կապում ենք բրենդներին կինոնախագծերի և սերիալների հետ՝ տեսարան առ տեսարան տեղադրման հաշվետվությունների միջոցով։",
   },
   "hero.disclaimer": {
     ru: "Плейсменты от $5K. Комиссия платформы — только по закрытым сделкам.",
@@ -55,8 +55,8 @@ export const UI: Record<string, Dict> = {
 
   // ── buttons / CTAs ──────────────────────────
   "btn.getStarted": { ru: "Начать", en: "Get Started", hy: "Սկսել" },
-  "btn.viewReport": { ru: "Смотреть отчёт", en: "View Report", hy: "Դիտել հաշվետվությունը" },
-  "btn.requestDetails": { ru: "Запросить детали", en: "Request details", hy: "Հարցնել մանրամասներ" },
+  "btn.viewReport": { ru: "Подробнее", en: "Learn More", hy: "Մանրամասն" },
+  "btn.requestDetails": { ru: "Связаться", en: "Contact us", hy: "Կապվել" },
   "btn.expressInterest": { ru: "Проявить интерес", en: "Express Interest", hy: "Ցուցաբերել հետաքրքրություն" },
   "btn.browseProjects": { ru: "Смотреть проекты", en: "Browse Projects", hy: "Դիտել նախագծերը" },
   "btn.viewAll": { ru: "Смотреть все", en: "View All", hy: "Դիտել բոլորը" },
@@ -109,19 +109,42 @@ export const UI: Record<string, Dict> = {
   "catalog.genderAll": { ru: "Все", en: "All", hy: "Բոլորը" },
   "catalog.genderMale": { ru: "Мужской", en: "Male", hy: "Արական" },
   "catalog.genderFemale": { ru: "Женский", en: "Female", hy: "Իգական" },
+
+  // ── Localized data-value labels (closed sets rendered from DB values) ──
+  // Keyed by the raw DB value; localizeValue() falls back to the raw value
+  // for anything not listed (e.g. a custom genre an admin types).
+  "gender.All": { ru: "Все", en: "All", hy: "Բոլորը" },
+  "gender.Male": { ru: "Мужской", en: "Male", hy: "Արական" },
+  "gender.Female": { ru: "Женский", en: "Female", hy: "Իգական" },
+  "genre.Comedy Film": { ru: "Комедийный фильм", en: "Comedy Film", hy: "Կատակերգական ֆիլմ" },
+  "genre.Comedy Series": { ru: "Комедийный сериал", en: "Comedy Series", hy: "Կատակերգական սերիալ" },
+  "genre.Drama Series": { ru: "Драматический сериал", en: "Drama Series", hy: "Դրամատիկ սերիալ" },
+  "genre.Family Series": { ru: "Семейный сериал", en: "Family Series", hy: "Ընտանեկան սերիալ" },
+  "genre.Documentary": { ru: "Документальный", en: "Documentary", hy: "Վավերագրական" },
+  "genre.Thriller": { ru: "Триллер", en: "Thriller", hy: "Թրիլլեր" },
+  "placement.In-Frame": { ru: "В кадре", en: "In-Frame", hy: "Կադրում" },
+  "placement.Story Integration": { ru: "Интеграция в сюжет", en: "Story Integration", hy: "Սյուժեի ինտեգրում" },
+  "placement.Mention": { ru: "Упоминание", en: "Mention", hy: "Հիշատակում" },
+  "category.Automotive": { ru: "Автомобили", en: "Automotive", hy: "Ավտոմեքենաներ" },
+  "category.Beverages": { ru: "Напитки", en: "Beverages", hy: "Ըմպելիքներ" },
+  "category.Food & Beverages": { ru: "Еда и напитки", en: "Food & Beverages", hy: "Սնունդ և ըմպելիք" },
+  "category.Footwear": { ru: "Обувь", en: "Footwear", hy: "Կոշիկ" },
+  "category.Home & Living": { ru: "Дом и быт", en: "Home & Living", hy: "Տուն և կենցաղ" },
+  "category.Kids Apparel": { ru: "Детская одежда", en: "Kids Apparel", hy: "Մանկական հագուստ" },
+  "category.Media": { ru: "Медиа", en: "Media", hy: "Մեդիա" },
+  "category.Sportswear": { ru: "Спортивная одежда", en: "Sportswear", hy: "Սպորտային հագուստ" },
+  "category.Technology": { ru: "Технологии", en: "Technology", hy: "Տեխնոլոգիաներ" },
+  "category.Travel & Luggage": { ru: "Путешествия и багаж", en: "Travel & Luggage", hy: "Ճամփորդություն և ուղեբեռ" },
   "catalog.budgetRange": { ru: "Диапазон бюджета", en: "Budget Range", hy: "Բյուջեի միջակայք" },
   "catalog.min": { ru: "Мин", en: "Min", hy: "Նվազ." },
   "catalog.max": { ru: "Макс", en: "Max", hy: "Առավ." },
   "catalog.productCategory": { ru: "Категория продукта", en: "Product Category", hy: "Ապրանքի կատեգորիա" },
-  "catalog.brandSafety": { ru: "Безопасность бренда", en: "Brand Safety", hy: "Բրենդի անվտանգություն" },
-  "catalog.safeOnly": { ru: "Только безопасные", en: "Safe only", hy: "Միայն անվտանգ" },
   "catalog.status": { ru: "Статус", en: "Status", hy: "Կարգավիճակ" },
   "catalog.clearAll": { ru: "Сбросить всё", en: "Clear All", hy: "Մաքրել բոլորը" },
   "catalog.searchPlaceholder": { ru: "Поиск по жанру, рынку, ключевым словам…", en: "Search by genre, market, keyword…", hy: "Որոնել ըստ ժանրի, շուկայի, բանալի բառի…" },
   "catalog.sortMostRelevant": { ru: "Сначала релевантные", en: "Most relevant", hy: "Առավել համապատասխան" },
   "catalog.sortViews": { ru: "Просмотры", en: "Views", hy: "Դիտումներ" },
   "catalog.sortBudget": { ru: "Бюджет", en: "Budget", hy: "Բյուջե" },
-  "catalog.sortSafety": { ru: "Безопасность", en: "Safety", hy: "Անվտանգություն" },
   "catalog.gridView": { ru: "Вид сеткой", en: "Grid view", hy: "Ցանցի տեսք" },
   "catalog.listView": { ru: "Вид списком", en: "List view", hy: "Ցուցակի տեսք" },
   "catalog.showingProjectsPrefix": { ru: "Показано", en: "Showing", hy: "Ցուցադրված է" },
@@ -166,9 +189,6 @@ export const UI: Record<string, Dict> = {
   "trust.countriesNumber": { ru: "100+", en: "100+", hy: "100+" },
   "trust.countriesTitle": { ru: "стран охвачено", en: "countries covered", hy: "երկիր ընդգրկված" },
   "trust.countriesCaption": { ru: "доступно на крупнейших рынках мира", en: "available in major markets worldwide", hy: "հասանելի է աշխարհի խոշոր շուկաներում" },
-  "trust.safetyNumber": { ru: "Посценовая", en: "Scene-level", hy: "Տեսարան առ տեսարան" },
-  "trust.safetyTitle": { ru: "безопасность бренда", en: "brand safety", hy: "բրենդի անվտանգություն" },
-  "trust.safetyCaption": { ru: "на основе анализа контента через ИИ", en: "powered by AI content analysis", hy: "աշխատում է ԱԲ-ի կոնտենտի վերլուծությամբ" },
 
   // ── featured productions ──────────────────────
   "featured.title": { ru: "Избранные проекты", en: "Featured Productions", hy: "Առաջարկվող նախագծեր" },
@@ -229,9 +249,9 @@ export const UI: Record<string, Dict> = {
   "getStarted.title": { ru: "Начните", en: "Get Started", hy: "Սկսեք" },
   "getStarted.forBrandsTitle": { ru: "Для брендов", en: "For Brands", hy: "Բրենդների համար" },
   "getStarted.forBrandsBody": {
-    ru: "Изучайте проверенные проекты, посценовые оценки безопасности, платите только по закрытым сделкам.",
-    en: "Browse vetted productions, scene-level safety scores, pay only on closed deals.",
-    hy: "Ուսումնասիրեք ստուգված նախագծեր, տեսարան առ տեսարան անվտանգության գնահատականներ, վճարեք միայն կնքված գործարքների համար։",
+    ru: "Изучайте проверенные проекты, посценовые отчёты о плейсменте, платите только по закрытым сделкам.",
+    en: "Browse vetted productions, scene-level placement reports, pay only on closed deals.",
+    hy: "Ուսումնասիրեք ստուգված նախագծեր, տեսարան առ տեսարան տեղադրման հաշվետվություններ, վճարեք միայն կնքված գործարքների համար։",
   },
   "getStarted.forFilmmakersTitle": { ru: "Для режиссёров", en: "For Filmmakers", hy: "Ռեժիսորների համար" },
   "getStarted.forFilmmakersBody": {
@@ -277,12 +297,6 @@ export const UI: Record<string, Dict> = {
     ru: "Плейсменты начинаются от $5K. Листинг и просмотр бесплатны — мы берём комиссию только когда сделка действительно закрывается, поэтому бренды и режиссёры никогда не платят за сорвавшиеся плейсменты.",
     en: "Placements start from $5K. Listing and browsing are free — we only take a fee when a deal actually closes, so brands and filmmakers never pay for placements that fall through.",
     hy: "Տեղադրումները սկսվում են $5K-ից։ Ցուցակագրումն ու դիտումն անվճար են․ մենք վճար ենք վերցնում միայն այն ժամանակ, երբ գործարքն իրականում կնքվում է, ուստի բրենդներն ու ռեժիսորները երբեք չեն վճարում չկայացած տեղադրումների համար։",
-  },
-  "faq.q2.question": { ru: "Как оценивается безопасность бренда?", en: "How is brand safety scored?", hy: "Ինչպե՞ս է գնահատվում բրենդի անվտանգությունը" },
-  "faq.q2.answer": {
-    ru: "Каждый сценарий разбирается по сценам и оценивается по 11-категорийной системе безопасности бренда GARM, поэтому вы точно видите, где появится ваш продукт, ещё до заключения сделки.",
-    en: "Every script is broken down scene by scene and scored against the GARM 11-category brand safety framework, so you can see exactly where your product would appear before committing to a deal.",
-    hy: "Յուրաքանչյուր սցենար վերլուծվում է տեսարան առ տեսարան և գնահատվում GARM-ի 11 կատեգորիայի բրենդի անվտանգության շրջանակով, այնպես որ դուք ճշգրիտ կտեսնեք, թե որտեղ կհայտնվի ձեր ապրանքը՝ նախքան գործարքի կնքումը։",
   },
   "faq.q3.question": { ru: "Что значит анонимизация?", en: "What does anonymization mean?", hy: "Ի՞նչ է նշանակում անանունացում" },
   "faq.q3.answer": {
@@ -391,9 +405,9 @@ export const UI: Record<string, Dict> = {
   },
   "hiw.brand2Title": { ru: "Смотрите посценовый отчёт", en: "View Scene-Level Report", hy: "Դիտեք տեսարան առ տեսարան հաշվետվությունը" },
   "hiw.brand2Desc": {
-    ru: "Получите доступ к подробным отчётам о плейсменте по каждому проекту, включая описания сцен, метрики аудитории и оценки безопасности бренда.",
-    en: "Access detailed placement reports for each project, including scene descriptions, audience metrics, and brand safety scores.",
-    hy: "Ստացեք հասանելիություն յուրաքանչյուր նախագծի մանրամասն տեղադրման հաշվետվություններին, ներառյալ տեսարանների նկարագրություններ, լսարանի չափորոշիչներ և բրենդի անվտանգության գնահատականներ։",
+    ru: "Получите доступ к подробным отчётам о плейсменте по каждому проекту, включая описания сцен и метрики аудитории.",
+    en: "Access detailed placement reports for each project, including scene descriptions and audience metrics.",
+    hy: "Ստացեք հասանելիություն յուրաքանչյուր նախագծի մանրամասն տեղադրման հաշվետվություններին, ներառյալ տեսարանների նկարագրություններ և լսարանի չափորոշիչներ։",
   },
   "hiw.brand3Title": { ru: "Проявляйте интерес и договаривайтесь", en: "Express Interest & Negotiate", hy: "Ցուցաբերեք հետաքրքրություն և բանակցեք" },
   "hiw.brand3Desc": {
@@ -476,8 +490,10 @@ export const UI: Record<string, Dict> = {
   "report.catalogLabel": { ru: "Каталог", en: "Catalog", hy: "Կատալոգ" },
   "report.share": { ru: "Поделиться", en: "Share", hy: "Կիսվել" },
   "report.downloadPdf": { ru: "Скачать PDF", en: "Download PDF", hy: "Ներբեռնել PDF" },
+  "report.prev": { ru: "Назад", en: "Previous", hy: "Նախորդ" },
+  "report.next": { ru: "Вперёд", en: "Next", hy: "Հաջորդ" },
+  "report.linkCopied": { ru: "Ссылка скопирована", en: "Link copied", hy: "Հղումը պատճենվեց" },
   "report.projectedViews": { ru: "Прогноз. просмотры", en: "Projected Views", hy: "Կանխատեսվող դիտումներ" },
-  "report.brandSafety": { ru: "Безопасность бренда", en: "Brand Safety", hy: "Բրենդի անվտանգություն" },
   "report.cpm": { ru: "CPM", en: "CPM", hy: "CPM" },
   "report.budgetRange": { ru: "Диапазон бюджета", en: "Budget Range", hy: "Բյուջեի միջակայք" },
   "report.status.PRE_PRODUCTION": { ru: "Пре-продакшен", en: "Pre-Production", hy: "Նախապատրաստական փուլ" },
@@ -486,12 +502,11 @@ export const UI: Record<string, Dict> = {
   "report.status.RELEASED": { ru: "Выпущено", en: "Released", hy: "Թողարկված" },
   "report.tabs.overview": { ru: "Обзор", en: "Overview", hy: "Ընդհանուր տեսք" },
   "report.tabs.cast": { ru: "Актёры", en: "Cast", hy: "Դերասաններ" },
-  "report.tabs.safety": { ru: "Безопасность", en: "Safety", hy: "Անվտանգություն" },
   "report.tabs.investment": { ru: "Инвестиции", en: "Investment", hy: "Ներդրում" },
   "report.tabs.more": { ru: "Ещё", en: "More", hy: "Ավելին" },
 
-  "cast.title": { ru: "Актёры", en: "Cast", hy: "Դերասաններ" },
-  "cast.subtitle": { ru: "Актёры, задействованные в проекте", en: "Actors attached to this production", hy: "Այս նախագծին կցված դերասաններ" },
+  "cast.title": { ru: "Актёры и создатели", en: "Cast & Creators", hy: "Դերասаններ և ստեղծագործողներ" },
+  "cast.subtitle": { ru: "Актёры и создатели, задействованные в проекте", en: "Actors and creators attached to this project", hy: "Այս նախագծին կցված դերասаններ և ստեղծագործողներ" },
 
   "keyFacts.placementSlots": { ru: "Слоты для плейсмента", en: "Placement Slots", hy: "Տեղադրման հատվածներ" },
   "keyFacts.available": { ru: "из {b} доступно", en: "of {b} available", hy: "{b}-ից հասանելի է" },
@@ -536,29 +551,11 @@ export const UI: Record<string, Dict> = {
   "roi.poweredBy": { ru: "Прогнозы основаны на отраслевых бенчмарках.", en: "Projections powered by industry benchmark data.", hy: "Կանխատեսումները հիմնված են ոլորտի չափանիշային տվյալների վրա։" },
   "express.lockedNotice": { ru: "Полные детали открываются после взаимного интереса", en: "Full details unlocked after mutual interest", hy: "Ամբողջական մանրամասները բացվում են փոխադարձ հետաքրքրությունից հետո" },
 
-  // ── report: safety assessment ──────────────────
-  "safety.title": { ru: "Оценка безопасности бренда", en: "Brand Safety Assessment", hy: "Բրենդի անվտանգության գնահատում" },
-  "safety.subtitle": {
-    ru: "Первичная оценка на основе фреймворка GARM. Итоговая безопасность бренда требует ручной проверки сценария перед подписанием сделки.",
-    en: "Initial assessment based on GARM framework. Final brand safety requires manual script review before deal signing.",
-    hy: "Նախնական գնահատում՝ հիմնված GARM շրջանակի վրա։ Վերջնական բրենդային անվտանգությունը պահանջում է սցենարի ձեռքով վերանայում մինչև գործարքի ստորագրումը։",
-  },
-  "safety.garmCategories": { ru: "Категории GARM", en: "GARM Categories", hy: "GARM կատեգորիաներ" },
-  "safety.verdictSafe": { ru: "В целом безопасно", en: "Generally Safe", hy: "Ընդհանուր առմամբ անվտանգ" },
-  "safety.verdictReview": { ru: "Требует проверки", en: "Needs Review", hy: "Պահանջում է վերանայում" },
-  "safety.verdictHighRisk": { ru: "Высокий риск", en: "High Risk", hy: "Բարձր ռիսկ" },
-  "safety.note": {
-    ru: "Представленные сцены описывают историю, сосредоточенную вокруг ключевых тем проекта. Хотя контент в целом подходит для массовой аудитории, рекомендуется полное прочтение сценария для подтверждения контекста любых чувствительных моментов перед финальным утверждением плейсмента.",
-    en: "The provided scenes outline a story centered on the project's core narrative themes. While the content is largely appropriate for mainstream audiences, a full read of the script is recommended to confirm context around any sensitive moments before final placement approval.",
-    hy: "Տրամադրված տեսարանները ուրվագծում են պատմություն, որը կենտրոնացած է նախագծի հիմնական պատումային թեմաների շուրջ։ Թեև բովանդակությունը հիմնականում համապատասխանում է լայն լսարանին, խորհուրդ է տրվում ամբողջությամբ կարդալ սցենարը՝ ցանկացած զգայուն պահի համատեքստը հաստատելու համար նախքան տեղադրման վերջնական հաստատումը։",
-  },
-
   // ── report: investment ──────────────────────────
   "investment.title": { ru: "Инвестиции и что входит", en: "Investment & Deliverables", hy: "Ներդրում և մատուցվող ծառայություններ" },
   "investment.subtitle": { ru: "Пакеты плейсмента и конкурентные цены", en: "Placement packages and competitive pricing", hy: "Տեղադրման փաթեթներ և մրցունակ գներ" },
   "investment.investmentLabel": { ru: "Инвестиции", en: "Investment", hy: "Ներդրում" },
   "investment.item1": { ru: "Проверенные посценовые возможности плейсмента", en: "Verified scene-level placement opportunities", hy: "Ստուգված տեսարան առ տեսարան տեղադրման հնարավորություններ" },
-  "investment.item2": { ru: "Анализ безопасности бренда с оценкой GARM", en: "Brand safety analysis with GARM scoring", hy: "Բրենդի անվտանգության վերլուծություն GARM գնահատմամբ" },
   "investment.item3": { ru: "Прогнозируемые метрики эффективности", en: "Projected performance metrics", hy: "Կանխատեսվող արդյունավետության չափորոշիչներ" },
   "investment.item4": { ru: "Персональный координатор плейсмента", en: "Dedicated placement coordinator", hy: "Հատուկ նշանակված տեղադրման համակարգող" },
   "investment.item5": { ru: "Отчёт об эффективности после кампании", en: "Post-campaign performance reporting", hy: "Հետարշավային արդյունավետության հաշվետվություն" },
@@ -594,17 +591,6 @@ export const UI: Record<string, Dict> = {
   "deepDive.uniqueScenes": { ru: "Уникальные сцены", en: "Unique scenes", hy: "Եզակի տեսարաններ" },
   "deepDive.totalScreenTime": { ru: "Общее экранное время", en: "Total screen time", hy: "Ընդհանուր էկրանային ժամանակ" },
   "deepDive.analysisDate": { ru: "Дата анализа", en: "Analysis date", hy: "Վերլուծության ամսաթիվ" },
-  "deepDive.fullSafetyTitle": { ru: "Полный анализ безопасности", en: "Full Safety Analysis", hy: "Անվտանգության ամբողջական վերլուծություն" },
-  "deepDive.suitable": { ru: "Подходит", en: "Suitable", hy: "Հարմար է" },
-  "deepDive.needsReview": { ru: "Требует проверки", en: "Needs Review", hy: "Պահանջում է վերանայում" },
-  "deepDive.highRisk": { ru: "Высокий риск", en: "High Risk", hy: "Բարձր ռիսկ" },
-  "deepDive.clearedNote": {
-    ru: "Существенных блокеров безопасности бренда не выявлено. Одобрено для большинства партнёрств с брендами при условии полной проверки сценария.",
-    en: "No significant brand-safety blockers identified. Cleared for most brand partnerships pending full script review.",
-    hy: "Բրենդի անվտանգության էական խոչընդոտներ չեն հայտնաբերվել։ Հաստատված է բրենդային գործընկերությունների մեծ մասի համար՝ սցենարի ամբողջական վերանայման պայմանով։",
-  },
-  "deepDive.viewGarmBreakdown": { ru: "Смотреть подробную разбивку GARM ({n} категорий)", en: "View detailed GARM category breakdown ({n} categories)", hy: "Դիտել GARM կատեգորիաների մանրամասն վերլուծությունը ({n} կատեգորիա)" },
-  "deepDive.potentialRisks": { ru: "Возможные риски", en: "Potential Risks", hy: "Հնարավոր ռիսկեր" },
   "deepDive.recommendations": { ru: "Рекомендации", en: "Recommendations", hy: "Առաջարկություններ" },
   "deepDive.rec1": { ru: "Ознакомьтесь с полным сценарием перед финализацией сделки с брендом.", en: "Review the full script before finalizing any brand deal.", hy: "Վերանայեք ամբողջական սցենարը նախքան բրենդային ցանկացած գործարքի ավարտը։" },
   "deepDive.rec2": { ru: "Согласуйте посценовое утверждение с юридической службой продакшена.", en: "Coordinate scene-level approval with the production's legal team.", hy: "Համակարգեք տեսարան առ տեսարան հաստատումը արտադրության իրավաբանական թիմի հետ։" },
@@ -673,6 +659,21 @@ export const UI: Record<string, Dict> = {
 
 /** Build a UI translator bound to a locale. Supports `{token}` interpolation
  *  via a second argument, e.g. t("catalog.showingProjectsPrefix"). */
+/**
+ * Localize a raw DB value from a closed set (genre, placementType, gender) via
+ * a `${prefix}.${value}` dict key. Falls back to the raw value when there's no
+ * translation (e.g. a custom genre an admin typed), so nothing ever renders a
+ * bare key. Free-text content (title/synopsis) is NOT handled here.
+ */
+export function localizeValue(
+  locale: Locale,
+  prefix: string,
+  value: string | null | undefined,
+): string {
+  if (!value) return "";
+  return UI[`${prefix}.${value}`]?.[locale] ?? value;
+}
+
 export function makeUI(locale: Locale) {
   return function t(key: string, vars?: Record<string, string | number>): string {
     let s = UI[key]?.[locale] ?? UI[key]?.en ?? key;

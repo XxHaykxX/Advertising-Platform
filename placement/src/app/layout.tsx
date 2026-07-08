@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://igovazd.am"),
   title: "iGovazd — Brand Placement Marketplace",
   description:
-    "Discover and place your brand in film and TV productions — scene-level safety, transparent pricing, direct access to filmmakers.",
+    "Discover and place your brand in film and TV productions — scene-level placement insights, transparent pricing, direct access to filmmakers.",
   alternates: { canonical: "/" },
 };
 

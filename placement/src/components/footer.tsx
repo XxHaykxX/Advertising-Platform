@@ -3,7 +3,9 @@ import { Mail, Phone } from "lucide-react";
 import { TelegramIcon, WhatsAppIcon, YouTubeIcon } from "@/components/brand-icons";
 import { Container } from "@/components/ui/container";
 import { LocaleSwitcher } from "@/components/locale-switcher";
+import { CurrencySwitcher } from "@/components/currency-switcher";
 import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
+import { DEFAULT_CURRENCY, type CurrencyCode } from "@/lib/currency";
 
 const CONTACTS = [
   { icon: Mail, label: "hello@igovazd.am", href: "mailto:hello@igovazd.am" },
@@ -19,11 +21,17 @@ const SOCIALS = [
 ] as const;
 
 /** Footer is rendered per-page by a server component (no shared root layout
- *  wrapper — see app/page.tsx), so it receives `locale` as a plain prop from
- *  its server parent. That parent re-executes with the fresh cookie value on
- *  every router.refresh() after a locale switch, so this stays in sync
- *  without any client-side cookie polling. */
-export function Footer({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
+ *  wrapper — see app/page.tsx), so it receives `locale`/`currency` as plain
+ *  props from its server parent. That parent re-executes with the fresh
+ *  cookie values on every router.refresh() after a locale/currency switch, so
+ *  this stays in sync without any client-side cookie polling. */
+export function Footer({
+  locale = DEFAULT_LOCALE,
+  currency = DEFAULT_CURRENCY,
+}: {
+  locale?: Locale;
+  currency?: CurrencyCode;
+}) {
   const t = makeUI(locale);
   return (
     <footer className="bg-section border-t border-border">
@@ -185,7 +193,10 @@ export function Footer({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
           <p className="text-[13px] text-muted-foreground">
             © 2026 iGovazd. {t("footer.rights")}
           </p>
-          <LocaleSwitcher current={locale} openUp />
+          <div className="flex items-center gap-2">
+            <LocaleSwitcher current={locale} openUp />
+            <CurrencySwitcher current={currency} openUp />
+          </div>
         </div>
       </Container>
     </footer>

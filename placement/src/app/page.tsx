@@ -12,14 +12,17 @@ import Contact from "@/components/contact";
 import { Footer } from "@/components/footer";
 import { getProjects } from "@/lib/data/projects";
 import { getLocale } from "@/lib/data/locale";
+import { getCurrency } from "@/lib/data/currency";
 
 export default async function Home() {
-  const [projects, locale] = await Promise.all([getProjects(), getLocale()]);
+  const locale = await getLocale();
+  const currency = await getCurrency();
+  const projects = await getProjects(locale, currency);
 
   return (
     <>
       <OrganizationJsonLd />
-      <Header locale={locale} />
+      <Header locale={locale} currency={currency} />
       <main>
         <Hero locale={locale} />
         <Stats locale={locale} />
@@ -31,7 +34,7 @@ export default async function Home() {
         <Faq locale={locale} />
         <Contact locale={locale} />
       </main>
-      <Footer locale={locale} />
+      <Footer locale={locale} currency={currency} />
     </>
   );
 }

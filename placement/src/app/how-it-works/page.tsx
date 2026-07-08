@@ -7,6 +7,7 @@ import { Container } from "@/components/ui/container";
 import { Reveal } from "@/components/ui/reveal";
 import { Button } from "@/components/ui/button";
 import { getLocale } from "@/lib/data/locale";
+import { getCurrency } from "@/lib/data/currency";
 import { makeUI } from "@/lib/i18n";
 
 export const metadata: Metadata = {
@@ -38,11 +39,12 @@ const filmmakerSteps: Step[] = [
 
 export default async function HowItWorksPage() {
   const locale = await getLocale();
+  const currency = await getCurrency();
   const t = makeUI(locale);
 
   return (
     <>
-      <Header locale={locale} />
+      <Header locale={locale} currency={currency} />
 
       {/* Hero section */}
       <Section className="border-b border-border">
@@ -145,7 +147,7 @@ export default async function HowItWorksPage() {
         </Container>
       </Section>
 
-      <Footer locale={locale} />
+      <Footer locale={locale} currency={currency} />
     </>
   );
 }

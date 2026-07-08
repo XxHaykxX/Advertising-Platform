@@ -1,22 +1,14 @@
-export const GARM_CATEGORIES = [
-  "Adult Content",
-  "Arms & Ammunition",
-  "Crime",
-  "Drugs",
-  "Hate Speech",
-  "Military Conflict",
-  "Profanity",
-  "Sensitive Issues",
-  "Spam",
-  "Terrorism",
-  "Tobacco",
-] as const;
-
 type SeedProject = {
   code: string;
   title: string;
+  titleHy: string;
+  titleRu: string;
+  titleEn: string;
   genre: string;
   synopsis: string;
+  synopsisHy: string;
+  synopsisRu: string;
+  synopsisEn: string;
   poster: string;
   gallery: string[];
   format: string;
@@ -27,11 +19,14 @@ type SeedProject = {
   audienceGender: string;
   audienceAge: string;
   projViews: string;
-  cpmRange: string;
-  budgetRange: string;
-  safetyScore: number;
-  safety: "SAFE" | "REVIEW" | "RISK";
-  catScores: number[]; // 11 scores aligned to GARM_CATEGORIES
+  // Money — AMD only. Budget/CPM are context; price is optional (undefined
+  // -> the site shows the "on request" label).
+  budgetMinAmd: number;
+  budgetMaxAmd: number;
+  cpmMinAmd: number;
+  cpmMaxAmd: number;
+  priceMinAmd?: number;
+  priceMaxAmd?: number;
   opps: {
     sceneNo: number;
     description: string;
@@ -42,7 +37,6 @@ type SeedProject = {
     category: string;
     estValue: number;
     durationSec: number;
-    safety: number;
   }[];
   slotsTotal: number;
   slotsTaken: number;
@@ -72,8 +66,17 @@ export const SEED_PROJECTS: SeedProject[] = [
   {
     code: "#PP-2026-8540",
     title: "Фул Хаус։ Посадка",
+    titleHy: "Ֆուլ Հաուս․ Վայրէջք",
+    titleRu: "Фул Хаус: Посадка",
+    titleEn: "Full House: Landing",
     genre: "Comedy Film",
     synopsis:
+      "The chaotic family from Armenia's hit comedy touches down for a new misadventure when a routine flight turns into an unplanned family reunion at 30,000 feet. One house, one plane, zero peace and quiet.",
+    synopsisHy:
+      "Հայկական հիթ կատակերգության քաոսային ընտանիքը նոր արկածի մեջ է ընկնում, երբ սովորական չվերթը վերածվում է չնախատեսված ընտանեկան հանդիպման 10 000 մետր բարձրության վրա։ Մեկ տուն, մեկ ինքնաթիռ, զրո հանգստություն։",
+    synopsisRu:
+      "Хаотичная семья из хитовой армянской комедии отправляется в новое приключение, когда обычный рейс превращается в незапланированное семейное воссоединение на высоте 10 000 метров. Один дом, один самолёт, ноль покоя.",
+    synopsisEn:
       "The chaotic family from Armenia's hit comedy touches down for a new misadventure when a routine flight turns into an unplanned family reunion at 30,000 feet. One house, one plane, zero peace and quiet.",
     poster: "/kino/proj-01-hero.jpg",
     gallery: [
@@ -91,11 +94,10 @@ export const SEED_PROJECTS: SeedProject[] = [
     audienceGender: "All",
     audienceAge: "12-45",
     projViews: "420K",
-    cpmRange: "$1.20-$2.10",
-    budgetRange: "$150,000 — $300,000",
-    safetyScore: 92,
-    safety: "SAFE",
-    catScores: [95, 96, 90, 94, 97, 95, 92, 88, 98, 96, 94],
+    cpmMinAmd: 460,
+    cpmMaxAmd: 810,
+    budgetMinAmd: 58_000_000,
+    budgetMaxAmd: 116_000_000,
     opps: [
       {
         sceneNo: 1,
@@ -107,7 +109,6 @@ export const SEED_PROJECTS: SeedProject[] = [
         category: "Travel & Luggage",
         estValue: 60,
         durationSec: 40,
-        safety: 100,
       },
       {
         sceneNo: 3,
@@ -119,7 +120,6 @@ export const SEED_PROJECTS: SeedProject[] = [
         category: "Technology",
         estValue: 55,
         durationSec: 35,
-        safety: 100,
       },
       {
         sceneNo: 5,
@@ -131,7 +131,6 @@ export const SEED_PROJECTS: SeedProject[] = [
         category: "Food & Beverages",
         estValue: 48,
         durationSec: 45,
-        safety: 100,
       },
       {
         sceneNo: 7,
@@ -143,7 +142,6 @@ export const SEED_PROJECTS: SeedProject[] = [
         category: "Home & Living",
         estValue: 62,
         durationSec: 50,
-        safety: 98,
       },
     ],
     slotsTotal: 5,
@@ -152,7 +150,9 @@ export const SEED_PROJECTS: SeedProject[] = [
     releaseDate: "2026-10-25",
     platforms: ["Kinodaran"],
     placementType: "In-Frame",
-    priceNote: "Price on request",
+    priceMinAmd: 9_600_000,
+    priceMaxAmd: 12_000_000,
+    priceNote: "/ scene",
     actors: [
       { name: "Aram Petrosyan", role: "Lead — Family Patriarch" },
       { name: "Lilit Hakobyan", role: "Matriarch" },
@@ -162,8 +162,17 @@ export const SEED_PROJECTS: SeedProject[] = [
   {
     code: "#PP-2026-5657",
     title: "Святой 3",
+    titleHy: "Սուրբը 3",
+    titleRu: "Святой 3",
+    titleEn: "The Saint 3",
     genre: "Drama Series",
     synopsis:
+      "The third season of Armenia's acclaimed crime drama pulls a weary detective back into the underworld he thought he'd left behind. Old debts and new betrayals blur the line between saint and sinner.",
+    synopsisHy:
+      "Հայկական ճանաչված կրիմինալ դրամայի երրորդ եթերաշրջանը հոգնած դետեկտիվին վերադարձնում է հանցավոր աշխարհ, որը նա կարծում էր՝ թողել է անցյալում։ Հին պարտքերն ու նոր դավաճանությունները ջնջում են սրբի ու մեղավորի սահմանը։",
+    synopsisRu:
+      "Третий сезон признанной армянской криминальной драмы возвращает уставшего детектива в преступный мир, который он считал оставленным позади. Старые долги и новые предательства стирают грань между святым и грешником.",
+    synopsisEn:
       "The third season of Armenia's acclaimed crime drama pulls a weary detective back into the underworld he thought he'd left behind. Old debts and new betrayals blur the line between saint and sinner.",
     poster: "/kino/proj-02-hero.jpg",
     gallery: [
@@ -181,11 +190,10 @@ export const SEED_PROJECTS: SeedProject[] = [
     audienceGender: "All",
     audienceAge: "25-55",
     projViews: "310K",
-    cpmRange: "$1.40-$2.60",
-    budgetRange: "$180,000 — $350,000",
-    safetyScore: 64,
-    safety: "REVIEW",
-    catScores: [70, 55, 38, 60, 68, 52, 58, 45, 88, 55, 72],
+    cpmMinAmd: 540,
+    cpmMaxAmd: 1_000,
+    budgetMinAmd: 69_000_000,
+    budgetMaxAmd: 135_000_000,
     opps: [
       {
         sceneNo: 4,
@@ -197,7 +205,6 @@ export const SEED_PROJECTS: SeedProject[] = [
         category: "Technology",
         estValue: 70,
         durationSec: 45,
-        safety: 82,
       },
       {
         sceneNo: 6,
@@ -209,7 +216,6 @@ export const SEED_PROJECTS: SeedProject[] = [
         category: "Automotive",
         estValue: 95,
         durationSec: 55,
-        safety: 72,
       },
       {
         sceneNo: 9,
@@ -221,7 +227,6 @@ export const SEED_PROJECTS: SeedProject[] = [
         category: "Beverages",
         estValue: 50,
         durationSec: 30,
-        safety: 85,
       },
       {
         sceneNo: 12,
@@ -233,7 +238,6 @@ export const SEED_PROJECTS: SeedProject[] = [
         category: "Footwear",
         estValue: 88,
         durationSec: 40,
-        safety: 90,
       },
     ],
     slotsTotal: 6,
@@ -242,7 +246,9 @@ export const SEED_PROJECTS: SeedProject[] = [
     releaseDate: "2026-11-05",
     platforms: ["Kinodaran", "TV"],
     placementType: "In-Frame",
-    priceNote: "Price on request",
+    priceMinAmd: 15_400_000,
+    priceMaxAmd: 15_400_000,
+    priceNote: "/ episode",
     actors: [
       { name: "Vahan Grigoryan", role: "Lead — Detective" },
       { name: "Karen Avetisyan", role: "Rival Crime Boss" },
@@ -252,8 +258,17 @@ export const SEED_PROJECTS: SeedProject[] = [
   {
     code: "#PP-2026-2384",
     title: "Валдакар",
+    titleHy: "Վալդակար",
+    titleRu: "Валдакар",
+    titleEn: "Valdakar",
     genre: "Family Series",
     synopsis:
+      "A gentle animated adventure for the youngest viewers follows a curious young hero through a colorful fantasy world of friendly creatures and small lessons. Every episode is a new quest about kindness and courage.",
+    synopsisHy:
+      "Բարի անիմացիոն արկած ամենափոքր դիտողների համար՝ հետևելով հետաքրքրասեր փոքրիկ հերոսին գունեղ ֆանտաստիկ աշխարհով, ընկերասեր արարածներով և փոքրիկ դասերով։ Յուրաքանչյուր դրվագ բարության և քաջության մասին նոր արկած է։",
+    synopsisRu:
+      "Добрая анимационная история для самых маленьких зрителей следует за любопытным юным героем сквозь красочный фэнтезийный мир дружелюбных существ и маленьких уроков. Каждая серия — новое приключение о доброте и смелости.",
+    synopsisEn:
       "A gentle animated adventure for the youngest viewers follows a curious young hero through a colorful fantasy world of friendly creatures and small lessons. Every episode is a new quest about kindness and courage.",
     poster: "/kino/proj-03-hero.jpg",
     gallery: [
@@ -271,11 +286,10 @@ export const SEED_PROJECTS: SeedProject[] = [
     audienceGender: "All",
     audienceAge: "4-9",
     projViews: "150K",
-    cpmRange: "$0.90-$1.60",
-    budgetRange: "$90,000 — $180,000",
-    safetyScore: 99,
-    safety: "SAFE",
-    catScores: [99, 99, 99, 99, 99, 99, 98, 99, 99, 99, 99],
+    cpmMinAmd: 350,
+    cpmMaxAmd: 620,
+    budgetMinAmd: 35_000_000,
+    budgetMaxAmd: 69_000_000,
     opps: [
       {
         sceneNo: 1,
@@ -287,7 +301,6 @@ export const SEED_PROJECTS: SeedProject[] = [
         category: "Kids Apparel",
         estValue: 40,
         durationSec: 25,
-        safety: 100,
       },
       {
         sceneNo: 2,
@@ -299,7 +312,6 @@ export const SEED_PROJECTS: SeedProject[] = [
         category: "Food & Beverages",
         estValue: 35,
         durationSec: 20,
-        safety: 100,
       },
       {
         sceneNo: 4,
@@ -311,7 +323,6 @@ export const SEED_PROJECTS: SeedProject[] = [
         category: "Footwear",
         estValue: 38,
         durationSec: 22,
-        safety: 100,
       },
     ],
     slotsTotal: 4,
@@ -320,7 +331,7 @@ export const SEED_PROJECTS: SeedProject[] = [
     releaseDate: "2027-01-10",
     platforms: ["Kinodaran"],
     placementType: "Mention",
-    priceNote: "Price on request",
+    priceNote: "",
     actors: [
       { name: "Ani Vardanyan", role: "Voice of Valdakar" },
       { name: "Davit Ghazaryan", role: "Voice of Forest Guide" },
@@ -330,8 +341,17 @@ export const SEED_PROJECTS: SeedProject[] = [
   {
     code: "#PP-2026-9012",
     title: "Мхитарян. Эксклюзив",
+    titleHy: "Մխիթարյան․ Էքսկլյուզիվ",
+    titleRu: "Мхитарян. Эксклюзив",
+    titleEn: "Mkhitaryan. Exclusive",
     genre: "Documentary",
     synopsis:
+      "An intimate documentary portrait of football star Henrikh Mkhitaryan, tracing his journey from Armenian academy fields to Europe's biggest stages. Rare access reveals the discipline and heart behind a national icon.",
+    synopsisHy:
+      "Ֆուտբոլի աստղ Հենրիխ Մխիթարյանի անձնական վավերագրական դիմանկարը՝ նրա ճանապարհը հայկական ակադեմիայի դաշտերից մինչև Եվրոպայի խոշորագույն ասպարեզները։ Հազվագյուտ մատչելիությունը բացահայտում է ազգային խորհրդանիշի կարգապահությունն ու սիրտը։",
+    synopsisRu:
+      "Личный документальный портрет футбольной звезды Генриха Мхитаряна, прослеживающий его путь от полей армянской академии до крупнейших арен Европы. Редкий доступ раскрывает дисциплину и сердце национального символа.",
+    synopsisEn:
       "An intimate documentary portrait of football star Henrikh Mkhitaryan, tracing his journey from Armenian academy fields to Europe's biggest stages. Rare access reveals the discipline and heart behind a national icon.",
     poster: "/kino/proj-04-hero.jpg",
     gallery: [
@@ -349,11 +369,10 @@ export const SEED_PROJECTS: SeedProject[] = [
     audienceGender: "All",
     audienceAge: "16-55",
     projViews: "540K",
-    cpmRange: "$1.60-$2.90",
-    budgetRange: "$120,000 — $220,000",
-    safetyScore: 96,
-    safety: "SAFE",
-    catScores: [97, 98, 95, 97, 98, 97, 94, 90, 99, 98, 96],
+    cpmMinAmd: 620,
+    cpmMaxAmd: 1_120,
+    budgetMinAmd: 46_000_000,
+    budgetMaxAmd: 85_000_000,
     opps: [
       {
         sceneNo: 2,
@@ -365,7 +384,6 @@ export const SEED_PROJECTS: SeedProject[] = [
         category: "Sportswear",
         estValue: 140,
         durationSec: 35,
-        safety: 100,
       },
       {
         sceneNo: 5,
@@ -377,7 +395,6 @@ export const SEED_PROJECTS: SeedProject[] = [
         category: "Technology",
         estValue: 110,
         durationSec: 30,
-        safety: 98,
       },
       {
         sceneNo: 8,
@@ -389,7 +406,6 @@ export const SEED_PROJECTS: SeedProject[] = [
         category: "Beverages",
         estValue: 75,
         durationSec: 25,
-        safety: 100,
       },
       {
         sceneNo: 11,
@@ -401,7 +417,6 @@ export const SEED_PROJECTS: SeedProject[] = [
         category: "Media",
         estValue: 90,
         durationSec: 40,
-        safety: 100,
       },
     ],
     slotsTotal: 5,
@@ -410,7 +425,7 @@ export const SEED_PROJECTS: SeedProject[] = [
     releaseDate: "2026-09-05",
     platforms: ["Kinodaran", "YouTube"],
     placementType: "Story Integration",
-    priceNote: "Price on request",
+    priceNote: "",
     actors: [
       { name: "Henrikh Mkhitaryan", role: "Himself" },
       { name: "Vardan Petrosyan", role: "Childhood Coach" },
@@ -419,8 +434,17 @@ export const SEED_PROJECTS: SeedProject[] = [
   {
     code: "#PP-2026-3345",
     title: "Артист КомедЯан",
+    titleHy: "Արտիստ ԿոմեդՅան",
+    titleRu: "Артист КомедЯан",
+    titleEn: "Artist KomedYan",
     genre: "Comedy Series",
     synopsis:
+      "A fast-paced stand-up and sketch comedy show built around the sharp, offbeat humor of Armenia's rising comic voices. Each episode mixes live sets with original sketches for a new kind of laugh.",
+    synopsisHy:
+      "Դինամիկ սթենդափ և սքեթչ շոու՝ կառուցված Հայաստանի ծագող կատակերգակների սուր, ոչ ստանդարտ հումորի շուրջ։ Յուրաքանչյուր թողարկում կենդանի ելույթները խառնում է օրիգինալ սքեթչների հետ՝ նոր ծիծաղի համար։",
+    synopsisRu:
+      "Динамичное стендап- и скетч-шоу, построенное на остром, нестандартном юморе восходящих комиков Армении. Каждый выпуск сочетает живые выступления с оригинальными скетчами ради нового смеха.",
+    synopsisEn:
       "A fast-paced stand-up and sketch comedy show built around the sharp, offbeat humor of Armenia's rising comic voices. Each episode mixes live sets with original sketches for a new kind of laugh.",
     poster: "/kino/proj-05-hero.jpg",
     gallery: [
@@ -438,11 +462,10 @@ export const SEED_PROJECTS: SeedProject[] = [
     audienceGender: "All",
     audienceAge: "16-40",
     projViews: "260K",
-    cpmRange: "$1.10-$2.00",
-    budgetRange: "$70,000 — $140,000",
-    safetyScore: 85,
-    safety: "SAFE",
-    catScores: [88, 80, 72, 78, 90, 85, 60, 70, 95, 88, 86],
+    cpmMinAmd: 420,
+    cpmMaxAmd: 770,
+    budgetMinAmd: 27_000_000,
+    budgetMaxAmd: 54_000_000,
     opps: [
       {
         sceneNo: 2,
@@ -454,7 +477,6 @@ export const SEED_PROJECTS: SeedProject[] = [
         category: "Beverages",
         estValue: 45,
         durationSec: 30,
-        safety: 100,
       },
       {
         sceneNo: 4,
@@ -466,7 +488,6 @@ export const SEED_PROJECTS: SeedProject[] = [
         category: "Technology",
         estValue: 58,
         durationSec: 50,
-        safety: 92,
       },
       {
         sceneNo: 6,
@@ -478,7 +499,6 @@ export const SEED_PROJECTS: SeedProject[] = [
         category: "Food & Beverages",
         estValue: 40,
         durationSec: 25,
-        safety: 96,
       },
     ],
     slotsTotal: 5,
@@ -487,7 +507,7 @@ export const SEED_PROJECTS: SeedProject[] = [
     releaseDate: "2026-07-25",
     platforms: ["Kinodaran", "YouTube"],
     placementType: "Mention",
-    priceNote: "Price on request",
+    priceNote: "",
     actors: [
       { name: "Tigran Hovhannisyan", role: "Host / Stand-up Lead" },
       { name: "Suren Baghdasaryan", role: "Sketch Ensemble" },
@@ -497,8 +517,17 @@ export const SEED_PROJECTS: SeedProject[] = [
   {
     code: "#PP-2026-7788",
     title: "Закрытая улица",
+    titleHy: "Փակ փողոց",
+    titleRu: "Закрытая улица",
+    titleEn: "Dead-End Street",
     genre: "Thriller",
     synopsis:
+      "On one dead-end street, a single tense night spirals into a standoff nobody saw coming. A tight, unforgiving thriller about the neighbors you thought you knew.",
+    synopsisHy:
+      "Մի փակուղի փողոցում մեկ լարված գիշերը վերածվում է դիմակայության, որը ոչ ոք չէր սպասում։ Կոշտ, անողոք թրիլլեր հարևանների մասին, որոնց կարծում էիք՝ ճանաչում եք։",
+    synopsisRu:
+      "На одной тупиковой улице напряжённая ночь оборачивается противостоянием, которого никто не ожидал. Жёсткий, беспощадный триллер о соседях, которых вы думали, что знаете.",
+    synopsisEn:
       "On one dead-end street, a single tense night spirals into a standoff nobody saw coming. A tight, unforgiving thriller about the neighbors you thought you knew.",
     poster: "/kino/proj-06-hero.jpg",
     gallery: [
@@ -516,11 +545,10 @@ export const SEED_PROJECTS: SeedProject[] = [
     audienceGender: "All",
     audienceAge: "18-45",
     projViews: "95K",
-    cpmRange: "$1.00-$1.80",
-    budgetRange: "$40,000 — $90,000",
-    safetyScore: 58,
-    safety: "REVIEW",
-    catScores: [65, 48, 30, 55, 60, 42, 50, 38, 85, 50, 60],
+    cpmMinAmd: 385,
+    cpmMaxAmd: 690,
+    budgetMinAmd: 15_000_000,
+    budgetMaxAmd: 35_000_000,
     opps: [
       {
         sceneNo: 1,
@@ -532,7 +560,6 @@ export const SEED_PROJECTS: SeedProject[] = [
         category: "Technology",
         estValue: 62,
         durationSec: 30,
-        safety: 78,
       },
       {
         sceneNo: 3,
@@ -544,7 +571,6 @@ export const SEED_PROJECTS: SeedProject[] = [
         category: "Automotive",
         estValue: 85,
         durationSec: 40,
-        safety: 70,
       },
       {
         sceneNo: 5,
@@ -556,7 +582,6 @@ export const SEED_PROJECTS: SeedProject[] = [
         category: "Technology",
         estValue: 70,
         durationSec: 35,
-        safety: 75,
       },
     ],
     slotsTotal: 4,
@@ -565,7 +590,7 @@ export const SEED_PROJECTS: SeedProject[] = [
     releaseDate: "2026-11-20",
     platforms: ["Kinodaran"],
     placementType: "In-Frame",
-    priceNote: "Price on request",
+    priceNote: "",
     actors: [
       { name: "Gor Martirosyan", role: "Lead — Resident" },
       { name: "Sona Grigoryan", role: "The Stranger" },

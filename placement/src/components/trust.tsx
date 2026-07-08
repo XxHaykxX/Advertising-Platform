@@ -1,4 +1,4 @@
-import { FileText, Globe, ShieldCheck } from 'lucide-react';
+import { FileText, Globe } from 'lucide-react';
 import { Container } from './ui/container';
 import { Section } from './ui/section';
 import { Reveal } from './ui/reveal';
@@ -19,19 +19,13 @@ export function Trust({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
       title: t('trust.countriesTitle'),
       caption: t('trust.countriesCaption'),
     },
-    {
-      icon: ShieldCheck,
-      number: t('trust.safetyNumber'),
-      title: t('trust.safetyTitle'),
-      caption: t('trust.safetyCaption'),
-    },
   ];
 
   return (
     <Section muted>
       <Container>
         <Reveal>
-          <div className="grid grid-cols-3 gap-8 max-sm:grid-cols-1 md:gap-12">
+          <div className="grid grid-cols-2 gap-8 max-sm:grid-cols-1 md:gap-12">
             {items.map((item, idx) => {
               const Icon = item.icon;
               return (

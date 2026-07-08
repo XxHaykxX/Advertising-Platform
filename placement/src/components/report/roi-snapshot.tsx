@@ -87,7 +87,7 @@ export function RoiSnapshot({
                 </MetricLabel>
               </div>
               <div>
-                <div className="text-2xl font-extrabold text-foreground">{project.cpmRange}</div>
+                <div className="text-2xl font-extrabold text-foreground">{project.cpmDisplay}</div>
                 <MetricLabel tooltip={t("roi.cpmTooltip")}>
                   {t("roi.cpm")}
                 </MetricLabel>

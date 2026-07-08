@@ -8,7 +8,10 @@ import type { Role } from "@prisma/client";
    isActive gate lives in requireUser() (Node runtime, hits the DB). */
 
 export const SESSION_COOKIE = "adm_session";
-const MAX_AGE_SECONDS = 60 * 60 * 24 * 7; // 7 days
+/** Non-httpOnly cookie holding the last logged-in email, for "Remember me" prefill. */
+export const LAST_EMAIL_COOKIE = "adm_last_email";
+const MAX_AGE_SECONDS = 60 * 60 * 24 * 7; // 7 days (default / not remembered)
+export const REMEMBER_MAX_AGE_SECONDS = 60 * 60 * 24 * 30; // 30 days ("Remember me")
 
 export type SessionPayload = { uid: number; role: Role };
 
@@ -21,11 +24,15 @@ function secret() {
 }
 
 /** Create a signed session token for a logged-in user. */
-export async function createSessionToken(uid: number, role: Role): Promise<string> {
+export async function createSessionToken(
+  uid: number,
+  role: Role,
+  maxAgeSeconds: number = MAX_AGE_SECONDS,
+): Promise<string> {
   return new SignJWT({ uid, role })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
-    .setExpirationTime(`${MAX_AGE_SECONDS}s`)
+    .setExpirationTime(`${maxAgeSeconds}s`)
     .sign(secret());
 }
 
@@ -46,10 +53,14 @@ export async function verifySessionToken(
   }
 }
 
-export const sessionCookieOptions = {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: "lax" as const,
-  path: "/",
-  maxAge: MAX_AGE_SECONDS,
-};
+/** Cookie options for the session. Pass a maxAge to persist across restarts;
+   omit it (undefined) for a session cookie that dies when the browser closes. */
+export function sessionCookieOptions(maxAgeSeconds: number | undefined = MAX_AGE_SECONDS) {
+  return {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax" as const,
+    path: "/",
+    ...(maxAgeSeconds !== undefined ? { maxAge: maxAgeSeconds } : {}),
+  };
+}

@@ -4,6 +4,8 @@ import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import {
   SESSION_COOKIE,
+  LAST_EMAIL_COOKIE,
+  REMEMBER_MAX_AGE_SECONDS,
   createSessionToken,
   sessionCookieOptions,
 } from "@/lib/auth/session";
@@ -69,9 +71,32 @@ export async function login(
 
   attempts.delete(ip);
   const user = result.user;
-  const token = await createSessionToken(user.id, user.role);
+  const remember = formData.get("remember") != null;
+  // Remembered: 30-day persistent cookie. Otherwise: session cookie (dies on browser close).
+  const token = await createSessionToken(
+    user.id,
+    user.role,
+    remember ? REMEMBER_MAX_AGE_SECONDS : undefined,
+  );
   const c = await cookies();
-  c.set(SESSION_COOKIE, token, sessionCookieOptions);
+  c.set(
+    SESSION_COOKIE,
+    token,
+    sessionCookieOptions(remember ? REMEMBER_MAX_AGE_SECONDS : undefined),
+  );
+
+  // Prefill email on the next visit if remembered; forget it otherwise.
+  if (remember) {
+    c.set(LAST_EMAIL_COOKIE, email, {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: REMEMBER_MAX_AGE_SECONDS,
+    });
+  } else {
+    c.delete(LAST_EMAIL_COOKIE);
+  }
 
   const from = String(formData.get("from") || "");
   redirect(from && from.startsWith("/admin") ? from : "/admin");

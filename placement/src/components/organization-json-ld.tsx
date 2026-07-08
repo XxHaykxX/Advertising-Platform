@@ -14,7 +14,7 @@ export function OrganizationJsonLd() {
     name: "iGovazd",
     url: "https://igovazd.am",
     description:
-      "Brand placement marketplace connecting brands with film & TV productions through scene-level, brand-safe placement reports.",
+      "Brand placement marketplace connecting brands with film & TV productions through scene-level placement reports.",
   };
 
   return (

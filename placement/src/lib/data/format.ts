@@ -16,6 +16,9 @@ export function splitCountries(s: string): string[] {
     .filter(Boolean);
 }
 
+// TODO(currency): route through formatMoney once estValue is real AMD.
+// estValue/exposureTotal are still placeholder numbers on a different track
+// (see currency feature spec) — left untouched for now.
 export function moneyShort(n: number): string {
   return `$${n.toLocaleString("en-US")}`;
 }

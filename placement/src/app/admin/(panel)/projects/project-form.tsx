@@ -3,7 +3,8 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
-import { PLACEMENT_TYPE_VALUES, type ProjectFormState, type ProjectFormValues } from "./actions";
+import { PLACEMENT_TYPE_VALUES } from "./form-shared";
+import { type ProjectFormState, type ProjectFormValues } from "./actions";
 
 export type ProjectFormInitial = ProjectFormValues;
 
@@ -12,7 +13,14 @@ const EMPTY: ProjectFormInitial = {
   code: "",
   genre: "",
   synopsis: "",
+  titleHy: "",
+  titleRu: "",
+  titleEn: "",
+  synopsisHy: "",
+  synopsisRu: "",
+  synopsisEn: "",
   poster: "",
+  gallery: "",
   format: "",
   studio: "",
   status: "PRE_PRODUCTION",
@@ -21,10 +29,12 @@ const EMPTY: ProjectFormInitial = {
   audienceGender: "All",
   audienceAge: "",
   projViews: "",
-  cpmRange: "",
-  budgetRange: "",
-  safetyScore: 0,
-  safety: "REVIEW",
+  budgetMinAmd: null,
+  budgetMaxAmd: null,
+  cpmMinAmd: null,
+  cpmMaxAmd: null,
+  priceMinAmd: null,
+  priceMaxAmd: null,
   isActive: true,
   sortOrder: 0,
   slotsTotal: 5,
@@ -43,17 +53,17 @@ const STATUS_OPTIONS = [
   { value: "RELEASED", label: "Released" },
 ] as const;
 
-const SAFETY_OPTIONS = [
-  { value: "SAFE", label: "Safe" },
-  { value: "REVIEW", label: "Review" },
-  { value: "RISK", label: "Risk" },
-] as const;
-
 const GENDER_OPTIONS = ["All", "Male", "Female"] as const;
 
 const inputCls =
   "w-full rounded-xl border border-border bg-card px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:border-primary";
 const labelCls = "mb-1.5 block text-sm font-medium text-foreground";
+
+/** number|null -> the value <input defaultValue> expects; null renders as an
+ *  empty (unset) field. */
+function numOrEmpty(n: number | null): number | string {
+  return n ?? "";
+}
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -105,12 +115,50 @@ export function ProjectForm({
         <Field label="Synopsis *">
           <textarea name="synopsis" defaultValue={data.synopsis} rows={4} className={`${inputCls} resize-none`} />
         </Field>
+        <Field label="Gallery (storyboard thumbnails — one image URL per line, up to 5 shown)">
+          <textarea
+            name="gallery"
+            defaultValue={data.gallery}
+            rows={4}
+            placeholder={"https://…/still-1.jpg\nhttps://…/still-2.jpg"}
+            className={`${inputCls} resize-none`}
+          />
+        </Field>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Format">
             <input name="format" defaultValue={data.format} placeholder="50 ep × 1m 15s" className={inputCls} />
           </Field>
           <Field label="Studio">
             <input name="studio" defaultValue={data.studio} className={inputCls} />
+          </Field>
+        </div>
+      </section>
+
+      {/* ── Translations ── */}
+      <section className="space-y-4 rounded-2xl border border-border bg-card p-6">
+        <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">
+          Translations (hy / ru / en)
+        </h2>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Field label="Title (HY)">
+            <input name="titleHy" defaultValue={data.titleHy} className={inputCls} />
+          </Field>
+          <Field label="Title (RU)">
+            <input name="titleRu" defaultValue={data.titleRu} className={inputCls} />
+          </Field>
+          <Field label="Title (EN)">
+            <input name="titleEn" defaultValue={data.titleEn} className={inputCls} />
+          </Field>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Field label="Synopsis (HY)">
+            <textarea name="synopsisHy" defaultValue={data.synopsisHy} rows={3} className={`${inputCls} resize-none`} />
+          </Field>
+          <Field label="Synopsis (RU)">
+            <textarea name="synopsisRu" defaultValue={data.synopsisRu} rows={3} className={`${inputCls} resize-none`} />
+          </Field>
+          <Field label="Synopsis (EN)">
+            <textarea name="synopsisEn" defaultValue={data.synopsisEn} rows={3} className={`${inputCls} resize-none`} />
           </Field>
         </div>
       </section>
@@ -188,15 +236,38 @@ export function ProjectForm({
               ))}
             </select>
           </Field>
-          <Field label="Price note">
+          <Field label="Price note (optional caption)">
             <input
               name="priceNote"
               defaultValue={data.priceNote}
-              placeholder="Price on request"
+              placeholder="/ scene"
               className={inputCls}
             />
           </Field>
         </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Price min (AMD)">
+            <input
+              name="priceMinAmd"
+              type="number"
+              min={0}
+              defaultValue={numOrEmpty(data.priceMinAmd)}
+              className={inputCls}
+            />
+          </Field>
+          <Field label="Price max (AMD)">
+            <input
+              name="priceMaxAmd"
+              type="number"
+              min={0}
+              defaultValue={numOrEmpty(data.priceMaxAmd)}
+              className={inputCls}
+            />
+          </Field>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Leave price empty → the site shows &ldquo;Price on request&rdquo;.
+        </p>
       </section>
 
       {/* ── Audience & value ── */}
@@ -218,42 +289,43 @@ export function ProjectForm({
           <Field label="Projected views">
             <input name="projViews" defaultValue={data.projViews} placeholder="2.4M" className={inputCls} />
           </Field>
-          <Field label="CPM range">
-            <input name="cpmRange" defaultValue={data.cpmRange} placeholder="$3.60-$5.40" className={inputCls} />
-          </Field>
-          <Field label="Budget range">
-            <input
-              name="budgetRange"
-              defaultValue={data.budgetRange}
-              placeholder="$6,000,000 — $10,000,000"
-              className={inputCls}
-            />
-          </Field>
         </div>
-      </section>
-
-      {/* ── Brand safety ── */}
-      <section className="space-y-4 rounded-2xl border border-border bg-card p-6">
-        <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">Brand safety</h2>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Safety score (0-100)">
+          <Field label="CPM min (AMD)">
             <input
-              name="safetyScore"
+              name="cpmMinAmd"
               type="number"
               min={0}
-              max={100}
-              defaultValue={data.safetyScore}
+              defaultValue={numOrEmpty(data.cpmMinAmd)}
               className={inputCls}
             />
           </Field>
-          <Field label="Safety level">
-            <select name="safety" defaultValue={data.safety} className={inputCls}>
-              {SAFETY_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
+          <Field label="CPM max (AMD)">
+            <input
+              name="cpmMaxAmd"
+              type="number"
+              min={0}
+              defaultValue={numOrEmpty(data.cpmMaxAmd)}
+              className={inputCls}
+            />
+          </Field>
+          <Field label="Budget min (AMD)">
+            <input
+              name="budgetMinAmd"
+              type="number"
+              min={0}
+              defaultValue={numOrEmpty(data.budgetMinAmd)}
+              className={inputCls}
+            />
+          </Field>
+          <Field label="Budget max (AMD)">
+            <input
+              name="budgetMaxAmd"
+              type="number"
+              min={0}
+              defaultValue={numOrEmpty(data.budgetMaxAmd)}
+              className={inputCls}
+            />
           </Field>
         </div>
       </section>

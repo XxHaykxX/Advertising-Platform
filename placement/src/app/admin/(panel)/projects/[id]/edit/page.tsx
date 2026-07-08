@@ -3,9 +3,9 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth/require";
-import { formatDateInput, parsePlatformsInput, updateProject } from "../../actions";
+import { updateProject } from "../../actions";
+import { formatDateInput, parsePlatformsInput, parseGalleryInput } from "../../form-shared";
 import { ProjectForm, type ProjectFormInitial } from "../../project-form";
-import { SafetyEditor } from "../../safety-editor";
 import { OpportunitiesEditor } from "../../opportunities-editor";
 import { ActorsEditor } from "../../actors-editor";
 
@@ -23,7 +23,6 @@ export default async function EditProjectPage({
   const p = await prisma.project.findUnique({
     where: { id: pid },
     include: {
-      safetyCats: { orderBy: { sortOrder: "asc" } },
       opportunities: { orderBy: { sortOrder: "asc" } },
       actors: { orderBy: { sortOrder: "asc" } },
     },
@@ -38,7 +37,14 @@ export default async function EditProjectPage({
     code: p.code,
     genre: p.genre,
     synopsis: p.synopsis,
+    titleHy: p.titleHy ?? "",
+    titleRu: p.titleRu ?? "",
+    titleEn: p.titleEn ?? "",
+    synopsisHy: p.synopsisHy ?? "",
+    synopsisRu: p.synopsisRu ?? "",
+    synopsisEn: p.synopsisEn ?? "",
     poster: p.poster ?? "",
+    gallery: parseGalleryInput(p.gallery),
     format: p.format,
     studio: p.studio,
     status: p.status,
@@ -47,10 +53,12 @@ export default async function EditProjectPage({
     audienceGender: p.audienceGender,
     audienceAge: p.audienceAge,
     projViews: p.projViews,
-    cpmRange: p.cpmRange,
-    budgetRange: p.budgetRange,
-    safetyScore: p.safetyScore,
-    safety: p.safety,
+    budgetMinAmd: p.budgetMinAmd,
+    budgetMaxAmd: p.budgetMaxAmd,
+    cpmMinAmd: p.cpmMinAmd,
+    cpmMaxAmd: p.cpmMaxAmd,
+    priceMinAmd: p.priceMinAmd,
+    priceMaxAmd: p.priceMaxAmd,
     isActive: p.isActive,
     sortOrder: p.sortOrder,
     slotsTotal: p.slotsTotal,
@@ -78,14 +86,6 @@ export default async function EditProjectPage({
       <ProjectForm action={action} initial={initial} submitLabel="Save" />
 
       <div className="mt-10 max-w-3xl">
-        <h2 className="mb-4 text-lg font-bold text-foreground">Brand safety (GARM)</h2>
-        <SafetyEditor
-          projectId={pid}
-          safetyCats={p.safetyCats.map((c) => ({ name: c.name, score: c.score, aiText: c.aiText }))}
-        />
-      </div>
-
-      <div className="mt-10 max-w-3xl">
         <h2 className="mb-4 text-lg font-bold text-foreground">Placement opportunities</h2>
         <OpportunitiesEditor
           projectId={pid}
@@ -99,7 +99,6 @@ export default async function EditProjectPage({
             category: o.category,
             estValue: o.estValue,
             durationSec: o.durationSec,
-            safety: o.safety,
           }))}
         />
       </div>

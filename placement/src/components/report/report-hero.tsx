@@ -1,27 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
-import {
-  ArrowLeft,
-  DollarSign,
-  Download,
-  Film,
-  Share2,
-  ShieldAlert,
-  ShieldCheck,
-  Wallet,
-  Eye,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ArrowLeft, DollarSign, Film, Wallet, Eye } from "lucide-react";
 import { Reveal } from "@/components/ui/reveal";
+import { PrintButton, ShareButton } from "@/components/report/report-actions";
+import { PosterSlider } from "@/components/report/poster-slider";
 import { parseStringArray, splitCountries } from "@/lib/data/format";
-import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
+import { DEFAULT_LOCALE, localizeValue, makeUI, type Locale } from "@/lib/i18n";
 import type { ProjectDetailDTO } from "@/lib/types";
-
-function safetyColor(score: number) {
-  if (score >= 80) return "text-success";
-  if (score >= 60) return "text-warn";
-  return "text-danger";
-}
 
 export function ReportHero({
   project,
@@ -35,14 +20,18 @@ export function ReportHero({
   const thumbnails = parseStringArray(project.gallery).slice(0, 5);
   const placeholderCount = Math.max(0, 5 - thumbnails.length);
   const statusLabel = t(`report.status.${project.status}`);
-  const safetyClass = safetyColor(project.safetyScore);
+  // Main slider shows the poster plus every gallery image, poster first,
+  // de-duplicated in case the same file is used in both fields.
+  const sliderImages = Array.from(
+    new Set([project.poster, ...parseStringArray(project.gallery)].filter(Boolean)),
+  );
 
   const metaItems = [
-    project.genre,
+    localizeValue(locale, "genre", project.genre),
     project.format,
     project.studio,
     countries,
-    `${project.audienceGender} ${project.audienceAge}`,
+    `${localizeValue(locale, "gender", project.audienceGender)} ${project.audienceAge}`,
     project.releaseLabel,
   ].filter(Boolean);
 
@@ -63,14 +52,14 @@ export function ReportHero({
             </span>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="secondary" size="sm">
-              <Share2 className="mr-1.5 h-4 w-4" />
-              {t("report.share")}
-            </Button>
-            <Button variant="secondary" size="sm">
-              <Download className="mr-1.5 h-4 w-4" />
-              {t("report.downloadPdf")}
-            </Button>
+            <ShareButton
+              title={project.title}
+              label={t("report.share")}
+              copiedLabel={t("report.linkCopied")}
+              variant="secondary"
+              size="sm"
+            />
+            <PrintButton label={t("report.downloadPdf")} variant="secondary" size="sm" />
           </div>
         </div>
 
@@ -84,20 +73,12 @@ export function ReportHero({
         <Reveal delay={0.05}>
           <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1.3fr_1fr]">
             <div className="relative aspect-[16/10] overflow-hidden rounded-2xl border border-border bg-muted">
-              {project.poster ? (
-                <Image
-                  src={project.poster}
-                  alt={project.title}
-                  fill
-                  className="object-cover"
-                  sizes="(min-width: 1024px) 55vw, 100vw"
-                  priority
-                />
-              ) : (
-                <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
-                  <Film className="h-12 w-12 text-primary/40" />
-                </div>
-              )}
+              <PosterSlider
+                images={sliderImages}
+                alt={project.title}
+                prevLabel={t("report.prev")}
+                nextLabel={t("report.next")}
+              />
               <span className="absolute bottom-3 left-3 inline-flex items-center rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground shadow-sm">
                 {statusLabel}
               </span>
@@ -110,24 +91,13 @@ export function ReportHero({
                 <div className="text-xs text-muted-foreground">{t("report.projectedViews")}</div>
               </div>
               <div className="rounded-xl border border-border bg-card p-4">
-                {project.safetyScore >= 80 ? (
-                  <ShieldCheck className={`h-4 w-4 ${safetyClass}`} />
-                ) : (
-                  <ShieldAlert className={`h-4 w-4 ${safetyClass}`} />
-                )}
-                <div className={`mt-2 text-lg font-bold ${safetyClass}`}>
-                  {project.safetyScore}/100
-                </div>
-                <div className="text-xs text-muted-foreground">{t("report.brandSafety")}</div>
-              </div>
-              <div className="rounded-xl border border-border bg-card p-4">
                 <DollarSign className="h-4 w-4 text-primary" />
-                <div className="mt-2 text-lg font-bold text-foreground">{project.cpmRange}</div>
+                <div className="mt-2 text-lg font-bold text-foreground">{project.cpmDisplay}</div>
                 <div className="text-xs text-muted-foreground">{t("report.cpm")}</div>
               </div>
               <div className="rounded-xl border border-border bg-card p-4">
                 <Wallet className="h-4 w-4 text-primary" />
-                <div className="mt-2 text-lg font-bold text-foreground">{project.budgetRange}</div>
+                <div className="mt-2 text-lg font-bold text-foreground">{project.budgetDisplay}</div>
                 <div className="text-xs text-muted-foreground">{t("report.budgetRange")}</div>
               </div>
             </div>

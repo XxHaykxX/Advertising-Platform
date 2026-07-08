@@ -11,12 +11,12 @@ import {
   Users,
   Wallet,
 } from "lucide-react";
-import { AccentBadge, GenreBadge, SafetyBadge } from "@/components/ui/badge";
+import { AccentBadge, GenreBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ApplyDialog } from "@/components/apply-dialog";
 import { daysUntil, formatFullDate, formatMonthYear, parseStringArray, splitCountries } from "@/lib/data/format";
 import { cn } from "@/lib/utils";
-import { DEFAULT_LOCALE, intlLocale, makeUI, type Locale } from "@/lib/i18n";
+import { DEFAULT_LOCALE, intlLocale, localizeValue, makeUI, type Locale } from "@/lib/i18n";
 import type { ProjectListDTO } from "@/lib/types";
 
 export function ProjectCard({
@@ -38,7 +38,14 @@ export function ProjectCard({
   const deadlineUrgent = deadlineDays !== null && deadlineDays <= 45;
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card card-lift">
+    <div className="relative flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card card-lift">
+      {/* Whole-card click target → report. Sits under the action buttons
+          (which are z-10) so Apply / View Report still work. */}
+      <Link
+        href={`/reports/${project.id}`}
+        aria-label={project.title}
+        className="absolute inset-0 z-10"
+      />
       <div className="relative aspect-[16/10] shrink-0">
         {project.poster ? (
           <Image
@@ -54,17 +61,16 @@ export function ProjectCard({
           </div>
         )}
         <div className="absolute left-3 top-3">
-          <GenreBadge>{project.genre}</GenreBadge>
-        </div>
-        <div className="absolute right-3 top-3">
-          <SafetyBadge safety={project.safety} />
+          <GenreBadge>{localizeValue(locale, "genre", project.genre)}</GenreBadge>
         </div>
       </div>
 
       <div className="flex flex-1 flex-col p-6">
         <div className="flex flex-wrap items-center gap-2">
           <h3 className="text-lg font-semibold text-foreground md:text-xl">{project.title}</h3>
-          {project.placementType ? <AccentBadge>{project.placementType}</AccentBadge> : null}
+          {project.placementType ? (
+            <AccentBadge>{localizeValue(locale, "placement", project.placementType)}</AccentBadge>
+          ) : null}
         </div>
         <code className="text-xs text-muted-foreground">{project.code}</code>
         <p className="mt-3 line-clamp-2 text-sm text-muted-foreground">{project.synopsis}</p>
@@ -83,16 +89,18 @@ export function ProjectCard({
           </div>
           <div className="flex items-center gap-2">
             <Users className="h-3.5 w-3.5 shrink-0" />
-            <span>{project.audienceGender}, {project.audienceAge}</span>
+            <span>{localizeValue(locale, "gender", project.audienceGender)}, {project.audienceAge}</span>
           </div>
           <div className="flex items-center gap-2 text-primary">
             <Sparkles className="h-3.5 w-3.5 shrink-0" />
             <span>{project.opportunitiesCount} {t("card.opportunities")}</span>
           </div>
-          <div className="flex items-center gap-2">
-            <Wallet className="h-3.5 w-3.5 shrink-0" />
-            <span>{project.budgetRange}</span>
-          </div>
+          {project.budgetDisplay ? (
+            <div className="flex items-center gap-2">
+              <Wallet className="h-3.5 w-3.5 shrink-0" />
+              <span>{project.budgetDisplay}</span>
+            </div>
+          ) : null}
           <div className="flex items-center gap-2">
             <Eye className="h-3.5 w-3.5 shrink-0" />
             <span>{project.projViews} {t("card.projectedViews")}</span>
@@ -138,11 +146,12 @@ export function ProjectCard({
           </div>
         ) : null}
 
-        {project.priceNote ? (
-          <p className="mt-3 text-xs text-muted-foreground">{project.priceNote}</p>
-        ) : null}
+        <p className="mt-3 text-xs text-muted-foreground">
+          {project.priceDisplay ?? t("keyFacts.onRequest")}
+          {project.priceNote ? <span className="ml-1">({project.priceNote})</span> : null}
+        </p>
 
-        <div className="mt-auto flex gap-3 pt-6">
+        <div className="relative z-20 mt-auto flex gap-3 pt-6">
           <Button asChild variant="primary" size="sm">
             <Link href={`/reports/${project.id}`}>{t("btn.viewReport")}</Link>
           </Button>

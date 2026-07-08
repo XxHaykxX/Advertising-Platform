@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
-import { GARM_CATEGORIES, SEED_PROJECTS, SEED_PORTFOLIO, SEED_PARTNERS } from "./seed-data";
+import { SEED_PROJECTS, SEED_PORTFOLIO, SEED_PARTNERS } from "./seed-data";
 
 const prisma = new PrismaClient();
 
@@ -16,26 +16,27 @@ async function main() {
     create: { email: "admin@admin.com", passwordHash, role: "SUPERADMIN", name: "Admin" },
   });
 
-  // 2. Projects (+ nested safety cats + opportunities)
+  // 2. Projects (+ nested opportunities)
   await prisma.project.deleteMany();
   for (const [i, p] of SEED_PROJECTS.entries()) {
     await prisma.project.create({
       data: {
         code: p.code, title: p.title, genre: p.genre, synopsis: p.synopsis,
+        titleHy: p.titleHy, titleRu: p.titleRu, titleEn: p.titleEn,
+        synopsisHy: p.synopsisHy, synopsisRu: p.synopsisRu, synopsisEn: p.synopsisEn,
         poster: p.poster, gallery: JSON.stringify(p.gallery),
         format: p.format, studio: p.studio, status: p.status,
         releaseLabel: p.releaseLabel, countries: p.countries,
         audienceGender: p.audienceGender, audienceAge: p.audienceAge,
-        projViews: p.projViews, cpmRange: p.cpmRange, budgetRange: p.budgetRange,
-        safetyScore: p.safetyScore, safety: p.safety, sortOrder: i, ownerId: admin.id,
+        projViews: p.projViews,
+        budgetMinAmd: p.budgetMinAmd, budgetMaxAmd: p.budgetMaxAmd,
+        cpmMinAmd: p.cpmMinAmd, cpmMaxAmd: p.cpmMaxAmd,
+        priceMinAmd: p.priceMinAmd ?? null, priceMaxAmd: p.priceMaxAmd ?? null,
+        sortOrder: i, ownerId: admin.id,
         slotsTotal: p.slotsTotal, slotsTaken: p.slotsTaken,
         applicationDeadline: new Date(p.applicationDeadline), releaseDate: new Date(p.releaseDate),
-        platforms: JSON.stringify(p.platforms), placementType: p.placementType, priceNote: p.priceNote,
-        safetyCats: {
-          create: GARM_CATEGORIES.map((name, idx) => ({
-            name, score: p.catScores[idx] ?? 90, aiText: "", sortOrder: idx,
-          })),
-        },
+        platforms: JSON.stringify(p.platforms), placementType: p.placementType,
+        priceNote: p.priceNote || null,
         opportunities: {
           create: p.opps.map((o, idx) => ({ ...o, sortOrder: idx })),
         },

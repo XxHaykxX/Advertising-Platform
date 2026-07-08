@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ApplyDialog } from "@/components/apply-dialog";
 import { Reveal } from "@/components/ui/reveal";
 import { formatFullDate, formatMonthYear, parseStringArray } from "@/lib/data/format";
-import { DEFAULT_LOCALE, intlLocale, makeUI, type Locale } from "@/lib/i18n";
+import { DEFAULT_LOCALE, intlLocale, localizeValue, makeUI, type Locale } from "@/lib/i18n";
 import type { ProjectDetailDTO } from "@/lib/types";
 
 function Fact({
@@ -81,7 +81,7 @@ export function KeyFacts({
               <Fact
                 icon={<DollarSign className="h-3.5 w-3.5" />}
                 label={t("keyFacts.price")}
-                value={project.priceNote ?? t("keyFacts.onRequest")}
+                value={project.priceDisplay ?? t("keyFacts.onRequest")}
               />
 
               {platforms.length > 0 ? (
@@ -104,7 +104,9 @@ export function KeyFacts({
             </div>
 
             <div className="flex flex-col items-start gap-3 lg:items-end lg:border-l lg:border-border lg:pl-6">
-              {project.placementType ? <AccentBadge>{project.placementType}</AccentBadge> : null}
+              {project.placementType ? (
+                <AccentBadge>{localizeValue(locale, "placement", project.placementType)}</AccentBadge>
+              ) : null}
               <ApplyDialog
                 projectId={project.id}
                 projectTitle={project.title}

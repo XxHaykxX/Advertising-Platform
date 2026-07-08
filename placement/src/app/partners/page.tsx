@@ -8,6 +8,7 @@ import { PartnersGrid } from "@/components/partners-page/partners-grid";
 import { PartnersCta } from "@/components/partners-page/partners-cta";
 import { getPartners } from "@/lib/data/partners";
 import { getLocale } from "@/lib/data/locale";
+import { getCurrency } from "@/lib/data/currency";
 import { makeUI } from "@/lib/i18n";
 
 export const metadata = {
@@ -18,12 +19,12 @@ export const metadata = {
 };
 
 export default async function PartnersPage() {
-  const [partners, locale] = await Promise.all([getPartners(), getLocale()]);
+  const [partners, locale, currency] = await Promise.all([getPartners(), getLocale(), getCurrency()]);
   const t = makeUI(locale);
 
   return (
     <>
-      <Header locale={locale} />
+      <Header locale={locale} currency={currency} />
       <main className="relative min-h-screen bg-background">
         {/* Intro */}
         <div className="border-b border-border/50 bg-gradient-to-b from-background to-background/50 py-12 sm:py-16">
@@ -64,7 +65,7 @@ export default async function PartnersPage() {
 
         <PartnersCta locale={locale} />
       </main>
-      <Footer locale={locale} />
+      <Footer locale={locale} currency={currency} />
     </>
   );
 }

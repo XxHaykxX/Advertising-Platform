@@ -4,6 +4,7 @@ import { ContactForm } from "@/components/contact-page/contact-form";
 import { ContactMethods } from "@/components/contact-page/contact-methods";
 import { getProjects } from "@/lib/data/projects";
 import { getLocale } from "@/lib/data/locale";
+import { getCurrency } from "@/lib/data/currency";
 import { makeUI } from "@/lib/i18n";
 
 export const metadata = {
@@ -13,12 +14,14 @@ export const metadata = {
 };
 
 export default async function ContactPage() {
-  const [projects, locale] = await Promise.all([getProjects(), getLocale()]);
+  const locale = await getLocale();
+  const currency = await getCurrency();
+  const projects = await getProjects(locale, currency);
   const t = makeUI(locale);
 
   return (
     <>
-      <Header locale={locale} />
+      <Header locale={locale} currency={currency} />
       <main className="relative min-h-screen bg-background">
         {/* Subtle decorative background */}
         <div className="pointer-events-none fixed inset-0 overflow-hidden">
@@ -53,7 +56,7 @@ export default async function ContactPage() {
           </div>
         </div>
       </main>
-      <Footer locale={locale} />
+      <Footer locale={locale} currency={currency} />
     </>
   );
 }

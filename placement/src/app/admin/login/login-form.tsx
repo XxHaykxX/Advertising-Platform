@@ -4,7 +4,13 @@ import { useActionState } from "react";
 import { Loader2, Lock } from "lucide-react";
 import { login, type ActionState } from "@/app/admin/actions";
 
-export function LoginForm({ from }: { from: string }) {
+export function LoginForm({
+  from,
+  initialEmail = "",
+}: {
+  from: string;
+  initialEmail?: string;
+}) {
   const [state, formAction, pending] = useActionState<ActionState, FormData>(
     login,
     {},
@@ -23,6 +29,7 @@ export function LoginForm({ from }: { from: string }) {
           type="email"
           autoFocus
           autoComplete="username"
+          defaultValue={initialEmail}
           placeholder="you@example.com"
           className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:border-primary/50"
         />
@@ -39,6 +46,16 @@ export function LoginForm({ from }: { from: string }) {
           placeholder="••••••••"
           className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:border-primary/50"
         />
+      </label>
+
+      <label className="flex items-center gap-2 text-sm text-foreground">
+        <input
+          name="remember"
+          type="checkbox"
+          defaultChecked={Boolean(initialEmail)}
+          className="h-4 w-4 rounded border-border text-primary accent-primary"
+        />
+        Remember me
       </label>
 
       {state.error && (

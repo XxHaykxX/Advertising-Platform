@@ -8,7 +8,9 @@ import { Menu, MessageCircle, Phone, Send, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { LocaleSwitcher } from "@/components/locale-switcher";
+import { CurrencySwitcher } from "@/components/currency-switcher";
 import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
+import { DEFAULT_CURRENCY, type CurrencyCode } from "@/lib/currency";
 import { cn } from "@/lib/utils";
 
 function useNav(t: ReturnType<typeof makeUI>) {
@@ -42,7 +44,13 @@ function Wordmark({ onDark }: { onDark: boolean }) {
   );
 }
 
-export function Header({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
+export function Header({
+  locale = DEFAULT_LOCALE,
+  currency = DEFAULT_CURRENCY,
+}: {
+  locale?: Locale;
+  currency?: CurrencyCode;
+}) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
@@ -72,7 +80,7 @@ export function Header({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
           <Wordmark onDark={onDark} />
 
           {/* Desktop nav */}
-          <nav className="hidden items-center gap-8 md:flex">
+          <nav className="hidden items-center gap-8 lg:flex">
             {NAV.map((item) => (
               <Link
                 key={item.href}
@@ -88,8 +96,8 @@ export function Header({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
           </nav>
 
           {/* Right cluster (desktop) */}
-          <div className="hidden items-center gap-3 md:flex">
-            <div className={cn("flex items-center gap-1 border-r pr-3", onDark ? "border-white/15" : "border-border")}>
+          <div className="hidden items-center gap-3 lg:flex">
+            <div className={cn("hidden items-center gap-1 border-r pr-3 xl:flex", onDark ? "border-white/15" : "border-border")}>
               {CONTACT_LINKS.map((item) => (
                 <a
                   key={item.href}
@@ -107,6 +115,7 @@ export function Header({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
               ))}
             </div>
             <LocaleSwitcher current={locale} onDark={onDark} />
+            <CurrencySwitcher current={currency} onDark={onDark} />
             {/* Brand sign-in disabled until brand auth is built — kept for
                 restore. See docs/superpowers/plans parity plan + /login page.
             <Link
@@ -131,7 +140,7 @@ export function Header({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
             aria-expanded={menuOpen}
             aria-label={menuOpen ? t("nav.closeMenu") : t("nav.openMenu")}
             className={cn(
-              "grid h-10 w-10 place-items-center rounded-xl transition-colors md:hidden",
+              "grid h-10 w-10 place-items-center rounded-xl transition-colors lg:hidden",
               onDark ? "text-white hover:bg-white/10" : "text-foreground hover:bg-muted"
             )}
           >
@@ -148,7 +157,7 @@ export function Header({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-            className="overflow-hidden border-b border-border bg-background md:hidden"
+            className="overflow-hidden border-b border-border bg-background lg:hidden"
           >
             <Container className="flex flex-col gap-1 py-4">
               {NAV.map((item) => (
@@ -174,7 +183,10 @@ export function Header({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
                     <item.icon className="h-4 w-4" />
                   </a>
                 ))}
-                <LocaleSwitcher current={locale} className="ml-auto" />
+                <div className="ml-auto flex items-center gap-2">
+                  <LocaleSwitcher current={locale} />
+                  <CurrencySwitcher current={currency} />
+                </div>
               </div>
               <div className="flex flex-col gap-2 pt-2">
                 {/* Brand sign-in disabled until brand auth is built — kept for restore.

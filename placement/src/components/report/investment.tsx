@@ -1,32 +1,41 @@
-import { BarChart3, Check, Download, Share2 } from "lucide-react";
+import { BarChart3, Check } from "lucide-react";
 import { AccentBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ApplyDialog } from "@/components/apply-dialog";
 import { Reveal } from "@/components/ui/reveal";
+import { PrintButton, ShareButton } from "@/components/report/report-actions";
 import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
+import { DEFAULT_CURRENCY, formatMoneyRange, type CurrencyCode, type Rates } from "@/lib/currency";
 import type { ProjectDetailDTO } from "@/lib/types";
 
 const INCLUDED_ITEM_KEYS = [
   "investment.item1",
-  "investment.item2",
   "investment.item3",
   "investment.item4",
   "investment.item5",
   "investment.item6",
 ];
 
-const COMPARISON_ROW_KEYS = [
-  { channelKey: "investment.tvCommercial", cost: "$150,000+" },
-  { channelKey: "investment.printAd", cost: "$50,000+" },
-  { channelKey: "investment.influencer", cost: "$10,000-50,000" },
+// Reference figures for "how this compares" — AMD (≈ ×385 of the old USD
+// demo numbers), converted + formatted alongside the project's own CPM.
+// minAmd === maxAmd renders as a single value (formatMoneyRange collapses
+// equal bounds); influencer is a genuine range.
+const COMPARISON_ROW_AMD = [
+  { channelKey: "investment.tvCommercial", minAmd: 58_000_000, maxAmd: 58_000_000 },
+  { channelKey: "investment.printAd", minAmd: 19_250_000, maxAmd: 19_250_000 },
+  { channelKey: "investment.influencer", minAmd: 3_850_000, maxAmd: 19_250_000 },
 ];
 
 export function Investment({
   project,
   locale = DEFAULT_LOCALE,
+  currency = DEFAULT_CURRENCY,
+  rates,
 }: {
   project: ProjectDetailDTO;
   locale?: Locale;
+  currency?: CurrencyCode;
+  rates: Rates;
 }) {
   const t = makeUI(locale);
   return (
@@ -46,7 +55,7 @@ export function Investment({
                 {t("investment.investmentLabel")}
               </span>
               <div className="mt-1 text-3xl font-extrabold text-foreground">
-                {project.budgetRange}
+                {project.budgetDisplay}
               </div>
               <ul className="mt-5 space-y-2.5">
                 {INCLUDED_ITEM_KEYS.map((key) => (
@@ -78,10 +87,12 @@ export function Investment({
                   </tr>
                 </thead>
                 <tbody>
-                  {COMPARISON_ROW_KEYS.map((row) => (
+                  {COMPARISON_ROW_AMD.map((row) => (
                     <tr key={row.channelKey} className="border-t border-border">
                       <td className="py-2.5 text-muted-foreground">{t(row.channelKey)}</td>
-                      <td className="py-2.5 text-right text-foreground">{row.cost}</td>
+                      <td className="py-2.5 text-right text-foreground">
+                        {formatMoneyRange(row.minAmd, row.maxAmd, currency, rates, locale)}
+                      </td>
                     </tr>
                   ))}
                   <tr className="border-t border-border">
@@ -92,7 +103,7 @@ export function Investment({
                       </span>
                     </td>
                     <td className="py-2.5 text-right font-semibold text-primary">
-                      {project.cpmRange}
+                      {project.cpmDisplay}
                     </td>
                   </tr>
                 </tbody>
@@ -110,14 +121,14 @@ export function Investment({
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-3">
-              <Button variant="secondary" size="sm">
-                <Download className="mr-1.5 h-4 w-4" />
-                {t("report.downloadPdf")}
-              </Button>
-              <Button variant="secondary" size="sm">
-                <Share2 className="mr-1.5 h-4 w-4" />
-                {t("report.share")}
-              </Button>
+              <PrintButton label={t("report.downloadPdf")} variant="secondary" size="sm" />
+              <ShareButton
+                title={project.title}
+                label={t("report.share")}
+                copiedLabel={t("report.linkCopied")}
+                variant="secondary"
+                size="sm"
+              />
               <ApplyDialog
                 projectId={project.id}
                 projectTitle={project.title}

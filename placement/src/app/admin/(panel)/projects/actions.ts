@@ -3,23 +3,30 @@
 import { revalidatePath } from "next/cache";
 import { redirect, notFound } from "next/navigation";
 import { Prisma } from "@prisma/client";
-import type { ProjectStatus, BrandSafety } from "@prisma/client";
+import type { ProjectStatus } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth/require";
+import { PLACEMENT_TYPE_VALUES } from "./form-shared";
 
 const STATUS_VALUES = ["PRE_PRODUCTION", "FILMING", "POST_PRODUCTION", "RELEASED"] as const;
-const SAFETY_VALUES = ["SAFE", "REVIEW", "RISK"] as const;
 const GENDER_VALUES = ["All", "Male", "Female"] as const;
 const OPP_TYPE_VALUES = ["visual", "audio"] as const;
 const OPP_PROMINENCE_VALUES = ["background", "active"] as const;
-export const PLACEMENT_TYPE_VALUES = ["In-Frame", "Story Integration", "Mention"] as const;
 
 export type ProjectFormValues = {
   title: string;
   code: string;
   genre: string;
   synopsis: string;
+  // ── Per-locale translations (fall back to title/synopsis above) ──
+  titleHy: string;
+  titleRu: string;
+  titleEn: string;
+  synopsisHy: string;
+  synopsisRu: string;
+  synopsisEn: string;
   poster: string;
+  gallery: string; // newline/comma-separated image URLs in the form; JSON string[] at rest
   format: string;
   studio: string;
   status: ProjectStatus;
@@ -28,10 +35,15 @@ export type ProjectFormValues = {
   audienceGender: string;
   audienceAge: string;
   projViews: string;
-  cpmRange: string;
-  budgetRange: string;
-  safetyScore: number;
-  safety: BrandSafety;
+  // Money — AMD only, all optional (blank -> null). Placement price
+  // (priceMinAmd/priceMaxAmd) drives the "on request" fallback on the public
+  // site when left unset.
+  budgetMinAmd: number | null;
+  budgetMaxAmd: number | null;
+  cpmMinAmd: number | null;
+  cpmMaxAmd: number | null;
+  priceMinAmd: number | null;
+  priceMaxAmd: number | null;
   isActive: boolean;
   sortOrder: number;
   // ── Placement parity fields ──
@@ -60,8 +72,12 @@ function int(fd: FormData, key: string, fallback = 0) {
   const n = parseInt(String(fd.get(key) || ""), 10);
   return Number.isFinite(n) ? n : fallback;
 }
-function clamp(n: number, min: number, max: number) {
-  return Math.min(max, Math.max(min, n));
+/** Blank input -> null instead of 0, for the optional AMD money fields. */
+function intOrNull(fd: FormData, key: string): number | null {
+  const raw = String(fd.get(key) || "").trim();
+  if (!raw) return null;
+  const n = parseInt(raw, 10);
+  return Number.isFinite(n) ? n : null;
 }
 function bool(fd: FormData, key: string) {
   return fd.get(key) === "on";
@@ -92,11 +108,6 @@ function dateOrNull(value: string): Date | null {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
-/** Date | null -> "YYYY-MM-DD" for prefilling an <input type=date>. */
-export function formatDateInput(d: Date | null): string {
-  return d ? d.toISOString().slice(0, 10) : "";
-}
-
 /** "YouTube, Kinodaran, TV" -> JSON string[] (or null when empty) for the
    nullable @db.Text Json column. */
 function platformsToJson(csv: string): string | null {
@@ -107,15 +118,14 @@ function platformsToJson(csv: string): string | null {
   return arr.length ? JSON.stringify(arr) : null;
 }
 
-/** JSON string[] (or null) -> "YouTube, Kinodaran, TV" for the form. */
-export function parsePlatformsInput(json: string | null): string {
-  if (!json) return "";
-  try {
-    const arr = JSON.parse(json);
-    return Array.isArray(arr) ? arr.join(", ") : "";
-  } catch {
-    return "";
-  }
+/** "url1\nurl2" or "url1, url2" -> JSON string[] (or null when empty) for the
+   nullable @db.Text gallery column. Splits on newlines and commas. */
+function galleryToJson(input: string): string | null {
+  const arr = input
+    .split(/[\n,]/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return arr.length ? JSON.stringify(arr) : null;
 }
 
 function buildData(fd: FormData): ProjectFormValues {
@@ -124,7 +134,14 @@ function buildData(fd: FormData): ProjectFormValues {
     code: str(fd, "code", VARCHAR_MAX),
     genre: str(fd, "genre", VARCHAR_MAX),
     synopsis: str(fd, "synopsis"),
+    titleHy: str(fd, "titleHy", VARCHAR_MAX),
+    titleRu: str(fd, "titleRu", VARCHAR_MAX),
+    titleEn: str(fd, "titleEn", VARCHAR_MAX),
+    synopsisHy: str(fd, "synopsisHy"),
+    synopsisRu: str(fd, "synopsisRu"),
+    synopsisEn: str(fd, "synopsisEn"),
     poster: str(fd, "poster", VARCHAR_MAX),
+    gallery: str(fd, "gallery"),
     format: str(fd, "format", VARCHAR_MAX),
     studio: str(fd, "studio", VARCHAR_MAX),
     status: enumVal(fd, "status", STATUS_VALUES, "PRE_PRODUCTION"),
@@ -133,10 +150,12 @@ function buildData(fd: FormData): ProjectFormValues {
     audienceGender: enumVal(fd, "audienceGender", GENDER_VALUES, "All"),
     audienceAge: str(fd, "audienceAge", VARCHAR_MAX),
     projViews: str(fd, "projViews", VARCHAR_MAX),
-    cpmRange: str(fd, "cpmRange", VARCHAR_MAX),
-    budgetRange: str(fd, "budgetRange", VARCHAR_MAX),
-    safetyScore: clamp(int(fd, "safetyScore"), 0, 100),
-    safety: enumVal(fd, "safety", SAFETY_VALUES, "REVIEW"),
+    budgetMinAmd: intOrNull(fd, "budgetMinAmd"),
+    budgetMaxAmd: intOrNull(fd, "budgetMaxAmd"),
+    cpmMinAmd: intOrNull(fd, "cpmMinAmd"),
+    cpmMaxAmd: intOrNull(fd, "cpmMaxAmd"),
+    priceMinAmd: intOrNull(fd, "priceMinAmd"),
+    priceMaxAmd: intOrNull(fd, "priceMaxAmd"),
     isActive: bool(fd, "isActive"),
     sortOrder: int(fd, "sortOrder"),
     slotsTotal: Math.max(0, int(fd, "slotsTotal", 5)),
@@ -177,7 +196,11 @@ export async function createProject(
     await prisma.project.create({
       data: {
         ...data,
+        synopsisHy: data.synopsisHy || null,
+        synopsisRu: data.synopsisRu || null,
+        synopsisEn: data.synopsisEn || null,
         poster: data.poster || null,
+        gallery: galleryToJson(data.gallery),
         applicationDeadline: dateOrNull(data.applicationDeadline),
         releaseDate: dateOrNull(data.releaseDate),
         platforms: platformsToJson(data.platforms),
@@ -224,7 +247,11 @@ export async function updateProject(
       where: { id },
       data: {
         ...data,
+        synopsisHy: data.synopsisHy || null,
+        synopsisRu: data.synopsisRu || null,
+        synopsisEn: data.synopsisEn || null,
         poster: data.poster || null,
+        gallery: galleryToJson(data.gallery),
         applicationDeadline: dateOrNull(data.applicationDeadline),
         releaseDate: dateOrNull(data.releaseDate),
         platforms: platformsToJson(data.platforms),
@@ -269,7 +296,7 @@ export async function toggleActive(id: number, isActive: boolean) {
   revalidateProjectPaths(id);
 }
 
-// ── Nested sub-editors (safety categories / placement opportunities) ──────
+// ── Nested sub-editors (placement opportunities / actors) ─────────────────
 // Authz is re-checked independently of the parent edit page (defense in
 // depth): a Publisher cannot POST directly against another owner's project.
 
@@ -284,35 +311,6 @@ async function authorizeProject(projectId: number): Promise<string | null> {
   return null;
 }
 
-type SafetyCatRow = { name: string; score: number; aiText: string };
-
-export async function saveSafetyCats(
-  projectId: number,
-  _prev: SubEditorState,
-  fd: FormData,
-): Promise<SubEditorState> {
-  const authError = await authorizeProject(projectId);
-  if (authError) return { error: authError };
-
-  const rows = jsonArray<SafetyCatRow>(fd, "rows");
-
-  await prisma.$transaction([
-    prisma.safetyCategory.deleteMany({ where: { projectId } }),
-    prisma.safetyCategory.createMany({
-      data: rows.map((r, i) => ({
-        projectId,
-        name: (r.name || "").trim(),
-        score: clamp(Number(r.score) || 0, 0, 100),
-        aiText: (r.aiText || "").trim(),
-        sortOrder: i,
-      })),
-    }),
-  ]);
-
-  revalidateProjectPaths(projectId);
-  return { ok: true };
-}
-
 type OpportunityRow = {
   sceneNo: number;
   description: string;
@@ -323,7 +321,6 @@ type OpportunityRow = {
   category: string;
   estValue: number;
   durationSec: number;
-  safety: number;
 };
 
 export async function saveOpportunities(
@@ -352,7 +349,6 @@ export async function saveOpportunities(
         category: (r.category || "").trim(),
         estValue: Math.max(0, Number(r.estValue) || 0),
         durationSec: Math.max(0, Number(r.durationSec) || 0),
-        safety: clamp(Number(r.safety) || 0, 0, 100),
         sortOrder: i,
       })),
     }),

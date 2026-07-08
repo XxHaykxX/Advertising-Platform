@@ -55,3 +55,7 @@ next-env.d.ts
 # dev server logs
 placement/dev-3001.log
 *.log
+
+# large local press-kit assets (keep out of git)
+*.press*.pdf
+/qa-*.jpeg

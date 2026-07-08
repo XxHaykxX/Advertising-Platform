@@ -8,6 +8,7 @@ import { Footer } from "@/components/footer";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
+import { DEFAULT_CURRENCY, type CurrencyCode } from "@/lib/currency";
 import type { PortfolioDTO } from "@/lib/types";
 import { CaseCard } from "./case-card";
 import { CaseLightbox } from "./lightbox";
@@ -15,16 +16,18 @@ import { CaseLightbox } from "./lightbox";
 export function PortfolioView({
   cases,
   locale = DEFAULT_LOCALE,
+  currency = DEFAULT_CURRENCY,
 }: {
   cases: PortfolioDTO[];
   locale?: Locale;
+  currency?: CurrencyCode;
 }) {
   const t = makeUI(locale);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   return (
     <>
-      <Header locale={locale} />
+      <Header locale={locale} currency={currency} />
 
       <main className="bg-background">
         <div className="border-b border-border bg-gradient-to-b from-muted/60 to-background py-16 sm:py-20">
@@ -91,7 +94,7 @@ export function PortfolioView({
         </div>
       </main>
 
-      <Footer locale={locale} />
+      <Footer locale={locale} currency={currency} />
 
       <CaseLightbox
         cases={cases}

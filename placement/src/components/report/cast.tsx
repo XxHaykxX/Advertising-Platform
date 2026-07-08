@@ -1,30 +1,7 @@
 import { Reveal } from "@/components/ui/reveal";
+import { CastCarousel } from "@/components/report/cast-carousel";
 import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
-import type { ActorDTO, ProjectDetailDTO } from "@/lib/types";
-
-function initials(name: string): string {
-  const words = name.trim().split(/\s+/).filter(Boolean);
-  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
-  return (words[0][0] + words[1][0]).toUpperCase();
-}
-
-function ActorCard({ actor }: { actor: ActorDTO }) {
-  return (
-    <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-4">
-      <div
-        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
-        style={{ background: "var(--grad)" }}
-        aria-hidden
-      >
-        {initials(actor.name)}
-      </div>
-      <div className="min-w-0">
-        <p className="truncate font-semibold text-foreground">{actor.name}</p>
-        <p className="truncate text-xs text-muted-foreground">{actor.role}</p>
-      </div>
-    </div>
-  );
-}
+import type { ProjectDetailDTO } from "@/lib/types";
 
 export function Cast({
   project,
@@ -47,10 +24,12 @@ export function Cast({
         </Reveal>
 
         <Reveal delay={0.05}>
-          <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {project.actors.map((actor) => (
-              <ActorCard key={actor.id} actor={actor} />
-            ))}
+          <div className="mt-6">
+            <CastCarousel
+              actors={project.actors}
+              prevLabel={t("report.prev")}
+              nextLabel={t("report.next")}
+            />
           </div>
         </Reveal>
       </div>

@@ -2,11 +2,9 @@
 
 import { useState, type ReactNode } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ChevronDown, Lock, ShieldCheck } from "lucide-react";
+import { ChevronDown, Lock } from "lucide-react";
 import { AccentBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Gauge } from "@/components/ui/gauge";
-import { ScoreBar } from "@/components/ui/score-bar";
 import { Reveal } from "@/components/ui/reveal";
 import { moneyShort } from "@/lib/data/format";
 import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
@@ -16,18 +14,6 @@ import { ExpressInterestBanner } from "./roi-snapshot";
 
 const RECOMMENDED_FOR = ["Beverages", "Technology", "Fashion", "Consumer Electronics"];
 const USE_CAUTION_WITH = ["Alcohol", "Gambling", "Firearms"];
-
-function safetyColor(score: number) {
-  if (score >= 80) return "text-success";
-  if (score >= 60) return "text-warn";
-  return "text-danger";
-}
-
-function verdict(score: number, t: (key: string) => string) {
-  if (score >= 80) return t("deepDive.suitable");
-  if (score >= 60) return t("deepDive.needsReview");
-  return t("deepDive.highRisk");
-}
 
 function formatScreenTime(totalSec: number) {
   const minutes = Math.floor(totalSec / 60);
@@ -91,16 +77,12 @@ export function DeepDive({
   const t = makeUI(locale);
   const [openId, setOpenId] = useState<string | null>("opportunities");
   const [showAllOpps, setShowAllOpps] = useState(false);
-  const [showGarm, setShowGarm] = useState(false);
 
   const toggle = (id: string) => setOpenId((current) => (current === id ? null : id));
 
   const shownOpps = showAllOpps ? project.opportunities : project.opportunities.slice(0, 4);
   const uniqueScenes = new Set(project.opportunities.map((o) => o.sceneNo)).size;
   const totalScreenTime = project.opportunities.reduce((sum, o) => sum + o.durationSec, 0);
-  const risks = project.safetyCats.filter((cat) => cat.score < 80);
-  const safetyLabel = verdict(project.safetyScore, t);
-  const safetyClass = safetyColor(project.safetyScore);
 
   return (
     <section id="more" className="py-10">
@@ -204,64 +186,15 @@ export function DeepDive({
 
           <Reveal delay={0.17}>
             <AccordionItem
-              title={t("deepDive.fullSafetyTitle")}
-              isOpen={openId === "full-safety"}
-              onToggle={() => toggle("full-safety")}
+              title={t("deepDive.recommendations")}
+              isOpen={openId === "recommendations"}
+              onToggle={() => toggle("recommendations")}
             >
-              <div className="flex flex-col items-center gap-3 rounded-xl bg-muted p-6 sm:flex-row sm:items-center sm:gap-6">
-                <Gauge value={project.safetyScore} size={120} />
-                <div>
-                  <div className={`flex items-center gap-1.5 text-lg font-bold ${safetyClass}`}>
-                    <ShieldCheck className="h-5 w-5" />
-                    {safetyLabel} <span className="text-sm font-normal text-muted-foreground">({project.safetyScore}/100)</span>
-                  </div>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {t("deepDive.clearedNote")}
-                  </p>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setShowGarm((v) => !v)}
-                className="mt-4 flex w-full items-center justify-between rounded-lg border border-border px-4 py-3 text-sm font-medium text-foreground"
-                aria-expanded={showGarm}
-              >
-                {t("deepDive.viewGarmBreakdown", { n: project.safetyCats.length })}
-                <ChevronDown
-                  className={`h-4 w-4 shrink-0 transition-transform duration-300 ${showGarm ? "rotate-180" : ""}`}
-                />
-              </button>
-              {showGarm ? (
-                <div className="mt-3 grid grid-cols-1 gap-4 rounded-lg border border-border p-4 sm:grid-cols-2">
-                  {project.safetyCats.map((cat) => (
-                    <ScoreBar key={cat.name} label={cat.name} score={cat.score} aiText={cat.aiText} />
-                  ))}
-                </div>
-              ) : null}
-
-              {risks.length > 0 ? (
-                <div className="mt-5">
-                  <h4 className="text-sm font-semibold text-foreground">{t("deepDive.potentialRisks")}</h4>
-                  <ul className="mt-2 space-y-1.5">
-                    {risks.map((cat) => (
-                      <li key={cat.name} className="text-sm text-muted-foreground">
-                        <span className="font-medium text-foreground">{cat.name}:</span>{" "}
-                        {cat.aiText}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ) : null}
-
-              <div className="mt-5">
-                <h4 className="text-sm font-semibold text-foreground">{t("deepDive.recommendations")}</h4>
-                <ul className="mt-2 list-disc space-y-1.5 pl-5 text-sm text-muted-foreground">
-                  <li>{t("deepDive.rec1")}</li>
-                  <li>{t("deepDive.rec2")}</li>
-                  <li>{t("deepDive.rec3")}</li>
-                </ul>
-              </div>
+              <ul className="list-disc space-y-1.5 pl-5 text-sm text-muted-foreground">
+                <li>{t("deepDive.rec1")}</li>
+                <li>{t("deepDive.rec2")}</li>
+                <li>{t("deepDive.rec3")}</li>
+              </ul>
 
               <div className="mt-5 flex flex-wrap items-center gap-2">
                 <span className="text-sm font-medium text-foreground">{t("deepDive.recommendedFor")}</span>

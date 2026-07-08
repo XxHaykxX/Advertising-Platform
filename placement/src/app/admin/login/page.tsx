@@ -1,5 +1,7 @@
-import { Clapperboard } from "lucide-react";
+import { cookies } from "next/headers";
 import { LoginForm } from "./login-form";
+import { Logo } from "@/components/ui/logo";
+import { LAST_EMAIL_COOKIE } from "@/lib/auth/session";
 
 export default async function LoginPage({
   searchParams,
@@ -8,23 +10,19 @@ export default async function LoginPage({
 }) {
   const { from } = await searchParams;
   const safeFrom = from && from.startsWith("/admin") ? from : "/admin";
+  const initialEmail = (await cookies()).get(LAST_EMAIL_COOKIE)?.value ?? "";
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-6">
       <div className="w-full max-w-sm rounded-2xl border border-border bg-background p-8 shadow-sm">
-        <div className="mb-6 flex items-center gap-2.5">
-          <span className="grid h-9 w-9 place-items-center rounded-md bg-primary text-primary-foreground">
-            <Clapperboard className="h-5 w-5" />
-          </span>
-          <span className="text-base font-bold tracking-tight text-foreground">
-            <span className="text-primary">i</span>Govazd
-          </span>
+        <div className="mb-6">
+          <Logo suffix="Admin" />
         </div>
         <h1 className="mb-1 text-xl font-bold text-foreground">Admin sign-in</h1>
         <p className="mb-6 text-sm text-muted-foreground">
           Sign in with your admin or publisher account.
         </p>
-        <LoginForm from={safeFrom} />
+        <LoginForm from={safeFrom} initialEmail={initialEmail} />
       </div>
     </div>
   );

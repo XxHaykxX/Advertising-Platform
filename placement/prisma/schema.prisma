@@ -45,19 +45,19 @@ enum ProjectStatus {
   RELEASED
 }
 
-enum BrandSafety {
-  SAFE
-  REVIEW
-  RISK
-}
-
 /// A film/series project listed for product placement
 model Project {
   id             Int           @id @default(autoincrement())
   code           String        @unique // "#PP-2026-8540"
   title          String
+  titleHy        String        @default("")
+  titleRu        String        @default("")
+  titleEn        String        @default("")
   genre          String
   synopsis       String        @db.Text
+  synopsisHy     String?       @db.Text
+  synopsisRu     String?       @db.Text
+  synopsisEn     String?       @db.Text
   poster         String?
   gallery        String?       @db.Text // JSON string[]; nullable — MySQL forbids literal defaults on TEXT columns
   format         String        @default("") // "50 ep × 1m 15s"
@@ -68,10 +68,16 @@ model Project {
   audienceGender String        @default("All") // All | Male | Female
   audienceAge    String        @default("") // "16-30"
   projViews      String        @default("") // "2.4M"
-  cpmRange       String        @default("") // "$3.60-$5.40"
-  budgetRange    String        @default("") // "$6,000,000 — $10,000,000"
-  safetyScore    Int           @default(0) // 0-100
-  safety         BrandSafety   @default(REVIEW)
+  // Money — admin enters AMD only; the public site converts + formats for
+  // display in the visitor's chosen currency (see src/lib/currency). All
+  // nullable: budget/CPM are context, placement price is optional (null ->
+  // "on request").
+  budgetMinAmd   Int?
+  budgetMaxAmd   Int?
+  cpmMinAmd      Int?
+  cpmMaxAmd      Int?
+  priceMinAmd    Int?
+  priceMaxAmd    Int?
   isActive       Boolean       @default(true)
   sortOrder      Int           @default(0)
   createdAt      DateTime      @default(now())
@@ -86,7 +92,6 @@ model Project {
   priceNote           String?
 
   owner         User                   @relation(fields: [ownerId], references: [id])
-  safetyCats    SafetyCategory[]
   opportunities PlacementOpportunity[]
   actors        Actor[]
 
@@ -127,20 +132,6 @@ model Partner {
   sortOrder Int     @default(0)
 }
 
-/// GARM brand-safety category score for a project
-model SafetyCategory {
-  id        Int    @id @default(autoincrement())
-  projectId Int
-  name      String // "Crime", "Drugs", …
-  score     Int    @default(0) // 0-100
-  aiText    String @db.Text
-  sortOrder Int    @default(0)
-
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-
-  @@index([projectId])
-}
-
 /// A scene-level placement opportunity
 model PlacementOpportunity {
   id          Int    @id @default(autoincrement())
@@ -154,7 +145,6 @@ model PlacementOpportunity {
   category    String @default("") // "Beverages", "Technology", …
   estValue    Int    @default(0) // dollars
   durationSec Int    @default(0)
-  safety      Int    @default(100) // 0-100
   sortOrder   Int    @default(0)
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
