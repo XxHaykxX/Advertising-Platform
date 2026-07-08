@@ -78,8 +78,10 @@ export function Header({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors hover:bg-primary hover:text-primary-foreground",
-                  onDark ? "text-white/75" : "text-muted-foreground"
+                  "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+                  onDark
+                    ? "text-white/75 hover:bg-white/10 hover:text-white"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}
               >
                 {item.label}
@@ -153,7 +155,7 @@ export function Header({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
                   key={item.href}
                   href={item.href}
                   onClick={() => setMenuOpen(false)}
-                  className="rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-primary hover:text-primary-foreground"
+                  className="rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                 >
                   {item.label}
                 </Link>
