@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3001",
-    "build": "next build",
-    "start": "node --v8-pool-size=2 node_modules/next/dist/bin/next start",
+    "build": "NODE_OPTIONS=--v8-pool-size=2 UV_THREADPOOL_SIZE=2 next build",
+    "start": "NODE_OPTIONS=--v8-pool-size=2 UV_THREADPOOL_SIZE=2 next start",
     "lint": "eslint",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
