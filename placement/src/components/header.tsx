@@ -8,33 +8,25 @@ import { Menu, MessageCircle, Phone, Send, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { LocaleSwitcher } from "@/components/locale-switcher";
-import { DEFAULT_LOCALE, LOCALE_COOKIE, isLocale, type Locale } from "@/lib/i18n";
+import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
-const NAV = [
-  { label: "How It Works", href: "/how-it-works" },
-  { label: "Portfolio", href: "/portfolio" },
-  { label: "Partners", href: "/partners" },
-  { label: "FAQ", href: "/#faq" },
-  { label: "Contact", href: "/contact" },
-] as const;
+function useNav(t: ReturnType<typeof makeUI>) {
+  return [
+    { label: t("nav.how"), href: "/how-it-works" },
+    { label: t("nav.portfolio"), href: "/portfolio" },
+    { label: t("nav.partners"), href: "/partners" },
+    { label: t("nav.faq"), href: "/#faq" },
+    { label: t("nav.contact"), href: "/contact" },
+  ] as const;
+}
 
-const CONTACT_LINKS = [
-  { icon: Phone, label: "Call us", href: "tel:+37400000000" },
-  { icon: Send, label: "Telegram", href: "https://t.me/fpplacement" },
-  { icon: MessageCircle, label: "WhatsApp", href: "https://wa.me/37400000000" },
-] as const;
-
-/** Reads the `locale` cookie client-side. Header stays a client component
- *  (needs scroll/menu state), so it can't use the server-only getLocale(). */
-function useLocaleFromCookie(): Locale {
-  const [locale, setLocale] = useState<Locale>(DEFAULT_LOCALE);
-  useEffect(() => {
-    const match = document.cookie.match(new RegExp(`(?:^|; )${LOCALE_COOKIE}=([^;]*)`));
-    const v = match ? decodeURIComponent(match[1]) : undefined;
-    if (isLocale(v)) setLocale(v);
-  }, []);
-  return locale;
+function useContactLinks(t: ReturnType<typeof makeUI>) {
+  return [
+    { icon: Phone, label: t("nav.callUs"), href: "tel:+37400000000" },
+    { icon: Send, label: "Telegram", href: "https://t.me/fpplacement" },
+    { icon: MessageCircle, label: "WhatsApp", href: "https://wa.me/37400000000" },
+  ] as const;
 }
 
 function Wordmark({ onDark }: { onDark: boolean }) {
@@ -51,11 +43,13 @@ function Wordmark({ onDark }: { onDark: boolean }) {
   );
 }
 
-export function Header() {
+export function Header({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
-  const locale = useLocaleFromCookie();
+  const t = makeUI(locale);
+  const NAV = useNav(t);
+  const CONTACT_LINKS = useContactLinks(t);
   // Landing hero is a dark cinematic poster wall — while the transparent
   // header floats over it, switch text to a light-on-dark scheme.
   const onDark = pathname === "/" && !scrolled && !menuOpen;
@@ -123,10 +117,10 @@ export function Header() {
                 onDark ? "text-white hover:bg-white/10" : "text-foreground hover:bg-muted"
               )}
             >
-              Sign In
+              {t("nav.signIn")}
             </Link>
             <Button asChild variant="primary" size="sm">
-              <Link href="/catalog">Browse Projects</Link>
+              <Link href="/catalog">{t("nav.browseProjects")}</Link>
             </Button>
           </div>
 
@@ -135,7 +129,7 @@ export function Header() {
             type="button"
             onClick={() => setMenuOpen((v) => !v)}
             aria-expanded={menuOpen}
-            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            aria-label={menuOpen ? t("nav.closeMenu") : t("nav.openMenu")}
             className={cn(
               "grid h-10 w-10 place-items-center rounded-xl transition-colors md:hidden",
               onDark ? "text-white hover:bg-white/10" : "text-foreground hover:bg-muted"
@@ -188,10 +182,10 @@ export function Header() {
                   onClick={() => setMenuOpen(false)}
                   className="rounded-xl px-3 py-2.5 text-center text-sm font-semibold text-foreground transition-colors hover:bg-muted"
                 >
-                  Sign In
+                  {t("nav.signIn")}
                 </Link>
                 <Button asChild variant="primary" size="sm" onClick={() => setMenuOpen(false)}>
-                  <Link href="/catalog">Browse Projects</Link>
+                  <Link href="/catalog">{t("nav.browseProjects")}</Link>
                 </Button>
               </div>
             </Container>

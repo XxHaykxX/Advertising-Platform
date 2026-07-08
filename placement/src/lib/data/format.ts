@@ -24,18 +24,18 @@ export function sumExposure(opps: { estValue: number }[]): number {
   return opps.reduce((sum, o) => sum + o.estValue, 0);
 }
 
-export function formatMonthYear(iso: string | null): string {
+export function formatMonthYear(iso: string | null, locale = "en-US"): string {
   if (!iso) return "";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
-  return d.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  return d.toLocaleDateString(locale, { month: "long", year: "numeric" });
 }
 
-export function formatFullDate(iso: string | null): string {
+export function formatFullDate(iso: string | null, locale = "en-US"): string {
   if (!iso) return "";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "";
-  return d.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+  return d.toLocaleDateString(locale, { month: "long", day: "numeric", year: "numeric" });
 }
 
 export function daysUntil(iso: string | null): number | null {

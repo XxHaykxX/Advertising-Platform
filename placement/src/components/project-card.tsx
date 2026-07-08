@@ -16,16 +16,24 @@ import { Button } from "@/components/ui/button";
 import { ApplyDialog } from "@/components/apply-dialog";
 import { daysUntil, formatFullDate, formatMonthYear, parseStringArray, splitCountries } from "@/lib/data/format";
 import { cn } from "@/lib/utils";
+import { DEFAULT_LOCALE, intlLocale, makeUI, type Locale } from "@/lib/i18n";
 import type { ProjectListDTO } from "@/lib/types";
 
-export function ProjectCard({ project }: { project: ProjectListDTO }) {
+export function ProjectCard({
+  project,
+  locale = DEFAULT_LOCALE,
+}: {
+  project: ProjectListDTO;
+  locale?: Locale;
+}) {
+  const t = makeUI(locale);
   const countries = splitCountries(project.countries);
   const shownCountries = countries.slice(0, 3);
   const extraCountries = countries.length - shownCountries.length;
   const platforms = parseStringArray(project.platforms);
   const slotsLeft = Math.max(project.slotsTotal - project.slotsTaken, 0);
   const slotsPct = project.slotsTotal > 0 ? Math.min((project.slotsTaken / project.slotsTotal) * 100, 100) : 0;
-  const releaseLabel = formatMonthYear(project.releaseDate);
+  const releaseLabel = formatMonthYear(project.releaseDate, intlLocale(locale));
   const deadlineDays = daysUntil(project.applicationDeadline);
   const deadlineUrgent = deadlineDays !== null && deadlineDays <= 45;
 
@@ -79,7 +87,7 @@ export function ProjectCard({ project }: { project: ProjectListDTO }) {
           </div>
           <div className="flex items-center gap-2 text-primary">
             <Sparkles className="h-3.5 w-3.5 shrink-0" />
-            <span>{project.opportunitiesCount} opportunities</span>
+            <span>{project.opportunitiesCount} {t("card.opportunities")}</span>
           </div>
           <div className="flex items-center gap-2">
             <Wallet className="h-3.5 w-3.5 shrink-0" />
@@ -87,18 +95,18 @@ export function ProjectCard({ project }: { project: ProjectListDTO }) {
           </div>
           <div className="flex items-center gap-2">
             <Eye className="h-3.5 w-3.5 shrink-0" />
-            <span>{project.projViews} projected views</span>
+            <span>{project.projViews} {t("card.projectedViews")}</span>
           </div>
           {releaseLabel ? (
             <div className="flex items-center gap-2">
               <Calendar className="h-3.5 w-3.5 shrink-0" />
-              <span>Release: {releaseLabel}</span>
+              <span>{t("card.release")}: {releaseLabel}</span>
             </div>
           ) : null}
           {project.applicationDeadline ? (
             <div className={cn("flex items-center gap-2", deadlineUrgent ? "text-warn" : undefined)}>
               <Clock className="h-3.5 w-3.5 shrink-0" />
-              <span>Applications until {formatFullDate(project.applicationDeadline)}</span>
+              <span>{t("card.applicationsUntil")} {formatFullDate(project.applicationDeadline, intlLocale(locale))}</span>
             </div>
           ) : null}
         </div>
@@ -106,7 +114,7 @@ export function ProjectCard({ project }: { project: ProjectListDTO }) {
         {project.slotsTotal > 0 ? (
           <div className="mt-4">
             <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
-              <span>{slotsLeft} of {project.slotsTotal} slots available</span>
+              <span>{slotsLeft} {t("card.slotsAvailable", { b: project.slotsTotal })}</span>
             </div>
             <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-muted">
               <div
@@ -136,14 +144,15 @@ export function ProjectCard({ project }: { project: ProjectListDTO }) {
 
         <div className="mt-auto flex gap-3 pt-6">
           <Button asChild variant="primary" size="sm">
-            <Link href={`/reports/${project.id}`}>View Report</Link>
+            <Link href={`/reports/${project.id}`}>{t("btn.viewReport")}</Link>
           </Button>
           <ApplyDialog
             projectId={project.id}
             projectTitle={project.title}
+            locale={locale}
             trigger={
               <Button variant="ghost" size="sm">
-                Request details
+                {t("btn.requestDetails")}
               </Button>
             }
           />

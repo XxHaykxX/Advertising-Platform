@@ -4,14 +4,16 @@ import { Section } from "@/components/ui/section";
 import { Container } from "@/components/ui/container";
 import { Reveal } from "@/components/ui/reveal";
 import { Button } from "@/components/ui/button";
+import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
 
-export default function GetStarted() {
+export default function GetStarted({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
+  const t = makeUI(locale);
   return (
     <Section id="get-started">
       <Container>
         <div className="mb-16 text-center">
           <Reveal>
-            <h2 className="text-4xl font-bold md:text-5xl">Get Started</h2>
+            <h2 className="text-4xl font-bold md:text-5xl">{t("getStarted.title")}</h2>
           </Reveal>
         </div>
 
@@ -22,12 +24,12 @@ export default function GetStarted() {
               <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
                 <Briefcase className="h-6 w-6 text-primary" />
               </div>
-              <h3 className="mb-4 text-2xl font-bold text-foreground">For Brands</h3>
+              <h3 className="mb-4 text-2xl font-bold text-foreground">{t("getStarted.forBrandsTitle")}</h3>
               <p className="mb-8 text-muted-foreground">
-                Browse vetted productions, scene-level safety scores, pay only on closed deals.
+                {t("getStarted.forBrandsBody")}
               </p>
               <Button asChild variant="primary" size="md">
-                <Link href="/catalog">Browse Projects</Link>
+                <Link href="/catalog">{t("btn.browseProjects")}</Link>
               </Button>
             </div>
           </Reveal>
@@ -38,12 +40,12 @@ export default function GetStarted() {
               <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
                 <Clapperboard className="h-6 w-6 text-primary" />
               </div>
-              <h3 className="mb-4 text-2xl font-bold text-foreground">For Filmmakers</h3>
+              <h3 className="mb-4 text-2xl font-bold text-foreground">{t("getStarted.forFilmmakersTitle")}</h3>
               <p className="mb-8 text-muted-foreground">
-                Monetize your production, keep creative control, free placement report.
+                {t("getStarted.forFilmmakersBody")}
               </p>
               <Button asChild variant="secondary" size="md">
-                <Link href="/register">List Your Project</Link>
+                <Link href="/register">{t("btn.listProject")}</Link>
               </Button>
             </div>
           </Reveal>

@@ -2,6 +2,7 @@ import { ExternalLink } from 'lucide-react';
 import { Container } from './ui/container';
 import { Section } from './ui/section';
 import { Reveal } from './ui/reveal';
+import { DEFAULT_LOCALE, makeUI, type Locale } from '@/lib/i18n';
 
 interface Founder {
   initials: string;
@@ -10,28 +11,20 @@ interface Founder {
   bio: string;
 }
 
-const founders: Founder[] = [
-  {
-    initials: 'AF',
-    name: 'Alex Founder',
-    role: 'CEO & Co-founder',
-    bio: 'Passionate about democratizing access to film financing and transforming how brands connect with authentic storytelling.',
-  },
-  {
-    initials: 'MF',
-    name: 'Maria Founder',
-    role: 'CTO & Co-founder',
-    bio: 'Experienced engineer who built scalable platforms. Believes data-driven transparency is key to sustainable creative partnerships.',
-  },
-];
+export default function Why({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
+  const t = makeUI(locale);
 
-export default function Why() {
+  const founders: Founder[] = [
+    { initials: 'AF', name: 'Alex Founder', role: t('why.ceoRole'), bio: t('why.ceoBio') },
+    { initials: 'MF', name: 'Maria Founder', role: t('why.ctoRole'), bio: t('why.ctoBio') },
+  ];
+
   return (
     <Section id="about" muted>
       <Container>
         <div className="mb-16 text-center">
           <Reveal>
-            <h2 className="text-4xl font-bold md:text-5xl">Why We Built This</h2>
+            <h2 className="text-4xl font-bold md:text-5xl">{t('why.title')}</h2>
           </Reveal>
         </div>
 
@@ -40,17 +33,17 @@ export default function Why() {
           <div className="space-y-6">
             <Reveal delay={0.1}>
               <p className="text-lg leading-relaxed text-foreground">
-                Product placement has been broken for decades. Filmmakers struggle to monetize their stories while brands stumble through opaque networks, paying inflated premiums for placements that may never see the light of day. It's manual, inefficient, and gated behind relationship networks.
+                {t('why.paragraph1')}
               </p>
             </Reveal>
             <Reveal delay={0.2}>
               <p className="text-lg leading-relaxed text-foreground">
-                We built FP Placement to change that. By making placement transparent, data-driven, and accessible, we empower creators to control their own destiny and help brands make smarter, more authentic choices about where their products appear.
+                {t('why.paragraph2')}
               </p>
             </Reveal>
             <Reveal delay={0.3}>
               <p className="text-lg leading-relaxed text-muted-foreground">
-                Our mission is simple: create a fairer marketplace where great stories meet great brands, and everyone wins.
+                {t('why.paragraph3')}
               </p>
             </Reveal>
           </div>

@@ -1,6 +1,7 @@
 import { Section } from "@/components/ui/section";
 import { Container } from "@/components/ui/container";
 import { Reveal } from "@/components/ui/reveal";
+import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
 
 interface Step {
   number: number;
@@ -8,53 +9,31 @@ interface Step {
   caption: string;
 }
 
-const brandsSteps: Step[] = [
-  {
-    number: 1,
-    title: "Browse Anonymously",
-    caption: "Explore available films and production deals without revealing your brand.",
-  },
-  {
-    number: 2,
-    title: "Express Interest",
-    caption: "Submit placement requirements and budget to filmmakers you connect with.",
-  },
-  {
-    number: 3,
-    title: "Match & Negotiate",
-    caption: "Collaborate with creators to craft the perfect product placement.",
-  },
-];
+export default function HowItWorks({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
+  const t = makeUI(locale);
 
-const filmmakerSteps: Step[] = [
-  {
-    number: 1,
-    title: "Upload Script",
-    caption: "Share your screenplay with placement opportunities clearly marked.",
-  },
-  {
-    number: 2,
-    title: "Receive Offers",
-    caption: "Get matched with brands interested in your production.",
-  },
-  {
-    number: 3,
-    title: "Monetize Your Story",
-    caption: "Negotiate terms and unlock additional funding for your film.",
-  },
-];
+  const brandsSteps: Step[] = [
+    { number: 1, title: t("landingHow.brand1Title"), caption: t("landingHow.brand1Caption") },
+    { number: 2, title: t("landingHow.brand2Title"), caption: t("landingHow.brand2Caption") },
+    { number: 3, title: t("landingHow.brand3Title"), caption: t("landingHow.brand3Caption") },
+  ];
 
-export default function HowItWorks() {
+  const filmmakerSteps: Step[] = [
+    { number: 1, title: t("landingHow.film1Title"), caption: t("landingHow.film1Caption") },
+    { number: 2, title: t("landingHow.film2Title"), caption: t("landingHow.film2Caption") },
+    { number: 3, title: t("landingHow.film3Title"), caption: t("landingHow.film3Caption") },
+  ];
+
   return (
     <Section id="how-it-works">
       <Container>
         <div className="mb-16 text-center">
           <Reveal>
-            <h2 className="text-4xl font-bold md:text-5xl">How It Works</h2>
+            <h2 className="text-4xl font-bold md:text-5xl">{t("landingHow.title")}</h2>
           </Reveal>
           <Reveal delay={0.1}>
             <p className="mt-4 text-lg text-muted-foreground">
-              Connect creators and brands. Fair deals, authentic placements.
+              {t("landingHow.subtitle")}
             </p>
           </Reveal>
         </div>
@@ -65,7 +44,7 @@ export default function HowItWorks() {
             {/* For Brands */}
             <div className="space-y-8">
               <Reveal delay={0.2}>
-                <h3 className="text-lg font-semibold text-foreground">For Brands</h3>
+                <h3 className="text-lg font-semibold text-foreground">{t("landingHow.forBrands")}</h3>
               </Reveal>
               {brandsSteps.map((step, idx) => (
                 <Reveal key={step.number} delay={0.2 + (idx + 1) * 0.1}>
@@ -85,7 +64,7 @@ export default function HowItWorks() {
             {/* For Filmmakers */}
             <div className="space-y-8">
               <Reveal delay={0.2}>
-                <h3 className="text-lg font-semibold text-foreground">For Filmmakers</h3>
+                <h3 className="text-lg font-semibold text-foreground">{t("landingHow.forFilmmakers")}</h3>
               </Reveal>
               {filmmakerSteps.map((step, idx) => (
                 <Reveal key={step.number} delay={0.2 + (idx + 1) * 0.1}>
@@ -109,9 +88,9 @@ export default function HowItWorks() {
               <div className="mb-2 inline-flex items-center justify-center rounded-full bg-primary/20 px-3 py-1.5">
                 <span className="text-xs font-semibold text-primary">→</span>
               </div>
-              <h4 className="text-lg font-bold text-foreground">Matching & Deal</h4>
+              <h4 className="text-lg font-bold text-foreground">{t("landingHow.matchTitle")}</h4>
               <p className="mt-2 text-sm text-muted-foreground">
-                Close collaboration and secure agreements that benefit everyone.
+                {t("landingHow.matchCaption")}
               </p>
             </div>
           </Reveal>

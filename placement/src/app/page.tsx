@@ -10,25 +10,26 @@ import Faq from "@/components/faq";
 import Contact from "@/components/contact";
 import { Footer } from "@/components/footer";
 import { getProjects } from "@/lib/data/projects";
+import { getLocale } from "@/lib/data/locale";
 
 export default async function Home() {
-  const projects = await getProjects();
+  const [projects, locale] = await Promise.all([getProjects(), getLocale()]);
 
   return (
     <>
-      <Header />
+      <Header locale={locale} />
       <main>
-        <Hero />
-        <Stats />
-        <Featured projects={projects.slice(0, 6)} />
-        <Trust />
-        <HowItWorks />
-        <GetStarted />
-        <Why />
-        <Faq />
-        <Contact />
+        <Hero locale={locale} />
+        <Stats locale={locale} />
+        <Featured projects={projects.slice(0, 6)} locale={locale} />
+        <Trust locale={locale} />
+        <HowItWorks locale={locale} />
+        <GetStarted locale={locale} />
+        <Why locale={locale} />
+        <Faq locale={locale} />
+        <Contact locale={locale} />
       </main>
-      <Footer />
+      <Footer locale={locale} />
     </>
   );
 }

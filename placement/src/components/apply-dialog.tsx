@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { CheckCircle, Loader2, Send, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { submitApplication, type ApplicationState } from "@/lib/actions/applications";
+import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
 
 const initialState: ApplicationState = { ok: false };
 
@@ -16,6 +17,7 @@ const labelClass = "mb-1.5 block text-sm font-semibold text-foreground";
 interface ApplyDialogProps {
   projectId?: number;
   projectTitle?: string;
+  locale?: Locale;
   /* An already-rendered trigger element (e.g. <Button>Request details</Button>).
      Passed as a plain element rather than a render-prop function so callers
      can stay Server Components — functions can't cross the RSC boundary. */
@@ -25,7 +27,7 @@ interface ApplyDialogProps {
 /* Modal application form. Reuses the submitApplication server action; the
    underlying form/field set mirrors the legacy site's project apply form
    (name + phone required, consent required, honeypot). */
-export function ApplyDialog({ projectId, projectTitle, trigger }: ApplyDialogProps) {
+export function ApplyDialog({ projectId, projectTitle, locale = DEFAULT_LOCALE, trigger }: ApplyDialogProps) {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   // Bumped on every open so ApplyDialogForm remounts with fresh useActionState,
@@ -86,7 +88,7 @@ export function ApplyDialog({ projectId, projectTitle, trigger }: ApplyDialogPro
                   <button
                     type="button"
                     onClick={() => setOpen(false)}
-                    aria-label="Close"
+                    aria-label={makeUI(locale)("btn.close")}
                     className="absolute right-4 top-4 grid h-8 w-8 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                   >
                     <X className="h-4 w-4" />
@@ -96,6 +98,7 @@ export function ApplyDialog({ projectId, projectTitle, trigger }: ApplyDialogPro
                     key={sessionKey}
                     projectId={projectId}
                     projectTitle={projectTitle}
+                    locale={locale}
                     onClose={() => setOpen(false)}
                   />
                 </motion.div>
@@ -111,12 +114,15 @@ export function ApplyDialog({ projectId, projectTitle, trigger }: ApplyDialogPro
 function ApplyDialogForm({
   projectId,
   projectTitle,
+  locale = DEFAULT_LOCALE,
   onClose,
 }: {
   projectId?: number;
   projectTitle?: string;
+  locale?: Locale;
   onClose: () => void;
 }) {
+  const t = makeUI(locale);
   const [state, formAction, pending] = useActionState<ApplicationState, FormData>(
     submitApplication,
     initialState,
@@ -139,20 +145,20 @@ function ApplyDialogForm({
         >
           <CheckCircle className="h-12 w-12 text-success" />
           <p className="mt-4 text-lg font-semibold text-foreground">
-            Thanks — we&apos;ll get back to you within 24 hours.
+            {t("applyDialog.thanks")}
           </p>
           <button
             type="button"
             onClick={onClose}
             className="mt-6 text-sm font-medium text-primary hover:underline"
           >
-            Close
+            {t("btn.close")}
           </button>
         </motion.div>
       ) : (
         <motion.div key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
           <h2 className="text-xl font-bold text-foreground">
-            {projectTitle ? "Request Details" : "Express Interest"}
+            {projectTitle ? t("applyDialog.requestTitle") : t("applyDialog.expressTitle")}
           </h2>
           {projectTitle && <p className="mt-1 text-sm text-muted-foreground">{projectTitle}</p>}
 
@@ -171,7 +177,7 @@ function ApplyDialogForm({
 
             <label className="block">
               <span className={labelClass}>
-                Name<span className="ml-0.5 text-primary">*</span>
+                {t("form.name")}<span className="ml-0.5 text-primary">*</span>
               </span>
               <input
                 ref={nameInputRef}
@@ -179,14 +185,14 @@ function ApplyDialogForm({
                 type="text"
                 autoComplete="name"
                 defaultValue={state.values?.name}
-                placeholder="Your name"
+                placeholder={t("applyDialog.namePlaceholder")}
                 className={fieldClass}
               />
             </label>
 
             <label className="block">
               <span className={labelClass}>
-                Phone<span className="ml-0.5 text-primary">*</span>
+                {t("form.phone")}<span className="ml-0.5 text-primary">*</span>
               </span>
               <input
                 name="phone"
@@ -194,43 +200,43 @@ function ApplyDialogForm({
                 inputMode="tel"
                 autoComplete="tel"
                 defaultValue={state.values?.phone}
-                placeholder="+1 ___ ___-____"
+                placeholder={t("applyDialog.phonePlaceholder")}
                 className={fieldClass}
               />
             </label>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block">
-                <span className={labelClass}>Email</span>
+                <span className={labelClass}>{t("form.email")}</span>
                 <input
                   name="email"
                   type="email"
                   autoComplete="email"
                   defaultValue={state.values?.email}
-                  placeholder="you@company.com"
+                  placeholder={t("applyDialog.emailPlaceholder")}
                   className={fieldClass}
                 />
               </label>
               <label className="block">
-                <span className={labelClass}>Company</span>
+                <span className={labelClass}>{t("form.company")}</span>
                 <input
                   name="company"
                   type="text"
                   autoComplete="organization"
                   defaultValue={state.values?.company}
-                  placeholder="Your company"
+                  placeholder={t("applyDialog.companyPlaceholder")}
                   className={fieldClass}
                 />
               </label>
             </div>
 
             <label className="block">
-              <span className={labelClass}>Message</span>
+              <span className={labelClass}>{t("form.message")}</span>
               <textarea
                 name="message"
                 rows={3}
                 defaultValue={state.values?.message}
-                placeholder="Tell us about your brand and placement goals…"
+                placeholder={t("applyDialog.messagePlaceholder")}
                 className={`${fieldClass} resize-none`}
               />
             </label>
@@ -238,9 +244,9 @@ function ApplyDialogForm({
             <label className="flex cursor-pointer items-start gap-3 text-sm text-muted-foreground">
               <input type="checkbox" name="consent" className="mt-0.5 h-4 w-4 shrink-0 accent-primary" />
               <span>
-                I agree to be contacted regarding this inquiry and accept the{" "}
+                {t("applyDialog.consentPrefix")}{" "}
                 <a href="/privacy" className="text-primary underline underline-offset-2">
-                  Privacy Policy
+                  {t("applyDialog.privacyPolicy")}
                 </a>
                 .
               </span>
@@ -252,12 +258,12 @@ function ApplyDialogForm({
               {pending ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Sending…
+                  {t("btn.sending")}
                 </>
               ) : (
                 <>
                   <Send className="h-4 w-4" />
-                  Submit
+                  {t("btn.submit")}
                 </>
               )}
             </Button>

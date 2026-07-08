@@ -1,11 +1,8 @@
-"use client";
-
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Mail, MessageCircle, Phone, Send, Video } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { LocaleSwitcher } from "@/components/locale-switcher";
-import { DEFAULT_LOCALE, LOCALE_COOKIE, isLocale, type Locale } from "@/lib/i18n";
+import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
 
 const CONTACTS = [
   { icon: Mail, label: "hello@fpplacement.com", href: "mailto:hello@fpplacement.com" },
@@ -20,20 +17,13 @@ const SOCIALS = [
   { icon: Video, label: "YouTube", href: "https://youtube.com/@kinodaran" },
 ] as const;
 
-/** Reads the `locale` cookie client-side, same convention as header.tsx —
- *  keeps Footer usable from both server pages and client views (e.g. catalog). */
-function useLocaleFromCookie(): Locale {
-  const [locale, setLocale] = useState<Locale>(DEFAULT_LOCALE);
-  useEffect(() => {
-    const match = document.cookie.match(new RegExp(`(?:^|; )${LOCALE_COOKIE}=([^;]*)`));
-    const v = match ? decodeURIComponent(match[1]) : undefined;
-    if (isLocale(v)) setLocale(v);
-  }, []);
-  return locale;
-}
-
-export function Footer() {
-  const locale = useLocaleFromCookie();
+/** Footer is rendered per-page by a server component (no shared root layout
+ *  wrapper — see app/page.tsx), so it receives `locale` as a plain prop from
+ *  its server parent. That parent re-executes with the fresh cookie value on
+ *  every router.refresh() after a locale switch, so this stays in sync
+ *  without any client-side cookie polling. */
+export function Footer({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
+  const t = makeUI(locale);
   return (
     <footer className="bg-section border-t border-border">
       <Container className="py-16 max-sm:py-12">
@@ -45,7 +35,7 @@ export function Footer() {
             </h2>
           </div>
           <p className="mt-2 text-sm text-muted-foreground">
-            Discover premium brand placement opportunities in film and TV.
+            {t("footer.tagline")}
           </p>
         </div>
 
@@ -54,7 +44,7 @@ export function Footer() {
           {/* Product */}
           <div>
             <h3 className="mb-4 text-sm font-semibold text-foreground">
-              Product
+              {t("footer.product")}
             </h3>
             <ul className="space-y-3">
               <li>
@@ -62,7 +52,7 @@ export function Footer() {
                   href="/catalog"
                   className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                 >
-                  Browse Projects
+                  {t("footer.browseProjects")}
                 </Link>
               </li>
               <li>
@@ -70,7 +60,7 @@ export function Footer() {
                   href="/how-it-works"
                   className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                 >
-                  How It Works
+                  {t("footer.howItWorks")}
                 </Link>
               </li>
               <li>
@@ -78,7 +68,7 @@ export function Footer() {
                   href="/portfolio"
                   className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                 >
-                  Portfolio
+                  {t("footer.portfolio")}
                 </Link>
               </li>
               <li>
@@ -86,7 +76,7 @@ export function Footer() {
                   href="/partners"
                   className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                 >
-                  Partners
+                  {t("footer.partners")}
                 </Link>
               </li>
               <li>
@@ -94,7 +84,7 @@ export function Footer() {
                   href="/#faq"
                   className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                 >
-                  FAQ
+                  {t("footer.faq")}
                 </Link>
               </li>
             </ul>
@@ -103,7 +93,7 @@ export function Footer() {
           {/* Company */}
           <div>
             <h3 className="mb-4 text-sm font-semibold text-foreground">
-              Company
+              {t("footer.company")}
             </h3>
             <ul className="space-y-3">
               <li>
@@ -111,7 +101,7 @@ export function Footer() {
                   href="/#about"
                   className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                 >
-                  About
+                  {t("footer.about")}
                 </Link>
               </li>
               <li>
@@ -119,7 +109,7 @@ export function Footer() {
                   href="/contact"
                   className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                 >
-                  Contact
+                  {t("footer.contact")}
                 </Link>
               </li>
             </ul>
@@ -128,7 +118,7 @@ export function Footer() {
           {/* Legal */}
           <div>
             <h3 className="mb-4 text-sm font-semibold text-foreground">
-              Legal
+              {t("footer.legal")}
             </h3>
             <ul className="space-y-3">
               <li>
@@ -136,7 +126,7 @@ export function Footer() {
                   href="/terms"
                   className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                 >
-                  Terms
+                  {t("footer.terms")}
                 </Link>
               </li>
               <li>
@@ -144,7 +134,7 @@ export function Footer() {
                   href="/privacy"
                   className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                 >
-                  Privacy
+                  {t("footer.privacy")}
                 </Link>
               </li>
             </ul>
@@ -153,7 +143,7 @@ export function Footer() {
           {/* Contacts */}
           <div>
             <h3 className="mb-4 text-sm font-semibold text-foreground">
-              Contacts
+              {t("footer.contacts")}
             </h3>
             <ul className="space-y-3">
               {CONTACTS.map((item) => (
@@ -192,7 +182,7 @@ export function Footer() {
         {/* Bottom: Copyright + locale */}
         <div className="flex flex-col gap-4 border-t border-border pt-6 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-[13px] text-muted-foreground">
-            © 2026 FP Placement. All rights reserved.
+            © 2026 FP Placement. {t("footer.rights")}
           </p>
           <LocaleSwitcher current={locale} />
         </div>

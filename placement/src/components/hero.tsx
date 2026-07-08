@@ -10,6 +10,7 @@ import {
   type MotionValue,
 } from "framer-motion";
 import { ArrowRight, Play, ChevronDown } from "lucide-react";
+import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
 
 /* Cinematic poster wall — real stills scraped from kinodaran.com, served
    locally from /public/kino (same-origin, no external dependency). */
@@ -73,9 +74,10 @@ function ParallaxColumn({
   );
 }
 
-export function Hero() {
+export function Hero({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
   const ref = useRef<HTMLElement>(null);
   const reduce = useReducedMotion();
+  const t = makeUI(locale);
 
   const { scrollYProgress } = useScroll({
     target: ref,
@@ -138,7 +140,7 @@ export function Hero() {
           className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/40 px-4 py-1.5 text-xs font-medium uppercase tracking-[0.2em] text-white/80 backdrop-blur"
         >
           <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-indigo-400" />
-          Product placement marketplace
+          {t("hero.eyebrow")}
         </motion.span>
 
         <motion.h1
@@ -148,9 +150,9 @@ export function Hero() {
           className="mt-6 text-balance text-4xl font-extrabold leading-[1.05] tracking-tight text-white drop-shadow-[0_2px_20px_rgba(0,0,0,0.8)] sm:text-6xl md:text-7xl"
         >
           <span className="bg-gradient-to-r from-indigo-400 via-indigo-300 to-indigo-400 bg-clip-text text-transparent">
-            Brand Placement
+            {t("hero.titleHighlight")}
           </span>{" "}
-          Marketplace
+          {t("hero.titleRest")}
         </motion.h1>
 
         <motion.p
@@ -159,8 +161,7 @@ export function Hero() {
           transition={{ duration: 0.7, ease: "easeOut", delay: 0.16 }}
           className="mx-auto mt-6 max-w-2xl text-pretty text-base text-white/80 drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)] sm:text-lg"
         >
-          Connect brands with film & series productions through scene-level,
-          brand-safe placement reports.
+          {t("hero.subtitle")}
         </motion.p>
 
         <motion.div
@@ -173,7 +174,7 @@ export function Hero() {
             href="/register"
             className="group inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-7 py-3.5 text-sm font-semibold text-primary-foreground shadow-[0_8px_30px_-8px_rgba(79,70,229,0.7)] transition-all duration-200 hover:scale-[1.03] hover:bg-[var(--primary-hover)] sm:w-auto"
           >
-            Get Started
+            {t("btn.getStarted")}
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
           </Link>
           <Link
@@ -181,7 +182,7 @@ export function Hero() {
             className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-white/15 bg-white/5 px-7 py-3.5 text-sm font-semibold text-white backdrop-blur transition-all duration-200 hover:border-white/30 hover:bg-white/10 sm:w-auto"
           >
             <Play className="h-4 w-4 fill-current" />
-            Browse Projects
+            {t("btn.browseProjects")}
           </Link>
         </motion.div>
 
@@ -191,14 +192,14 @@ export function Hero() {
           transition={{ duration: 0.7, ease: "easeOut", delay: 0.32 }}
           className="mt-5 text-sm text-white/60 drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)]"
         >
-          Placements from $5K. Platform fee only on closed deals.
+          {t("hero.disclaimer")}
         </motion.p>
       </motion.div>
 
       {/* ── Scroll indicator ─────────────────────────────────── */}
       <motion.a
         href="#stats"
-        aria-label="Scroll down"
+        aria-label={t("hero.scrollDown")}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1, duration: 0.8 }}

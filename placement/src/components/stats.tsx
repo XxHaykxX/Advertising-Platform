@@ -1,15 +1,17 @@
 import { Container } from "@/components/ui/container";
 import { Section } from "@/components/ui/section";
 import { Reveal } from "@/components/ui/reveal";
+import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
 
-const STATS = [
-  { number: "~$5", label: "Average CPM", source: "PQ Media" },
-  { number: "85%", label: "Higher Brand Recall", source: "Nielsen" },
-  { number: "2.5M+", label: "Avg Projected Views", source: "Statista" },
-  { number: "74%", label: "Brand Recall Rate", source: "IPG Media Lab" },
-];
+export function Stats({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
+  const t = makeUI(locale);
+  const STATS = [
+    { number: "~$5", label: t("stats.averageCpm"), source: "PQ Media" },
+    { number: "85%", label: t("stats.higherBrandRecall"), source: "Nielsen" },
+    { number: "2.5M+", label: t("stats.avgProjectedViews"), source: "Statista" },
+    { number: "74%", label: t("stats.brandRecallRate"), source: "IPG Media Lab" },
+  ];
 
-export function Stats() {
   return (
     <Section muted id="stats">
       <Container>
