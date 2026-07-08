@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Building2, Film, Mail, User } from "lucide-react";
+import { Building2, Mail, User } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { getLocale } from "@/lib/data/locale";
@@ -76,14 +76,6 @@ export default async function RegisterPage() {
               {t("register.signIn")}
             </Link>
           </p>
-
-          <div className="mt-6 flex items-center gap-2 rounded-xl border border-border bg-muted/60 px-4 py-3 text-xs text-muted-foreground">
-            <Film className="h-4 w-4 shrink-0 text-primary" />
-            {t("register.filmmakerOrAdmin")}{" "}
-            <Link href="/admin/login" className="font-medium text-primary hover:underline">
-              {t("register.goToAdminLogin")}
-            </Link>
-          </div>
         </div>
       </Container>
     </section>

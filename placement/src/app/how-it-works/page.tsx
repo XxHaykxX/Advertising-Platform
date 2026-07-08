@@ -134,12 +134,9 @@ export default async function HowItWorksPage() {
                   {t("hiw.trustBody")}
                 </p>
 
-                <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
+                <div className="mt-8 flex justify-center">
                   <Button asChild variant="primary" size="md">
                     <Link href="/catalog">{t("btn.browseProjects")}</Link>
-                  </Button>
-                  <Button asChild variant="ghost" size="md">
-                    <Link href="/register">{t("btn.registerAsPublisher")}</Link>
                   </Button>
                 </div>
               </div>
