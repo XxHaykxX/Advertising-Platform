@@ -12,7 +12,7 @@ function pooledUrl(): string | undefined {
   const url = process.env.DATABASE_URL;
   if (!url) return url;
   if (/[?&]connection_limit=/.test(url)) return url;
-  return url + (url.includes("?") ? "&" : "?") + "connection_limit=5&pool_timeout=15";
+  return url + (url.includes("?") ? "&" : "?") + "connection_limit=2&pool_timeout=15";
 }
 
 export const prisma =
