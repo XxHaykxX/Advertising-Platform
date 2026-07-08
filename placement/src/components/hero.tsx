@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { motion, useReducedMotion, type Variants } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,19 @@ export function Hero() {
 
   return (
     <section className="relative isolate overflow-hidden pt-40 pb-24 md:pt-48 md:pb-32">
+      {/* ── Cinematic background image ───────────────────────── */}
+      <div className="absolute inset-0 -z-20" aria-hidden>
+        <Image
+          src="/hero/hero-A-1080.jpg"
+          alt=""
+          fill
+          priority
+          className="object-cover"
+        />
+        {/* light overlay so foreground text stays readable on the indigo/light theme */}
+        <div className="absolute inset-0 bg-gradient-to-b from-white via-white/85 to-white/60" />
+      </div>
+
       {/* ── Light indigo decoration ─────────────────────────── */}
       <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden>
         <div className="absolute left-1/2 top-[-10%] h-[600px] w-[600px] -translate-x-1/2 rounded-full bg-primary/10 blur-[120px]" />
