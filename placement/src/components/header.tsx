@@ -4,17 +4,38 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { Menu, X } from "lucide-react";
+import { Menu, MessageCircle, Phone, Send, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
+import { LocaleSwitcher } from "@/components/locale-switcher";
+import { DEFAULT_LOCALE, LOCALE_COOKIE, isLocale, type Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 const NAV = [
-  { label: "How It Works", href: "/#how-it-works" },
+  { label: "How It Works", href: "/how-it-works" },
+  { label: "Portfolio", href: "/portfolio" },
+  { label: "Partners", href: "/partners" },
   { label: "FAQ", href: "/#faq" },
-  { label: "About", href: "/#about" },
-  { label: "Contact", href: "/#contact" },
+  { label: "Contact", href: "/contact" },
 ] as const;
+
+const CONTACT_LINKS = [
+  { icon: Phone, label: "Call us", href: "tel:+37400000000" },
+  { icon: Send, label: "Telegram", href: "https://t.me/fpplacement" },
+  { icon: MessageCircle, label: "WhatsApp", href: "https://wa.me/37400000000" },
+] as const;
+
+/** Reads the `locale` cookie client-side. Header stays a client component
+ *  (needs scroll/menu state), so it can't use the server-only getLocale(). */
+function useLocaleFromCookie(): Locale {
+  const [locale, setLocale] = useState<Locale>(DEFAULT_LOCALE);
+  useEffect(() => {
+    const match = document.cookie.match(new RegExp(`(?:^|; )${LOCALE_COOKIE}=([^;]*)`));
+    const v = match ? decodeURIComponent(match[1]) : undefined;
+    if (isLocale(v)) setLocale(v);
+  }, []);
+  return locale;
+}
 
 function Wordmark({ onDark }: { onDark: boolean }) {
   return (
@@ -34,6 +55,7 @@ export function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
+  const locale = useLocaleFromCookie();
   // Landing hero is a dark cinematic poster wall — while the transparent
   // header floats over it, switch text to a light-on-dark scheme.
   const onDark = pathname === "/" && !scrolled && !menuOpen;
@@ -76,6 +98,24 @@ export function Header() {
 
           {/* Right cluster (desktop) */}
           <div className="hidden items-center gap-3 md:flex">
+            <div className={cn("flex items-center gap-1 border-r pr-3", onDark ? "border-white/15" : "border-border")}>
+              {CONTACT_LINKS.map((item) => (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  target={item.href.startsWith("http") ? "_blank" : undefined}
+                  rel={item.href.startsWith("http") ? "noopener noreferrer" : undefined}
+                  aria-label={item.label}
+                  className={cn(
+                    "grid h-9 w-9 place-items-center rounded-xl transition-colors",
+                    onDark ? "text-white/75 hover:bg-white/10 hover:text-white" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  )}
+                >
+                  <item.icon className="h-4 w-4" />
+                </a>
+              ))}
+            </div>
+            <LocaleSwitcher current={locale} onDark={onDark} />
             <Link
               href="/login"
               className={cn(
@@ -127,7 +167,22 @@ export function Header() {
                   {item.label}
                 </Link>
               ))}
-              <div className="mt-2 flex flex-col gap-2 border-t border-border pt-4">
+              <div className="mt-2 flex items-center gap-2 border-t border-border pt-4">
+                {CONTACT_LINKS.map((item) => (
+                  <a
+                    key={item.href}
+                    href={item.href}
+                    target={item.href.startsWith("http") ? "_blank" : undefined}
+                    rel={item.href.startsWith("http") ? "noopener noreferrer" : undefined}
+                    aria-label={item.label}
+                    className="grid h-10 w-10 place-items-center rounded-xl text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  >
+                    <item.icon className="h-4 w-4" />
+                  </a>
+                ))}
+                <LocaleSwitcher current={locale} className="ml-auto" />
+              </div>
+              <div className="flex flex-col gap-2 pt-2">
                 <Link
                   href="/login"
                   onClick={() => setMenuOpen(false)}

@@ -36,6 +36,13 @@ export interface ProjectListDTO {
   safety: BrandSafetyLevel;
   safetyScore: number;
   opportunitiesCount: number;
+  slotsTotal: number;
+  slotsTaken: number;
+  applicationDeadline: string | null;
+  releaseDate: string | null;
+  platforms: string; // JSON string[]; parse with parseStringArray
+  placementType: string | null;
+  priceNote: string | null;
 }
 
 export interface ProjectDetailDTO extends ProjectListDTO {
@@ -46,13 +53,6 @@ export interface ProjectDetailDTO extends ProjectListDTO {
   safetyCats: SafetyCatDTO[];
   opportunities: OpportunityDTO[];
   exposureTotal: number;
-  slotsTotal: number;
-  slotsTaken: number;
-  applicationDeadline: string | null;
-  releaseDate: string | null;
-  platforms: string; // JSON string[]; parse with parseStringArray
-  placementType: string | null;
-  priceNote: string | null;
   actors: ActorDTO[];
 }
 

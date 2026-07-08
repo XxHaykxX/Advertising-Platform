@@ -6,6 +6,7 @@ import Link from "next/link";
 import {
   ChevronDown,
   ChevronRight,
+  Clock,
   Film,
   LayoutGrid,
   List,
@@ -14,11 +15,11 @@ import {
 } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
-import { GenreBadge, SafetyBadge } from "@/components/ui/badge";
+import { AccentBadge, GenreBadge, SafetyBadge } from "@/components/ui/badge";
 import { ProjectCard } from "@/components/project-card";
 import { ApplyDialog } from "@/components/apply-dialog";
 import { Footer } from "@/components/footer";
-import { splitCountries } from "@/lib/data/format";
+import { daysUntil, formatFullDate, splitCountries } from "@/lib/data/format";
 import { cn } from "@/lib/utils";
 import type { ProjectListDTO } from "@/lib/types";
 
@@ -45,6 +46,9 @@ function parseViews(v: string): number {
 
 function ProjectRow({ project }: { project: ProjectListDTO }) {
   const countries = splitCountries(project.countries);
+  const slotsLeft = Math.max(project.slotsTotal - project.slotsTaken, 0);
+  const deadlineDays = daysUntil(project.applicationDeadline);
+  const deadlineUrgent = deadlineDays !== null && deadlineDays <= 45;
   return (
     <div className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 card-lift sm:flex-row sm:items-center">
       <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden rounded-lg sm:w-48">
@@ -68,6 +72,7 @@ function ProjectRow({ project }: { project: ProjectListDTO }) {
           <h3 className="text-lg font-semibold text-foreground">{project.title}</h3>
           <GenreBadge>{project.genre}</GenreBadge>
           <SafetyBadge safety={project.safety} />
+          {project.placementType ? <AccentBadge>{project.placementType}</AccentBadge> : null}
         </div>
         <code className="text-xs text-muted-foreground">{project.code}</code>
         <p className="mt-2 line-clamp-1 text-sm text-muted-foreground">{project.synopsis}</p>
@@ -78,6 +83,18 @@ function ProjectRow({ project }: { project: ProjectListDTO }) {
           <span className="text-primary">{project.opportunitiesCount} opportunities</span>
           <span>{project.budgetRange}</span>
           <span>{project.projViews} projected views</span>
+          {project.slotsTotal > 0 ? <span>{slotsLeft} of {project.slotsTotal} slots</span> : null}
+          {project.applicationDeadline ? (
+            <span
+              className={cn(
+                "inline-flex items-center gap-1",
+                deadlineUrgent ? "text-warn" : undefined,
+              )}
+            >
+              <Clock className="h-3 w-3 shrink-0" />
+              Until {formatFullDate(project.applicationDeadline)}
+            </span>
+          ) : null}
         </div>
       </div>
 

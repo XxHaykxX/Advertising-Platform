@@ -25,6 +25,13 @@ export async function getProjects(activeOnly = true): Promise<ProjectListDTO[]> 
     safety: p.safety,
     safetyScore: p.safetyScore,
     opportunitiesCount: p._count.opportunities,
+    slotsTotal: p.slotsTotal,
+    slotsTaken: p.slotsTaken,
+    applicationDeadline: p.applicationDeadline?.toISOString() ?? null,
+    releaseDate: p.releaseDate?.toISOString() ?? null,
+    platforms: p.platforms ?? "[]",
+    placementType: p.placementType,
+    priceNote: p.priceNote,
   }));
 }
 

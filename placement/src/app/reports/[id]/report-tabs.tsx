@@ -4,14 +4,16 @@ import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Container } from "@/components/ui/container";
 
-const TABS = [
+const BASE_TABS = [
   { id: "overview", label: "Overview" },
+  { id: "cast", label: "Cast" },
   { id: "safety", label: "Safety" },
   { id: "investment", label: "Investment" },
   { id: "more", label: "More" },
 ] as const;
 
-export function ReportTabs() {
+export function ReportTabs({ hasCast = true }: { hasCast?: boolean }) {
+  const TABS = hasCast ? BASE_TABS : BASE_TABS.filter((t) => t.id !== "cast");
   const [active, setActive] = useState<string>("overview");
 
   useEffect(() => {

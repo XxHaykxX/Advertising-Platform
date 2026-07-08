@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import { getProject, getProjectIds } from "@/lib/data/projects";
 import { Footer } from "@/components/footer";
 import { ReportHero } from "@/components/report/report-hero";
+import { KeyFacts } from "@/components/report/key-facts";
+import { Cast } from "@/components/report/cast";
 import { RoiSnapshot } from "@/components/report/roi-snapshot";
 import { SafetyAssessment } from "@/components/report/safety-assessment";
 import { Investment } from "@/components/report/investment";
@@ -29,10 +31,12 @@ export default async function ReportPage({
 
   return (
     <>
-      <ReportTabs />
+      <ReportTabs hasCast={project.actors.length > 0} />
       <div id="overview">
         <ReportHero project={project} />
+        <KeyFacts project={project} />
       </div>
+      <Cast project={project} />
       <RoiSnapshot project={project} />
       <SafetyAssessment project={project} />
       <Investment project={project} />
