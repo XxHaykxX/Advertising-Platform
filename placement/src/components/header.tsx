@@ -109,6 +109,8 @@ export function Header({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
               ))}
             </div>
             <LocaleSwitcher current={locale} onDark={onDark} />
+            {/* Brand sign-in disabled until brand auth is built — kept for
+                restore. See docs/superpowers/plans parity plan + /login page.
             <Link
               href="/login"
               className={cn(
@@ -118,6 +120,7 @@ export function Header({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
             >
               {t("nav.signIn")}
             </Link>
+            */}
             <Button asChild variant="primary" size="sm">
               <Link href="/catalog">{t("nav.browseProjects")}</Link>
             </Button>
@@ -176,6 +179,7 @@ export function Header({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
                 <LocaleSwitcher current={locale} className="ml-auto" />
               </div>
               <div className="flex flex-col gap-2 pt-2">
+                {/* Brand sign-in disabled until brand auth is built — kept for restore.
                 <Link
                   href="/login"
                   onClick={() => setMenuOpen(false)}
@@ -183,6 +187,7 @@ export function Header({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
                 >
                   {t("nav.signIn")}
                 </Link>
+                */}
                 <Button asChild variant="primary" size="sm" onClick={() => setMenuOpen(false)}>
                   <Link href="/catalog">{t("nav.browseProjects")}</Link>
                 </Button>

@@ -45,7 +45,7 @@ export default function GetStarted({ locale = DEFAULT_LOCALE }: { locale?: Local
                 {t("getStarted.forFilmmakersBody")}
               </p>
               <Button asChild variant="secondary" size="md">
-                <Link href="/register">{t("btn.listProject")}</Link>
+                <Link href="/contact">{t("btn.listProject")}</Link>
               </Button>
             </div>
           </Reveal>

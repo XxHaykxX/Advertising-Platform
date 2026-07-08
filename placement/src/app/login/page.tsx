@@ -1,3 +1,8 @@
+// DISABLED / UNLINKED (2026-07-08): brand sign-in is not built (no brand auth
+// backend — only admin/publisher auth exists). Header "Sign In" link is
+// commented out, so this page is no longer reachable from the UI. Kept intact
+// for restore when brand accounts ship. Inputs remain disabled by design.
+// See the FP/iGovazd parity plan in docs/superpowers/plans.
 import Link from "next/link";
 import { Lock, Mail } from "lucide-react";
 import { Container } from "@/components/ui/container";

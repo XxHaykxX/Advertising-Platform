@@ -1,3 +1,7 @@
+// DISABLED / UNLINKED (2026-07-08): brand registration is not built (no brand
+// auth backend). All CTAs that pointed here (hero "Get Started", get-started
+// "List project") now go to /contact (the working lead form). Kept intact for
+// restore when brand accounts ship. See the parity plan in docs/superpowers/plans.
 import Link from "next/link";
 import { Building2, Mail, User } from "lucide-react";
 import { Container } from "@/components/ui/container";

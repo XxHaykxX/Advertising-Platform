@@ -171,7 +171,7 @@ export function Hero({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
           className="mt-9 flex flex-col items-center justify-center gap-4 sm:flex-row"
         >
           <Link
-            href="/register"
+            href="/contact"
             className="group inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-7 py-3.5 text-sm font-semibold text-primary-foreground shadow-[0_8px_30px_-8px_rgba(79,70,229,0.7)] transition-all duration-200 hover:scale-[1.03] hover:bg-[var(--primary-hover)] sm:w-auto"
           >
             {t("btn.getStarted")}
