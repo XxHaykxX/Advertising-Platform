@@ -28,9 +28,9 @@ export async function getProjects(activeOnly = true): Promise<ProjectListDTO[]> 
   }));
 }
 
-export async function getProject(id: number): Promise<ProjectDetailDTO | null> {
-  const p = await prisma.project.findUnique({
-    where: { id },
+export async function getProject(id: number, activeOnly = false): Promise<ProjectDetailDTO | null> {
+  const p = await prisma.project.findFirst({
+    where: activeOnly ? { id, isActive: true } : { id },
     include: {
       safetyCats: { orderBy: { sortOrder: "asc" } },
       opportunities: { orderBy: { sortOrder: "asc" } },
@@ -77,6 +77,9 @@ export async function getProject(id: number): Promise<ProjectDetailDTO | null> {
 }
 
 export async function getProjectIds(): Promise<number[]> {
-  const rows = await prisma.project.findMany({ select: { id: true } });
+  const rows = await prisma.project.findMany({
+    where: { isActive: true },
+    select: { id: true },
+  });
   return rows.map((r) => r.id);
 }
