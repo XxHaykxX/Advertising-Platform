@@ -25,61 +25,80 @@ export default function OpengraphImage() {
           height: "100%",
           display: "flex",
           flexDirection: "column",
-          justifyContent: "space-between",
-          padding: "72px 80px",
+          padding: "62px 80px",
           background:
             "radial-gradient(1000px 600px at 78% -10%, rgba(79,70,229,0.42), transparent 60%), linear-gradient(135deg, #0a0a12 0%, #101024 100%)",
           color: "#ffffff",
         }}
       >
-        {/* Brand row */}
-        <div style={{ display: "flex", alignItems: "center", gap: "28px" }}>
+        {/* Brand row (top) */}
+        <div style={{ display: "flex", alignItems: "center", gap: "26px" }}>
           <div
             style={{
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              width: "116px",
-              height: "116px",
-              borderRadius: "26px",
+              width: "104px",
+              height: "104px",
+              borderRadius: "24px",
               background: INDIGO,
-              fontSize: "60px",
+              fontSize: "54px",
               fontWeight: 700,
               boxShadow: "0 20px 60px rgba(79,70,229,0.55)",
             }}
           >
             iG
           </div>
-          <div style={{ display: "flex", fontSize: "72px", fontWeight: 700, letterSpacing: "-2px" }}>
+          <div style={{ display: "flex", fontSize: "58px", fontWeight: 700, letterSpacing: "-1.5px" }}>
             iGovazd
           </div>
         </div>
 
-        {/* Eyebrow + headline + subtitle */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+        {/* Main text block — anchored under the brand with a fixed gap; footer
+            is pushed to the bottom, so the vertical rhythm is deliberate rather
+            than distributed. Eyebrow hugs the headline (they read as one unit);
+            the subtitle gets a clearly larger gap. */}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            marginTop: "40px",
+          }}
+        >
           <div
             style={{
               display: "flex",
-              fontSize: "28px",
+              fontSize: "26px",
               fontWeight: 700,
               letterSpacing: "6px",
               color: "#a5b4fc",
+              marginBottom: "14px",
             }}
           >
             ARMENIAN FILM &amp; TV
           </div>
-          <div style={{ display: "flex", fontSize: "72px", fontWeight: 700, lineHeight: 1.08, letterSpacing: "-1.5px" }}>
+          <div style={{ display: "flex", fontSize: "66px", fontWeight: 700, lineHeight: 1.05, letterSpacing: "-1.5px" }}>
             Brand Placement Marketplace
           </div>
-          <div style={{ display: "flex", fontSize: "33px", fontWeight: 400, color: "#c7d2fe", lineHeight: 1.35, maxWidth: "1000px" }}>
+          <div
+            style={{
+              display: "flex",
+              marginTop: "26px",
+              fontSize: "30px",
+              fontWeight: 400,
+              color: "#c7d2fe",
+              lineHeight: 1.4,
+              maxWidth: "960px",
+            }}
+          >
             Place your brand in film &amp; TV productions — scene-level insights, transparent pricing, direct access to filmmakers.
           </div>
         </div>
 
-        {/* Footer strip */}
-        <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-          <div style={{ display: "flex", width: "56px", height: "6px", borderRadius: "3px", background: INDIGO }} />
-          <div style={{ display: "flex", fontSize: "30px", fontWeight: 700, color: "#94a3b8", letterSpacing: "0.5px" }}>
+        {/* Footer strip (bottom) */}
+        <div style={{ display: "flex", alignItems: "center", gap: "18px", marginTop: "auto" }}>
+          <div style={{ display: "flex", width: "52px", height: "6px", borderRadius: "3px", background: INDIGO }} />
+          <div style={{ display: "flex", fontSize: "29px", fontWeight: 700, color: "#94a3b8", letterSpacing: "0.5px" }}>
             igovazd.am
           </div>
         </div>
