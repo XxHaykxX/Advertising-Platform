@@ -36,7 +36,7 @@ export function ReportHero({
   ].filter(Boolean);
 
   return (
-    <section className="pt-28 pb-4">
+    <section className="pt-8 pb-4">
       <div className="mx-auto w-full max-w-[1200px] px-6 max-sm:px-4">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-sm">

@@ -26,7 +26,12 @@
 @layer base {
   * { border-color: var(--border); }
   html { color-scheme: light; scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
-  body { background: var(--background); color: var(--foreground); }
+  /* `overflow-x: clip` kills any horizontal page scroll/pan on touch devices
+     caused by decorative off-canvas elements (hero glow, marquees) that extend
+     past the viewport. `clip` (not `hidden`) doesn't create a scroll container,
+     so it leaves `position: sticky` on the header/tabs working. Scoped scrollers
+     like the poster slider keep their own `overflow-x-auto`. */
+  body { background: var(--background); color: var(--foreground); overflow-x: clip; }
   ::selection { background: var(--primary); color: #fff; }
 }
 .grad-text { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }

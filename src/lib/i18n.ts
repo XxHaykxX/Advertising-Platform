@@ -141,6 +141,7 @@ export const UI: Record<string, Dict> = {
   "catalog.productCategory": { ru: "Категория продукта", en: "Product Category", hy: "Ապրանքի կատեգորիա" },
   "catalog.status": { ru: "Статус", en: "Status", hy: "Կարգավիճակ" },
   "catalog.clearAll": { ru: "Сбросить всё", en: "Clear All", hy: "Մաքրել բոլորը" },
+  "catalog.showResults": { ru: "Показать", en: "Show", hy: "Ցուցադրել" },
   "catalog.searchPlaceholder": { ru: "Поиск по жанру, рынку, ключевым словам…", en: "Search by genre, market, keyword…", hy: "Որոնել ըստ ժանրի, շուկայի, բանալի բառի…" },
   "catalog.sortMostRelevant": { ru: "Сначала релевантные", en: "Most relevant", hy: "Առավել համապատասխան" },
   "catalog.sortViews": { ru: "Просмотры", en: "Views", hy: "Դիտումներ" },

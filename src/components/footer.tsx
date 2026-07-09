@@ -194,8 +194,8 @@ export function Footer({
             © 2026 iGovazd. {t("footer.rights")}
           </p>
           <div className="flex items-center gap-2">
-            <LocaleSwitcher current={locale} openUp />
-            <CurrencySwitcher current={currency} openUp />
+            <LocaleSwitcher current={locale} openUp menuLeft />
+            <CurrencySwitcher current={currency} openUp menuLeft />
           </div>
         </div>
       </Container>

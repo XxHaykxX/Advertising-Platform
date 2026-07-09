@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -12,6 +12,8 @@ import {
   List,
   Search,
   ShieldCheck,
+  SlidersHorizontal,
+  X,
 } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
@@ -204,6 +206,29 @@ export function CatalogView({
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortKey>("relevant");
   const [view, setView] = useState<ViewMode>("grid");
+  // Mobile filters live in a bottom-sheet (industry-standard on small screens —
+  // a stacked sidebar buries the results below a long filter column). Desktop
+  // keeps the always-visible sidebar.
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
+  // Count of active filter facets (excluding free-text search, which has its
+  // own always-visible box) — shown as a badge on the mobile "Filters" button.
+  const activeFilterCount =
+    selectedGenres.length +
+    selectedCategories.length +
+    selectedStatuses.length +
+    (gender !== "All" ? 1 : 0) +
+    (budgetMin !== "" || budgetMax !== "" ? 1 : 0);
+
+  // Lock the page scroll behind the open filter sheet.
+  useEffect(() => {
+    if (!filtersOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [filtersOpen]);
 
   const hasFilters =
     selectedGenres.length > 0 ||
@@ -292,6 +317,90 @@ export function CatalogView({
     sort,
   ]);
 
+  // Shared filter controls — rendered in the desktop sidebar AND the mobile
+  // bottom-sheet, so the two never drift out of sync.
+  const filterGroups = (
+    <>
+      <div className="border-t border-border py-4">
+        <h3 className="mb-3 text-sm font-semibold text-foreground">{t("catalog.genre")}</h3>
+        <div className="flex flex-col gap-2.5">
+          {genres.map((g) => (
+            <label key={g} className="flex items-center gap-2 text-sm text-foreground">
+              <input
+                type="checkbox"
+                checked={selectedGenres.includes(g)}
+                onChange={() => toggleGenre(g)}
+                className="h-4 w-4 rounded border-border accent-primary"
+              />
+              {localizeValue(locale, "genre", g)}
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div className="border-t border-border py-4">
+        <h3 className="mb-1 text-sm font-semibold text-foreground">{t("catalog.targetAudience")}</h3>
+        <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          {t("catalog.gender")}
+        </p>
+        <div className="inline-flex rounded-xl border border-border bg-muted p-1">
+          {(["All", "Male", "Female"] as Gender[]).map((g) => (
+            <button
+              key={g}
+              type="button"
+              onClick={() => setGender(g)}
+              className={cn(
+                "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
+                gender === g
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {g === "All" ? t("catalog.genderAll") : g === "Male" ? t("catalog.genderMale") : t("catalog.genderFemale")}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="border-t border-border py-4">
+        <h3 className="mb-3 text-sm font-semibold text-foreground">{t("catalog.budgetRange")}</h3>
+        <div className="flex items-center gap-2">
+          <input
+            type="number"
+            inputMode="numeric"
+            placeholder={t("catalog.min")}
+            value={budgetMin}
+            onChange={(e) => setBudgetMin(e.target.value)}
+            className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+          />
+          <span className="text-muted-foreground">—</span>
+          <input
+            type="number"
+            inputMode="numeric"
+            placeholder={t("catalog.max")}
+            value={budgetMax}
+            onChange={(e) => setBudgetMax(e.target.value)}
+            className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+          />
+        </div>
+      </div>
+
+      <CheckboxFilter
+        label={t("catalog.productCategory")}
+        options={categories.map((c) => ({ value: c, label: localizeValue(locale, "category", c) }))}
+        selected={selectedCategories}
+        onToggle={toggleCategory}
+      />
+
+      <CheckboxFilter
+        label={t("catalog.status")}
+        options={statusOptions}
+        selected={selectedStatuses}
+        onToggle={toggleStatus}
+      />
+    </>
+  );
+
   return (
     <>
       <Header locale={locale} currency={currency} />
@@ -305,90 +414,12 @@ export function CatalogView({
 
       <Container className="pb-20">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-[240px_1fr]">
-          {/* Sidebar filters */}
-          <aside>
+          {/* Desktop sidebar — on mobile the filters move into a bottom-sheet */}
+          <aside className="hidden lg:block">
             <h2 className="mb-2 text-xs font-bold uppercase tracking-wide text-muted-foreground">
               {t("catalog.filters")}
             </h2>
-
-            <div className="border-t border-border py-4">
-              <h3 className="mb-3 text-sm font-semibold text-foreground">{t("catalog.genre")}</h3>
-              <div className="flex flex-col gap-2.5">
-                {genres.map((g) => (
-                  <label key={g} className="flex items-center gap-2 text-sm text-foreground">
-                    <input
-                      type="checkbox"
-                      checked={selectedGenres.includes(g)}
-                      onChange={() => toggleGenre(g)}
-                      className="h-4 w-4 rounded border-border accent-primary"
-                    />
-                    {localizeValue(locale, "genre", g)}
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div className="border-t border-border py-4">
-              <h3 className="mb-1 text-sm font-semibold text-foreground">{t("catalog.targetAudience")}</h3>
-              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                {t("catalog.gender")}
-              </p>
-              <div className="inline-flex rounded-xl border border-border bg-muted p-1">
-                {(["All", "Male", "Female"] as Gender[]).map((g) => (
-                  <button
-                    key={g}
-                    type="button"
-                    onClick={() => setGender(g)}
-                    className={cn(
-                      "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
-                      gender === g
-                        ? "bg-primary text-primary-foreground"
-                        : "text-muted-foreground hover:text-foreground",
-                    )}
-                  >
-                    {g === "All" ? t("catalog.genderAll") : g === "Male" ? t("catalog.genderMale") : t("catalog.genderFemale")}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="border-t border-border py-4">
-              <h3 className="mb-3 text-sm font-semibold text-foreground">{t("catalog.budgetRange")}</h3>
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  placeholder={t("catalog.min")}
-                  value={budgetMin}
-                  onChange={(e) => setBudgetMin(e.target.value)}
-                  className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
-                />
-                <span className="text-muted-foreground">—</span>
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  placeholder={t("catalog.max")}
-                  value={budgetMax}
-                  onChange={(e) => setBudgetMax(e.target.value)}
-                  className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
-                />
-              </div>
-            </div>
-
-            <CheckboxFilter
-              label={t("catalog.productCategory")}
-              options={categories.map((c) => ({ value: c, label: localizeValue(locale, "category", c) }))}
-              selected={selectedCategories}
-              onToggle={toggleCategory}
-            />
-
-            <CheckboxFilter
-              label={t("catalog.status")}
-              options={statusOptions}
-              selected={selectedStatuses}
-              onToggle={toggleStatus}
-            />
-
+            {filterGroups}
             <div className="pt-4">
               <Button
                 type="button"
@@ -405,6 +436,22 @@ export function CatalogView({
           {/* Main content */}
           <div>
             <div className="mb-6 flex flex-wrap items-center gap-3">
+              {/* Mobile "Filters" trigger — opens the bottom-sheet. Hidden on lg
+                  where the sidebar is always visible. */}
+              <button
+                type="button"
+                onClick={() => setFiltersOpen(true)}
+                className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-border bg-card px-3.5 py-2.5 text-sm font-medium text-foreground transition-colors hover:border-primary lg:hidden"
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+                {t("catalog.filters")}
+                {activeFilterCount > 0 ? (
+                  <span className="grid h-5 min-w-5 place-items-center rounded-full bg-primary px-1.5 text-xs font-bold text-primary-foreground">
+                    {activeFilterCount}
+                  </span>
+                ) : null}
+              </button>
+
               <div className="relative flex-1 min-w-[220px]">
                 <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <input
@@ -478,6 +525,49 @@ export function CatalogView({
           </div>
         </div>
       </Container>
+
+      {/* Mobile filter bottom-sheet */}
+      {filtersOpen ? (
+        <div className="fixed inset-0 z-[60] lg:hidden" role="dialog" aria-modal="true">
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setFiltersOpen(false)}
+          />
+          <div className="absolute inset-x-0 bottom-0 flex max-h-[85vh] flex-col rounded-t-2xl border-t border-border bg-background shadow-2xl">
+            <div className="flex items-center justify-between border-b border-border px-4 py-3">
+              <h2 className="text-base font-bold text-foreground">{t("catalog.filters")}</h2>
+              <button
+                type="button"
+                onClick={() => setFiltersOpen(false)}
+                aria-label={t("nav.closeMenu")}
+                className="grid h-9 w-9 place-items-center rounded-xl text-muted-foreground transition-colors hover:bg-muted"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-2">{filterGroups}</div>
+            <div className="flex items-center gap-3 border-t border-border p-4">
+              <Button
+                type="button"
+                variant="secondary"
+                className="flex-1"
+                onClick={clearAll}
+                disabled={!hasFilters}
+              >
+                {t("catalog.clearAll")}
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
+                className="flex-1"
+                onClick={() => setFiltersOpen(false)}
+              >
+                {t("catalog.showResults")} {filtered.length}
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <Footer locale={locale} currency={currency} />
     </>

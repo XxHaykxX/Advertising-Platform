@@ -21,12 +21,16 @@ export function CurrencySwitcher({
   current,
   onDark = false,
   openUp = false,
+  menuLeft = false,
   className,
 }: {
   current: CurrencyCode;
   onDark?: boolean;
   /** Open the menu upward — use in the footer, where it sits at page bottom. */
   openUp?: boolean;
+  /** Anchor the menu to the button's LEFT edge instead of its right. Use where
+   *  the switcher sits at the left of the screen (e.g. the mobile footer). */
+  menuLeft?: boolean;
   className?: string;
 }) {
   const [pending, startTransition] = useTransition();
@@ -89,7 +93,8 @@ export function CurrencySwitcher({
           role="listbox"
           aria-label="Currency"
           className={cn(
-            "absolute right-0 z-50 min-w-[6rem] overflow-hidden rounded-xl border border-border bg-card py-1 shadow-lg shadow-black/10",
+            "absolute z-50 min-w-[6rem] overflow-hidden rounded-xl border border-border bg-card py-1 shadow-lg shadow-black/10",
+            menuLeft ? "left-0 sm:left-auto sm:right-0" : "right-0",
             openUp ? "bottom-full mb-2" : "top-full mt-2"
           )}
         >

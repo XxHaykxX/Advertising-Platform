@@ -20,12 +20,17 @@ export function LocaleSwitcher({
   current,
   onDark = false,
   openUp = false,
+  menuLeft = false,
   className,
 }: {
   current: Locale;
   onDark?: boolean;
   /** Open the menu upward — use in the footer, where it sits at page bottom. */
   openUp?: boolean;
+  /** Anchor the menu to the button's LEFT edge instead of its right. Use where
+   *  the switcher itself sits at the left of the screen (e.g. the mobile
+   *  footer) — the default right-anchored menu would spill off-screen left. */
+  menuLeft?: boolean;
   className?: string;
 }) {
   const [pending, startTransition] = useTransition();
@@ -88,7 +93,8 @@ export function LocaleSwitcher({
           role="listbox"
           aria-label="Language"
           className={cn(
-            "absolute right-0 z-50 min-w-[9rem] overflow-hidden rounded-xl border border-border bg-card py-1 shadow-lg shadow-black/10",
+            "absolute z-50 min-w-[9rem] overflow-hidden rounded-xl border border-border bg-card py-1 shadow-lg shadow-black/10",
+            menuLeft ? "left-0 sm:left-auto sm:right-0" : "right-0",
             openUp ? "bottom-full mb-2" : "top-full mt-2"
           )}
         >
