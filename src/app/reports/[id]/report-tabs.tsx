@@ -9,7 +9,6 @@ const BASE_TABS = [
   { id: "overview", labelKey: "report.tabs.overview" },
   { id: "cast", labelKey: "report.tabs.cast" },
   { id: "investment", labelKey: "report.tabs.investment" },
-  { id: "more", labelKey: "report.tabs.more" },
 ] as const;
 
 export function ReportTabs({

@@ -10,7 +10,6 @@ import { KeyFacts } from "@/components/report/key-facts";
 import { Cast } from "@/components/report/cast";
 import { RoiSnapshot } from "@/components/report/roi-snapshot";
 import { Investment } from "@/components/report/investment";
-import { DeepDive } from "@/components/report/deep-dive";
 import { ReportTabs } from "./report-tabs";
 
 export async function generateStaticParams() {
@@ -46,7 +45,6 @@ export default async function ReportPage({
       <Cast project={project} locale={locale} />
       <RoiSnapshot project={project} locale={locale} />
       <Investment project={project} locale={locale} currency={currency} rates={rates} />
-      <DeepDive project={project} locale={locale} />
       <Footer locale={locale} currency={currency} />
     </>
   );
