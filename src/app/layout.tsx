@@ -10,12 +10,12 @@ const inter = Inter({
   subsets: ["latin", "cyrillic"],
 });
 
-// Armenian (hy) share copy, matching the site's default locale and the hero
-// strings in src/lib/i18n.ts. The og:image / twitter:image are supplied
-// automatically by app/opengraph-image.tsx (Next file convention).
-const OG_TITLE = "iGovazd — Բրենդային տեղադրման շուկա";
+// English share copy; "Armenian" anchors the positioning. The og:image /
+// twitter:image are supplied automatically by app/opengraph-image.tsx (Next
+// file convention).
+const OG_TITLE = "iGovazd — Armenian Brand Placement Marketplace";
 const OG_DESCRIPTION =
-  "Կապում ենք բրենդներին կինոնախագծերի և սերիալների հետ՝ տեսարան առ տեսարան տեղադրման հաշվետվությունների միջոցով։";
+  "Place your brand in Armenian film & TV productions — scene-level placement insights, transparent pricing, direct access to filmmakers.";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://igovazd.am"),
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: "iGovazd",
-    locale: "hy_AM",
+    locale: "en_US",
     url: "https://igovazd.am",
     title: OG_TITLE,
     description: OG_DESCRIPTION,

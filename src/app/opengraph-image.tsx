@@ -5,14 +5,10 @@ import { join } from "path";
 // Branded social-share card (Telegram/FB/X/WhatsApp link unfurl). Rendered via
 // next/og (Satori) — self-contained, no external asset fetch at runtime. The
 // file-convention name auto-wires this into both og:image and twitter:image for
-// every route that doesn't define its own.
-//
-// Copy is Armenian (site default locale hy), pulled from the real hero strings
-// in src/lib/i18n.ts. Satori's default font has no Armenian glyphs, so both a
-// Latin family (Noto Sans, for the "iGovazd" wordmark) and an Armenian family
-// (Noto Sans Armenian, for the headline/subtitle) are loaded from public/fonts;
-// Satori falls back per-glyph across the loaded fonts.
-export const alt = "iGovazd — Բրենդային տեղադրման շուկա";
+// every route that doesn't define its own. Copy is English; the "Armenian"
+// eyebrow anchors the positioning. Noto Sans (Latin) is bundled in public/fonts
+// and read via fs so the type renders consistently.
+export const alt = "iGovazd — Armenian Brand Placement Marketplace";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -59,13 +55,24 @@ export default function OpengraphImage() {
           </div>
         </div>
 
-        {/* Headline + subtitle (Armenian) */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "22px" }}>
-          <div style={{ display: "flex", fontSize: "68px", fontWeight: 700, lineHeight: 1.12, letterSpacing: "-1px" }}>
-            Բրենդային տեղադրման շուկա
+        {/* Eyebrow + headline + subtitle */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
+          <div
+            style={{
+              display: "flex",
+              fontSize: "28px",
+              fontWeight: 700,
+              letterSpacing: "6px",
+              color: "#a5b4fc",
+            }}
+          >
+            ARMENIAN FILM &amp; TV
           </div>
-          <div style={{ display: "flex", fontSize: "34px", fontWeight: 400, color: "#c7d2fe", lineHeight: 1.35, maxWidth: "980px" }}>
-            Կապում ենք բրենդներին կինոնախագծերի և սերիալների հետ
+          <div style={{ display: "flex", fontSize: "72px", fontWeight: 700, lineHeight: 1.08, letterSpacing: "-1.5px" }}>
+            Brand Placement Marketplace
+          </div>
+          <div style={{ display: "flex", fontSize: "33px", fontWeight: 400, color: "#c7d2fe", lineHeight: 1.35, maxWidth: "1000px" }}>
+            Place your brand in film &amp; TV productions — scene-level insights, transparent pricing, direct access to filmmakers.
           </div>
         </div>
 
@@ -83,8 +90,6 @@ export default function OpengraphImage() {
       fonts: [
         { name: "NotoSans", data: font("NotoSans-Regular.ttf"), weight: 400, style: "normal" },
         { name: "NotoSans", data: font("NotoSans-Bold.ttf"), weight: 700, style: "normal" },
-        { name: "NotoArm", data: font("NotoSansArmenian-Regular.ttf"), weight: 400, style: "normal" },
-        { name: "NotoArm", data: font("NotoSansArmenian-Bold.ttf"), weight: 700, style: "normal" },
       ],
     },
   );
