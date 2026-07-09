@@ -62,28 +62,16 @@ export default function OpengraphImage() {
           style={{
             display: "flex",
             flexDirection: "column",
-            marginTop: "40px",
+            marginTop: "64px",
           }}
         >
-          <div
-            style={{
-              display: "flex",
-              fontSize: "26px",
-              fontWeight: 700,
-              letterSpacing: "6px",
-              color: "#a5b4fc",
-              marginBottom: "14px",
-            }}
-          >
-            ARMENIAN FILM &amp; TV
-          </div>
-          <div style={{ display: "flex", fontSize: "66px", fontWeight: 700, lineHeight: 1.05, letterSpacing: "-1.5px" }}>
-            Brand Placement Marketplace
+          <div style={{ display: "flex", fontSize: "68px", fontWeight: 700, lineHeight: 1.06, letterSpacing: "-1.5px", maxWidth: "1010px" }}>
+            Armenian Brand Placement Marketplace
           </div>
           <div
             style={{
               display: "flex",
-              marginTop: "26px",
+              marginTop: "28px",
               fontSize: "30px",
               fontWeight: 400,
               color: "#c7d2fe",
