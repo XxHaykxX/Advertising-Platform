@@ -496,6 +496,17 @@ export const UI: Record<string, Dict> = {
   "report.linkCopied": { ru: "Ссылка скопирована", en: "Link copied", hy: "Հղումը պատճենվեց" },
   "report.projectedViews": { ru: "Прогноз. просмотры", en: "Projected Views", hy: "Կանխատեսվող դիտումներ" },
   "report.cpm": { ru: "CPM", en: "CPM", hy: "CPM" },
+  // ── report: press-kit additions (Aram) ──
+  "cast.crewHeading": { ru: "Команда", en: "Crew", hy: "Թիմ" },
+  "cast.castHeading": { ru: "Актёры", en: "Cast", hy: "Դերասаններ" },
+  "keyFacts.cinemas": { ru: "Кинотеатры", en: "Cinemas", hy: "Կինոթատրոններ" },
+  "keyFacts.comparableTo": { ru: "Сравнимо с", en: "Comparable to", hy: "Համեմատելի է" },
+  "investment.sponsorsTitle": { ru: "Пакеты спонсорства", en: "Sponsorship Packages", hy: "Հովանավորության փաթեթներ" },
+  "investment.sponsorsSubtitle": {
+    ru: "Выберите уровень спонсорства проекта",
+    en: "Choose a sponsorship level for the project",
+    hy: "Ընտրեք նախագծի հովանավորության մակարդակ",
+  },
   "report.budgetRange": { ru: "Диапазон бюджета", en: "Budget Range", hy: "Բյուջեի միջակայք" },
   "report.status.PRE_PRODUCTION": { ru: "Пре-продакшен", en: "Pre-Production", hy: "Նախապատրաստական փուլ" },
   "report.status.FILMING": { ru: "Съёмки", en: "Filming", hy: "Նկարահանում" },

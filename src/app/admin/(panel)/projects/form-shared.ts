@@ -30,3 +30,14 @@ export function parseGalleryInput(json: string | null): string {
     return "";
   }
 }
+
+/** JSON string[] (or null) -> newline-separated benefits for the tier editor. */
+export function parseBenefitsInput(json: string | null): string {
+  if (!json) return "";
+  try {
+    const arr = JSON.parse(json);
+    return Array.isArray(arr) ? arr.join("\n") : "";
+  } catch {
+    return "";
+  }
+}

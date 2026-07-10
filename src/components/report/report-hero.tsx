@@ -28,6 +28,7 @@ export function ReportHero({
 
   const metaItems = [
     localizeValue(locale, "genre", project.genre),
+    project.subgenre,
     project.format,
     project.studio,
     countries,
@@ -68,6 +69,11 @@ export function ReportHero({
             {project.title}
           </h1>
           <code className="mt-1 block text-sm text-muted-foreground">{project.code}</code>
+          {project.tagline ? (
+            <p className="mt-3 max-w-3xl text-lg font-medium italic text-foreground/90 md:text-xl">
+              {project.tagline}
+            </p>
+          ) : null}
         </Reveal>
 
         <Reveal delay={0.05}>

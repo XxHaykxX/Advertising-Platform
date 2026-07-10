@@ -4,10 +4,16 @@ import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth/require";
 import { updateProject } from "../../actions";
-import { formatDateInput, parsePlatformsInput, parseGalleryInput } from "../../form-shared";
+import {
+  formatDateInput,
+  parsePlatformsInput,
+  parseGalleryInput,
+  parseBenefitsInput,
+} from "../../form-shared";
 import { ProjectForm, type ProjectFormInitial } from "../../project-form";
 import { OpportunitiesEditor } from "../../opportunities-editor";
 import { ActorsEditor } from "../../actors-editor";
+import { TiersEditor } from "../../tiers-editor";
 
 export default async function EditProjectPage({
   params,
@@ -25,6 +31,7 @@ export default async function EditProjectPage({
     include: {
       opportunities: { orderBy: { sortOrder: "asc" } },
       actors: { orderBy: { sortOrder: "asc" } },
+      tiers: { orderBy: { sortOrder: "asc" } },
     },
   });
   if (!p) notFound();
@@ -68,6 +75,10 @@ export default async function EditProjectPage({
     platforms: parsePlatformsInput(p.platforms),
     placementType: p.placementType ?? "",
     priceNote: p.priceNote ?? "",
+    tagline: p.tagline ?? "",
+    subgenre: p.subgenre ?? "",
+    references: p.references ?? "",
+    cinemas: p.cinemas ?? "",
   };
 
   const action = updateProject.bind(null, pid);
@@ -104,10 +115,22 @@ export default async function EditProjectPage({
       </div>
 
       <div className="mt-10 max-w-3xl">
-        <h2 className="mb-4 text-lg font-bold text-foreground">Actors</h2>
+        <h2 className="mb-4 text-lg font-bold text-foreground">Cast &amp; crew</h2>
         <ActorsEditor
           projectId={pid}
-          actors={p.actors.map((a) => ({ id: a.id, name: a.name, role: a.role }))}
+          actors={p.actors.map((a) => ({ id: a.id, name: a.name, role: a.role, kind: a.kind, photo: a.photo ?? "" }))}
+        />
+      </div>
+
+      <div className="mt-10 max-w-3xl">
+        <h2 className="mb-4 text-lg font-bold text-foreground">Sponsorship tiers</h2>
+        <TiersEditor
+          projectId={pid}
+          tiers={p.tiers.map((tier) => ({
+            name: tier.name,
+            priceAmd: tier.priceAmd,
+            benefits: parseBenefitsInput(tier.benefits),
+          }))}
         />
       </div>
     </div>

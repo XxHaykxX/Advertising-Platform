@@ -3,7 +3,7 @@ import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import type { ProjectListDTO, ProjectDetailDTO } from "@/lib/types";
 import type { Locale } from "@/lib/i18n";
-import { formatMoneyRange } from "@/lib/currency";
+import { formatMoney, formatMoneyRange } from "@/lib/currency";
 import { getRates } from "@/lib/currency/rates";
 import type { CurrencyCode } from "@/lib/currency";
 
@@ -54,6 +54,27 @@ const COUNTRY_TOKENS: Record<string, { ru: string; hy: string }> = {
   USA: { ru: "США", hy: "ԱՄՆ" },
   Diaspora: { ru: "Диаспора", hy: "Սփյուռք" },
 };
+
+/** "Bohemian Rhapsody, Ray, Michael" -> ["Bohemian Rhapsody", "Ray", "Michael"].
+   Used for the comma-list press-kit fields (references, cinemas). */
+function splitCommaList(s: string | null): string[] {
+  if (!s) return [];
+  return s
+    .split(",")
+    .map((x) => x.trim())
+    .filter(Boolean);
+}
+
+/** JSON string[] (or null) -> string[]; tolerant of malformed data. */
+function parseJsonList(json: string | null): string[] {
+  if (!json) return [];
+  try {
+    const arr = JSON.parse(json);
+    return Array.isArray(arr) ? arr.filter((v): v is string => typeof v === "string") : [];
+  } catch {
+    return [];
+  }
+}
 
 function localizeCountries(locale: Locale, countries: string): string {
   if (locale === "en" || !countries) return countries;
@@ -145,6 +166,7 @@ const getProjectCached = unstable_cache(
     include: {
       opportunities: { orderBy: { sortOrder: "asc" } },
       actors: { orderBy: { sortOrder: "asc" } },
+      tiers: { orderBy: { sortOrder: "asc" } },
     },
   });
   if (!p) return null;
@@ -195,7 +217,17 @@ const getProjectCached = unstable_cache(
       p.priceMinAmd != null && p.priceMaxAmd != null
         ? formatMoneyRange(p.priceMinAmd, p.priceMaxAmd, currency, rates, locale)
         : null,
-    actors: p.actors.map((a) => ({ id: a.id, name: a.name, role: a.role })),
+    actors: p.actors.map((a) => ({ id: a.id, name: a.name, role: a.role, kind: a.kind, photo: a.photo ?? "" })),
+    tagline: p.tagline ?? "",
+    subgenre: p.subgenre ?? "",
+    references: splitCommaList(p.references),
+    cinemas: splitCommaList(p.cinemas),
+    tiers: p.tiers.map((tier) => ({
+      id: tier.id,
+      name: tier.name,
+      priceDisplay: formatMoney(tier.priceAmd, currency, rates, locale),
+      benefits: parseJsonList(tier.benefits),
+    })),
   };
   },
   ["project-detail"],

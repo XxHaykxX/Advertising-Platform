@@ -54,6 +54,11 @@ export type ProjectFormValues = {
   platforms: string; // comma-separated in the form; JSON string[] at rest
   placementType: string; // "" | one of PLACEMENT_TYPE_VALUES
   priceNote: string;
+  // ── Press-kit fields (Aram, 2026-07-09) ──
+  tagline: string; // one-line logline (hero)
+  subgenre: string; // e.g. "Musical" (hero meta, next to genre)
+  references: string; // comparable titles, comma-separated ("Bohemian Rhapsody, Ray")
+  cinemas: string; // exhibition venues, comma-separated ("Cinema Star, Kino Park")
 };
 
 export type ProjectFormState = { error?: string; values?: ProjectFormValues };
@@ -165,6 +170,10 @@ function buildData(fd: FormData): ProjectFormValues {
     platforms: str(fd, "platforms", VARCHAR_MAX),
     placementType: enumVal(fd, "placementType", [...PLACEMENT_TYPE_VALUES, ""] as const, ""),
     priceNote: str(fd, "priceNote", VARCHAR_MAX),
+    tagline: str(fd, "tagline", VARCHAR_MAX),
+    subgenre: str(fd, "subgenre", VARCHAR_MAX),
+    references: str(fd, "references"),
+    cinemas: str(fd, "cinemas"),
   };
 }
 
@@ -212,6 +221,10 @@ export async function createProject(
         platforms: platformsToJson(data.platforms),
         placementType: data.placementType || null,
         priceNote: data.priceNote || null,
+        tagline: data.tagline || null,
+        subgenre: data.subgenre || null,
+        references: data.references || null,
+        cinemas: data.cinemas || null,
         // ownerId is always the creating user — never trusted from the form.
         ownerId: user.id,
       },
@@ -263,6 +276,10 @@ export async function updateProject(
         platforms: platformsToJson(data.platforms),
         placementType: data.placementType || null,
         priceNote: data.priceNote || null,
+        tagline: data.tagline || null,
+        subgenre: data.subgenre || null,
+        references: data.references || null,
+        cinemas: data.cinemas || null,
       },
     });
   } catch (e) {
@@ -364,7 +381,8 @@ export async function saveOpportunities(
   return { ok: true };
 }
 
-type ActorRow = { name: string; role: string };
+const ACTOR_KIND_VALUES = ["CAST", "CREW"] as const;
+type ActorRow = { name: string; role: string; kind: string; photo: string };
 
 export async function saveActors(
   projectId: number,
@@ -383,6 +401,48 @@ export async function saveActors(
         projectId,
         name: (r.name || "").trim(),
         role: (r.role || "").trim(),
+        kind: (ACTOR_KIND_VALUES as readonly string[]).includes(r.kind) ? r.kind : "CAST",
+        photo: (r.photo || "").trim() || null,
+        sortOrder: i,
+      })),
+    }),
+  ]);
+
+  revalidateProjectPaths(projectId);
+  return { ok: true };
+}
+
+// ── Sponsorship tiers (the productised sponsor offer: named price + benefits) ──
+type TierRow = { name: string; priceAmd: number; benefits: string };
+
+/** "line 1\nline 2" -> JSON string[] (trimmed, blanks dropped) for the
+   benefits @db.Text column. */
+function benefitsToJson(input: string): string {
+  const arr = (input || "")
+    .split("\n")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return JSON.stringify(arr);
+}
+
+export async function saveTiers(
+  projectId: number,
+  _prev: SubEditorState,
+  fd: FormData,
+): Promise<SubEditorState> {
+  const authError = await authorizeProject(projectId);
+  if (authError) return { error: authError };
+
+  const rows = jsonArray<TierRow>(fd, "rows").filter((r) => (r.name || "").trim());
+
+  await prisma.$transaction([
+    prisma.sponsorshipTier.deleteMany({ where: { projectId } }),
+    prisma.sponsorshipTier.createMany({
+      data: rows.map((r, i) => ({
+        projectId,
+        name: (r.name || "").trim().slice(0, VARCHAR_MAX),
+        priceAmd: Math.max(0, Number(r.priceAmd) || 0),
+        benefits: benefitsToJson(r.benefits),
         sortOrder: i,
       })),
     }),

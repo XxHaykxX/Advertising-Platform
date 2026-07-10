@@ -101,6 +101,42 @@ export function KeyFacts({
                   </div>
                 </div>
               ) : null}
+
+              {project.cinemas.length > 0 ? (
+                <div className="sm:col-span-2">
+                  <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {t("keyFacts.cinemas")}
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {project.cinemas.map((c) => (
+                      <span
+                        key={c}
+                        className="inline-flex items-center rounded-full border border-border bg-muted px-2.5 py-1 text-xs font-medium text-foreground"
+                      >
+                        {c}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              {project.references.length > 0 ? (
+                <div className="sm:col-span-2">
+                  <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {t("keyFacts.comparableTo")}
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {project.references.map((r) => (
+                      <span
+                        key={r}
+                        className="inline-flex items-center rounded-full border border-primary/30 bg-primary/5 px-2.5 py-1 text-xs font-medium text-foreground"
+                      >
+                        {r}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
             </div>
 
             <div className="flex flex-col items-start gap-3 lg:items-end lg:border-l lg:border-border lg:pl-6">

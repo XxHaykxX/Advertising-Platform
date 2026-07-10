@@ -91,20 +91,45 @@ model Project {
   placementType       String? // "In-Frame" | "Story Integration" | "Mention"
   priceNote           String?
 
+  // ── Real press-kit fields (added for the Aram title, 2026-07-09) ──
+  tagline   String? // one-line logline, shown in the report hero
+  subgenre  String? // e.g. "Musical" — narrower than `genre`
+  references String? @db.Text // comparable titles ("Bohemian Rhapsody, Ray"), comma/JSON list
+  cinemas    String? @db.Text // exhibition venues ("Cinema Star, Kino Park"), comma/JSON list
+
   owner         User                   @relation(fields: [ownerId], references: [id])
   opportunities PlacementOpportunity[]
   actors        Actor[]
+  tiers         SponsorshipTier[]
 
   @@index([ownerId])
 }
 
-/// A cast member attached to a project, shown in placement pitch materials
+/// A person attached to a project (cast or crew), shown in the pitch materials
 model Actor {
   id        Int    @id @default(autoincrement())
   projectId Int
   name      String
   role      String
+  kind      String @default("CAST") // CAST | CREW — press-kits often list crew, not cast
+  photo     String? // uploaded headshot path ("/uploads/…"); null -> initials avatar
   sortOrder Int    @default(0)
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+/// A sponsorship package/tier for a project (the core monetization offer):
+/// a named price point with a list of included benefits. Distinct from
+/// scene-level PlacementOpportunity — tiers are the productised sponsor deal.
+model SponsorshipTier {
+  id        Int     @id @default(autoincrement())
+  projectId Int
+  name      String // "Official Sponsor" | "General Sponsor" (+ per-locale later)
+  priceAmd  Int // 20000000 / 30000000 / 40000000
+  benefits  String  @db.Text // JSON string[] — the included-benefits bullet list
+  sortOrder Int     @default(0)
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 

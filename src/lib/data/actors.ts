@@ -7,5 +7,5 @@ export async function listActorsByProject(projectId: number): Promise<ActorDTO[]
     where: { projectId },
     orderBy: { sortOrder: "asc" },
   });
-  return rows.map((a) => ({ id: a.id, name: a.name, role: a.role }));
+  return rows.map((a) => ({ id: a.id, name: a.name, role: a.role, kind: a.kind, photo: a.photo ?? "" }));
 }

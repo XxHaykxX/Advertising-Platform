@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Film, Inbox, Users, Images, Handshake } from "lucide-react";
+import { LayoutDashboard, Film, Inbox, Users, Images, Handshake, FolderOpen } from "lucide-react";
 import type { Role } from "@prisma/client";
 
 // Full nav for SUPERADMIN. A PUBLISHER only sees Dashboard + Projects —
@@ -11,6 +11,7 @@ import type { Role } from "@prisma/client";
 const NAV = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, superadminOnly: false },
   { href: "/admin/projects", label: "Projects", icon: Film, superadminOnly: false },
+  { href: "/admin/media", label: "Media", icon: FolderOpen, superadminOnly: false },
   { href: "/admin/applications", label: "Applications", icon: Inbox, superadminOnly: true },
   { href: "/admin/portfolio", label: "Portfolio", icon: Images, superadminOnly: true },
   { href: "/admin/partners", label: "Partners", icon: Handshake, superadminOnly: true },

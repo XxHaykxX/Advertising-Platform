@@ -48,6 +48,34 @@ export function Investment({
           </p>
         </Reveal>
 
+        {project.tiers.length > 0 ? (
+          <Reveal delay={0.05}>
+            <div className="mt-8">
+              <h3 className="text-lg font-bold text-foreground">{t("investment.sponsorsTitle")}</h3>
+              <p className="mt-1 text-sm text-muted-foreground">{t("investment.sponsorsSubtitle")}</p>
+              <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-3">
+                {project.tiers.map((tier) => (
+                  <div
+                    key={tier.id}
+                    className="flex h-full flex-col rounded-2xl border border-border bg-card p-6 transition-colors hover:border-primary/40"
+                  >
+                    <span className="text-sm font-semibold text-foreground">{tier.name}</span>
+                    <div className="mt-2 text-2xl font-extrabold text-primary">{tier.priceDisplay}</div>
+                    <ul className="mt-4 space-y-2.5">
+                      {tier.benefits.map((benefit, idx) => (
+                        <li key={idx} className="flex items-start gap-2.5 text-sm text-foreground">
+                          <Check className="mt-0.5 h-4 w-4 shrink-0 text-success" />
+                          {benefit}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </Reveal>
+        ) : null}
+
         <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
           <Reveal delay={0.05}>
             <div className="h-full rounded-2xl border border-border bg-card p-6">

@@ -4,13 +4,20 @@ const nextConfig: NextConfig = {
   // No `output: standalone` — Hostinger's managed Next runner serves the app with
   // `next start` (which errors out against a standalone build). It keeps
   // node_modules + .next around at runtime, so plain `next start` is what works.
-  // Admins paste arbitrary poster/gallery image URLs in the panel. Without an
-  // images config, next/image throws "hostname not configured" and 500s the
-  // public report page. `unoptimized` serves the URL straight to the browser
-  // <img> — no server-side fetch, so an unreachable/slow host can't hang the
-  // Node server, and there's no image-optimizer SSRF surface.
+  // Poster/gallery/headshots are uploaded in the panel and served from
+  // /uploads. `unoptimized` sends the file straight to the browser <img> — no
+  // server-side fetch/optimizer, so nothing can hang the Node server and
+  // there's no image-optimizer SSRF surface.
   images: {
     unoptimized: true,
+  },
+  experimental: {
+    // Server Actions cap request bodies at 1 MB by default; image uploads
+    // (uploadImage) need headroom. Matches the 8 MB per-file cap enforced in
+    // src/lib/actions/uploads.ts.
+    serverActions: {
+      bodySizeLimit: "8mb",
+    },
   },
 };
 

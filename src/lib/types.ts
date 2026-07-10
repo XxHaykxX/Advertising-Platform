@@ -53,12 +53,27 @@ export interface ProjectDetailDTO extends ProjectListDTO {
   opportunities: OpportunityDTO[];
   exposureTotal: number;
   actors: ActorDTO[];
+  // ── Press-kit fields (Aram) ──
+  tagline: string; // "" when unset
+  subgenre: string; // "" when unset
+  references: string[]; // comparable titles, parsed from the comma list
+  cinemas: string[]; // exhibition venues, parsed from the comma list
+  tiers: TierDTO[]; // sponsorship packages (the productised offer)
 }
 
 export interface ActorDTO {
   id: number;
   name: string;
   role: string;
+  kind: string; // "CAST" | "CREW"
+  photo: string; // uploaded headshot path, "" when none
+}
+
+export interface TierDTO {
+  id: number;
+  name: string;
+  priceDisplay: string; // preformatted in the visitor's currency
+  benefits: string[]; // parsed from the JSON benefits column
 }
 
 export interface PortfolioDTO {

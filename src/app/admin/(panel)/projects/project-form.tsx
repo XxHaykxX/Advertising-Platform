@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { PLACEMENT_TYPE_VALUES } from "./form-shared";
+import { ImageUploader } from "./image-uploader";
 import { type ProjectFormState, type ProjectFormValues } from "./actions";
 
 export type ProjectFormInitial = ProjectFormValues;
@@ -44,6 +45,10 @@ const EMPTY: ProjectFormInitial = {
   platforms: "",
   placementType: "",
   priceNote: "",
+  tagline: "",
+  subgenre: "",
+  references: "",
+  cinemas: "",
 };
 
 const STATUS_OPTIONS = [
@@ -108,21 +113,15 @@ export function ProjectForm({
           <Field label="Genre *">
             <input name="genre" defaultValue={data.genre} className={inputCls} />
           </Field>
-          <Field label="Poster URL">
-            <input name="poster" defaultValue={data.poster} placeholder="https://…" className={inputCls} />
+          <Field label="Poster">
+            <ImageUploader name="poster" dir="projects" initial={data.poster} label="Upload poster" />
           </Field>
         </div>
         <Field label="Synopsis *">
           <textarea name="synopsis" defaultValue={data.synopsis} rows={4} className={`${inputCls} resize-none`} />
         </Field>
-        <Field label="Gallery (storyboard thumbnails — one image URL per line, up to 5 shown)">
-          <textarea
-            name="gallery"
-            defaultValue={data.gallery}
-            rows={4}
-            placeholder={"https://…/still-1.jpg\nhttps://…/still-2.jpg"}
-            className={`${inputCls} resize-none`}
-          />
+        <Field label="Gallery (storyboard stills — up to 5 shown)">
+          <ImageUploader name="gallery" dir="projects" multiple initial={data.gallery} label="Upload gallery images" />
         </Field>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Format">
@@ -328,6 +327,42 @@ export function ProjectForm({
             />
           </Field>
         </div>
+      </section>
+
+      {/* ── Press-kit details ── */}
+      <section className="space-y-4 rounded-2xl border border-border bg-card p-6">
+        <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">
+          Press-kit details
+        </h2>
+        <Field label="Tagline / logline (one line, shown in the hero)">
+          <input
+            name="tagline"
+            defaultValue={data.tagline}
+            placeholder="A star is born — and fame has a price."
+            className={inputCls}
+          />
+        </Field>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="Subgenre (shown next to genre)">
+            <input name="subgenre" defaultValue={data.subgenre} placeholder="Musical" className={inputCls} />
+          </Field>
+          <Field label="Comparable titles (comma-separated)">
+            <input
+              name="references"
+              defaultValue={data.references}
+              placeholder="Bohemian Rhapsody, Ray, Michael"
+              className={inputCls}
+            />
+          </Field>
+        </div>
+        <Field label="Cinemas / exhibition venues (comma-separated)">
+          <input
+            name="cinemas"
+            defaultValue={data.cinemas}
+            placeholder="Cinema Star, Moscow Cinema, Kino Park"
+            className={inputCls}
+          />
+        </Field>
       </section>
 
       {/* ── Visibility ── */}

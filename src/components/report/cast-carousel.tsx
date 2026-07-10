@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef } from "react";
+import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { ActorDTO } from "@/lib/types";
 
@@ -13,13 +14,19 @@ function initials(name: string): string {
 function ActorCard({ actor }: { actor: ActorDTO }) {
   return (
     <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-4">
-      <div
-        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
-        style={{ background: "var(--grad)" }}
-        aria-hidden
-      >
-        {initials(actor.name)}
-      </div>
+      {actor.photo ? (
+        <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border border-border">
+          <Image src={actor.photo} alt={actor.name} fill className="object-cover" sizes="48px" unoptimized />
+        </div>
+      ) : (
+        <div
+          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
+          style={{ background: "var(--grad)" }}
+          aria-hidden
+        >
+          {initials(actor.name)}
+        </div>
+      )}
       <div className="min-w-0">
         <p className="truncate font-semibold text-foreground">{actor.name}</p>
         <p className="truncate text-xs text-muted-foreground">{actor.role}</p>
