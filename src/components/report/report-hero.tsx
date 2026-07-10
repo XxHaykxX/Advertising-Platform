@@ -4,6 +4,7 @@ import { ArrowLeft, DollarSign, Film, Wallet, Eye } from "lucide-react";
 import { Reveal } from "@/components/ui/reveal";
 import { PrintButton, ShareButton } from "@/components/report/report-actions";
 import { PosterSlider } from "@/components/report/poster-slider";
+import { SynopsisDisclosure } from "@/components/report/synopsis-disclosure";
 import { parseStringArray, splitCountries } from "@/lib/data/format";
 import { DEFAULT_LOCALE, localizeValue, makeUI, type Locale } from "@/lib/i18n";
 import type { ProjectDetailDTO } from "@/lib/types";
@@ -88,6 +89,11 @@ export function ReportHero({
               <span className="absolute bottom-3 left-3 inline-flex items-center rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground shadow-sm">
                 {statusLabel}
               </span>
+              {project.ageRating ? (
+                <span className="absolute right-3 top-3 inline-flex items-center rounded-full bg-black/75 px-2.5 py-1 text-xs font-bold text-white shadow-sm ring-1 ring-white/20">
+                  {project.ageRating}
+                </span>
+              ) : null}
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -119,9 +125,11 @@ export function ReportHero({
               </span>
             ))}
           </p>
-          <p className="mt-4 max-w-3xl text-base leading-relaxed text-muted-foreground">
-            {project.synopsis}
-          </p>
+          <SynopsisDisclosure
+            text={project.synopsis}
+            moreLabel={t("report.showMore")}
+            lessLabel={t("report.showLess")}
+          />
         </Reveal>
 
         <Reveal delay={0.15}>

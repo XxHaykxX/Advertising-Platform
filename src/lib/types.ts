@@ -1,15 +1,3 @@
-export interface OpportunityDTO {
-  sceneNo: number;
-  description: string;
-  mood: string;
-  rationale: string;
-  type: string;
-  prominence: string;
-  category: string;
-  estValue: number;
-  durationSec: number;
-}
-
 export interface ProjectListDTO {
   id: number;
   code: string;
@@ -22,6 +10,7 @@ export interface ProjectListDTO {
   countries: string;
   audienceGender: string;
   audienceAge: string;
+  ageRating: string; // content rating badge ("16+", "18+"); "" when unset
   projViews: string;
   // Budget is preformatted (converted + symbol) by the data layer — a single
   // formatting point so display components never touch currency math.
@@ -31,10 +20,6 @@ export interface ProjectListDTO {
   budgetMinAmd: number | null;
   budgetMaxAmd: number | null;
   status: string;
-  opportunitiesCount: number;
-  productCategories: string[];
-  slotsTotal: number;
-  slotsTaken: number;
   applicationDeadline: string | null;
   releaseDate: string | null;
   platforms: string; // JSON string[]; parse with parseStringArray
@@ -50,8 +35,6 @@ export interface ProjectDetailDTO extends ProjectListDTO {
   status: string;
   releaseLabel: string;
   cpmDisplay: string; // "" when both bounds are unset
-  opportunities: OpportunityDTO[];
-  exposureTotal: number;
   actors: ActorDTO[];
   // ── Press-kit fields (Aram) ──
   tagline: string; // "" when unset

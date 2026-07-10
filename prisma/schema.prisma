@@ -67,6 +67,7 @@ model Project {
   countries      String        @default("") // "US, UK, …"
   audienceGender String        @default("All") // All | Male | Female
   audienceAge    String        @default("") // "16-30"
+  ageRating      String        @default("") // content rating badge on the poster: "16+", "18+", "12+", …
   projViews      String        @default("") // "2.4M"
   // Money — admin enters AMD only; the public site converts + formats for
   // display in the visitor's chosen currency (see src/lib/currency). All
@@ -83,8 +84,6 @@ model Project {
   createdAt      DateTime      @default(now())
   ownerId        Int
 
-  slotsTotal          Int       @default(5)
-  slotsTaken          Int       @default(0)
   applicationDeadline DateTime?
   releaseDate         DateTime?
   platforms           String?   @db.Text // JSON string[]; nullable — MySQL forbids literal defaults on TEXT columns
@@ -98,7 +97,6 @@ model Project {
   cinemas    String? @db.Text // exhibition venues ("Cinema Star, Kino Park"), comma/JSON list
 
   owner         User                   @relation(fields: [ownerId], references: [id])
-  opportunities PlacementOpportunity[]
   actors        Actor[]
   tiers         SponsorshipTier[]
 
@@ -155,26 +153,6 @@ model Partner {
   logo      String?
   url       String?
   sortOrder Int     @default(0)
-}
-
-/// A scene-level placement opportunity
-model PlacementOpportunity {
-  id          Int    @id @default(autoincrement())
-  projectId   Int
-  sceneNo     Int    @default(1)
-  description String @db.Text
-  mood        String @default("")
-  rationale   String @db.Text
-  type        String @default("visual") // visual | audio
-  prominence  String @default("background") // background | active
-  category    String @default("") // "Beverages", "Technology", …
-  estValue    Int    @default(0) // dollars
-  durationSec Int    @default(0)
-  sortOrder   Int    @default(0)
-
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-
-  @@index([projectId])
 }
 
 /// Lead applications (Express Interest + contact form)

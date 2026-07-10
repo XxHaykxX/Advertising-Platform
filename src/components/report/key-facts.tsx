@@ -1,4 +1,4 @@
-import { CalendarClock, CalendarDays, DollarSign, Ticket } from "lucide-react";
+import { CalendarClock, CalendarDays, DollarSign } from "lucide-react";
 import { AccentBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ApplyDialog } from "@/components/apply-dialog";
@@ -36,11 +36,6 @@ export function KeyFacts({
 }) {
   const t = makeUI(locale);
   const platforms = parseStringArray(project.platforms);
-  const available = Math.max(0, project.slotsTotal - project.slotsTaken);
-  const pct =
-    project.slotsTotal > 0
-      ? Math.min(100, Math.round((project.slotsTaken / project.slotsTotal) * 100))
-      : 0;
   const release = formatMonthYear(project.releaseDate, intlLocale(locale));
   const deadline = formatFullDate(project.applicationDeadline, intlLocale(locale));
 
@@ -50,22 +45,6 @@ export function KeyFacts({
         <Reveal delay={0.2}>
           <div className="grid grid-cols-1 gap-6 rounded-2xl border border-border bg-card p-6 lg:grid-cols-[1fr_auto] lg:items-center">
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-              <div>
-                <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  <Ticket className="h-3.5 w-3.5" />
-                  {t("keyFacts.placementSlots")}
-                </div>
-                <div className="mt-1.5 text-sm font-semibold text-foreground">
-                  {available} {t("keyFacts.available", { b: project.slotsTotal })}
-                </div>
-                <div className="mt-2 h-2 w-full max-w-[220px] overflow-hidden rounded-full bg-muted">
-                  <div
-                    className="h-full rounded-full bg-primary transition-[width] duration-500 ease-out"
-                    style={{ width: `${pct}%` }}
-                  />
-                </div>
-              </div>
-
               {release ? (
                 <Fact icon={<CalendarDays className="h-3.5 w-3.5" />} label={t("keyFacts.release")} value={release} />
               ) : null}

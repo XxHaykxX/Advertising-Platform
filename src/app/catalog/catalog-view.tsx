@@ -53,7 +53,6 @@ function parseViews(v: string): number {
 function ProjectRow({ project, locale = DEFAULT_LOCALE }: { project: ProjectListDTO; locale?: Locale }) {
   const t = makeUI(locale);
   const countries = splitCountries(project.countries);
-  const slotsLeft = Math.max(project.slotsTotal - project.slotsTaken, 0);
   const deadlineDays = daysUntil(project.applicationDeadline);
   const deadlineUrgent = deadlineDays !== null && deadlineDays <= 45;
   return (
@@ -88,12 +87,8 @@ function ProjectRow({ project, locale = DEFAULT_LOCALE }: { project: ProjectList
           <span>{project.format}</span>
           <span>{countries.slice(0, 3).join(", ")}</span>
           <span>{localizeValue(locale, "gender", project.audienceGender)}, {project.audienceAge}</span>
-          <span className="text-primary">{project.opportunitiesCount} {t("card.opportunities")}</span>
           {project.budgetDisplay ? <span>{project.budgetDisplay}</span> : null}
           <span>{project.projViews} {t("card.projectedViews")}</span>
-          {project.slotsTotal > 0 ? (
-            <span>{slotsLeft} {t("card.slotsShort", { b: project.slotsTotal })}</span>
-          ) : null}
           {project.applicationDeadline ? (
             <span
               className={cn(
@@ -184,10 +179,6 @@ export function CatalogView({
     () => Array.from(new Set(projects.map((p) => p.genre))).sort(),
     [projects],
   );
-  const categories = useMemo(
-    () => Array.from(new Set(projects.flatMap((p) => p.productCategories))).sort(),
-    [projects],
-  );
   const statuses = useMemo(
     () => Array.from(new Set(projects.map((p) => p.status))).sort(),
     [projects],
@@ -198,7 +189,6 @@ export function CatalogView({
   );
 
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [gender, setGender] = useState<Gender>("All");
   const [budgetMin, setBudgetMin] = useState("");
@@ -215,7 +205,6 @@ export function CatalogView({
   // own always-visible box) — shown as a badge on the mobile "Filters" button.
   const activeFilterCount =
     selectedGenres.length +
-    selectedCategories.length +
     selectedStatuses.length +
     (gender !== "All" ? 1 : 0) +
     (budgetMin !== "" || budgetMax !== "" ? 1 : 0);
@@ -232,7 +221,6 @@ export function CatalogView({
 
   const hasFilters =
     selectedGenres.length > 0 ||
-    selectedCategories.length > 0 ||
     selectedStatuses.length > 0 ||
     gender !== "All" ||
     budgetMin !== "" ||
@@ -241,7 +229,6 @@ export function CatalogView({
 
   const clearAll = () => {
     setSelectedGenres([]);
-    setSelectedCategories([]);
     setSelectedStatuses([]);
     setGender("All");
     setBudgetMin("");
@@ -251,10 +238,6 @@ export function CatalogView({
 
   const toggleGenre = (g: string) => {
     setSelectedGenres((prev) => (prev.includes(g) ? prev.filter((x) => x !== g) : [...prev, g]));
-  };
-
-  const toggleCategory = (c: string) => {
-    setSelectedCategories((prev) => (prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c]));
   };
 
   const toggleStatus = (s: string) => {
@@ -268,11 +251,6 @@ export function CatalogView({
 
     let list = projects.filter((p) => {
       if (selectedGenres.length > 0 && !selectedGenres.includes(p.genre)) return false;
-      if (
-        selectedCategories.length > 0 &&
-        !p.productCategories.some((c) => selectedCategories.includes(c))
-      )
-        return false;
       if (selectedStatuses.length > 0 && !selectedStatuses.includes(p.status)) return false;
       if (gender !== "All" && p.audienceGender !== gender) return false;
 
@@ -308,7 +286,6 @@ export function CatalogView({
   }, [
     projects,
     selectedGenres,
-    selectedCategories,
     selectedStatuses,
     gender,
     budgetMin,
@@ -384,13 +361,6 @@ export function CatalogView({
           />
         </div>
       </div>
-
-      <CheckboxFilter
-        label={t("catalog.productCategory")}
-        options={categories.map((c) => ({ value: c, label: localizeValue(locale, "category", c) }))}
-        selected={selectedCategories}
-        onToggle={toggleCategory}
-      />
 
       <CheckboxFilter
         label={t("catalog.status")}

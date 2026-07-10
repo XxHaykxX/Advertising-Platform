@@ -21,7 +21,6 @@ export default async function ProjectsAdminPage() {
     where: isSuperadmin ? undefined : { ownerId: user.id },
     orderBy: { sortOrder: "asc" },
     include: {
-      _count: { select: { opportunities: true } },
       owner: { select: { name: true } },
     },
   });
@@ -54,7 +53,6 @@ export default async function ProjectsAdminPage() {
                 <th className="px-4 py-3 font-medium">Poster</th>
                 <th className="px-4 py-3 font-medium">Title / Code</th>
                 <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium">Opportunities</th>
                 <th className="px-4 py-3 font-medium">Active</th>
                 {isSuperadmin && <th className="px-4 py-3 font-medium">Owner</th>}
                 <th className="px-4 py-3 font-medium"></th>
@@ -83,7 +81,6 @@ export default async function ProjectsAdminPage() {
                   <td className="px-4 py-3 text-muted-foreground">
                     {STATUS_LABEL[p.status] ?? p.status}
                   </td>
-                  <td className="px-4 py-3 text-muted-foreground">{p._count.opportunities}</td>
                   <td className="px-4 py-3">
                     <ActiveToggle id={p.id} active={p.isActive} />
                   </td>

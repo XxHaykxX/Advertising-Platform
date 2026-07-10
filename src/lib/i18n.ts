@@ -138,7 +138,6 @@ export const UI: Record<string, Dict> = {
   "catalog.budgetRange": { ru: "Диапазон бюджета", en: "Budget Range", hy: "Բյուջեի միջակայք" },
   "catalog.min": { ru: "Мин", en: "Min", hy: "Նվազ." },
   "catalog.max": { ru: "Макс", en: "Max", hy: "Առավ." },
-  "catalog.productCategory": { ru: "Категория продукта", en: "Product Category", hy: "Ապրանքի կատեգորիա" },
   "catalog.status": { ru: "Статус", en: "Status", hy: "Կարգավիճակ" },
   "catalog.clearAll": { ru: "Сбросить всё", en: "Clear All", hy: "Մաքրել բոլորը" },
   "catalog.showResults": { ru: "Показать", en: "Show", hy: "Ցուցադրել" },
@@ -155,12 +154,9 @@ export const UI: Record<string, Dict> = {
   "catalog.until": { ru: "До", en: "Until", hy: "Մինչև" },
 
   // ── project card / row ──────────────────────
-  "card.opportunities": { ru: "возможностей", en: "opportunities", hy: "հնարավորություն" },
   "card.projectedViews": { ru: "прогноз. просмотров", en: "projected views", hy: "կանխատեսվող դիտում" },
   "card.release": { ru: "Выход", en: "Release", hy: "Թողարկում" },
   "card.applicationsUntil": { ru: "Заявки до", en: "Applications until", hy: "Հայտեր՝ մինչև" },
-  "card.slotsAvailable": { ru: "из {b} слотов доступно", en: "of {b} slots available", hy: "{b}-ից հասանելի է" },
-  "card.slotsShort": { ru: "из {b} слотов", en: "of {b} slots", hy: "{b}-ից" },
 
   // ── forms (shared) ──────────────────────────
   "form.name": { ru: "Имя", en: "Name", hy: "Անուն" },
@@ -493,6 +489,8 @@ export const UI: Record<string, Dict> = {
   "report.downloadPdf": { ru: "Скачать PDF", en: "Download PDF", hy: "Ներբեռնել PDF" },
   "report.prev": { ru: "Назад", en: "Previous", hy: "Նախորդ" },
   "report.next": { ru: "Вперёд", en: "Next", hy: "Հաջորդ" },
+  "report.showMore": { ru: "Читать полностью", en: "Read more", hy: "Կարդալ ամբողջությամբ" },
+  "report.showLess": { ru: "Свернуть", en: "Show less", hy: "Ծալել" },
   "report.linkCopied": { ru: "Ссылка скопирована", en: "Link copied", hy: "Հղումը պատճենվեց" },
   "report.projectedViews": { ru: "Прогноз. просмотры", en: "Projected Views", hy: "Կանխատեսվող դիտումներ" },
   "report.cpm": { ru: "CPM", en: "CPM", hy: "CPM" },
@@ -520,8 +518,6 @@ export const UI: Record<string, Dict> = {
   "cast.title": { ru: "Актёры и создатели", en: "Cast & Creators", hy: "Դերասаններ և ստեղծագործողներ" },
   "cast.subtitle": { ru: "Актёры и создатели, задействованные в проекте", en: "Actors and creators attached to this project", hy: "Այս նախագծին կցված դերասаններ և ստեղծագործողներ" },
 
-  "keyFacts.placementSlots": { ru: "Слоты для плейсмента", en: "Placement Slots", hy: "Տեղադրման հատվածներ" },
-  "keyFacts.available": { ru: "из {b} доступно", en: "of {b} available", hy: "{b}-ից հասանելի է" },
   "keyFacts.release": { ru: "Выход", en: "Release", hy: "Թողարկում" },
   "keyFacts.applicationDeadline": { ru: "Срок подачи заявок", en: "Application Deadline", hy: "Հայտերի ընդունման վերջնաժամկետ" },
   "keyFacts.price": { ru: "Цена", en: "Price", hy: "Գին" },
@@ -530,12 +526,6 @@ export const UI: Record<string, Dict> = {
 
   // ── report: ROI / express interest banner ──────
   "roi.title": { ru: "Прогноз ROI", en: "Estimated ROI Snapshot", hy: "Կանխատեսվող ROI-ի պատկեր" },
-  "roi.exposureValue": { ru: "Оценка охвата бренда", en: "Estimated Exposure Value", hy: "Գնահատված ազդեցության արժեք" },
-  "roi.exposureTooltip": {
-    ru: "Методология: сумма оценённой стоимости охвата по всем выявленным возможностям плейсмента.",
-    en: "Methodology: sum of estimated exposure value across all identified placement opportunities.",
-    hy: "Մեթոդաբանություն. բոլոր հայտնաբերված տեղադրման հնարավորությունների գնահատված ազդեցության արժեքի գումարը։",
-  },
   "roi.projectedViewers": { ru: "Прогноз. зрители", en: "Projected Viewers", hy: "Կանխատեսվող դիտողներ" },
   "roi.projectedViewersTooltip": {
     ru: "Методология: моделируемая аудитория на основе формата, жанра и бенчмарков целевой аудитории.",
@@ -547,18 +537,6 @@ export const UI: Record<string, Dict> = {
     ru: "Методология: диапазон цены за тысячу показов, сопоставленный с аналогичными плейсментами.",
     en: "Methodology: cost-per-thousand-impressions range benchmarked against comparable placements.",
     hy: "Մեթոդաբանություն. հազար ցուցադրության արժեքի միջակայք՝ համեմատված նմանատիպ տեղադրումների հետ։",
-  },
-  "roi.placements": { ru: "Плейсменты", en: "Placements", hy: "Տեղադրումներ" },
-  "roi.placementsTooltip": {
-    ru: "Методология: отдельные возможности плейсмента, выявленные при посценовом анализе сценария.",
-    en: "Methodology: distinct placement opportunities identified across scene-level script analysis.",
-    hy: "Մեթոդաբանություն. սցենարի տեսարան առ տեսարան վերլուծությամբ հայտնաբերված առանձին տեղադրման հնարավորություններ։",
-  },
-  "roi.acrossTypes": { ru: "в {n} категориях", en: "across {n} types", hy: "{n} տեսակների շրջանակում" },
-  "roi.summary": {
-    ru: "Этот проект предлагает {value} прогнозируемого охвата бренда через {count} посценовых возможностей плейсмента, с ценами, сопоставленными по формату, жанру и профилю аудитории.",
-    en: "This project offers {value} in estimated brand exposure across {count} scene-level placement opportunities, with pricing benchmarked against comparable format, genre, and audience profiles.",
-    hy: "Այս նախագիծը առաջարկում է {value} գնահատված բրենդային ազդեցություն {count} տեսարան առ տեսարան տեղադրման հնարավորությունների միջոցով՝ գներ, որոնք համեմատված են ձևաչափի, ժանրի և լսարանի պրոֆիլների հետ։",
   },
   "roi.poweredBy": { ru: "Прогнозы основаны на отраслевых бенчмарках.", en: "Projections powered by industry benchmark data.", hy: "Կանխատեսումները հիմնված են ոլորտի չափանիշային տվյալների վրա։" },
   "express.lockedNotice": { ru: "Полные детали открываются после взаимного интереса", en: "Full details unlocked after mutual interest", hy: "Ամբողջական մանրամասները բացվում են փոխադարձ հետաքրքրությունից հետո" },

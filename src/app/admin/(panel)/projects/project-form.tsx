@@ -29,6 +29,7 @@ const EMPTY: ProjectFormInitial = {
   countries: "",
   audienceGender: "All",
   audienceAge: "",
+  ageRating: "",
   projViews: "",
   budgetMinAmd: null,
   budgetMaxAmd: null,
@@ -38,8 +39,6 @@ const EMPTY: ProjectFormInitial = {
   priceMaxAmd: null,
   isActive: true,
   sortOrder: 0,
-  slotsTotal: 5,
-  slotsTaken: 0,
   applicationDeadline: "",
   releaseDate: "",
   platforms: "",
@@ -188,24 +187,6 @@ export function ProjectForm({
       <section className="space-y-4 rounded-2xl border border-border bg-card p-6">
         <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">Placement</h2>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Slots total">
-            <input
-              name="slotsTotal"
-              type="number"
-              min={0}
-              defaultValue={data.slotsTotal}
-              className={inputCls}
-            />
-          </Field>
-          <Field label="Slots taken">
-            <input
-              name="slotsTaken"
-              type="number"
-              min={0}
-              defaultValue={data.slotsTaken}
-              className={inputCls}
-            />
-          </Field>
           <Field label="Application deadline">
             <input
               name="applicationDeadline"
@@ -284,6 +265,9 @@ export function ProjectForm({
           </Field>
           <Field label="Audience age">
             <input name="audienceAge" defaultValue={data.audienceAge} placeholder="16-30" className={inputCls} />
+          </Field>
+          <Field label="Age rating (poster badge)">
+            <input name="ageRating" defaultValue={data.ageRating} placeholder="16+" className={inputCls} />
           </Field>
           <Field label="Projected views">
             <input name="projViews" defaultValue={data.projViews} placeholder="2.4M" className={inputCls} />

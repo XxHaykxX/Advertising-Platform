@@ -10,8 +10,6 @@ import { PLACEMENT_TYPE_VALUES } from "./form-shared";
 
 const STATUS_VALUES = ["PRE_PRODUCTION", "FILMING", "POST_PRODUCTION", "RELEASED"] as const;
 const GENDER_VALUES = ["All", "Male", "Female"] as const;
-const OPP_TYPE_VALUES = ["visual", "audio"] as const;
-const OPP_PROMINENCE_VALUES = ["background", "active"] as const;
 
 export type ProjectFormValues = {
   title: string;
@@ -34,6 +32,7 @@ export type ProjectFormValues = {
   countries: string;
   audienceGender: string;
   audienceAge: string;
+  ageRating: string; // content rating badge ("16+", "18+"); "" when unset
   projViews: string;
   // Money — AMD only, all optional (blank -> null). Placement price
   // (priceMinAmd/priceMaxAmd) drives the "on request" fallback on the public
@@ -47,8 +46,6 @@ export type ProjectFormValues = {
   isActive: boolean;
   sortOrder: number;
   // ── Placement parity fields ──
-  slotsTotal: number;
-  slotsTaken: number;
   applicationDeadline: string; // <input type=date> value, "" when unset
   releaseDate: string; // <input type=date> value, "" when unset
   platforms: string; // comma-separated in the form; JSON string[] at rest
@@ -154,6 +151,7 @@ function buildData(fd: FormData): ProjectFormValues {
     countries: str(fd, "countries", VARCHAR_MAX),
     audienceGender: enumVal(fd, "audienceGender", GENDER_VALUES, "All"),
     audienceAge: str(fd, "audienceAge", VARCHAR_MAX),
+    ageRating: str(fd, "ageRating", VARCHAR_MAX),
     projViews: str(fd, "projViews", VARCHAR_MAX),
     budgetMinAmd: intOrNull(fd, "budgetMinAmd"),
     budgetMaxAmd: intOrNull(fd, "budgetMaxAmd"),
@@ -163,8 +161,6 @@ function buildData(fd: FormData): ProjectFormValues {
     priceMaxAmd: intOrNull(fd, "priceMaxAmd"),
     isActive: bool(fd, "isActive"),
     sortOrder: int(fd, "sortOrder"),
-    slotsTotal: Math.max(0, int(fd, "slotsTotal", 5)),
-    slotsTaken: Math.max(0, int(fd, "slotsTaken", 0)),
     applicationDeadline: str(fd, "applicationDeadline"),
     releaseDate: str(fd, "releaseDate"),
     platforms: str(fd, "platforms", VARCHAR_MAX),
@@ -332,53 +328,6 @@ async function authorizeProject(projectId: number): Promise<string | null> {
   if (!existing) return "Project not found.";
   if (user.role !== "SUPERADMIN" && existing.ownerId !== user.id) return "Not authorized.";
   return null;
-}
-
-type OpportunityRow = {
-  sceneNo: number;
-  description: string;
-  mood: string;
-  rationale: string;
-  type: string;
-  prominence: string;
-  category: string;
-  estValue: number;
-  durationSec: number;
-};
-
-export async function saveOpportunities(
-  projectId: number,
-  _prev: SubEditorState,
-  fd: FormData,
-): Promise<SubEditorState> {
-  const authError = await authorizeProject(projectId);
-  if (authError) return { error: authError };
-
-  const rows = jsonArray<OpportunityRow>(fd, "rows");
-
-  await prisma.$transaction([
-    prisma.placementOpportunity.deleteMany({ where: { projectId } }),
-    prisma.placementOpportunity.createMany({
-      data: rows.map((r, i) => ({
-        projectId,
-        sceneNo: Math.max(0, Number(r.sceneNo) || 1),
-        description: (r.description || "").trim(),
-        mood: (r.mood || "").trim(),
-        rationale: (r.rationale || "").trim(),
-        type: (OPP_TYPE_VALUES as readonly string[]).includes(r.type) ? r.type : "visual",
-        prominence: (OPP_PROMINENCE_VALUES as readonly string[]).includes(r.prominence)
-          ? r.prominence
-          : "background",
-        category: (r.category || "").trim(),
-        estValue: Math.max(0, Number(r.estValue) || 0),
-        durationSec: Math.max(0, Number(r.durationSec) || 0),
-        sortOrder: i,
-      })),
-    }),
-  ]);
-
-  revalidateProjectPaths(projectId);
-  return { ok: true };
 }
 
 const ACTOR_KIND_VALUES = ["CAST", "CREW"] as const;

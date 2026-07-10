@@ -7,7 +7,6 @@ import {
   Eye,
   Film,
   MapPin,
-  Sparkles,
   Users,
   Wallet,
 } from "lucide-react";
@@ -31,8 +30,6 @@ export function ProjectCard({
   const shownCountries = countries.slice(0, 3);
   const extraCountries = countries.length - shownCountries.length;
   const platforms = parseStringArray(project.platforms);
-  const slotsLeft = Math.max(project.slotsTotal - project.slotsTaken, 0);
-  const slotsPct = project.slotsTotal > 0 ? Math.min((project.slotsTaken / project.slotsTotal) * 100, 100) : 0;
   const releaseLabel = formatMonthYear(project.releaseDate, intlLocale(locale));
   const deadlineDays = daysUntil(project.applicationDeadline);
   const deadlineUrgent = deadlineDays !== null && deadlineDays <= 45;
@@ -91,10 +88,6 @@ export function ProjectCard({
             <Users className="h-3.5 w-3.5 shrink-0" />
             <span>{localizeValue(locale, "gender", project.audienceGender)}, {project.audienceAge}</span>
           </div>
-          <div className="flex items-center gap-2 text-primary">
-            <Sparkles className="h-3.5 w-3.5 shrink-0" />
-            <span>{project.opportunitiesCount} {t("card.opportunities")}</span>
-          </div>
           {project.budgetDisplay ? (
             <div className="flex items-center gap-2">
               <Wallet className="h-3.5 w-3.5 shrink-0" />
@@ -118,20 +111,6 @@ export function ProjectCard({
             </div>
           ) : null}
         </div>
-
-        {project.slotsTotal > 0 ? (
-          <div className="mt-4">
-            <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
-              <span>{slotsLeft} {t("card.slotsAvailable", { b: project.slotsTotal })}</span>
-            </div>
-            <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-              <div
-                className="h-full rounded-full bg-primary"
-                style={{ width: `${slotsPct}%` }}
-              />
-            </div>
-          </div>
-        ) : null}
 
         {platforms.length > 0 ? (
           <div className="mt-3 flex flex-wrap gap-1.5">

@@ -107,7 +107,6 @@ const getProjectsCached = unstable_cache(
     const rows = await prisma.project.findMany({
     where: activeOnly ? { isActive: true } : undefined,
     orderBy: { sortOrder: "asc" },
-    include: { opportunities: { select: { category: true } } },
   });
   const rates = await getRates();
   return rows.map((p) => ({
@@ -122,15 +121,12 @@ const getProjectsCached = unstable_cache(
     countries: localizeCountries(locale, p.countries),
     audienceGender: p.audienceGender,
     audienceAge: p.audienceAge,
+    ageRating: p.ageRating,
     projViews: p.projViews,
     budgetDisplay: formatMoneyRange(p.budgetMinAmd, p.budgetMaxAmd, currency, rates, locale),
     budgetMinAmd: p.budgetMinAmd,
     budgetMaxAmd: p.budgetMaxAmd,
     status: p.status,
-    opportunitiesCount: p.opportunities.length,
-    productCategories: Array.from(new Set(p.opportunities.map((o) => o.category))).sort(),
-    slotsTotal: p.slotsTotal,
-    slotsTaken: p.slotsTaken,
     applicationDeadline: p.applicationDeadline?.toISOString() ?? null,
     releaseDate: p.releaseDate?.toISOString() ?? null,
     platforms: p.platforms ?? "[]",
@@ -164,14 +160,12 @@ const getProjectCached = unstable_cache(
   const p = await prisma.project.findFirst({
     where: activeOnly ? { id, isActive: true } : { id },
     include: {
-      opportunities: { orderBy: { sortOrder: "asc" } },
       actors: { orderBy: { sortOrder: "asc" } },
       tiers: { orderBy: { sortOrder: "asc" } },
     },
   });
   if (!p) return null;
   const rates = await getRates();
-  const exposureTotal = p.opportunities.reduce((s, o) => s + o.estValue, 0);
   return {
     id: p.id,
     code: p.code,
@@ -187,27 +181,12 @@ const getProjectCached = unstable_cache(
     countries: localizeCountries(locale, p.countries),
     audienceGender: p.audienceGender,
     audienceAge: p.audienceAge,
+    ageRating: p.ageRating,
     projViews: p.projViews,
     cpmDisplay: formatMoneyRange(p.cpmMinAmd, p.cpmMaxAmd, currency, rates, locale, { decimals: 2 }),
     budgetDisplay: formatMoneyRange(p.budgetMinAmd, p.budgetMaxAmd, currency, rates, locale),
     budgetMinAmd: p.budgetMinAmd,
     budgetMaxAmd: p.budgetMaxAmd,
-    opportunities: p.opportunities.map((o) => ({
-      sceneNo: o.sceneNo,
-      description: o.description,
-      mood: o.mood,
-      rationale: o.rationale,
-      type: o.type,
-      prominence: o.prominence,
-      category: o.category,
-      estValue: o.estValue,
-      durationSec: o.durationSec,
-    })),
-    exposureTotal,
-    opportunitiesCount: p.opportunities.length,
-    productCategories: Array.from(new Set(p.opportunities.map((o) => o.category))).sort(),
-    slotsTotal: p.slotsTotal,
-    slotsTaken: p.slotsTaken,
     applicationDeadline: p.applicationDeadline?.toISOString() ?? null,
     releaseDate: p.releaseDate?.toISOString() ?? null,
     platforms: p.platforms ?? "[]",

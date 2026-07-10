@@ -16,7 +16,7 @@ async function main() {
     create: { email: "admin@admin.com", passwordHash, role: "SUPERADMIN", name: "Admin" },
   });
 
-  // 2. Projects (+ nested opportunities)
+  // 2. Projects
   await prisma.project.deleteMany();
   for (const [i, p] of SEED_PROJECTS.entries()) {
     await prisma.project.create({
@@ -33,13 +33,9 @@ async function main() {
         cpmMinAmd: p.cpmMinAmd, cpmMaxAmd: p.cpmMaxAmd,
         priceMinAmd: p.priceMinAmd ?? null, priceMaxAmd: p.priceMaxAmd ?? null,
         sortOrder: i, ownerId: admin.id,
-        slotsTotal: p.slotsTotal, slotsTaken: p.slotsTaken,
         applicationDeadline: new Date(p.applicationDeadline), releaseDate: new Date(p.releaseDate),
         platforms: JSON.stringify(p.platforms), placementType: p.placementType,
         priceNote: p.priceNote || null,
-        opportunities: {
-          create: p.opps.map((o, idx) => ({ ...o, sortOrder: idx })),
-        },
         actors: {
           create: p.actors.map((a, idx) => ({ ...a, sortOrder: idx })),
         },

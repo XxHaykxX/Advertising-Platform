@@ -2,7 +2,6 @@ import { Info, Lock, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ApplyDialog } from "@/components/apply-dialog";
 import { Reveal } from "@/components/ui/reveal";
-import { moneyShort } from "@/lib/data/format";
 import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
 import type { ProjectDetailDTO } from "@/lib/types";
 
@@ -59,7 +58,6 @@ export function RoiSnapshot({
   locale?: Locale;
 }) {
   const t = makeUI(locale);
-  const uniqueTypes = new Set(project.opportunities.map((o) => o.category)).size;
 
   return (
     <section id="roi" className="py-10">
@@ -71,15 +69,7 @@ export function RoiSnapshot({
               {t("roi.title")}
             </div>
 
-            <div className="mt-6 grid grid-cols-4 gap-6 max-sm:grid-cols-2">
-              <div>
-                <div className="text-2xl font-extrabold text-foreground">
-                  {moneyShort(project.exposureTotal)}
-                </div>
-                <MetricLabel tooltip={t("roi.exposureTooltip")}>
-                  {t("roi.exposureValue")}
-                </MetricLabel>
-              </div>
+            <div className="mt-6 grid grid-cols-2 gap-6">
               <div>
                 <div className="text-2xl font-extrabold text-foreground">{project.projViews}</div>
                 <MetricLabel tooltip={t("roi.projectedViewersTooltip")}>
@@ -92,20 +82,9 @@ export function RoiSnapshot({
                   {t("roi.cpm")}
                 </MetricLabel>
               </div>
-              <div>
-                <div className="text-2xl font-extrabold text-foreground">
-                  {project.opportunitiesCount} <span className="text-base font-medium text-muted-foreground">{t("roi.acrossTypes", { n: uniqueTypes })}</span>
-                </div>
-                <MetricLabel tooltip={t("roi.placementsTooltip")}>
-                  {t("roi.placements")}
-                </MetricLabel>
-              </div>
             </div>
 
-            <p className="mt-6 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-              {t("roi.summary", { value: moneyShort(project.exposureTotal), count: project.opportunitiesCount })}
-            </p>
-            <p className="mt-2 text-xs text-muted-foreground">
+            <p className="mt-6 text-xs text-muted-foreground">
               {t("roi.poweredBy")}
             </p>
 

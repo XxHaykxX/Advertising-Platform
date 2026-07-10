@@ -17,7 +17,6 @@ function useNav(t: ReturnType<typeof makeUI>) {
   return [
     { label: t("nav.catalog"), href: "/catalog" },
     { label: t("nav.portfolio"), href: "/portfolio" },
-    { label: t("nav.partners"), href: "/partners" },
     { label: t("nav.contact"), href: "/contact" },
   ] as const;
 }

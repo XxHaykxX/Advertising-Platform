@@ -82,14 +82,6 @@ export function Footer({
               </li>
               <li>
                 <Link
-                  href="/partners"
-                  className="text-sm text-muted-foreground transition-colors hover:text-primary"
-                >
-                  {t("footer.partners")}
-                </Link>
-              </li>
-              <li>
-                <Link
                   href="/#faq"
                   className="text-sm text-muted-foreground transition-colors hover:text-primary"
                 >

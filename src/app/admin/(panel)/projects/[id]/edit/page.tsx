@@ -11,7 +11,6 @@ import {
   parseBenefitsInput,
 } from "../../form-shared";
 import { ProjectForm, type ProjectFormInitial } from "../../project-form";
-import { OpportunitiesEditor } from "../../opportunities-editor";
 import { ActorsEditor } from "../../actors-editor";
 import { TiersEditor } from "../../tiers-editor";
 
@@ -29,7 +28,6 @@ export default async function EditProjectPage({
   const p = await prisma.project.findUnique({
     where: { id: pid },
     include: {
-      opportunities: { orderBy: { sortOrder: "asc" } },
       actors: { orderBy: { sortOrder: "asc" } },
       tiers: { orderBy: { sortOrder: "asc" } },
     },
@@ -59,6 +57,7 @@ export default async function EditProjectPage({
     countries: p.countries,
     audienceGender: p.audienceGender,
     audienceAge: p.audienceAge,
+    ageRating: p.ageRating,
     projViews: p.projViews,
     budgetMinAmd: p.budgetMinAmd,
     budgetMaxAmd: p.budgetMaxAmd,
@@ -68,8 +67,6 @@ export default async function EditProjectPage({
     priceMaxAmd: p.priceMaxAmd,
     isActive: p.isActive,
     sortOrder: p.sortOrder,
-    slotsTotal: p.slotsTotal,
-    slotsTaken: p.slotsTaken,
     applicationDeadline: formatDateInput(p.applicationDeadline),
     releaseDate: formatDateInput(p.releaseDate),
     platforms: parsePlatformsInput(p.platforms),
@@ -95,24 +92,6 @@ export default async function EditProjectPage({
       <h1 className="mb-6 mt-4 text-2xl font-bold text-foreground">Edit: {p.title}</h1>
 
       <ProjectForm action={action} initial={initial} submitLabel="Save" />
-
-      <div className="mt-10 max-w-3xl">
-        <h2 className="mb-4 text-lg font-bold text-foreground">Placement opportunities</h2>
-        <OpportunitiesEditor
-          projectId={pid}
-          opportunities={p.opportunities.map((o) => ({
-            sceneNo: o.sceneNo,
-            description: o.description,
-            mood: o.mood,
-            rationale: o.rationale,
-            type: o.type,
-            prominence: o.prominence,
-            category: o.category,
-            estValue: o.estValue,
-            durationSec: o.durationSec,
-          }))}
-        />
-      </div>
 
       <div className="mt-10 max-w-3xl">
         <h2 className="mb-4 text-lg font-bold text-foreground">Cast &amp; crew</h2>
