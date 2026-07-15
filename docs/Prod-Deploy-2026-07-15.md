@@ -55,3 +55,19 @@ Prod was behind commit `17e68f0` (still had slots cols + PlacementOpportunity, l
 4. Smoke test: `/admin/login`, `/register`, `/login`, `/reports/7`, `/catalog`.
 
 Google OAuth stays OFF (no creds → button hidden). Indexing stays OFF (noindex + robots disallow).
+
+## Post-deploy incident: DB auth failure (resolved)
+
+After the DB migration + app restart, every Project-querying page (`/`, `/catalog`, `/reports/*`) returned 500 with
+`PrismaClientInitializationError: Authentication failed against database server, the provided database credentials for u998961932_advertising are not valid`.
+Non-DB pages (`/register`, `/login`, `/admin/login`) stayed up. Root cause: the password in the hPanel Node.js
+`DATABASE_URL` env did not match the live DB password (mismatch and/or a literal `#` in the URL, which Prisma
+truncates as a fragment delimiter).
+
+Fix: reset the DB password to a pure alphanumeric value via MCP `hosting_changeDatabasePasswordV1`, update the hPanel
+`DATABASE_URL` env to match (`@127.0.0.1:3306`), restart the Node app. The live password value is NOT stored in this
+repo — it lives in the hPanel env and in local agent memory (`prod-deploy-migration.md`).
+
+**Lesson:** rotating the DB password REQUIRES also updating the hPanel `DATABASE_URL` env; prefer passwords without
+URL-special characters (`#`, `@`, `/`, `?`). The Hostinger MCP has no tool to read/set Node.js app env vars — only the
+owner can edit `DATABASE_URL` in hPanel.
