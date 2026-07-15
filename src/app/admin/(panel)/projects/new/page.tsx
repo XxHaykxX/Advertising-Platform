@@ -1,9 +1,25 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { prisma } from "@/lib/prisma";
+import { requireContentEditor } from "@/lib/auth/require";
 import { createProject } from "../actions";
 import { ProjectForm } from "../project-form";
 
-export default function NewProjectPage() {
+export default async function NewProjectPage() {
+  const user = await requireContentEditor();
+
+  // Distinct studio names already on file, for the Studio autocomplete.
+  const rows = await prisma.project.findMany({
+    where: { studio: { not: "" } },
+    select: { studio: true },
+    distinct: ["studio"],
+  });
+  const studios = rows.map((r) => r.studio).sort();
+
+  // No owner yet on create — the poster generator's logo overlay (#26) falls
+  // back to the current staff user's own avatar (see poster-action.ts).
+  const me = await prisma.user.findUnique({ where: { id: user.id }, select: { avatar: true } });
+
   return (
     <div>
       <Link
@@ -14,7 +30,12 @@ export default function NewProjectPage() {
         Back to projects
       </Link>
       <h1 className="mb-6 mt-4 text-2xl font-bold text-foreground">New project</h1>
-      <ProjectForm action={createProject} submitLabel="Create project" />
+      <ProjectForm
+        action={createProject}
+        submitLabel="Create project"
+        studios={studios}
+        ownerHasAvatar={!!me?.avatar}
+      />
     </div>
   );
 }

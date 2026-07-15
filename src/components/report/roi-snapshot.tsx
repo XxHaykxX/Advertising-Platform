@@ -63,20 +63,26 @@ export function RoiSnapshot({
               {t("roi.title")}
             </div>
 
-            <div className="mt-6 grid grid-cols-2 gap-6">
-              <div>
-                <div className="text-2xl font-extrabold text-foreground">{project.projViews}</div>
-                <MetricLabel tooltip={t("roi.projectedViewersTooltip")}>
-                  {t("roi.projectedViewers")}
-                </MetricLabel>
+            {project.projViews || project.cpmDisplay ? (
+              <div className="mt-6 grid grid-cols-2 gap-6">
+                {project.projViews ? (
+                  <div>
+                    <div className="text-2xl font-extrabold text-foreground">{project.projViews}</div>
+                    <MetricLabel tooltip={t("roi.projectedViewersTooltip")}>
+                      {t("roi.projectedViewers")}
+                    </MetricLabel>
+                  </div>
+                ) : null}
+                {project.cpmDisplay ? (
+                  <div>
+                    <div className="text-2xl font-extrabold text-foreground">{project.cpmDisplay}</div>
+                    <MetricLabel tooltip={t("roi.cpmTooltip")}>
+                      {t("roi.cpm")}
+                    </MetricLabel>
+                  </div>
+                ) : null}
               </div>
-              <div>
-                <div className="text-2xl font-extrabold text-foreground">{project.cpmDisplay}</div>
-                <MetricLabel tooltip={t("roi.cpmTooltip")}>
-                  {t("roi.cpm")}
-                </MetricLabel>
-              </div>
-            </div>
+            ) : null}
 
             <p className="mt-6 text-xs text-muted-foreground">
               {t("roi.poweredBy")}

@@ -1,23 +1,34 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { Building2, Loader2, Lock, Mail, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { register, type RegisterState } from "./actions";
 import { GoogleButton } from "@/components/google-button";
 import { makeUI, type Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { PasswordInput } from "@/components/ui/password-input";
 
 export function RegisterForm({ locale, googleEnabled }: { locale: Locale; googleEnabled?: boolean }) {
   const t = makeUI(locale);
   const [state, formAction, pending] = useActionState<RegisterState, FormData>(register, {});
   const [type, setType] = useState<"brand" | "creator">("brand");
 
+  // Registration signs the member in immediately (no moderation queue) and
+  // reports success + a destination instead of redirecting server-side: the
+  // session cookie was just set in this action, so navigating from the
+  // client with a fresh full request is what carries it past the auth gate.
+  useEffect(() => {
+    if (state.ok && state.redirect) {
+      window.location.assign(state.redirect);
+    }
+  }, [state]);
+
   if (state.ok) {
     return (
-      <div className="mt-8 rounded-xl border border-primary/30 bg-primary/5 p-6 text-center">
-        <h2 className="text-lg font-bold text-foreground">{t("register.pendingTitle")}</h2>
-        <p className="mt-2 text-sm text-muted-foreground">{t("register.pendingBody")}</p>
+      <div className="mt-8 flex items-center justify-center gap-2 rounded-xl border border-primary/30 bg-primary/5 p-6 text-center text-sm font-medium text-foreground">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        {t("auth.redirecting")}
       </div>
     );
   }
@@ -101,7 +112,7 @@ export function RegisterForm({ locale, googleEnabled }: { locale: Locale; google
             name="email"
             type="email"
             required
-            placeholder="you@brand.com"
+            placeholder={type === "brand" ? t("register.emailPlaceholderBrand") : t("register.emailPlaceholderCreator")}
             className="w-full rounded-xl border border-border bg-background py-3 pl-10 pr-4 text-sm text-foreground outline-none transition-colors focus:border-primary/50"
           />
         </div>
@@ -111,25 +122,28 @@ export function RegisterForm({ locale, googleEnabled }: { locale: Locale; google
         <span className="mb-1.5 block text-sm font-semibold text-foreground">{t("register.password")}</span>
         <div className="relative">
           <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input
+          <PasswordInput
             name="password"
-            type="password"
             required
             autoComplete="new-password"
             placeholder={t("register.passwordPlaceholder")}
+            showLabel={t("auth.passwordShow")}
+            hideLabel={t("auth.passwordHide")}
             className="w-full rounded-xl border border-border bg-background py-3 pl-10 pr-4 text-sm text-foreground outline-none transition-colors focus:border-primary/50"
           />
         </div>
       </label>
 
       <label className="block">
-        <span className="mb-1.5 block text-sm font-semibold text-foreground">{t("form.company")}</span>
+        <span className="mb-1.5 block text-sm font-semibold text-foreground">
+          {type === "brand" ? t("form.company") : t("register.creatorOrg")}
+        </span>
         <div className="relative">
           <Building2 className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <input
             name="company"
             type="text"
-            placeholder={t("register.companyPlaceholder")}
+            placeholder={type === "brand" ? t("register.companyPlaceholder") : t("register.creatorOrgPlaceholder")}
             className="w-full rounded-xl border border-border bg-background py-3 pl-10 pr-4 text-sm text-foreground outline-none transition-colors focus:border-primary/50"
           />
         </div>

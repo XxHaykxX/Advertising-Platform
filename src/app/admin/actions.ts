@@ -16,7 +16,7 @@ import {
 } from "@/lib/auth/password";
 import { requireSuperadmin } from "@/lib/auth/require";
 
-export type ActionState = { error?: string; ok?: boolean };
+export type ActionState = { error?: string; ok?: boolean; redirect?: string };
 
 /* ── In-memory login rate limit (per IP). Resets on process restart —
    acceptable for a single-admin MVP on shared hosting. ── */
@@ -71,7 +71,11 @@ export async function login(
 
   // Members (BRAND / CREATOR) must never obtain an admin session — they sign in
   // at /login. Reject them here even with correct credentials.
-  if (result.user.role !== "SUPERADMIN" && result.user.role !== "PUBLISHER") {
+  if (
+    result.user.role !== "SUPERADMIN" &&
+    result.user.role !== "PUBLISHER" &&
+    result.user.role !== "MODERATOR"
+  ) {
     recordFailure(ip);
     return { error: "Incorrect email or password." };
   }
@@ -106,7 +110,12 @@ export async function login(
   }
 
   const from = String(formData.get("from") || "");
-  redirect(from && from.startsWith("/admin") ? from : "/admin");
+  // Don't redirect() here: this cookie was just set in a useActionState action,
+  // and Next 16 would render the destination from the root in the same
+  // action response, before the cookie is visible to the auth gate — a
+  // nested redirect there crashes the flight tree into global-error. Instead
+  // report success and let the client navigate with a fresh full request.
+  return { ok: true, redirect: from && from.startsWith("/admin") ? from : "/admin" };
 }
 
 export async function logout() {

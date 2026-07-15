@@ -1,13 +1,12 @@
 "use server";
 
 import { cookies, headers } from "next/headers";
-import { redirect } from "next/navigation";
 import { authenticateMember } from "@/lib/auth/members";
 import { SESSION_COOKIE, createSessionToken, sessionCookieOptions } from "@/lib/auth/session";
 import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
 
-export type LoginState = { error?: string };
+export type LoginState = { error?: string; ok?: boolean; redirect?: string };
 
 /* Per-IP throttle mirroring admin login. In-memory, resets on restart —
    acceptable for a single-node shared-hosting MVP. */
@@ -60,5 +59,10 @@ export async function login(
   const jar = await cookies();
   jar.set(SESSION_COOKIE, token, sessionCookieOptions());
 
-  redirect("/account");
+  // Don't redirect() here: this cookie was just set in a useActionState
+  // action, and Next 16 would render /account from the root in the same
+  // action response before the cookie is visible to the auth gate — a
+  // nested redirect there crashes the flight tree into global-error. Instead
+  // report success and let the client navigate with a fresh full request.
+  return { ok: true, redirect: "/account" };
 }

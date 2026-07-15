@@ -86,7 +86,11 @@ export function ProjectCard({
           </div>
           <div className="flex items-center gap-2">
             <Users className="h-3.5 w-3.5 shrink-0" />
-            <span>{localizeValue(locale, "gender", project.audienceGender)}, {project.audienceAge}</span>
+            <span>
+              {[localizeValue(locale, "gender", project.audienceGender), project.audienceAge]
+                .filter(Boolean)
+                .join(", ")}
+            </span>
           </div>
           {project.budgetDisplay ? (
             <div className="flex items-center gap-2">
@@ -94,10 +98,12 @@ export function ProjectCard({
               <span>{project.budgetDisplay}</span>
             </div>
           ) : null}
-          <div className="flex items-center gap-2">
-            <Eye className="h-3.5 w-3.5 shrink-0" />
-            <span>{project.projViews} {t("card.projectedViews")}</span>
-          </div>
+          {project.projViews ? (
+            <div className="flex items-center gap-2">
+              <Eye className="h-3.5 w-3.5 shrink-0" />
+              <span>{project.projViews} {t("card.projectedViews")}</span>
+            </div>
+          ) : null}
           {releaseLabel ? (
             <div className="flex items-center gap-2">
               <Calendar className="h-3.5 w-3.5 shrink-0" />

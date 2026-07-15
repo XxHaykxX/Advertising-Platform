@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { FileUp, FolderKanban, LogOut, Search } from "lucide-react";
+import { redirect } from "next/navigation";
+import { FileUp, FolderKanban, LogOut } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { Section } from "@/components/ui/section";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,10 @@ import { prisma } from "@/lib/prisma";
 import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
 import { logout } from "./actions";
+
+/* #16: for CREATOR members the two placeholder cards below became live links
+   into the "submit project" / "my projects" flow (account/projects/*). BRAND
+   members are unaffected — they still get the catalog-browse card. */
 
 function ProfileRow({ label, value }: { label: string; value: string }) {
   return (
@@ -21,12 +26,18 @@ function ProfileRow({ label, value }: { label: string; value: string }) {
 
 export default async function AccountPage() {
   const user = await requireMember();
-  const [locale, dbUser] = await Promise.all([
+  // F13: BRAND members have a full cabinet at /account/brand (browse / interests /
+  // profile) that was otherwise unreachable — no nav link pointed to it. Send them
+  // straight there so express-interest & recommendations are actually usable.
+  if (user.role === "BRAND") redirect("/account/brand");
+  const [locale, dbUser, projectsCount] = await Promise.all([
     getLocale(),
     prisma.user.findUnique({ where: { id: user.id }, select: { company: true } }),
+    user.role === "CREATOR" ? prisma.project.count({ where: { ownerId: user.id } }) : Promise.resolve(0),
   ]);
   const t = makeUI(locale);
-  const roleLabel = user.role === "BRAND" ? t("account.roleBrand") : t("account.roleCreator");
+  // BRAND is redirected to /account/brand above, so this page is CREATOR-only.
+  const roleLabel = t("account.roleCreator");
 
   return (
     <Section>
@@ -62,54 +73,45 @@ export default async function AccountPage() {
             </div>
           </Reveal>
 
-          {/* Role-specific content */}
+          {/* Creator content (BRAND is redirected to /account/brand above) */}
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:col-span-2">
-            {user.role === "CREATOR" ? (
+            {(
               <>
                 <Reveal delay={0.05}>
-                  <div className="flex h-full flex-col items-start rounded-2xl border border-dashed border-border bg-card p-6">
+                  <div className="flex h-full flex-col items-start rounded-2xl border border-border bg-card p-6">
                     <div className="grid h-11 w-11 place-items-center rounded-xl bg-primary/10 text-primary">
                       <FileUp className="h-5 w-5" />
                     </div>
                     <h3 className="mt-4 text-lg font-semibold text-foreground">
-                      {t("account.creatorUploadTitle")}
+                      {t("account.submitProject")}
                     </h3>
                     <p className="mt-2 text-sm text-muted-foreground">
-                      {t("account.creatorUploadSoon")}
+                      {t("account.submitProjectSubtitle")}
                     </p>
+                    <Button asChild variant="primary" size="md" className="mt-6">
+                      <Link href="/account/projects/new">{t("account.submitProject")}</Link>
+                    </Button>
                   </div>
                 </Reveal>
                 <Reveal delay={0.1}>
-                  <div className="flex h-full flex-col items-start rounded-2xl border border-dashed border-border bg-card p-6">
+                  <div className="flex h-full flex-col items-start rounded-2xl border border-border bg-card p-6">
                     <div className="grid h-11 w-11 place-items-center rounded-xl bg-primary/10 text-primary">
                       <FolderKanban className="h-5 w-5" />
                     </div>
                     <h3 className="mt-4 text-lg font-semibold text-foreground">
-                      {t("account.creatorProjectsTitle")}
+                      {t("account.myProjects")}
                     </h3>
                     <p className="mt-2 text-sm text-muted-foreground">
-                      {t("account.creatorProjectsSoon")}
+                      {projectsCount > 0
+                        ? t("account.projectsCount", { count: projectsCount })
+                        : t("account.noProjects")}
                     </p>
+                    <Button asChild variant="secondary" size="md" className="mt-6">
+                      <Link href="/account/projects">{t("account.myProjects")}</Link>
+                    </Button>
                   </div>
                 </Reveal>
               </>
-            ) : (
-              <Reveal delay={0.05} className="sm:col-span-2">
-                <div className="flex h-full flex-col items-start rounded-2xl border border-border bg-card p-6">
-                  <div className="grid h-11 w-11 place-items-center rounded-xl bg-primary/10 text-primary">
-                    <Search className="h-5 w-5" />
-                  </div>
-                  <h3 className="mt-4 text-lg font-semibold text-foreground">
-                    {t("account.brandBrowseTitle")}
-                  </h3>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    {t("account.brandBrowseBody")}
-                  </p>
-                  <Button asChild variant="primary" size="md" className="mt-6">
-                    <Link href="/catalog">{t("account.brandBrowseCta")}</Link>
-                  </Button>
-                </div>
-              </Reveal>
             )}
           </div>
         </div>

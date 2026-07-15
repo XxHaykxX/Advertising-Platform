@@ -9,10 +9,9 @@ import {
   parsePlatformsInput,
   parseGalleryInput,
   parseBenefitsInput,
+  parseGenresInput,
 } from "../../form-shared";
 import { ProjectForm, type ProjectFormInitial } from "../../project-form";
-import { ActorsEditor } from "../../actors-editor";
-import { TiersEditor } from "../../tiers-editor";
 
 export default async function EditProjectPage({
   params,
@@ -30,6 +29,7 @@ export default async function EditProjectPage({
     include: {
       actors: { orderBy: { sortOrder: "asc" } },
       tiers: { orderBy: { sortOrder: "asc" } },
+      owner: { select: { avatar: true } },
     },
   });
   if (!p) notFound();
@@ -37,10 +37,19 @@ export default async function EditProjectPage({
   // edit URL gets a 404 (indistinguishable from "doesn't exist").
   if (!isSuperadmin && p.ownerId !== user.id) notFound();
 
+  // Distinct studio names already on file, for the Studio autocomplete.
+  const studioRows = await prisma.project.findMany({
+    where: { studio: { not: "" } },
+    select: { studio: true },
+    distinct: ["studio"],
+  });
+  const studios = studioRows.map((r) => r.studio).sort();
+
   const initial: ProjectFormInitial = {
     title: p.title,
     code: p.code,
     genre: p.genre,
+    genres: parseGenresInput(p.genres, p.genre),
     synopsis: p.synopsis,
     titleHy: p.titleHy ?? "",
     titleRu: p.titleRu ?? "",
@@ -52,6 +61,9 @@ export default async function EditProjectPage({
     gallery: parseGalleryInput(p.gallery),
     format: p.format,
     studio: p.studio,
+    kind: p.kind,
+    episodes: p.episodes,
+    episodeMinutes: p.episodeMinutes,
     status: p.status,
     releaseLabel: p.releaseLabel,
     countries: p.countries,
@@ -91,27 +103,25 @@ export default async function EditProjectPage({
       </Link>
       <h1 className="mb-6 mt-4 text-2xl font-bold text-foreground">Edit: {p.title}</h1>
 
-      <ProjectForm action={action} initial={initial} submitLabel="Save" />
-
-      <div className="mt-10 max-w-3xl">
-        <h2 className="mb-4 text-lg font-bold text-foreground">Cast &amp; crew</h2>
-        <ActorsEditor
-          projectId={pid}
-          actors={p.actors.map((a) => ({ id: a.id, name: a.name, role: a.role, kind: a.kind, photo: a.photo ?? "" }))}
-        />
-      </div>
-
-      <div className="mt-10 max-w-3xl">
-        <h2 className="mb-4 text-lg font-bold text-foreground">Sponsorship tiers</h2>
-        <TiersEditor
-          projectId={pid}
-          tiers={p.tiers.map((tier) => ({
-            name: tier.name,
-            priceAmd: tier.priceAmd,
-            benefits: parseBenefitsInput(tier.benefits),
-          }))}
-        />
-      </div>
+      <ProjectForm
+        action={action}
+        initial={initial}
+        initialActors={p.actors.map((a) => ({
+          name: a.name,
+          role: a.role,
+          kind: a.kind,
+          photo: a.photo ?? "",
+        }))}
+        initialTiers={p.tiers.map((tier) => ({
+          name: tier.name,
+          priceAmd: tier.priceAmd,
+          benefits: parseBenefitsInput(tier.benefits),
+        }))}
+        submitLabel="Save"
+        studios={studios}
+        projectId={pid}
+        ownerHasAvatar={!!p.owner.avatar}
+      />
     </div>
   );
 }

@@ -3,29 +3,47 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Film, Inbox, Users, Images, Handshake, FolderOpen, UserCheck } from "lucide-react";
+import {
+  LayoutDashboard,
+  Film,
+  Inbox,
+  Users,
+  Images,
+  Handshake,
+  FolderOpen,
+  UserCheck,
+  ShieldCheck,
+  Heart,
+} from "lucide-react";
 import type { Role } from "@prisma/client";
+import { canEditContent, canManageUsers, canModerate } from "@/lib/auth/permissions";
 import { getPendingCount } from "./registrations/actions";
+import { getPendingModerationCount } from "./moderation/actions";
 
-// Full nav for SUPERADMIN. A PUBLISHER only sees Dashboard + Projects —
-// Applications, Users, Portfolio and Partners are platform-wide, super-admin-
-// only views (Portfolio/Partners have no ownerId to scope by Publisher).
-// Registrations (brand/creator sign-ups) is likewise platform-wide but both
-// staff roles can review it — it's gated by requireUser(), not requireSuperadmin().
+// Per-role nav visibility. Dashboard is universal; everything else is gated
+// by what that role is actually allowed to do:
+//  - SUPERADMIN sees everything.
+//  - PUBLISHER (content editor) sees Projects/Media/Registrations, not the
+//    super-admin-only platform-wide views (Applications, Portfolio, Partners,
+//    Users — Portfolio/Partners have no ownerId to scope by Publisher).
+//  - MODERATOR (project moderation only) sees Dashboard + Moderation — no
+//    content-edit tools, no user/settings management.
 const NAV = [
-  { href: "/admin", label: "Dashboard", icon: LayoutDashboard, superadminOnly: false },
-  { href: "/admin/projects", label: "Projects", icon: Film, superadminOnly: false },
-  { href: "/admin/media", label: "Media", icon: FolderOpen, superadminOnly: false },
-  { href: "/admin/registrations", label: "Registrations", icon: UserCheck, superadminOnly: false },
-  { href: "/admin/applications", label: "Applications", icon: Inbox, superadminOnly: true },
-  { href: "/admin/portfolio", label: "Portfolio", icon: Images, superadminOnly: true },
-  { href: "/admin/partners", label: "Partners", icon: Handshake, superadminOnly: true },
-  { href: "/admin/users", label: "Users", icon: Users, superadminOnly: true },
+  { href: "/admin", label: "Dashboard", icon: LayoutDashboard, show: () => true },
+  { href: "/admin/moderation", label: "Moderation", icon: ShieldCheck, show: canModerate },
+  { href: "/admin/projects", label: "Projects", icon: Film, show: canEditContent },
+  { href: "/admin/media", label: "Media", icon: FolderOpen, show: canEditContent },
+  { href: "/admin/registrations", label: "Registrations", icon: UserCheck, show: canEditContent },
+  { href: "/admin/applications", label: "Applications", icon: Inbox, show: canManageUsers },
+  { href: "/admin/interests", label: "Interests", icon: Heart, show: canManageUsers },
+  { href: "/admin/portfolio", label: "Portfolio", icon: Images, show: canManageUsers },
+  { href: "/admin/partners", label: "Partners", icon: Handshake, show: canManageUsers },
+  { href: "/admin/users", label: "Users", icon: Users, show: canManageUsers },
 ];
 
 export function AdminNav({ role }: { role: Role }) {
   const pathname = usePathname();
-  const items = role === "SUPERADMIN" ? NAV : NAV.filter((item) => !item.superadminOnly);
+  const items = NAV.filter((item) => item.show(role));
 
   // Pending-registrations badge — the count doubles as the "new sign-up"
   // notification. Fetched via a direct Server Action call (not a form), so
@@ -38,6 +56,21 @@ export function AdminNav({ role }: { role: Role }) {
     getPendingCount()
       .then((n) => {
         if (alive) setPendingCount(n);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [pathname]);
+
+  // Pending-moderation badge — same fetch-on-route-change pattern as the
+  // registrations badge above, just against the project moderation queue.
+  const [pendingModerationCount, setPendingModerationCount] = useState(0);
+  useEffect(() => {
+    let alive = true;
+    getPendingModerationCount()
+      .then((n) => {
+        if (alive) setPendingModerationCount(n);
       })
       .catch(() => {});
     return () => {
@@ -71,6 +104,11 @@ export function AdminNav({ role }: { role: Role }) {
             {item.href === "/admin/registrations" && pendingCount > 0 && (
               <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-primary px-1.5 text-[11px] font-semibold text-primary-foreground">
                 {pendingCount}
+              </span>
+            )}
+            {item.href === "/admin/moderation" && pendingModerationCount > 0 && (
+              <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-primary px-1.5 text-[11px] font-semibold text-primary-foreground">
+                {pendingModerationCount}
               </span>
             )}
           </Link>

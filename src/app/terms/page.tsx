@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Header } from "@/components/header";
+import { SiteHeader } from "@/components/site-header";
 import { Footer } from "@/components/footer";
 import { LegalPage, type LegalSection } from "@/components/legal-page";
 import { getLocale } from "@/lib/data/locale";
@@ -172,7 +172,7 @@ export default async function TermsPage() {
   const c = content[locale];
   return (
     <>
-      <Header locale={locale} currency={currency} />
+      <SiteHeader />
       <LegalPage
         title={t("legal.termsTitle")}
         updated={c.updated}

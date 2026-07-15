@@ -64,6 +64,18 @@ html { scrollbar-gutter: stable; }
   .marquee-col { animation: none !important; }
 }
 
+/* contained pulse for the "Product placement" node — a soft ring that
+   expands ~8px on all sides via box-shadow (no layout shift, no horizontal
+   overflow like animate-ping's full-width scale). */
+@keyframes placement-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.45); }
+  50% { box-shadow: 0 0 0 8px rgba(79, 70, 229, 0); }
+}
+.placement-glow { animation: placement-glow 2.4s ease-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .placement-glow { animation: none !important; }
+}
+
 /* horizontal marquee (partners logo slider) */
 @keyframes marquee-left {
   from { transform: translateX(0); }

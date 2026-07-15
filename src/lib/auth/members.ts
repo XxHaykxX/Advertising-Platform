@@ -4,9 +4,10 @@ import { prisma } from "@/lib/prisma";
 import type { AccountStatus } from "@prisma/client";
 
 /* Self-serve member accounts (BRAND / CREATOR). Separate from staff
-   (SUPERADMIN / PUBLISHER) auth: members register into a PENDING state and
-   cannot sign in until an admin approves them, and can be BLOCKED at any time.
-   Staff accounts never flow through here — they use /admin/login. */
+   (SUPERADMIN / PUBLISHER / MODERATOR) auth: members register straight into
+   APPROVED (no moderation queue) and can sign in immediately, but can still
+   be REJECTED/BLOCKED by an admin at any time. Staff accounts never flow
+   through here — they use /admin/login. */
 
 export type MemberRole = "BRAND" | "CREATOR";
 
@@ -18,8 +19,9 @@ export type CreateMemberResult =
   | { ok: true; userId: number }
   | { ok: false; reason: "email_taken" };
 
-/** Create a PENDING member account. Password is bcrypt-hashed; the account is
-   inert (cannot sign in) until an admin sets status APPROVED. */
+/** Create an APPROVED member account. Password is bcrypt-hashed; the account
+   can sign in immediately — no admin moderation step. An admin may still
+   REJECT/BLOCK it later from /admin/registrations. */
 export async function createMember(input: {
   name: string;
   email: string;
@@ -38,7 +40,7 @@ export async function createMember(input: {
       email,
       passwordHash,
       role: input.role,
-      status: "PENDING",
+      status: "APPROVED",
       company: input.company?.trim() || null,
     },
   });
@@ -89,8 +91,9 @@ export async function findMemberByGoogleId(googleId: string) {
   return prisma.user.findUnique({ where: { googleId } });
 }
 
-/** Create a PENDING member from a verified Google profile. No password hash —
-   the account signs in via Google only. Email/googleId must both be unused. */
+/** Create an APPROVED member from a verified Google profile. No password
+   hash — the account signs in via Google only. Email/googleId must both be
+   unused. Signs in immediately — no admin moderation step. */
 export async function createGoogleMember(input: {
   googleId: string;
   email: string;
@@ -111,7 +114,7 @@ export async function createGoogleMember(input: {
       googleId: input.googleId,
       passwordHash: null,
       role: input.role,
-      status: "PENDING",
+      status: "APPROVED",
       company: input.company?.trim() || null,
     },
   });

@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { getPortfolio } from "@/lib/data/portfolio";
-import { getPartners } from "@/lib/data/partners";
 import { getLocale } from "@/lib/data/locale";
 import { getCurrency } from "@/lib/data/currency";
+import { getSiteHeaderUser } from "@/lib/data/site-header-user";
 import { PortfolioView } from "@/components/portfolio-page/portfolio-view";
 import { PortfolioJsonLd } from "@/components/portfolio-page/portfolio-json-ld";
 
@@ -14,17 +14,17 @@ export const metadata: Metadata = {
 };
 
 export default async function PortfolioPage() {
-  const [cases, partners, locale, currency] = await Promise.all([
+  const [cases, locale, currency, user] = await Promise.all([
     getPortfolio(),
-    getPartners(),
     getLocale(),
     getCurrency(),
+    getSiteHeaderUser(),
   ]);
 
   return (
     <>
       <PortfolioJsonLd cases={cases} />
-      <PortfolioView cases={cases} partners={partners} locale={locale} currency={currency} />
+      <PortfolioView cases={cases} locale={locale} currency={currency} user={user} />
     </>
   );
 }

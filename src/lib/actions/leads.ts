@@ -1,6 +1,8 @@
 "use server";
 
 import { createApplication } from "@/lib/data/applications";
+import { getLocale } from "@/lib/data/locale";
+import { makeUI } from "@/lib/i18n";
 
 export interface LeadValues {
   name: string;
@@ -25,16 +27,18 @@ export async function submitLead(
   const message = String(formData.get("message") || "").trim();
   const values: LeadValues = { name, email, message };
 
-  if (!name) return { ok: false, error: "Please enter your name.", values };
-  if (name.length > 200) return { ok: false, error: "Name is too long.", values };
+  const t = makeUI(await getLocale());
 
-  if (!email) return { ok: false, error: "Please enter your email.", values };
-  if (email.length > 200) return { ok: false, error: "Email is too long.", values };
+  if (!name) return { ok: false, error: t("formErr.name"), values };
+  if (name.length > 200) return { ok: false, error: t("formErr.nameLong"), values };
+
+  if (!email) return { ok: false, error: t("formErr.email"), values };
+  if (email.length > 200) return { ok: false, error: t("formErr.emailLong"), values };
   if (!EMAIL_RE.test(email)) {
-    return { ok: false, error: "Please enter a valid email address.", values };
+    return { ok: false, error: t("formErr.emailInvalid"), values };
   }
 
-  if (message.length > 5000) return { ok: false, error: "Message is too long.", values };
+  if (message.length > 5000) return { ok: false, error: t("formErr.messageLong"), values };
 
   const projectIdRaw = String(formData.get("projectId") || "").trim();
   const projectId = projectIdRaw ? Number(projectIdRaw) : undefined;

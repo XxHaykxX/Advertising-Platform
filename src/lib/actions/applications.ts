@@ -2,6 +2,8 @@
 
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
+import { getLocale } from "@/lib/data/locale";
+import { makeUI } from "@/lib/i18n";
 
 export interface ApplicationValues {
   name: string;
@@ -58,27 +60,29 @@ export async function submitApplication(
   const consent = formData.get("consent") === "on";
   const values: ApplicationValues = { name, phone, email, company, message };
 
-  if (name.length < 2) return { ok: false, error: "Please enter your name.", values };
-  if (name.length > 200) return { ok: false, error: "Name is too long.", values };
+  const t = makeUI(await getLocale());
 
-  if (!phone) return { ok: false, error: "Please enter your phone number.", values };
-  if (phone.length > 40) return { ok: false, error: "Phone number is too long.", values };
+  if (name.length < 2) return { ok: false, error: t("formErr.name"), values };
+  if (name.length > 200) return { ok: false, error: t("formErr.nameLong"), values };
+
+  if (!phone) return { ok: false, error: t("formErr.phone"), values };
+  if (phone.length > 40) return { ok: false, error: t("formErr.phoneLong"), values };
 
   if (email) {
-    if (email.length > 200) return { ok: false, error: "Email is too long.", values };
+    if (email.length > 200) return { ok: false, error: t("formErr.emailLong"), values };
     if (!EMAIL_RE.test(email)) {
-      return { ok: false, error: "Please enter a valid email address.", values };
+      return { ok: false, error: t("formErr.emailInvalid"), values };
     }
   }
 
-  if (message.length > 5000) return { ok: false, error: "Message is too long.", values };
+  if (message.length > 5000) return { ok: false, error: t("formErr.messageLong"), values };
 
   if (!consent) {
-    return { ok: false, error: "Please confirm you agree to be contacted.", values };
+    return { ok: false, error: t("formErr.consent"), values };
   }
 
   if (rateLimited(await clientIp())) {
-    return { ok: false, error: "Too many requests. Please try again later.", values };
+    return { ok: false, error: t("formErr.rateLimit"), values };
   }
 
   const projectIdRaw = String(formData.get("projectId") || "").trim();

@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { getProject, getProjectIds } from "@/lib/data/projects";
 import { getLocale } from "@/lib/data/locale";
 import { getCurrency } from "@/lib/data/currency";
-import { Header } from "@/components/header";
+import { SiteHeader } from "@/components/site-header";
 import { Footer } from "@/components/footer";
 import { ReportHero } from "@/components/report/report-hero";
 import { KeyFacts } from "@/components/report/key-facts";
@@ -33,7 +33,7 @@ export default async function ReportPage({
 
   return (
     <>
-      <Header locale={locale} currency={currency} />
+      <SiteHeader />
       <ReportTabs hasCast={project.actors.length > 0} locale={locale} />
       <div id="overview">
         <ReportHero project={project} locale={locale} />

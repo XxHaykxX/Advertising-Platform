@@ -59,3 +59,6 @@ placement/dev-3001.log
 # large local press-kit assets (keep out of git)
 *.press*.pdf
 /qa-*.jpeg
+
+# root-level screenshot/test artifacts
+/*.png

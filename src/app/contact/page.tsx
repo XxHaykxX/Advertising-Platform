@@ -1,4 +1,4 @@
-import { Header } from "@/components/header";
+import { SiteHeader } from "@/components/site-header";
 import { Footer } from "@/components/footer";
 import { ContactForm } from "@/components/contact-page/contact-form";
 import { ContactMethods } from "@/components/contact-page/contact-methods";
@@ -21,7 +21,7 @@ export default async function ContactPage() {
 
   return (
     <>
-      <Header locale={locale} currency={currency} />
+      <SiteHeader />
       <main className="relative min-h-screen bg-background">
         {/* Subtle decorative background */}
         <div className="pointer-events-none fixed inset-0 overflow-hidden">

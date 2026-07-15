@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Loader2, KeyRound, Ban, RotateCcw, CheckCircle2 } from "lucide-react";
 import type { FormState, ResetState } from "./actions";
 import { setUserActive, resetUserPassword } from "./actions";
+import { PasswordInput } from "@/components/ui/password-input";
 
 const inputCls =
   "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none transition-colors focus:border-primary";
@@ -30,9 +31,8 @@ export function UserForm({
         </label>
         <label className="block">
           <span className={labelCls}>Password *</span>
-          <input
+          <PasswordInput
             name="password"
-            type="password"
             autoComplete="new-password"
             placeholder="at least 8 characters"
             className={inputCls}
@@ -72,9 +72,8 @@ function ResetPasswordForm({ id, onDone }: { id: number; onDone: () => void }) {
 
   return (
     <form action={formAction} className="mt-2 flex flex-wrap items-center gap-2">
-      <input
+      <PasswordInput
         name="password"
-        type="password"
         placeholder="New password (min. 8 chars)"
         autoComplete="new-password"
         className={`${inputCls} max-w-[220px] py-1.5`}

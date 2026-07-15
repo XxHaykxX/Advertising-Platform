@@ -1,28 +1,35 @@
 "use client";
 
-import { useState } from "react";
+import { forwardRef, useImperativeHandle, useState } from "react";
 import Image from "next/image";
 import { Loader2, Trash2, Upload } from "lucide-react";
 import { uploadImage } from "@/lib/actions/uploads";
 
+/** Imperative handle (#26) — lets a sibling component (the "Generate poster"
+ *  panel) push a freshly generated image path into an uncontrolled
+ *  ImageUploader without the parent form having to lift its state. */
+export type ImageUploaderHandle = { addPath: (path: string) => void };
+
 /** File-upload replacement for the old URL text fields. Uploaded paths are
  *  mirrored into a hidden <input> so the existing form plumbing (poster string /
  *  newline-joined gallery) keeps working unchanged. */
-export function ImageUploader({
-  name,
-  dir,
-  multiple = false,
-  initial = "",
-  label,
-  onChange,
-}: {
+export const ImageUploader = forwardRef<ImageUploaderHandle, {
   name?: string; // when set, mirrors value into a hidden form field
   dir: string;
   multiple?: boolean;
   initial?: string; // single path, or newline-joined paths for multiple
   label: string;
   onChange?: (paths: string[]) => void; // controlled mode (e.g. sub-editor rows)
-}) {
+  trailing?: React.ReactNode; // rendered inline next to the upload button (e.g. an "or Generate poster" action)
+}>(function ImageUploader({
+  name,
+  dir,
+  multiple = false,
+  initial = "",
+  label,
+  onChange,
+  trailing,
+}, ref) {
   const [paths, setPaths] = useState<string[]>(
     initial ? initial.split("\n").map((s) => s.trim()).filter(Boolean) : [],
   );
@@ -60,18 +67,25 @@ export function ImageUploader({
     commit(paths.filter((_, idx) => idx !== i));
   }
 
+  useImperativeHandle(ref, () => ({
+    addPath(path: string) {
+      commit(multiple ? [...paths, path] : [path]);
+    },
+  }));
+
   const hiddenValue = multiple ? paths.join("\n") : paths[0] ?? "";
 
   return (
     <div className="space-y-3">
       {name ? <input type="hidden" name={name} value={hiddenValue} /> : null}
       <div className="flex items-center gap-3">
-        <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm text-foreground hover:border-primary/40">
+        <label className="inline-flex cursor-pointer items-center gap-2 whitespace-nowrap rounded-lg border border-border px-3 py-2 text-sm text-foreground hover:border-primary/40">
           <Upload className="h-4 w-4" />
           {label}
           <input type="file" accept="image/*" multiple={multiple} onChange={onPick} className="hidden" />
         </label>
         {busy && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
+        {trailing}
       </div>
 
       {error && <p className="text-xs text-primary">{error}</p>}
@@ -98,4 +112,4 @@ export function ImageUploader({
       )}
     </div>
   );
-}
+});

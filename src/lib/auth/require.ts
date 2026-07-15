@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { notFound } from "next/navigation";
 import { SESSION_COOKIE, verifySessionToken } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
+import { canEditContent, canModerate } from "@/lib/auth/permissions";
 import type { Role } from "@prisma/client";
 
 export type AuthedUser = {
@@ -18,7 +19,7 @@ export type AuthedUser = {
    token is valid AND the user still has isActive=true — this is the instant-
    deactivation gate: a deactivated Publisher is locked out on the very next
    request, since we re-check the DB (not just the JWT) on every call. */
-async function loadCurrentUser(): Promise<AuthedUser | null> {
+export async function loadCurrentUser(): Promise<AuthedUser | null> {
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
   const session = await verifySessionToken(token);
   if (!session) return null;
@@ -57,13 +58,19 @@ async function loadCurrentMember(): Promise<AuthedUser | null> {
   };
 }
 
-/** Require a logged-in, active staff user (SUPERADMIN or PUBLISHER). Members
-   (BRAND / CREATOR) are bounced to /admin/login — they can never reach the
-   admin panel even with a valid member session. */
+/** True for any staff role that may sign in at /admin (SUPERADMIN, PUBLISHER,
+   MODERATOR). Members (BRAND / CREATOR) are not staff. */
+function isStaffRole(role: Role): boolean {
+  return role === "SUPERADMIN" || role === "PUBLISHER" || role === "MODERATOR";
+}
+
+/** Require a logged-in, active staff user (SUPERADMIN, PUBLISHER or
+   MODERATOR). Members (BRAND / CREATOR) are bounced to /admin/login — they
+   can never reach the admin panel even with a valid member session. */
 export async function requireUser(): Promise<AuthedUser> {
   const user = await loadCurrentUser();
   if (!user) redirect("/admin/login");
-  if (user.role !== "SUPERADMIN" && user.role !== "PUBLISHER") redirect("/admin/login");
+  if (!isStaffRole(user.role)) redirect("/admin/login");
   return user;
 }
 
@@ -80,6 +87,28 @@ export async function requireMember(): Promise<AuthedUser> {
 export async function requireSuperadmin(): Promise<AuthedUser> {
   const user = await requireUser();
   if (user.role !== "SUPERADMIN") notFound();
+  return user;
+}
+
+/** Require a logged-in, active staff user who may create/edit project content
+   (SUPERADMIN or PUBLISHER — see permissions.ts). 404s otherwise, same
+   disguise-as-not-found pattern as requireSuperadmin: a Moderator hitting a
+   content action directly (bypassing admin-nav, which already hides the
+   link) must not be able to tell "doesn't exist" from "not allowed". */
+export async function requireContentEditor(): Promise<AuthedUser> {
+  const user = await requireUser();
+  if (!canEditContent(user.role)) notFound();
+  return user;
+}
+
+/** Require a logged-in, active staff user who may moderate submitted projects
+   (SUPERADMIN or MODERATOR — see permissions.ts). 404s otherwise, same
+   pattern as requireContentEditor/requireSuperadmin. Not yet wired to any
+   route (moderation actions land in a follow-up task) — exported so that
+   work can consume it directly. */
+export async function requireModerator(): Promise<AuthedUser> {
+  const user = await requireUser();
+  if (!canModerate(user.role)) notFound();
   return user;
 }
 

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getProjects } from "@/lib/data/projects";
 import { getLocale } from "@/lib/data/locale";
 import { getCurrency } from "@/lib/data/currency";
+import { getSiteHeaderUser } from "@/lib/data/site-header-user";
 import { CatalogView } from "./catalog-view";
 
 export const metadata: Metadata = {
@@ -14,6 +15,9 @@ export const metadata: Metadata = {
 export default async function CatalogPage() {
   const locale = await getLocale();
   const currency = await getCurrency();
-  const projects = await getProjects(locale, currency);
-  return <CatalogView projects={projects} locale={locale} currency={currency} />;
+  const [projects, user] = await Promise.all([
+    getProjects(locale, currency),
+    getSiteHeaderUser(),
+  ]);
+  return <CatalogView projects={projects} locale={locale} currency={currency} user={user} />;
 }

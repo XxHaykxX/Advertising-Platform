@@ -3,35 +3,33 @@
 import { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Header } from "@/components/header";
+import { Header, type SiteHeaderUser } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
 import { DEFAULT_CURRENCY, type CurrencyCode } from "@/lib/currency";
-import type { PortfolioDTO, PartnerDTO } from "@/lib/types";
-import { PartnersMarquee } from "@/components/partners-page/partners-marquee";
-import { PartnersGrid } from "@/components/partners-page/partners-grid";
+import type { PortfolioDTO } from "@/lib/types";
 import { CaseCard } from "./case-card";
 import { CaseLightbox } from "./lightbox";
 
 export function PortfolioView({
   cases,
-  partners = [],
   locale = DEFAULT_LOCALE,
   currency = DEFAULT_CURRENCY,
+  user = null,
 }: {
   cases: PortfolioDTO[];
-  partners?: PartnerDTO[];
   locale?: Locale;
   currency?: CurrencyCode;
+  user?: SiteHeaderUser | null;
 }) {
   const t = makeUI(locale);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   return (
     <>
-      <Header locale={locale} currency={currency} />
+      <Header user={user} locale={locale} currency={currency} />
 
       <main className="bg-background">
         <div className="border-b border-border bg-gradient-to-b from-muted/60 to-background py-16 sm:py-20">
@@ -82,25 +80,6 @@ export function PortfolioView({
             </div>
           )}
         </Container>
-
-        {partners.length > 0 ? (
-          <div className="border-t border-border py-16 sm:py-20">
-            <Container>
-              <div className="mb-10 text-center">
-                <h2 className="text-3xl font-bold tracking-tight text-foreground md:text-4xl">
-                  {t("partners.fullNetwork")}
-                </h2>
-                <p className="mt-3 text-base text-muted-foreground">{t("partners.subtitle")}</p>
-              </div>
-            </Container>
-            <div className="mb-12">
-              <PartnersMarquee partners={partners} />
-            </div>
-            <Container>
-              <PartnersGrid partners={partners} />
-            </Container>
-          </div>
-        ) : null}
 
         <div className="border-t border-border bg-section">
           <Container className="flex flex-col items-center gap-5 py-16 text-center sm:py-20">

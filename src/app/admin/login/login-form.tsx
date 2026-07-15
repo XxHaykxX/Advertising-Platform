@@ -1,8 +1,10 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
+import Link from "next/link";
 import { Loader2, Lock } from "lucide-react";
 import { login, type ActionState } from "@/app/admin/actions";
+import { PasswordInput } from "@/components/ui/password-input";
 
 export function LoginForm({
   from,
@@ -16,6 +18,14 @@ export function LoginForm({
     {},
   );
 
+  // Navigate on the client with a fresh full request, so the just-set
+  // session cookie is carried and the auth gate sees it (see actions.ts).
+  useEffect(() => {
+    if (state.ok && state.redirect) {
+      window.location.assign(state.redirect);
+    }
+  }, [state]);
+
   return (
     <form action={formAction} className="space-y-4">
       <input type="hidden" name="from" value={from} />
@@ -27,6 +37,7 @@ export function LoginForm({
         <input
           name="email"
           type="email"
+          required
           autoFocus
           autoComplete="username"
           defaultValue={initialEmail}
@@ -36,12 +47,15 @@ export function LoginForm({
       </label>
 
       <label className="block">
-        <span className="mb-1.5 block text-sm font-medium text-foreground">
-          Password
-        </span>
-        <input
+        <div className="mb-1.5 flex items-center justify-between">
+          <span className="text-sm font-medium text-foreground">Password</span>
+          <Link href="/forgot" className="text-xs font-medium text-primary hover:underline">
+            Forgot password?
+          </Link>
+        </div>
+        <PasswordInput
           name="password"
-          type="password"
+          required
           autoComplete="current-password"
           placeholder="••••••••"
           className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:border-primary/50"

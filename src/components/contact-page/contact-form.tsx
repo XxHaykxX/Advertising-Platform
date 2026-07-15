@@ -52,6 +52,7 @@ export function ContactForm({
             <input
               name="name"
               type="text"
+              required
               autoComplete="name"
               defaultValue={state.values?.name}
               placeholder={t("form.namePlaceholder")}
@@ -64,6 +65,7 @@ export function ContactForm({
             <input
               name="email"
               type="email"
+              required
               autoComplete="email"
               defaultValue={state.values?.email}
               placeholder="you@example.com"
@@ -92,6 +94,7 @@ export function ContactForm({
             <textarea
               name="message"
               rows={5}
+              required
               defaultValue={state.values?.message}
               placeholder={t("contactPage.messagePlaceholder")}
               className={`${fieldClass} resize-none`}

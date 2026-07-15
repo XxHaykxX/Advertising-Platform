@@ -26,13 +26,16 @@ export function ReportHero({
     new Set([project.poster, ...parseStringArray(project.gallery)].filter(Boolean)),
   );
 
+  const audience = [localizeValue(locale, "gender", project.audienceGender), project.audienceAge]
+    .filter(Boolean)
+    .join(" ");
   const metaItems = [
     localizeValue(locale, "genre", project.genre),
     project.subgenre,
     project.format,
     project.studio,
     countries,
-    `${localizeValue(locale, "gender", project.audienceGender)} ${project.audienceAge}`,
+    audience,
     project.releaseLabel,
   ].filter(Boolean);
 
@@ -96,21 +99,27 @@ export function ReportHero({
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-xl border border-border bg-card p-4">
-                <Eye className="h-4 w-4 text-primary" />
-                <div className="mt-2 text-lg font-bold text-foreground">{project.projViews}</div>
-                <div className="text-xs text-muted-foreground">{t("report.projectedViews")}</div>
-              </div>
-              <div className="rounded-xl border border-border bg-card p-4">
-                <DollarSign className="h-4 w-4 text-primary" />
-                <div className="mt-2 text-lg font-bold text-foreground">{project.cpmDisplay}</div>
-                <div className="text-xs text-muted-foreground">{t("report.cpm")}</div>
-              </div>
-              <div className="rounded-xl border border-border bg-card p-4">
-                <Wallet className="h-4 w-4 text-primary" />
-                <div className="mt-2 text-lg font-bold text-foreground">{project.budgetDisplay}</div>
-                <div className="text-xs text-muted-foreground">{t("report.budgetRange")}</div>
-              </div>
+              {project.projViews ? (
+                <div className="rounded-xl border border-border bg-card p-4">
+                  <Eye className="h-4 w-4 text-primary" />
+                  <div className="mt-2 text-lg font-bold text-foreground">{project.projViews}</div>
+                  <div className="text-xs text-muted-foreground">{t("report.projectedViews")}</div>
+                </div>
+              ) : null}
+              {project.cpmDisplay ? (
+                <div className="rounded-xl border border-border bg-card p-4">
+                  <DollarSign className="h-4 w-4 text-primary" />
+                  <div className="mt-2 text-lg font-bold text-foreground">{project.cpmDisplay}</div>
+                  <div className="text-xs text-muted-foreground">{t("report.cpm")}</div>
+                </div>
+              ) : null}
+              {project.budgetDisplay ? (
+                <div className="rounded-xl border border-border bg-card p-4">
+                  <Wallet className="h-4 w-4 text-primary" />
+                  <div className="mt-2 text-lg font-bold text-foreground">{project.budgetDisplay}</div>
+                  <div className="text-xs text-muted-foreground">{t("report.budgetRange")}</div>
+                </div>
+              ) : null}
             </div>
           </div>
         </Reveal>

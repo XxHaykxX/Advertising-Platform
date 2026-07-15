@@ -21,7 +21,7 @@ import { AccentBadge, GenreBadge } from "@/components/ui/badge";
 import { ProjectCard } from "@/components/project-card";
 import { ApplyDialog } from "@/components/apply-dialog";
 import { Footer } from "@/components/footer";
-import { Header } from "@/components/header";
+import { Header, type SiteHeaderUser } from "@/components/header";
 import { daysUntil, formatFullDate, splitCountries } from "@/lib/data/format";
 import { cn } from "@/lib/utils";
 import { DEFAULT_LOCALE, intlLocale, localizeValue, makeUI, UI, LOCALES, type Locale } from "@/lib/i18n";
@@ -86,9 +86,13 @@ function ProjectRow({ project, locale = DEFAULT_LOCALE }: { project: ProjectList
         <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
           <span>{project.format}</span>
           <span>{countries.slice(0, 3).join(", ")}</span>
-          <span>{localizeValue(locale, "gender", project.audienceGender)}, {project.audienceAge}</span>
+          <span>
+            {[localizeValue(locale, "gender", project.audienceGender), project.audienceAge]
+              .filter(Boolean)
+              .join(", ")}
+          </span>
           {project.budgetDisplay ? <span>{project.budgetDisplay}</span> : null}
-          <span>{project.projViews} {t("card.projectedViews")}</span>
+          {project.projViews ? <span>{project.projViews} {t("card.projectedViews")}</span> : null}
           {project.applicationDeadline ? (
             <span
               className={cn(
@@ -169,10 +173,12 @@ export function CatalogView({
   projects,
   locale = DEFAULT_LOCALE,
   currency = DEFAULT_CURRENCY,
+  user = null,
 }: {
   projects: ProjectListDTO[];
   locale?: Locale;
   currency?: CurrencyCode;
+  user?: SiteHeaderUser | null;
 }) {
   const t = makeUI(locale);
   const genres = useMemo(
@@ -373,7 +379,7 @@ export function CatalogView({
 
   return (
     <>
-      <Header locale={locale} currency={currency} />
+      <Header user={user} locale={locale} currency={currency} />
 
       <Container className="pt-6">
         <div className="mb-8 flex items-center gap-2 rounded-xl border border-border bg-muted/60 px-4 py-3 text-sm text-muted-foreground">

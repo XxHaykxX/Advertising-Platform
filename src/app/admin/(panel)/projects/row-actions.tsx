@@ -2,8 +2,9 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { Pencil, Trash2, Loader2 } from "lucide-react";
-import { deleteProject, toggleActive } from "./actions";
+import { useRouter } from "next/navigation";
+import { Copy, Pencil, Trash2, Loader2 } from "lucide-react";
+import { deleteProject, duplicateProject, toggleActive } from "./actions";
 
 export function ActiveToggle({ id, active }: { id: number; active: boolean }) {
   const [on, setOn] = useState(active);
@@ -29,6 +30,8 @@ export function ActiveToggle({ id, active }: { id: number; active: boolean }) {
 
 export function DeleteButton({ id, title }: { id: number; title: string }) {
   const [pending, start] = useTransition();
+  const [duplicating, startDuplicate] = useTransition();
+  const router = useRouter();
   return (
     <div className="flex items-center gap-1">
       <Link
@@ -38,6 +41,25 @@ export function DeleteButton({ id, title }: { id: number; title: string }) {
       >
         <Pencil className="h-4 w-4" />
       </Link>
+      <button
+        type="button"
+        disabled={duplicating}
+        onClick={() => {
+          // #20²: clone this project as a template and jump to the new copy's
+          // edit page. The action returns { redirect } (never redirect()s
+          // itself — the 2026-07-15 black-screen bugfix), so navigate here.
+          startDuplicate(async () => {
+            const res = await duplicateProject(id);
+            if (res?.redirect) router.push(res.redirect);
+            else if (res?.error) alert(res.error);
+          });
+        }}
+        className="grid h-8 w-8 place-items-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
+        aria-label="Duplicate"
+        title="Duplicate as template"
+      >
+        {duplicating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Copy className="h-4 w-4" />}
+      </button>
       <button
         type="button"
         disabled={pending}

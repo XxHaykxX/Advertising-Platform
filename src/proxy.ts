@@ -15,7 +15,8 @@ export async function proxy(req: NextRequest) {
   // instead of being bounced into an infinite redirect against requireUser().
   const session = await verifySessionToken(token);
   const authed =
-    session !== null && (session.role === "SUPERADMIN" || session.role === "PUBLISHER");
+    session !== null &&
+    (session.role === "SUPERADMIN" || session.role === "PUBLISHER" || session.role === "MODERATOR");
 
   if (!authed && !isLogin) {
     const url = req.nextUrl.clone();

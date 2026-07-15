@@ -14,6 +14,14 @@ const LOCALE_NAMES: Record<Locale, string> = {
   hy: "Հայերեն",
 };
 
+/** Short native badge shown next to the full name (and on the collapsed
+ *  button) — native abbreviations instead of the raw "ru"/"en"/"hy" codes. */
+const LOCALE_SHORT: Record<Locale, string> = {
+  ru: "RU",
+  en: "EN",
+  hy: "Հայ",
+};
+
 /** Language dropdown (RU / EN / HY). Pass `onDark` when floating over the
  *  cinematic hero (see header.tsx for the same light-on-dark convention). */
 export function LocaleSwitcher({
@@ -74,12 +82,12 @@ export function LocaleSwitcher({
         aria-expanded={open}
         aria-label="Language"
         className={cn(
-          "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold uppercase transition-colors hover:bg-primary/10 hover:text-primary disabled:cursor-not-allowed disabled:opacity-70",
+          "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-primary/10 hover:text-primary disabled:cursor-not-allowed disabled:opacity-70",
           onDark ? "bg-white/10 text-white" : "bg-muted text-foreground"
         )}
       >
         <Globe className="h-3.5 w-3.5" />
-        {current}
+        {LOCALE_SHORT[current]}
         <ChevronDown
           className={cn(
             "h-3.5 w-3.5 transition-transform",

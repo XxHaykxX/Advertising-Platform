@@ -43,6 +43,22 @@ function localizeFormat(locale: Locale, format: string): string {
     .join(" · ");
 }
 
+/** #19: a SERIAL with episode data displays "{episodeMinutes}m/{episodes}
+   episodes" (e.g. "60m/24episodes") instead of the free-text `format` column
+   — computed once here so every consumer of ProjectListDTO/ProjectDetailDTO
+   (project-card, report-hero, catalog) gets it for free without duplicating
+   the branch. FILM (or a SERIAL missing episode data) falls back to the
+   plain localized `format` string as before. */
+function effectiveFormat(
+  locale: Locale,
+  p: { format: string; kind: string; episodes: number | null; episodeMinutes: number | null },
+): string {
+  if (p.kind === "SERIAL" && p.episodes && p.episodeMinutes) {
+    return `${p.episodeMinutes}m/${p.episodes}episodes`;
+  }
+  return localizeFormat(locale, p.format);
+}
+
 // ── country token dictionary ─────────────────────────────────────────────
 const COUNTRY_TOKENS: Record<string, { ru: string; hy: string }> = {
   Armenia: { ru: "Армения", hy: "Հայաստան" },
@@ -104,8 +120,13 @@ const getProjectsCached = unstable_cache(
     currency: CurrencyCode,
     activeOnly: boolean,
   ): Promise<ProjectListDTO[]> => {
+    // #13: the public catalog (activeOnly=true) only ever shows projects that
+    // have cleared moderation — PENDING/REJECTED/DRAFT stay hidden until an
+    // admin/moderator approves them. Existing rows default to APPROVED, so
+    // nothing already live disappears. Admin call sites pass activeOnly=false
+    // and see every status (unfiltered by moderation).
     const rows = await prisma.project.findMany({
-    where: activeOnly ? { isActive: true } : undefined,
+    where: activeOnly ? { isActive: true, moderationStatus: "APPROVED" } : undefined,
     orderBy: { sortOrder: "asc" },
   });
   const rates = await getRates();
@@ -116,7 +137,7 @@ const getProjectsCached = unstable_cache(
     genre: p.genre,
     synopsis: pickLocale(locale, { hy: p.synopsisHy, ru: p.synopsisRu, en: p.synopsisEn }, p.synopsis),
     poster: p.poster ?? "",
-    format: localizeFormat(locale, p.format),
+    format: effectiveFormat(locale, p),
     studio: p.studio,
     countries: localizeCountries(locale, p.countries),
     audienceGender: p.audienceGender,
@@ -158,7 +179,7 @@ const getProjectCached = unstable_cache(
     activeOnly: boolean,
   ): Promise<ProjectDetailDTO | null> => {
   const p = await prisma.project.findFirst({
-    where: activeOnly ? { id, isActive: true } : { id },
+    where: activeOnly ? { id, isActive: true, moderationStatus: "APPROVED" } : { id },
     include: {
       actors: { orderBy: { sortOrder: "asc" } },
       tiers: { orderBy: { sortOrder: "asc" } },
@@ -174,7 +195,7 @@ const getProjectCached = unstable_cache(
     synopsis: pickLocale(locale, { hy: p.synopsisHy, ru: p.synopsisRu, en: p.synopsisEn }, p.synopsis),
     poster: p.poster ?? "",
     gallery: p.gallery ?? "[]",
-    format: localizeFormat(locale, p.format),
+    format: effectiveFormat(locale, p),
     studio: p.studio,
     status: p.status,
     releaseLabel: p.releaseLabel,
@@ -229,7 +250,7 @@ export async function getProjectIds(): Promise<number[]> {
   // on demand at runtime. This keeps the build from failing on a DB hiccup.
   try {
     const rows = await prisma.project.findMany({
-      where: { isActive: true },
+      where: { isActive: true, moderationStatus: "APPROVED" },
       select: { id: true },
     });
     return rows.map((r) => r.id);

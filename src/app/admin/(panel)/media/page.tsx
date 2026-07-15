@@ -1,9 +1,9 @@
-import { requireUser } from "@/lib/auth/require";
+import { requireContentEditor } from "@/lib/auth/require";
 import { listUploads } from "@/lib/actions/uploads";
 import { MediaManager } from "./media-manager";
 
 export default async function MediaPage() {
-  await requireUser();
+  await requireContentEditor();
   const files = await listUploads();
 
   return (

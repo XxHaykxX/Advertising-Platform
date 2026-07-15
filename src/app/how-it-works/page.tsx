@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Header } from "@/components/header";
+import { SiteHeader } from "@/components/site-header";
 import { Footer } from "@/components/footer";
 import { Section } from "@/components/ui/section";
 import { Container } from "@/components/ui/container";
@@ -44,7 +44,7 @@ export default async function HowItWorksPage() {
 
   return (
     <>
-      <Header locale={locale} currency={currency} />
+      <SiteHeader />
 
       {/* Hero section */}
       <Section className="border-b border-border">

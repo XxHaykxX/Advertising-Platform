@@ -1,12 +1,14 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
+import Link from "next/link";
 import { Loader2, Lock, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { login, type LoginState } from "./actions";
 import { GoogleButton } from "@/components/google-button";
 import { makeUI, type Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { PasswordInput } from "@/components/ui/password-input";
 
 export function LoginForm({
   locale,
@@ -20,6 +22,14 @@ export function LoginForm({
   const t = makeUI(locale);
   const [state, formAction, pending] = useActionState<LoginState, FormData>(login, {});
   const message = state.error ?? notice;
+
+  // Navigate on the client with a fresh full request, so the just-set
+  // session cookie is carried and the auth gate sees it (see actions.ts).
+  useEffect(() => {
+    if (state.ok && state.redirect) {
+      window.location.assign(state.redirect);
+    }
+  }, [state]);
 
   return (
     <>
@@ -50,15 +60,21 @@ export function LoginForm({
       </label>
 
       <label className="block">
-        <span className="mb-1.5 block text-sm font-semibold text-foreground">{t("login.password")}</span>
+        <div className="mb-1.5 flex items-center justify-between">
+          <span className="text-sm font-semibold text-foreground">{t("login.password")}</span>
+          <Link href="/forgot" className="text-xs font-medium text-primary hover:underline">
+            {t("auth.forgotLink")}
+          </Link>
+        </div>
         <div className="relative">
           <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input
+          <PasswordInput
             name="password"
-            type="password"
             required
             autoComplete="current-password"
             placeholder="••••••••"
+            showLabel={t("auth.passwordShow")}
+            hideLabel={t("auth.passwordHide")}
             className="w-full rounded-xl border border-border bg-background py-3 pl-10 pr-4 text-sm text-foreground outline-none transition-colors focus:border-primary/50"
           />
         </div>

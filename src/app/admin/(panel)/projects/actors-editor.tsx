@@ -1,56 +1,51 @@
 "use client";
 
-import { useActionState, useState } from "react";
-import { Loader2, Plus, Trash2 } from "lucide-react";
-import type { ActorDTO } from "@/lib/types";
-import { saveActors, type SubEditorState } from "./actions";
+import { Plus, Trash2 } from "lucide-react";
 import { ImageUploader } from "./image-uploader";
 
-type ActorRow = { name: string; role: string; kind: string; photo: string };
+// Controlled cast/crew section (#20²). Rewritten from a standalone <form> +
+// saveActors action into a presentational section whose rows are owned by the
+// parent ProjectForm — so cast/crew now save together with the main project in
+// a single submit (no more two-step create→edit, no nested <form>). The parent
+// mirrors `value` into a hidden `actorsRows` input; createProject/updateProject
+// persist it transactionally.
+export type ActorRow = { name: string; role: string; kind: string; photo: string };
 
-const EMPTY_ROW: ActorRow = { name: "", role: "", kind: "CAST", photo: "" };
+export const EMPTY_ACTOR: ActorRow = { name: "", role: "", kind: "CAST", photo: "" };
 
 const inputCls =
   "w-full rounded-xl border border-border bg-card px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-primary";
 const miniLabelCls = "mb-1 block text-xs text-muted-foreground";
 
-export function ActorsEditor({
-  projectId,
-  actors,
+export function ActorsSection({
+  value,
+  onChange,
 }: {
-  projectId: number;
-  actors: ActorDTO[];
+  value: ActorRow[];
+  onChange: (rows: ActorRow[]) => void;
 }) {
-  const action = saveActors.bind(null, projectId);
-  const [state, formAction, pending] = useActionState<SubEditorState, FormData>(action, {});
-  const [rows, setRows] = useState<ActorRow[]>(
-    actors.map((a) => ({ name: a.name, role: a.role, kind: a.kind, photo: a.photo })),
-  );
-
   function update(i: number, patch: Partial<ActorRow>) {
-    setRows((arr) => arr.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
+    onChange(value.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
   }
 
   return (
-    <form action={formAction} className="space-y-4 rounded-2xl border border-border bg-card p-6">
-      <input type="hidden" name="rows" value={JSON.stringify(rows)} />
-
+    <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          {rows.length} actor{rows.length === 1 ? "" : "s"}
+          {value.length} member{value.length === 1 ? "" : "s"}
         </p>
         <button
           type="button"
-          onClick={() => setRows((arr) => [...arr, { ...EMPTY_ROW }])}
+          onClick={() => onChange([...value, { ...EMPTY_ACTOR }])}
           className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs text-foreground hover:border-primary/40"
         >
-          <Plus className="h-3.5 w-3.5" /> Add actor
+          <Plus className="h-3.5 w-3.5" /> Add member
         </button>
       </div>
 
-      {rows.length === 0 && <p className="text-sm text-muted-foreground">No actors.</p>}
+      {value.length === 0 && <p className="text-sm text-muted-foreground">No cast / crew yet.</p>}
 
-      {rows.map((r, i) => (
+      {value.map((r, i) => (
         <div key={i} className="space-y-3 rounded-xl border border-border bg-section p-4">
           <div className="flex items-start gap-3">
             <div className="grid flex-1 gap-3 sm:grid-cols-3">
@@ -72,7 +67,7 @@ export function ActorsEditor({
             </div>
             <button
               type="button"
-              onClick={() => setRows((arr) => arr.filter((_, idx) => idx !== i))}
+              onClick={() => onChange(value.filter((_, idx) => idx !== i))}
               className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-muted-foreground hover:bg-muted hover:text-primary"
               aria-label="Remove"
             >
@@ -90,22 +85,6 @@ export function ActorsEditor({
           </div>
         </div>
       ))}
-
-      {state.error && (
-        <p className="rounded-lg border border-primary/40 bg-primary/10 px-4 py-2.5 text-sm text-primary">
-          {state.error}
-        </p>
-      )}
-      {state.ok && !pending && <p className="text-sm text-success">Saved.</p>}
-
-      <button
-        type="submit"
-        disabled={pending}
-        className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:opacity-90 disabled:opacity-70"
-      >
-        {pending && <Loader2 className="h-4 w-4 animate-spin" />}
-        Save actors
-      </button>
-    </form>
+    </div>
   );
 }
