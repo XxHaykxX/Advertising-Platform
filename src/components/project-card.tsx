@@ -131,19 +131,19 @@ export function ProjectCard({
         </p>
 
         <div className="relative z-20 mt-auto flex gap-3 pt-6">
-          <Button asChild variant="primary" size="sm">
-            <Link href={`/reports/${project.id}`}>{t("btn.viewReport")}</Link>
-          </Button>
           <ApplyDialog
             projectId={project.id}
             projectTitle={project.title}
             locale={locale}
             trigger={
-              <Button variant="ghost" size="sm">
+              <Button variant="primary" size="sm">
                 {t("btn.requestDetails")}
               </Button>
             }
           />
+          <Button asChild variant="secondary" size="sm">
+            <Link href={`/reports/${project.id}`}>{t("btn.viewReport")}</Link>
+          </Button>
         </div>
       </div>
     </div>

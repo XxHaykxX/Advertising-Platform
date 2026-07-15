@@ -1,18 +1,28 @@
-// DISABLED / UNLINKED (2026-07-08): brand sign-in is not built (no brand auth
-// backend — only admin/publisher auth exists). Header "Sign In" link is
-// commented out, so this page is no longer reachable from the UI. Kept intact
-// for restore when brand accounts ship. Inputs remain disabled by design.
-// See the FP/iGovazd parity plan in docs/superpowers/plans.
 import Link from "next/link";
-import { Lock, Mail } from "lucide-react";
 import { Container } from "@/components/ui/container";
-import { Button } from "@/components/ui/button";
 import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
+import { googleConfigured } from "@/lib/auth/google";
+import { LoginForm } from "./login-form";
 
-export default async function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string; error?: string }>;
+}) {
   const locale = await getLocale();
   const t = makeUI(locale);
+  const { status, error } = await searchParams;
+  const notice =
+    error === "google"
+      ? t("login.errGoogle")
+      : status === "pending"
+        ? t("login.errPending")
+        : status === "blocked"
+          ? t("login.errBlocked")
+          : status === "rejected"
+            ? t("login.errRejected")
+            : undefined;
   return (
     <section className="relative flex min-h-screen items-center justify-center overflow-hidden py-20">
       <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden>
@@ -30,42 +40,12 @@ export default async function LoginPage() {
             {t("login.subtitle")}
           </p>
 
-          <form className="mt-8 space-y-5">
-            <label className="block">
-              <span className="mb-1.5 block text-sm font-semibold text-foreground">{t("form.email")}</span>
-              <div className="relative">
-                <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  type="email"
-                  disabled
-                  placeholder={t("login.emailPlaceholder")}
-                  className="w-full rounded-xl border border-border bg-muted py-3 pl-10 pr-4 text-sm text-muted-foreground outline-none"
-                />
-              </div>
-            </label>
-
-            <label className="block">
-              <span className="mb-1.5 block text-sm font-semibold text-foreground">{t("login.password")}</span>
-              <div className="relative">
-                <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  type="password"
-                  disabled
-                  placeholder="••••••••"
-                  className="w-full rounded-xl border border-border bg-muted py-3 pl-10 pr-4 text-sm text-muted-foreground outline-none"
-                />
-              </div>
-            </label>
-
-            <Button type="button" variant="primary" size="lg" disabled className="w-full">
-              {t("login.signIn")}
-            </Button>
-          </form>
+          <LoginForm locale={locale} googleEnabled={googleConfigured()} notice={notice} />
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
-            {t("login.notBrandYet")}{" "}
-            <Link href="/#contact" className="font-medium text-primary hover:underline">
-              {t("login.expressInterestInstead")}
+            {t("login.noAccount")}{" "}
+            <Link href="/register" className="font-medium text-primary hover:underline">
+              {t("login.registerLink")}
             </Link>
           </p>
         </div>

@@ -1,9 +1,9 @@
-import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, DollarSign, Film, Wallet, Eye } from "lucide-react";
+import { ArrowLeft, DollarSign, Wallet, Eye } from "lucide-react";
 import { Reveal } from "@/components/ui/reveal";
 import { PrintButton, ShareButton } from "@/components/report/report-actions";
 import { PosterSlider } from "@/components/report/poster-slider";
+import { StoryboardMarquee } from "@/components/report/storyboard-marquee";
 import { SynopsisDisclosure } from "@/components/report/synopsis-disclosure";
 import { parseStringArray, splitCountries } from "@/lib/data/format";
 import { DEFAULT_LOCALE, localizeValue, makeUI, type Locale } from "@/lib/i18n";
@@ -18,8 +18,7 @@ export function ReportHero({
 }) {
   const t = makeUI(locale);
   const countries = splitCountries(project.countries).join(", ");
-  const thumbnails = parseStringArray(project.gallery).slice(0, 5);
-  const placeholderCount = Math.max(0, 5 - thumbnails.length);
+  const thumbnails = parseStringArray(project.gallery).slice(0, 20);
   const statusLabel = t(`report.status.${project.status}`);
   // Main slider shows the poster plus every gallery image, poster first,
   // de-duplicated in case the same file is used in both fields.
@@ -133,20 +132,8 @@ export function ReportHero({
         </Reveal>
 
         <Reveal delay={0.15}>
-          <div className="mt-6 grid grid-cols-5 gap-3 max-sm:grid-cols-3">
-            {thumbnails.map((src, idx) => (
-              <div key={idx} className="relative aspect-video overflow-hidden rounded-lg border border-border">
-                <Image src={src} alt={`Storyboard ${idx + 1}`} fill className="object-cover" sizes="20vw" />
-              </div>
-            ))}
-            {Array.from({ length: placeholderCount }).map((_, idx) => (
-              <div
-                key={`placeholder-${idx}`}
-                className="flex aspect-video items-center justify-center rounded-lg border border-dashed border-border bg-muted"
-              >
-                <Film className="h-5 w-5 text-muted-foreground/50" />
-              </div>
-            ))}
+          <div className="mt-6">
+            <StoryboardMarquee images={thumbnails} alt={project.title} />
           </div>
         </Reveal>
       </div>

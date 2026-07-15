@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { Menu, MessageCircle, Phone, Send, X } from "lucide-react";
+import { LogIn, Menu, MessageCircle, Phone, Send, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { LocaleSwitcher } from "@/components/locale-switcher";
@@ -115,20 +115,11 @@ export function Header({
             </div>
             <LocaleSwitcher current={locale} onDark={onDark} />
             <CurrencySwitcher current={currency} onDark={onDark} />
-            {/* Brand sign-in disabled until brand auth is built — kept for
-                restore. See docs/superpowers/plans parity plan + /login page.
-            <Link
-              href="/login"
-              className={cn(
-                "rounded-xl px-4 py-2 text-sm font-semibold transition-colors",
-                onDark ? "text-white hover:bg-white/10" : "text-foreground hover:bg-muted"
-              )}
-            >
-              {t("nav.signIn")}
-            </Link>
-            */}
             <Button asChild variant="primary" size="sm">
-              <Link href="/catalog">{t("nav.browseProjects")}</Link>
+              <Link href="/login" className="group gap-2">
+                <LogIn className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
+                {t("nav.signInUp")}
+              </Link>
             </Button>
           </div>
 
@@ -188,17 +179,11 @@ export function Header({
                 </div>
               </div>
               <div className="flex flex-col gap-2 pt-2">
-                {/* Brand sign-in disabled until brand auth is built — kept for restore.
-                <Link
-                  href="/login"
-                  onClick={() => setMenuOpen(false)}
-                  className="rounded-xl px-3 py-2.5 text-center text-sm font-semibold text-foreground transition-colors hover:bg-muted"
-                >
-                  {t("nav.signIn")}
-                </Link>
-                */}
                 <Button asChild variant="primary" size="sm" onClick={() => setMenuOpen(false)}>
-                  <Link href="/catalog">{t("nav.browseProjects")}</Link>
+                  <Link href="/login" className="group gap-2">
+                    <LogIn className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
+                    {t("nav.signInUp")}
+                  </Link>
                 </Button>
               </div>
             </Container>

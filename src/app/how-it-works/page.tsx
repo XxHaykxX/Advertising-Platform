@@ -97,11 +97,11 @@ export default async function HowItWorksPage() {
             {/* For Filmmakers */}
             <div>
               <Reveal>
-                <h2 className="text-2xl font-bold text-foreground">{t("hiw.forFilmmakersTitle")}</h2>
+                <h2 className="text-2xl font-bold text-foreground">{t("hiw.forCreatorsTitle")}</h2>
               </Reveal>
               <Reveal delay={0.1}>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  {t("hiw.forFilmmakersSubtitle")}
+                  {t("hiw.forCreatorsSubtitle")}
                 </p>
               </Reveal>
 

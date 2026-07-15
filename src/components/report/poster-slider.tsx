@@ -41,10 +41,18 @@ export function PosterSlider({
   }
 
   function scrollByPage(direction: 1 | -1) {
-    scrollerRef.current?.scrollBy({
-      left: direction * scrollerRef.current.clientWidth,
-      behavior: "smooth",
-    });
+    const s = scrollerRef.current;
+    if (!s) return;
+    const atEnd = s.scrollLeft + s.clientWidth >= s.scrollWidth - 1;
+    const atStart = s.scrollLeft <= 1;
+    // Wrap around so the slider loops instead of dead-ending on the last/first image.
+    if (direction === 1 && atEnd) {
+      s.scrollTo({ left: 0, behavior: "smooth" });
+    } else if (direction === -1 && atStart) {
+      s.scrollTo({ left: s.scrollWidth, behavior: "smooth" });
+    } else {
+      s.scrollBy({ left: direction * s.clientWidth, behavior: "smooth" });
+    }
   }
 
   return (

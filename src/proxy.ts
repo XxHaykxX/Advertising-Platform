@@ -9,9 +9,13 @@ export async function proxy(req: NextRequest) {
 
   const token = req.cookies.get(SESSION_COOKIE)?.value;
   // Signature + expiry check only (no DB access here).
-  // The authoritative isActive gate is enforced by requireUser() server-side.
+  // The authoritative isActive/role gate is enforced by requireUser() server-side.
+  // Only STAFF sessions count as "authed" for /admin — a member (BRAND/CREATOR)
+  // token is treated as unauthenticated here, so it is shown the login page
+  // instead of being bounced into an infinite redirect against requireUser().
   const session = await verifySessionToken(token);
-  const authed = session !== null;
+  const authed =
+    session !== null && (session.role === "SUPERADMIN" || session.role === "PUBLISHER");
 
   if (!authed && !isLogin) {
     const url = req.nextUrl.clone();

@@ -16,16 +16,30 @@ model Setting {
 enum Role {
   SUPERADMIN
   PUBLISHER
+  BRAND
+  CREATOR
+}
+
+/// Self-serve member (BRAND / CREATOR) approval lifecycle. Staff users
+/// (SUPERADMIN / PUBLISHER) are seeded as APPROVED and ignore this gate.
+enum AccountStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  BLOCKED
 }
 
 model User {
-  id           Int      @id @default(autoincrement())
-  email        String   @unique
-  passwordHash String
-  role         Role     @default(PUBLISHER)
+  id           Int           @id @default(autoincrement())
+  email        String        @unique
+  passwordHash String?
+  googleId     String?       @unique
+  role         Role          @default(PUBLISHER)
+  status       AccountStatus @default(APPROVED)
   name         String
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
+  company      String?
+  isActive     Boolean       @default(true)
+  createdAt    DateTime      @default(now())
 
   projects Project[]
 }

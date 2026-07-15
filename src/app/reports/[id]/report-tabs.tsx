@@ -8,7 +8,6 @@ import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
 const BASE_TABS = [
   { id: "overview", labelKey: "report.tabs.overview" },
   { id: "cast", labelKey: "report.tabs.cast" },
-  { id: "investment", labelKey: "report.tabs.investment" },
 ] as const;
 
 export function ReportTabs({

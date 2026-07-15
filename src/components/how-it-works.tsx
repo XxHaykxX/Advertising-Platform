@@ -64,7 +64,7 @@ export default function HowItWorks({ locale = DEFAULT_LOCALE }: { locale?: Local
             {/* For Filmmakers */}
             <div className="space-y-8">
               <Reveal delay={0.2}>
-                <h3 className="text-lg font-semibold text-foreground">{t("landingHow.forFilmmakers")}</h3>
+                <h3 className="text-lg font-semibold text-foreground">{t("landingHow.forCreators")}</h3>
               </Reveal>
               {filmmakerSteps.map((step, idx) => (
                 <Reveal key={step.number} delay={0.2 + (idx + 1) * 0.1}>

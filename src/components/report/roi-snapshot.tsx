@@ -1,4 +1,4 @@
-import { Info, Lock, TrendingUp } from "lucide-react";
+import { Info, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ApplyDialog } from "@/components/apply-dialog";
 import { Reveal } from "@/components/ui/reveal";
@@ -19,12 +19,6 @@ export function ExpressInterestBanner({
     <div
       className={`flex flex-wrap items-center justify-between gap-4 rounded-xl border border-primary/20 bg-primary/5 px-5 py-4 ${className ?? ""}`}
     >
-      <div className="flex items-center gap-3">
-        <Lock className="h-4 w-4 shrink-0 text-primary" />
-        <p className="text-sm text-foreground">
-          {t("express.lockedNotice")}
-        </p>
-      </div>
       <ApplyDialog
         projectId={project.id}
         projectTitle={project.title}

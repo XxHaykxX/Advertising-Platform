@@ -32,6 +32,7 @@ export const UI: Record<string, Dict> = {
   "nav.contact": { ru: "Контакты", en: "Contact", hy: "Կոնտակտներ" },
   "nav.signIn": { ru: "Войти", en: "Sign In", hy: "Մուտք" },
   "nav.register": { ru: "Регистрация", en: "Register", hy: "Գրանցում" },
+  "nav.signInUp": { ru: "Войти / Регистрация", en: "Sign In / Up", hy: "Մուտք / Գրանցում" },
   "nav.browseProjects": { ru: "Смотреть проекты", en: "Browse Projects", hy: "Դիտել նախագծերը" },
   "nav.callUs": { ru: "Позвонить", en: "Call us", hy: "Զանգահարել" },
   "nav.openMenu": { ru: "Открыть меню", en: "Open menu", hy: "Բացել ընտրացանկը" },
@@ -198,7 +199,7 @@ export const UI: Record<string, Dict> = {
     hy: "Կապում ենք ստեղծագործողներին և բրենդներին։ Արդար գործարքներ, ինքնատիպ տեղադրումներ։",
   },
   "landingHow.forBrands": { ru: "Для брендов", en: "For Brands", hy: "Բրենդների համար" },
-  "landingHow.forFilmmakers": { ru: "Для режиссёров", en: "For Filmmakers", hy: "Ռեժիսորների համար" },
+  "landingHow.forCreators": { ru: "Для создателей", en: "For Creators", hy: "Ստեղծագործողների համար" },
   "landingHow.brand1Title": { ru: "Смотрите анонимно", en: "Browse Anonymously", hy: "Դիտեք անանուն" },
   "landingHow.brand1Caption": {
     ru: "Изучайте доступные фильмы и продакшен-сделки, не раскрывая свой бренд.",
@@ -207,9 +208,9 @@ export const UI: Record<string, Dict> = {
   },
   "landingHow.brand2Title": { ru: "Проявите интерес", en: "Express Interest", hy: "Ցուցաբերեք հետաքրքրություն" },
   "landingHow.brand2Caption": {
-    ru: "Отправьте требования к плейсменту и бюджет режиссёрам, с которыми хотите работать.",
-    en: "Submit placement requirements and budget to filmmakers you connect with.",
-    hy: "Ուղարկեք տեղադրման պահանջներն ու բյուջեն այն ռեժիսորներին, որոնց հետ կապ եք հաստատում։",
+    ru: "Отправьте требования к плейсменту и бюджет создателям, с которыми хотите работать.",
+    en: "Submit placement requirements and budget to creators you connect with.",
+    hy: "Ուղարկեք տեղադրման պահանջներն ու բյուջեն այն ստեղծագործողներին, որոնց հետ կապ եք հաստատում։",
   },
   "landingHow.brand3Title": { ru: "Договоритесь", en: "Match & Negotiate", hy: "Համաձայնեցրեք" },
   "landingHow.brand3Caption": {
@@ -250,8 +251,8 @@ export const UI: Record<string, Dict> = {
     en: "Browse vetted productions, scene-level placement reports, pay only on closed deals.",
     hy: "Ուսումնասիրեք ստուգված նախագծեր, տեսարան առ տեսարան տեղադրման հաշվետվություններ, վճարեք միայն կնքված գործարքների համար։",
   },
-  "getStarted.forFilmmakersTitle": { ru: "Для режиссёров", en: "For Filmmakers", hy: "Ռեժիսորների համար" },
-  "getStarted.forFilmmakersBody": {
+  "getStarted.forCreatorsTitle": { ru: "Для создателей", en: "For Creators", hy: "Ստեղծագործողների համար" },
+  "getStarted.forCreatorsBody": {
     ru: "Монетизируйте свой проект, сохраняйте творческий контроль, получите бесплатный отчёт о плейсменте.",
     en: "Monetize your production, keep creative control, free placement report.",
     hy: "Մոնետիզացրեք ձեր նախագիծը, պահպանեք ստեղծագործական վերահսկողությունը, ստացեք անվճար տեղադրման հաշվետվություն։",
@@ -260,9 +261,9 @@ export const UI: Record<string, Dict> = {
   // ── why we built this ─────────────────────────
   "why.title": { ru: "Почему мы это создали", en: "Why We Built This", hy: "Ինչու ենք մենք ստեղծել սա" },
   "why.paragraph1": {
-    ru: "Продакт-плейсмент десятилетиями оставался несовершенной системой. Режиссёры с трудом монетизируют свои истории, а бренды блуждают по непрозрачным сетям, переплачивая за плейсменты, которые могут никогда не выйти на экран. Всё делается вручную, неэффективно и доступно лишь через личные связи.",
-    en: "Product placement has been broken for decades. Filmmakers struggle to monetize their stories while brands stumble through opaque networks, paying inflated premiums for placements that may never see the light of day. It's manual, inefficient, and gated behind relationship networks.",
-    hy: "Փրոդակթ փլեյսմենթը տասնամյակներ շարունակ մնացել է խափանված համակարգ։ Ռեժիսորները դժվարանում են մոնետիզացնել իրենց պատմությունները, իսկ բրենդները շրջում են անթափանց ցանցերում՝ վճարելով գերագնահատված գումարներ այն տեղադրումների համար, որոնք գուցե երբեք չհասնեն էկրան։ Ամեն ինչ արվում է ձեռքով, անարդյունավետ և հասանելի է միայն կապերի միջոցով։",
+    ru: "Продакт-плейсмент десятилетиями оставался несовершенной системой. Создатели с трудом монетизируют свои истории, а бренды блуждают по непрозрачным сетям, переплачивая за плейсменты, которые могут никогда не выйти на экран. Всё делается вручную, неэффективно и доступно лишь через личные связи.",
+    en: "Product placement has been broken for decades. Creators struggle to monetize their stories while brands stumble through opaque networks, paying inflated premiums for placements that may never see the light of day. It's manual, inefficient, and gated behind relationship networks.",
+    hy: "Փրոդակթ փլեյսմենթը տասնամյակներ շարունակ մնացել է խափանված համակարգ։ Ստեղծագործողները դժվարանում են մոնետիզացնել իրենց պատմությունները, իսկ բրենդները շրջում են անթափանց ցանցերում՝ վճարելով գերագնահատված գումարներ այն տեղադրումների համար, որոնք գուցե երբեք չհասնեն էկրան։ Ամեն ինչ արվում է ձեռքով, անարդյունավետ և հասանելի է միայն կապերի միջոցով։",
   },
   "why.paragraph2": {
     ru: "Мы создали iGovazd, чтобы это изменить. Делая плейсмент прозрачным, основанным на данных и доступным, мы даём создателям возможность контролировать свою судьбу и помогаем брендам делать более разумный, аутентичный выбор о том, где появляется их продукт.",
@@ -291,9 +292,9 @@ export const UI: Record<string, Dict> = {
   "faq.title": { ru: "Часто задаваемые вопросы", en: "Frequently Asked Questions", hy: "Հաճախ տրվող հարցեր" },
   "faq.q1.question": { ru: "Как формируется цена?", en: "How does pricing work?", hy: "Ինչպե՞ս է ձևավորվում գինը" },
   "faq.q1.answer": {
-    ru: "Плейсменты начинаются от $5K. Листинг и просмотр бесплатны — мы берём комиссию только когда сделка действительно закрывается, поэтому бренды и режиссёры никогда не платят за сорвавшиеся плейсменты.",
-    en: "Placements start from $5K. Listing and browsing are free — we only take a fee when a deal actually closes, so brands and filmmakers never pay for placements that fall through.",
-    hy: "Տեղադրումները սկսվում են $5K-ից։ Ցուցակագրումն ու դիտումն անվճար են․ մենք վճար ենք վերցնում միայն այն ժամանակ, երբ գործարքն իրականում կնքվում է, ուստի բրենդներն ու ռեժիսորները երբեք չեն վճարում չկայացած տեղադրումների համար։",
+    ru: "Плейсменты начинаются от $5K. Листинг и просмотр бесплатны — мы берём комиссию только когда сделка действительно закрывается, поэтому бренды и создатели никогда не платят за сорвавшиеся плейсменты.",
+    en: "Placements start from $5K. Listing and browsing are free — we only take a fee when a deal actually closes, so brands and creators never pay for placements that fall through.",
+    hy: "Տեղադրումները սկսվում են $5K-ից։ Ցուցակագրումն ու դիտումն անվճար են․ մենք վճար ենք վերցնում միայն այն ժամանակ, երբ գործարքն իրականում կնքվում է, ուստի բրենդներն ու ստեղծագործողները երբեք չեն վճարում չկայացած տեղադրումների համար։",
   },
   "faq.q3.question": { ru: "Что значит анонимизация?", en: "What does anonymization mean?", hy: "Ի՞նչ է նշանակում անանունացում" },
   "faq.q3.answer": {
@@ -301,11 +302,11 @@ export const UI: Record<string, Dict> = {
     en: "Placement reports are shared anonymously by default. Production and brand identities stay hidden until both sides confirm mutual interest, keeping early conversations low-pressure on both ends.",
     hy: "Տեղադրման հաշվետվությունները ըստ լռելյայն կիսվում են անանուն։ Պրոդակշնի և բրենդի ինքնությունը մնում է թաքնված, մինչև երկու կողմերն էլ հաստատեն փոխադարձ հետաքրքրությունը, ինչը վաղ խոսակցությունները դարձնում է քիչ ճնշող երկու կողմերի համար։",
   },
-  "faq.q4.question": { ru: "Как режиссёры размещают проект?", en: "How do filmmakers list a project?", hy: "Ինչպե՞ս են ռեժիսորները ցուցակագրում նախագիծը" },
+  "faq.q4.question": { ru: "Как создатели размещают проект?", en: "How do creators list a project?", hy: "Ինչպե՞ս են ստեղծագործողները ցուցակագրում նախագիծը" },
   "faq.q4.answer": {
-    ru: "Режиссёры загружают сценарий, и наша система автоматически анализирует его, чтобы выявить сцены, готовые к плейсменту. Затем проект появляется в каталоге, доступном брендам для просмотра.",
-    en: "Filmmakers upload their screenplay, and our system analyzes it automatically to surface placement-ready scenes. The project then appears in the catalog for brands to discover and review.",
-    hy: "Ռեժիսորները վերբեռնում են սցենարը, և մեր համակարգը ինքնաշխատ վերլուծում է այն՝ բացահայտելու տեղադրման համար պատրաստ տեսարանները։ Այնուհետև նախագիծը հայտնվում է կատալոգում՝ բրենդների կողմից գտնվելու և վերանայվելու համար։",
+    ru: "Создатели загружают сценарий, и наша система автоматически анализирует его, чтобы выявить сцены, готовые к плейсменту. Затем проект появляется в каталоге, доступном брендам для просмотра.",
+    en: "Creators upload their screenplay, and our system analyzes it automatically to surface placement-ready scenes. The project then appears in the catalog for brands to discover and review.",
+    hy: "Ստեղծագործողները վերբեռնում են սցենարը, և մեր համակարգը ինքնաշխատ վերլուծում է այն՝ բացահայտելու տեղադրման համար պատրաստ տեսարանները։ Այնուհետև նախագիծը հայտնվում է կատալոգում՝ բրենդների կողմից գտնվելու և վերանայվելու համար։",
   },
   "faq.q5.question": { ru: "Какие стадии продакшена представлены?", en: "What production stages are listed?", hy: "Ի՞նչ արտադրական փուլեր են ներկայացված" },
   "faq.q5.answer": {
@@ -378,9 +379,9 @@ export const UI: Record<string, Dict> = {
   // ── how it works (full page) ──────────────────
   "hiw.heroTitle": { ru: "Как это работает", en: "How It Works", hy: "Ինչպես է աշխատում" },
   "hiw.heroSubtitle": {
-    ru: "iGovazd связывает бренды с режиссёрами через прозрачный, честный процесс. Узнайте, как начать всего за четыре простых шага.",
-    en: "iGovazd connects brands with filmmakers through a transparent, fair process. Discover how to get started in just four simple steps.",
-    hy: "iGovazd-ը կապում է բրենդներին ռեժիսորների հետ թափանցիկ, արդար գործընթացի միջոցով։ Իմացեք, թե ինչպես սկսել ընդամենը չորս պարզ քայլով։",
+    ru: "iGovazd связывает бренды с создателями через прозрачный, честный процесс. Узнайте, как начать всего за четыре простых шага.",
+    en: "iGovazd connects brands with creators through a transparent, fair process. Discover how to get started in just four simple steps.",
+    hy: "iGovazd-ը կապում է բրենդներին ստեղծագործողների հետ թափանցիկ, արդար գործընթացի միջոցով։ Իմացեք, թե ինչպես սկսել ընդամենը չորս պարզ քայլով։",
   },
   "hiw.forBrandsTitle": { ru: "Для брендов", en: "For Brands", hy: "Բրենդների համար" },
   "hiw.forBrandsSubtitle": {
@@ -388,8 +389,8 @@ export const UI: Record<string, Dict> = {
     en: "Find authentic placement opportunities in premium film and TV productions.",
     hy: "Գտեք ինքնատիպ տեղադրման հնարավորություններ պրեմիում ֆիլմերում և հեռուստասերիալներում։",
   },
-  "hiw.forFilmmakersTitle": { ru: "Для режиссёров", en: "For Filmmakers", hy: "Ռեժիսորների համար" },
-  "hiw.forFilmmakersSubtitle": {
+  "hiw.forCreatorsTitle": { ru: "Для создателей", en: "For Creators", hy: "Ստեղծագործողների համար" },
+  "hiw.forCreatorsSubtitle": {
     ru: "Откройте возможности финансирования, монетизируя плейсмент в своих проектах.",
     en: "Unlock funding opportunities by monetizing placement in your projects.",
     hy: "Բացահայտեք ֆինանսավորման հնարավորություններ՝ մոնետիզացնելով տեղադրումը ձեր նախագծերում։",
@@ -408,9 +409,9 @@ export const UI: Record<string, Dict> = {
   },
   "hiw.brand3Title": { ru: "Проявляйте интерес и договаривайтесь", en: "Express Interest & Negotiate", hy: "Ցուցաբերեք հետաքրքրություն և բանակցեք" },
   "hiw.brand3Desc": {
-    ru: "Отправляйте требования к плейсменту и данные о бюджете режиссёрам. Сотрудничайте напрямую, чтобы создать аутентичный плейсмент под ваш бренд.",
-    en: "Submit placement requirements and budget details to filmmakers. Collaborate directly to craft authentic placements that fit your brand.",
-    hy: "Ուղարկեք տեղադրման պահանջներն ու բյուջեի մանրամասները ռեժիսորներին։ Համագործակցեք ուղղակիորեն՝ ձեր բրենդին համապատասխան ինքնատիպ տեղադրումներ ստեղծելու համար։",
+    ru: "Отправляйте требования к плейсменту и данные о бюджете создателям. Сотрудничайте напрямую, чтобы создать аутентичный плейсмент под ваш бренд.",
+    en: "Submit placement requirements and budget details to creators. Collaborate directly to craft authentic placements that fit your brand.",
+    hy: "Ուղարկեք տեղադրման պահանջներն ու բյուջեի մանրամասները ստեղծագործողներին։ Համագործակցեք ուղղակիորեն՝ ձեր բրենդին համապատասխան ինքնատիպ տեղադրումներ ստեղծելու համար։",
   },
   "hiw.brand4Title": { ru: "Заключайте сделку", en: "Close the Deal", hy: "Կնքեք գործարքը" },
   "hiw.brand4Desc": {
@@ -420,9 +421,9 @@ export const UI: Record<string, Dict> = {
   },
   "hiw.film1Title": { ru: "Регистрация как продюсер", en: "Register as Publisher", hy: "Գրանցվեք որպես պրոդյուսեր" },
   "hiw.film1Desc": {
-    ru: "Создайте профиль режиссёра и подтвердите свои данные. Откройте доступ к партнёрству с брендами и возможностям финансирования.",
-    en: "Create your filmmaker profile and verify your credentials. Unlock access to brand partnerships and funding opportunities.",
-    hy: "Ստեղծեք ձեր ռեժիսորի պրոֆիլը և հաստատեք ձեր տվյալները։ Բացեք հասանելիություն բրենդային գործընկերությանը և ֆինանսավորման հնարավորություններին։",
+    ru: "Создайте профиль создателя и подтвердите свои данные. Откройте доступ к партнёрству с брендами и возможностям финансирования.",
+    en: "Create your creator profile and verify your credentials. Unlock access to brand partnerships and funding opportunities.",
+    hy: "Ստեղծեք ձեր ստեղծագործողի պրոֆիլը և հաստատեք ձեր տվյալները։ Բացեք հասանելիություն բրենդային գործընկերությանը և ֆինանսավորման հնարավորություններին։",
   },
   "hiw.film2Title": { ru: "Разместите проект и возможности плейсмента", en: "List Project & Placement Opportunities", hy: "Ավելացրեք նախագիծը և տեղադրման հնարավորությունները" },
   "hiw.film2Desc": {
@@ -444,9 +445,9 @@ export const UI: Record<string, Dict> = {
   },
   "hiw.trustTitle": { ru: "Честные сделки. Аутентичный плейсмент.", en: "Fair Deals. Authentic Placements.", hy: "Արդար գործարքներ։ Ինքնատիպ տեղադրումներ։" },
   "hiw.trustBody": {
-    ru: "iGovazd построен на прозрачности и доверии. Никаких скрытых комиссий для брендов, творческий контроль для режиссёров и комиссия платформы — только при закрытии сделок.",
-    en: "iGovazd is built on transparency and trust. No hidden fees for brands, creative control for filmmakers, and platform fees only when deals close.",
-    hy: "iGovazd-ը կառուցված է թափանցիկության և վստահության վրա։ Ոչ մի թաքնված վճար բրենդների համար, ստեղծագործական վերահսկողություն ռեժիսորների համար, և հարթակի վճարներ միայն գործարքների կնքման դեպքում։",
+    ru: "iGovazd построен на прозрачности и доверии. Никаких скрытых комиссий для брендов, творческий контроль для создателей и комиссия платформы — только при закрытии сделок.",
+    en: "iGovazd is built on transparency and trust. No hidden fees for brands, creative control for creators, and platform fees only when deals close.",
+    hy: "iGovazd-ը կառուցված է թափանցիկության և վստահության վրա։ Ոչ մի թաքնված վճար բրենդների համար, ստեղծագործական վերահսկողություն ստեղծագործողների համար, և հարթակի վճարներ միայն գործարքների կնքման դեպքում։",
   },
 
   // ── portfolio page ─────────────────────────────
@@ -489,7 +490,7 @@ export const UI: Record<string, Dict> = {
   "report.downloadPdf": { ru: "Скачать PDF", en: "Download PDF", hy: "Ներբեռնել PDF" },
   "report.prev": { ru: "Назад", en: "Previous", hy: "Նախորդ" },
   "report.next": { ru: "Вперёд", en: "Next", hy: "Հաջորդ" },
-  "report.showMore": { ru: "Читать полностью", en: "Read more", hy: "Կարդալ ամբողջությամբ" },
+  "report.showMore": { ru: "Ещё", en: "More", hy: "Ավելին" },
   "report.showLess": { ru: "Свернуть", en: "Show less", hy: "Ծալել" },
   "report.linkCopied": { ru: "Ссылка скопирована", en: "Link copied", hy: "Հղումը պատճենվեց" },
   "report.projectedViews": { ru: "Прогноз. просмотры", en: "Projected Views", hy: "Կանխատեսվող դիտումներ" },
@@ -539,7 +540,6 @@ export const UI: Record<string, Dict> = {
     hy: "Մեթոդաբանություն. հազար ցուցադրության արժեքի միջակայք՝ համեմատված նմանատիպ տեղադրումների հետ։",
   },
   "roi.poweredBy": { ru: "Прогнозы основаны на отраслевых бенчмарках.", en: "Projections powered by industry benchmark data.", hy: "Կանխատեսումները հիմնված են ոլորտի չափանիշային տվյալների վրա։" },
-  "express.lockedNotice": { ru: "Полные детали открываются после взаимного интереса", en: "Full details unlocked after mutual interest", hy: "Ամբողջական մանրամասները բացվում են փոխադարձ հետաքրքրությունից հետո" },
 
   // ── report: investment ──────────────────────────
   "investment.title": { ru: "Инвестиции и что входит", en: "Investment & Deliverables", hy: "Ներդրում և մատուցվող ծառայություններ" },
@@ -620,21 +620,21 @@ export const UI: Record<string, Dict> = {
   },
 
   // ── login / register ───────────────────────────
-  "login.title": { ru: "Вход для бренда", en: "Brand Sign In", hy: "Բրենդի մուտք" },
-  "login.subtitle": { ru: "Аккаунты брендов скоро появятся.", en: "Brand accounts coming soon.", hy: "Բրենդային հաշիվները շուտով հասանելի կլինեն։" },
+  "login.title": { ru: "Вход", en: "Sign In", hy: "Մուտք" },
+  "login.subtitle": { ru: "Войдите в аккаунт бренда или создателя.", en: "Sign in to your brand or creator account.", hy: "Մուտք գործեք ձեր բրենդի կամ ստեղծագործողի հաշիվ։" },
   "login.emailPlaceholder": { ru: "you@brand.com", en: "you@brand.com", hy: "you@brand.com" },
   "login.password": { ru: "Пароль", en: "Password", hy: "Գաղտնաբառ" },
   "login.signIn": { ru: "Войти", en: "Sign In", hy: "Մուտք" },
   "login.notBrandYet": { ru: "Ещё нет бренд-аккаунта?", en: "Not a brand account yet?", hy: "Դեռ չունե՞ք բրենդային հաշիվ" },
   "login.expressInterestInstead": { ru: "Проявите интерес вместо этого", en: "Express Interest instead", hy: "Փոխարենը ցուցաբերեք հետաքրքրություն" },
-  "login.filmmakerOrAdmin": { ru: "Режиссёр или админ?", en: "Filmmaker or admin?", hy: "Ռեժիսո՞ր եք կամ ադմին" },
+  "login.creatorOrAdmin": { ru: "Создатель или админ?", en: "Creator or admin?", hy: "Ստեղծագործո՞ղ եք կամ ադմին" },
   "login.goToAdminLogin": { ru: "Перейти к входу в админку", en: "Go to admin login", hy: "Անցնել ադմինի մուտք" },
 
-  "register.title": { ru: "Создать бренд-аккаунт", en: "Create a Brand Account", hy: "Ստեղծել բրենդային հաշիվ" },
+  "register.title": { ru: "Регистрация", en: "Create Account", hy: "Գրանցում" },
   "register.subtitle": {
-    ru: "Аккаунты брендов скоро появятся — проявите интерес ниже, и мы свяжемся с вами.",
-    en: "Brand accounts coming soon — express interest below and we'll reach out.",
-    hy: "Բրենդային հաշիվները շուտով հասանելի կլինեն․ ցուցաբերեք հետաքրքրություն ներքևում, և մենք կկապվենք ձեզ հետ։",
+    ru: "Создайте аккаунт бренда или создателя. Доступ открывается после проверки администратором.",
+    en: "Create a brand or creator account. Access is granted after admin review.",
+    hy: "Ստեղծեք բրենդի կամ ստեղծագործողի հաշիվ։ Հասանելիությունը տրվում է ադմինի ստուգումից հետո։",
   },
   "register.fullName": { ru: "Полное имя", en: "Full name", hy: "Լրիվ անուն" },
   "register.fullNamePlaceholder": { ru: "Иван Иванов", en: "Jane Doe", hy: "Անուն Ազգանուն" },
@@ -643,8 +643,95 @@ export const UI: Record<string, Dict> = {
   "register.expressInterest": { ru: "Проявить интерес", en: "Express Interest", hy: "Ցուցաբերել հետաքրքրություն" },
   "register.alreadyHaveAccess": { ru: "Уже есть доступ?", en: "Already have access?", hy: "Արդեն ունե՞ք հասանելիություն" },
   "register.signIn": { ru: "Войти", en: "Sign in", hy: "Մուտք" },
-  "register.filmmakerOrAdmin": { ru: "Режиссёр или админ?", en: "Filmmaker or admin?", hy: "Ռեժիսո՞ր եք կամ ադմին" },
+  "register.creatorOrAdmin": { ru: "Создатель или админ?", en: "Creator or admin?", hy: "Ստեղծագործո՞ղ եք կամ ադմին" },
   "register.goToAdminLogin": { ru: "Перейти к входу в админку", en: "Go to admin login", hy: "Անցնել ադմինի մուտք" },
+
+  // ── auth: register (brand + creator self-serve) ──
+  "register.accountType": { ru: "Тип аккаунта", en: "Account type", hy: "Հաշվի տեսակ" },
+  "register.typeBrand": { ru: "Бренд", en: "Brand", hy: "Բրենդ" },
+  "register.typeCreator": { ru: "Создатель", en: "Creator", hy: "Ստեղծագործող" },
+  "register.typeBrandHint": { ru: "Хочу разместить бренд в проектах", en: "Place my brand in productions", hy: "Տեղադրել իմ բրենդը նախագծերում" },
+  "register.typeCreatorHint": { ru: "Монетизирую свой контент плейсментом", en: "Monetize my content with placement", hy: "Մոնետիզացնել իմ բովանդակությունը տեղադրումով" },
+  "register.password": { ru: "Пароль", en: "Password", hy: "Գաղտնաբառ" },
+  "register.passwordPlaceholder": { ru: "Минимум 8 символов", en: "At least 8 characters", hy: "Առնվազն 8 նիշ" },
+  "register.submit": { ru: "Зарегистрироваться", en: "Create account", hy: "Գրանցվել" },
+  "register.pendingTitle": { ru: "Заявка отправлена", en: "Registration received", hy: "Հայտն ուղարկված է" },
+  "register.pendingBody": {
+    ru: "Ваш аккаунт ожидает одобрения администратора. Мы сообщим, когда доступ будет открыт.",
+    en: "Your account is awaiting admin approval. We'll let you know once access is granted.",
+    hy: "Ձեր հաշիվը սպասում է ադմինի հաստատմանը։ Կտեղեկացնենք, երբ հասանելիությունը բացվի։",
+  },
+  "register.errEmailTaken": { ru: "Этот email уже зарегистрирован.", en: "This email is already registered.", hy: "Այս էլ. փոստն արդեն գրանցված է։" },
+  "register.errFields": { ru: "Заполните все обязательные поля.", en: "Please fill in all required fields.", hy: "Լրացրեք բոլոր պարտադիր դաշտերը։" },
+  "register.errPasswordShort": { ru: "Пароль должен быть не короче 8 символов.", en: "Password must be at least 8 characters.", hy: "Գաղտնաբառը պետք է լինի առնվազն 8 նիշ։" },
+
+  // ── auth: login errors ──
+  "login.errInvalid": { ru: "Неверный email или пароль.", en: "Incorrect email or password.", hy: "Սխալ էլ. փոստ կամ գաղտնաբառ։" },
+  "login.errPending": { ru: "Аккаунт ожидает одобрения администратора.", en: "Your account is awaiting admin approval.", hy: "Ձեր հաշիվը սպասում է ադմինի հաստատմանը։" },
+  "login.errBlocked": { ru: "Аккаунт заблокирован. Свяжитесь с администрацией.", en: "This account is blocked. Contact the administrator.", hy: "Հաշիվը արգելափակված է։ Կապվեք ադմինի հետ։" },
+  "login.errRejected": { ru: "Заявка на регистрацию отклонена.", en: "Your registration was rejected.", hy: "Ձեր գրանցման հայտը մերժվել է։" },
+  "login.noAccount": { ru: "Нет аккаунта?", en: "No account?", hy: "Չունե՞ք հաշիվ" },
+  "login.registerLink": { ru: "Зарегистрироваться", en: "Register", hy: "Գրանցվել" },
+  "login.errGoogle": { ru: "Не удалось войти через Google.", en: "Google sign-in failed.", hy: "Google մուտքը ձախողվեց։" },
+
+  // ── auth: Google OAuth ──
+  "auth.googleContinue": { ru: "Продолжить через Google", en: "Continue with Google", hy: "Շարունակել Google-ով" },
+  "auth.or": { ru: "или", en: "or", hy: "կամ" },
+  "register.completeTitle": { ru: "Завершите профиль", en: "Complete your profile", hy: "Լրացրեք ձեր պրոֆիլը" },
+  "register.completeBody": {
+    ru: "Выберите тип аккаунта, чтобы завершить регистрацию через Google.",
+    en: "Choose your account type to finish signing up with Google.",
+    hy: "Ընտրեք հաշվի տեսակը՝ Google-ով գրանցումն ավարտելու համար։",
+  },
+
+  // ── member cabinet (/account) ──
+  "account.title": { ru: "Кабинет", en: "Dashboard", hy: "Անձնական էջ" },
+  "account.welcome": { ru: "Здравствуйте, {name}", en: "Welcome, {name}", hy: "Բարև, {name}" },
+  "account.profile": { ru: "Профиль", en: "Profile", hy: "Պրոֆիլ" },
+  "account.company": { ru: "Компания", en: "Company", hy: "Ընկերություն" },
+  "account.roleBrand": { ru: "Бренд", en: "Brand", hy: "Բրենդ" },
+  "account.roleCreator": { ru: "Создатель", en: "Creator", hy: "Ստեղծագործող" },
+  "account.statusApproved": { ru: "Одобрен", en: "Approved", hy: "Հաստատված" },
+  "account.logout": { ru: "Выйти", en: "Log out", hy: "Դուրս գալ" },
+  "account.creatorUploadTitle": { ru: "Загрузка сценария", en: "Upload script", hy: "Վերբեռնել սցենարը" },
+  "account.creatorUploadSoon": {
+    ru: "Скоро вы сможете загружать сценарии и отмечать возможности для плейсмента.",
+    en: "Soon you'll be able to upload scripts and mark placement opportunities.",
+    hy: "Շուտով դուք կկարողանաք վերբեռնել սցենարներ և նշել տեղադրման հնարավորությունները։",
+  },
+  "account.creatorProjectsTitle": { ru: "Мои проекты", en: "My projects", hy: "Իմ նախագծերը" },
+  "account.creatorProjectsSoon": { ru: "Здесь появятся ваши проекты.", en: "Your projects will appear here.", hy: "Ձեր նախագծերը կհայտնվեն այստեղ։" },
+  "account.brandBrowseTitle": { ru: "Каталог проектов", en: "Browse catalog", hy: "Դիտել կատալոգը" },
+  "account.brandBrowseBody": {
+    ru: "Изучайте проекты анонимно и отправляйте заявки на плейсмент.",
+    en: "Browse productions anonymously and submit placement requests.",
+    hy: "Ուսումնասիրեք նախագծերը անանուն և ուղարկեք տեղադրման հայտեր։",
+  },
+  "account.brandBrowseCta": { ru: "Открыть каталог", en: "Open catalog", hy: "Բացել կատալոգը" },
+
+  // ── admin: member registrations ──
+  "admin.registrations.nav": { ru: "Регистрации", en: "Registrations", hy: "Գրանցումներ" },
+  "admin.registrations.title": { ru: "Регистрации участников", en: "Member registrations", hy: "Անդամների գրանցումներ" },
+  "admin.registrations.subtitle": {
+    ru: "Одобряйте, отклоняйте или блокируйте аккаунты брендов и создателей.",
+    en: "Approve, reject, or block brand and creator accounts.",
+    hy: "Հաստատեք, մերժեք կամ արգելափակեք բրենդների և ստեղծագործողների հաշիվները։",
+  },
+  "admin.registrations.colName": { ru: "Имя", en: "Name", hy: "Անուն" },
+  "admin.registrations.colEmail": { ru: "Email", en: "Email", hy: "Էլ. փոստ" },
+  "admin.registrations.colRole": { ru: "Роль", en: "Role", hy: "Դեր" },
+  "admin.registrations.colCompany": { ru: "Компания", en: "Company", hy: "Ընկերություն" },
+  "admin.registrations.colStatus": { ru: "Статус", en: "Status", hy: "Կարգավիճակ" },
+  "admin.registrations.colDate": { ru: "Дата", en: "Date", hy: "Ամսաթիվ" },
+  "admin.registrations.approve": { ru: "Одобрить", en: "Approve", hy: "Հաստատել" },
+  "admin.registrations.reject": { ru: "Отклонить", en: "Reject", hy: "Մերժել" },
+  "admin.registrations.block": { ru: "Заблокировать", en: "Block", hy: "Արգելափակել" },
+  "admin.registrations.unblock": { ru: "Разблокировать", en: "Unblock", hy: "Ապաարգելափակել" },
+  "admin.registrations.empty": { ru: "Пока нет регистраций.", en: "No registrations yet.", hy: "Դեռ գրանցումներ չկան։" },
+  "admin.registrations.statusPending": { ru: "Ожидает", en: "Pending", hy: "Սպասում է" },
+  "admin.registrations.statusApproved": { ru: "Одобрен", en: "Approved", hy: "Հաստատված" },
+  "admin.registrations.statusRejected": { ru: "Отклонён", en: "Rejected", hy: "Մերժված" },
+  "admin.registrations.statusBlocked": { ru: "Заблокирован", en: "Blocked", hy: "Արգելափакված" },
 };
 
 /** Build a UI translator bound to a locale. Supports `{token}` interpolation

@@ -40,9 +40,9 @@ export default function GetStarted({ locale = DEFAULT_LOCALE }: { locale?: Local
               <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
                 <Clapperboard className="h-6 w-6 text-primary" />
               </div>
-              <h3 className="mb-4 text-2xl font-bold text-foreground">{t("getStarted.forFilmmakersTitle")}</h3>
+              <h3 className="mb-4 text-2xl font-bold text-foreground">{t("getStarted.forCreatorsTitle")}</h3>
               <p className="mb-8 text-muted-foreground">
-                {t("getStarted.forFilmmakersBody")}
+                {t("getStarted.forCreatorsBody")}
               </p>
               <Button asChild variant="secondary" size="md">
                 <Link href="/contact">{t("btn.listProject")}</Link>

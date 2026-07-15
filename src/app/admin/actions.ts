@@ -69,6 +69,13 @@ export async function login(
     return { error: "Incorrect email or password." };
   }
 
+  // Members (BRAND / CREATOR) must never obtain an admin session — they sign in
+  // at /login. Reject them here even with correct credentials.
+  if (result.user.role !== "SUPERADMIN" && result.user.role !== "PUBLISHER") {
+    recordFailure(ip);
+    return { error: "Incorrect email or password." };
+  }
+
   attempts.delete(ip);
   const user = result.user;
   const remember = formData.get("remember") != null;

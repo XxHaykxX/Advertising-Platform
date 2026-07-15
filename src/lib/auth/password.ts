@@ -16,7 +16,7 @@ export async function verifyUserPassword(
   plain: string,
 ): Promise<VerifyResult> {
   const user = await prisma.user.findUnique({ where: { email } });
-  if (!user) return { ok: false, reason: "invalid" };
+  if (!user || !user.passwordHash) return { ok: false, reason: "invalid" };
   const passOk = await bcrypt.compare(plain, user.passwordHash);
   if (!passOk) return { ok: false, reason: "invalid" };
   if (!user.isActive) return { ok: false, reason: "deactivated" };
@@ -32,7 +32,7 @@ export async function verifyUserPasswordById(
   plain: string,
 ): Promise<boolean> {
   const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user) return false;
+  if (!user || !user.passwordHash) return false;
   return bcrypt.compare(plain, user.passwordHash);
 }
 

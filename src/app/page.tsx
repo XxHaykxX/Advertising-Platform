@@ -1,7 +1,6 @@
 import { Header } from "@/components/header";
 import { OrganizationJsonLd } from "@/components/organization-json-ld";
 import { Hero } from "@/components/hero";
-import { Stats } from "@/components/stats";
 import { Featured } from "@/components/featured";
 import { Trust } from "@/components/trust";
 import HowItWorks from "@/components/how-it-works";
@@ -25,10 +24,9 @@ export default async function Home() {
       <Header locale={locale} currency={currency} />
       <main>
         <Hero locale={locale} />
-        <Stats locale={locale} />
+        <HowItWorks locale={locale} />
         <Featured projects={projects.slice(0, 6)} locale={locale} />
         <Trust locale={locale} />
-        <HowItWorks locale={locale} />
         <GetStarted locale={locale} />
         <Why locale={locale} />
         <Faq locale={locale} />
