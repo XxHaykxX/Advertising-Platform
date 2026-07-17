@@ -174,7 +174,18 @@
       **«This page couldn't load. Reload to try again, or go back.»** — **та же** ошибка, что при входе в админку (п.3).
 - [ ] Похоже на общий баг server-action/рендера на проде (одинаковый экран ошибки). Проверить оба вместе.
 
+## QA 2026-07-17 (Волна 2) — находки
+
+- [x] **BUG (краш, найден+исправлен QA):** creator `/account/projects/new` → 500 «Что-то пошло не так». Причина: серверный `new/page.tsx` передавал в клиентский ProjectForm инлайн-обёртку `posterAction={(input)=>generateCreatorPosterAction(input)}` — Next запрещает передавать обычные функции в client component (только "use server"-actions). tsc НЕ ловит (рантайм). Фикс: передавать `posterAction={generateCreatorPosterAction}` напрямую (project-form сам оборачивает с projectId). Проверено: форма рендерится, локализована. **УРОК:** при передаче server-action как пропа в client-компонент — БЕЗ инлайн-обёрток из серверного компонента.
+- Прочее QA чисто: логаут (клиентский, без краша), Applications убран (nav+роут+dashboard-карточка), Users-вкладки Staff/Members, hero на всех не-home (хедер читаем), admin-форма англ. + удалённые поля убраны + cast-datalist, creator-форма локализована (8 секций, Visibility скрыт), /contact (leads→email), карточки login-CTA. Console-ошибок нет (leads.ts/project-card в логе — стейл HMR, ушли).
+
 ## (место для новых пунктов — пользователь диктует)
+
+- [x] **BUG: иконка пароля на логине** — ПРОВЕРЕНО 2026-07-17: и `/login` (login-form.tsx:69), и `/admin/login` (login-form.tsx:56) УЖЕ используют `PasswordInput` с глазом (коммит a0d5991, на проде). Ложный баг — юзер видел старую вкладку до деплоя. Ничего чинить не нужно.
+
+- [ ] **Creator-форма подачи проекта ≠ админская (нужна полная паритетность).** `/account/projects/new` (`src/app/account/projects/new/project-submit-form.tsx`) — урезанная: есть только title, synopsis, genres, kind(film/serial), episodes/episodeMinutes, poster(+генератор), format, studio, countries. НЕТ (а в админской `project-form.tsx` есть): переводы hy/ru/en + кнопка Translate, Status & release, Placement (даты/платформы/placementType/цена/priceNote), Audience & value (CPM/бюджет/projViews/ageRating), Press-kit (tagline/subgenre/references/cinemas), Cast & crew (ActorsSection), Sponsorship tiers (TiersSection), автосейв черновика. Хочет: creator-форма как в админке, с тем же функционалом. **Подход:** переиспользовать `project-form.tsx` для creator-потока (или вынести общий компонент), submit → moderationStatus=PENDING (не APPROVED), ownerId=creator. Проверить: авто-Code, гейты, что creator НЕ может ставить isActive/moderationStatus сам. (записано 2026-07-16, НЕ чинено)
+
+- [ ] **BUG (прод): логаут кидает «Что-то пошло не так» на igovazd.am** — при выходе из member-аккаунтов (creator И brand), свежие вкладки, воспроизводится стабильно. **Корень найден:** обе logout-actions (`src/app/account/actions.ts` memberLogout + `src/app/admin/actions.ts` staffLogout) используют серверный `redirect()` внутри server-action. Это ТОТ ЖЕ паттерн, что батч-фикс «чёрного экрана» (2026-07-15) убрал из login/register → перевёл на `{ok,redirect}` + клиентскую навигацию, т.к. серверный `redirect()` в action крашит на Hostinger/Passenger. Логаут забыли мигрировать. Локально (dev + прод-билд :3002) НЕ воспроизводится — только на Hostinger. **Фикс:** сделать logout клиентским — server-action только удаляет cookie (без redirect), клиент делает `window.location.assign("/")` (member) / `"/admin/login"` (staff). Правки: `header.tsx` UserMenu + мобильное меню (обе `<form action=logout>` → onClick-хендлер), `account/actions.ts`, `admin/actions.ts` (убрать redirect, вернуть void/`{ok}`). Проверить также логаут из `/account`, `/account/brand` сайдбаров + `admin-shell.tsx`. (записано 2026-07-16, НЕ чинено)
 
 - [ ] …
 
