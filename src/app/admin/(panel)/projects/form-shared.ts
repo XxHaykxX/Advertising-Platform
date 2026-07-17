@@ -23,6 +23,32 @@ export const FORMAT_CATEGORY_VALUES = [
 // t(`language.${v}`) / localizeValue(locale, "language", v).
 export const LANGUAGE_VALUES = ["Armenian", "Russian", "English", "Georgian", "Other"] as const;
 
+// Fall back to a sensible Format bucket when a row has no explicit
+// formatCategory. That column was added late (default "") so every pre-existing
+// and seed row is blank — without this the catalog Format filter matches nothing
+// for that data. A saved value always wins; otherwise we infer from the
+// free-text `format`/`genre` (which carry "Series"/"Feature"/… tokens), and only
+// then from `kind`. Buckets with no matching data (Sitcom/Podcast/Reality/…)
+// legitimately stay empty. Keep in sync with FORMAT_CATEGORY_VALUES.
+export function deriveFormatCategory(
+  formatCategory: string,
+  kind: string,
+  hint = "",
+): string {
+  if (formatCategory) return formatCategory;
+  const t = hint.toLowerCase();
+  if (/\bsitcom\b|ситком|սիթքոմ/.test(t)) return "SITCOM";
+  if (/podcast|подкаст|փոդքաստ/.test(t)) return "PODCAST";
+  if (/reality|реалит|ռեալիթի/.test(t)) return "REALITY";
+  if (/\bshort\b|короткометр|կարճամետրաժ/.test(t)) return "SHORT";
+  if (/series|serial|сериал|սերիал/.test(t)) return "SERIES";
+  if (/program|переда|հաղորդում/.test(t)) return "PROGRAM";
+  if (/feature|documentary|\bfilm\b|\bmovie\b|фильм|филм|ֆիլմ|վավերագր/.test(t)) return "FEATURE";
+  if (kind === "SERIAL") return "SERIES";
+  if (kind === "FILM") return "FEATURE";
+  return "";
+}
+
 export const AGE_RATING_VALUES = ["", "0+", "6+", "12+", "16+", "18+"] as const;
 
 /** Date | null -> "YYYY-MM-DD" for prefilling an <input type=date>. */

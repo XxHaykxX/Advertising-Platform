@@ -10,10 +10,25 @@ export function parseStringArray(json: string | null): string[] {
 
 export function splitCountries(s: string): string[] {
   if (!s) return [];
-  return s
-    .split(", ")
-    .map((c) => c.trim())
-    .filter(Boolean);
+  // Split on ", " but NOT inside parentheses, so values like
+  // "Diaspora (US, France)" stay intact instead of splitting into
+  // "Diaspora (US" + "France)".
+  const out: string[] = [];
+  let depth = 0;
+  let cur = "";
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+    if (ch === "(") depth++;
+    else if (ch === ")") depth = Math.max(0, depth - 1);
+    if (ch === "," && depth === 0) {
+      out.push(cur.trim());
+      cur = "";
+      continue;
+    }
+    cur += ch;
+  }
+  out.push(cur.trim());
+  return out.filter(Boolean);
 }
 
 // TODO(currency): route through formatMoney once estValue is real AMD.

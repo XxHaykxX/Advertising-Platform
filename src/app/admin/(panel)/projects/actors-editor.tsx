@@ -129,6 +129,7 @@ export function ActorsSection({
               dir="actors"
               initial={r.photo}
               label={r.photo ? t("projectForm.cast.replacePhoto") : t("projectForm.cast.uploadPhoto")}
+              removeLabel={t("ui.remove")}
               onChange={(paths) => update(i, { photo: paths[0] ?? "" })}
             />
           </div>

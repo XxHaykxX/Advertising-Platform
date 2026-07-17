@@ -33,7 +33,6 @@ export function BrandSidebar({
     interests: string;
     profile: string;
     notifications: string;
-    soon: string;
     logout: string;
   };
   logoutAction: () => Promise<{ redirect: string }>;

@@ -30,7 +30,6 @@ export default async function BrandLayout({ children }: { children: ReactNode })
             interests: t("account.brand.navInterests"),
             profile: t("account.brand.navProfile"),
             notifications: t("account.brand.navNotifications"),
-            soon: t("account.brand.soon"),
             logout: t("account.logout"),
           }}
           logoutAction={logout}

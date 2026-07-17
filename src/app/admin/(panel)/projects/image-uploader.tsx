@@ -21,6 +21,7 @@ export const ImageUploader = forwardRef<ImageUploaderHandle, {
   label: string;
   onChange?: (paths: string[]) => void; // controlled mode (e.g. sub-editor rows)
   trailing?: React.ReactNode; // rendered inline next to the upload button (e.g. an "or Generate poster" action)
+  removeLabel?: string; // aria-label for the per-thumbnail remove button, localized by the caller
 }>(function ImageUploader({
   name,
   dir,
@@ -29,6 +30,7 @@ export const ImageUploader = forwardRef<ImageUploaderHandle, {
   label,
   onChange,
   trailing,
+  removeLabel = "Remove",
 }, ref) {
   const [paths, setPaths] = useState<string[]>(
     initial ? initial.split("\n").map((s) => s.trim()).filter(Boolean) : [],
@@ -101,7 +103,7 @@ export const ImageUploader = forwardRef<ImageUploaderHandle, {
               <button
                 type="button"
                 onClick={() => removeAt(i)}
-                aria-label="Remove"
+                aria-label={removeLabel}
                 className="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-md bg-background/80 text-muted-foreground opacity-0 transition-opacity hover:text-primary group-hover:opacity-100"
               >
                 <Trash2 className="h-3.5 w-3.5" />

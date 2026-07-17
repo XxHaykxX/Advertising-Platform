@@ -74,10 +74,10 @@ export const UI: Record<string, Dict> = {
   "about.heroEyebrow": {
     ru: "Маркетплейс product placement",
     en: "Product-placement marketplace",
-    hy: "Product placement-ի շուկա",
+    hy: "Փրոդակթ փլեյսմենթի շուկա",
   },
   "about.connectTitle": { ru: "Как мы соединяем", en: "How we connect", hy: "Ինչպես ենք կապում" },
-  "about.placementBadge": { ru: "Product placement", en: "Product placement", hy: "Product placement" },
+  "about.placementBadge": { ru: "Product placement", en: "Product placement", hy: "Փրոդակթ փլեյսմենթ" },
   "about.pillarsTitle": { ru: "Почему iGovazd", en: "Why iGovazd", hy: "Ինչու՞ iGovazd" },
   "about.pillar1Title": { ru: "Прозрачность", en: "Transparency", hy: "Թափանցիկություն" },
   "about.pillar1Body": {
@@ -87,9 +87,9 @@ export const UI: Record<string, Dict> = {
   },
   "about.pillar2Title": { ru: "Приватность", en: "Privacy", hy: "Գաղտնիություն" },
   "about.pillar2Body": {
-    ru: "Изучайте проекты в приватном режиме и раскрывайтесь только при взаимном интересе.",
-    en: "Browse projects privately and reveal yourself only on mutual interest.",
-    hy: "Ուսումնասիրեք նախագծերը գաղտնի կերպով և բացահայտվեք միայն փոխադարձ հետաքրքրության դեպքում։",
+    ru: "Ваши контактные данные не публикуются в каталоге — их видят только стороны, с которыми начинается сотрудничество.",
+    en: "Your contact details aren't published in the catalog — only parties you start working with can see them.",
+    hy: "Ձեր կոնտակտային տվյալները չեն հրապարակվում կատալոգում. դրանք տեսնում են միայն այն կողմերը, որոնց հետ սկսվում է համագործակցությունը։",
   },
   "about.pillar3Title": { ru: "Прямой контакт", en: "Direct contact", hy: "Ուղիղ կապ" },
   "about.pillar3Body": {
@@ -225,11 +225,6 @@ export const UI: Record<string, Dict> = {
   },
   "catalog.signIn": { ru: "Войти", en: "Sign In", hy: "Մուտք" },
   "catalog.register": { ru: "Регистрация", en: "Register", hy: "Գրանցում" },
-  "catalog.anonymizedNotice": {
-    ru: "Личности сторон раскрываются только после подтверждения взаимного интереса",
-    en: "Party identities are revealed only once mutual interest is confirmed",
-    hy: "Կողմերի ինքնությունը բացահայտվում է միայն փոխադարձ հետաքրքրության հաստատումից հետո",
-  },
   "catalog.filters": { ru: "Фильтры", en: "Filters", hy: "Զտիչներ" },
   "catalog.genre": { ru: "Жанр", en: "Genre", hy: "Ժանր" },
   "catalog.targetAudience": { ru: "Целевая аудитория", en: "Target Audience", hy: "Թիրախային լսարան" },
@@ -480,9 +475,9 @@ export const UI: Record<string, Dict> = {
   },
   "faq.q3.question": { ru: "Как защищена конфиденциальность сторон?", en: "How is party privacy protected?", hy: "Ինչպե՞ս է պաշտպանվում կողմերի գաղտնիությունը" },
   "faq.q3.answer": {
-    ru: "Отчёты о плейсменте по умолчанию скрывают личности сторон. Продакшен и бренд остаются нераскрытыми, пока обе стороны не подтвердят взаимный интерес, что делает ранние разговоры менее напряжёнными для обеих сторон.",
-    en: "Placement reports keep party identities hidden by default. Production and brand stay undisclosed until both sides confirm mutual interest, keeping early conversations low-pressure on both ends.",
-    hy: "Տեղադրման հաշվետվությունները ըստ լռելյայն թաքցնում են կողմերի ինքնությունը։ Պրոդակշնը և բրենդը մնում են չբացահայտված, մինչև երկու կողմերն էլ հաստատեն փոխադարձ հետաքրքրությունը, ինչը վաղ խոսակցությունները դարձնում է քիչ ճնշող երկու կողմերի համար։",
+    ru: "Ваши контактные данные не отображаются в публичном каталоге. Личности сторон становятся известны участникам сделки, а первый контакт помогает организовать платформа iGovazd.",
+    en: "Your contact details aren't shown in the public catalog. Party identities become known to those involved in a deal, and iGovazd helps arrange the first contact.",
+    hy: "Ձեր կոնտակտային տվյալները չեն ցուցադրվում հանրային կատալոգում։ Կողմերի ինքնությունը հայտնի է դառնում գործարքի մասնակիցներին, իսկ առաջին կապը կազմակերպելու հարցում օգնում է iGovazd հարթակը։",
   },
   "faq.q4.question": { ru: "Как создатели размещают проект?", en: "How do creators list a project?", hy: "Ինչպե՞ս են ստեղծագործողները ցուցակագրում նախագիծը" },
   "faq.q4.answer": {
@@ -829,9 +824,9 @@ export const UI: Record<string, Dict> = {
 
   "register.title": { ru: "Регистрация", en: "Create Account", hy: "Գրանցում" },
   "register.subtitle": {
-    ru: "Создайте аккаунт бренда или создателя. Доступ открывается после проверки администратором.",
-    en: "Create a brand or creator account. Access is granted after admin review.",
-    hy: "Ստեղծեք բրենդի կամ ստեղծագործողի հաշիվ։ Հասանելիությունը տրվում է ադմինի ստուգումից հետո։",
+    ru: "Создайте аккаунт бренда или создателя — доступ открывается сразу после регистрации.",
+    en: "Create a brand or creator account — access opens right after you sign up.",
+    hy: "Ստեղծեք բրենդի կամ ստեղծագործողի հաշիվ․ հասանելիությունը բացվում է գրանցումից անմիջապես հետո։",
   },
   "register.fullName": { ru: "Полное имя", en: "Full name", hy: "Լրիվ անուն" },
   "register.fullNamePlaceholder": { ru: "Иван Иванов", en: "Jane Doe", hy: "Անուն Ազգանուն" },
@@ -929,14 +924,14 @@ export const UI: Record<string, Dict> = {
   "account.roleCreator": { ru: "Создатель", en: "Creator", hy: "Ստեղծագործող" },
   "account.statusApproved": { ru: "Одобрен", en: "Approved", hy: "Հաստատված" },
   "account.logout": { ru: "Выйти", en: "Log out", hy: "Դուրս գալ" },
+
+  // ── shared UI controls (multi-select / uploaders) ──
+  "ui.addOption": { ru: "Добавить", en: "Add", hy: "Ավելացնել" },
+  "ui.remove": { ru: "Удалить", en: "Remove", hy: "Հեռացնել" },
+  "ui.close": { ru: "Закрыть", en: "Close", hy: "Փակել" },
+
   "account.creatorUploadTitle": { ru: "Загрузка сценария", en: "Upload script", hy: "Վերբեռնել սցենարը" },
-  "account.creatorUploadSoon": {
-    ru: "Скоро вы сможете загружать сценарии и отмечать возможности для плейсмента.",
-    en: "Soon you'll be able to upload scripts and mark placement opportunities.",
-    hy: "Շուտով դուք կկարողանաք վերբեռնել սցենարներ և նշել տեղադրման հնարավորությունները։",
-  },
   "account.creatorProjectsTitle": { ru: "Мои проекты", en: "My projects", hy: "Իմ նախագծերը" },
-  "account.creatorProjectsSoon": { ru: "Здесь появятся ваши проекты.", en: "Your projects will appear here.", hy: "Ձեր նախագծերը կհայտնվեն այստեղ։" },
   "account.brandBrowseTitle": { ru: "Каталог проектов", en: "Browse catalog", hy: "Դիտել կատալոգը" },
   "account.brandBrowseBody": {
     ru: "Изучайте каталог проектов и выражайте интерес к плейсменту.",

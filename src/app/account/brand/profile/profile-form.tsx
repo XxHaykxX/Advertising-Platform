@@ -80,6 +80,8 @@ export function ProfileForm({ profile, locale }: { profile: BrandProfileDTO; loc
               onChange={setCategories}
               name="brandCategories"
               placeholder={t("account.brand.categories")}
+              addLabel={t("ui.addOption")}
+              removeLabel={t("ui.remove")}
             />
           </div>
 

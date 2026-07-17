@@ -103,9 +103,8 @@ export async function requireContentEditor(): Promise<AuthedUser> {
 
 /** Require a logged-in, active staff user who may moderate submitted projects
    (SUPERADMIN or MODERATOR — see permissions.ts). 404s otherwise, same
-   pattern as requireContentEditor/requireSuperadmin. Not yet wired to any
-   route (moderation actions land in a follow-up task) — exported so that
-   work can consume it directly. */
+   pattern as requireContentEditor/requireSuperadmin. Guards the moderation
+   actions/pages. */
 export async function requireModerator(): Promise<AuthedUser> {
   const user = await requireUser();
   if (!canModerate(user.role)) notFound();

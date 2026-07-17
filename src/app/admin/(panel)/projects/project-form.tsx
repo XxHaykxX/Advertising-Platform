@@ -480,6 +480,8 @@ export function ProjectForm({
               onChange={setGenres}
               name="genres"
               placeholder={t("projectForm.genresPlaceholder")}
+              addLabel={t("ui.addOption")}
+              removeLabel={t("ui.remove")}
             />
           </Field>
           <Field label={t("projectForm.field.poster")}>
@@ -494,6 +496,7 @@ export function ProjectForm({
               dir="projects"
               initial={posterInitial}
               label={t("projectForm.uploadPoster")}
+              removeLabel={t("ui.remove")}
               trailing={
                 <>
                   <span className="text-xs uppercase tracking-wide text-muted-foreground">{t("projectForm.or")}</span>
@@ -528,6 +531,7 @@ export function ProjectForm({
             multiple
             initial={galleryInitial}
             label={t("projectForm.uploadGalleryImages")}
+            removeLabel={t("ui.remove")}
           />
         </Field>
         <Field label={t("projectForm.field.kind")}>
@@ -690,6 +694,8 @@ export function ProjectForm({
               name="countries"
               allowCustom
               placeholder={t("projectForm.countriesPlaceholder")}
+              addLabel={t("ui.addOption")}
+              removeLabel={t("ui.remove")}
             />
           </Field>
         </div>
@@ -718,6 +724,8 @@ export function ProjectForm({
               name="platforms"
               allowCustom
               placeholder={t("projectForm.platformsPlaceholder")}
+              addLabel={t("ui.addOption")}
+              removeLabel={t("ui.remove")}
             />
           </Field>
           <Field label={t("projectForm.field.placementType")}>
@@ -821,6 +829,8 @@ export function ProjectForm({
             name="cinemas"
             allowCustom
             placeholder={t("projectForm.cinemasPlaceholder")}
+            addLabel={t("ui.addOption")}
+            removeLabel={t("ui.remove")}
           />
         </Field>
       </section>

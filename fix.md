@@ -7,6 +7,157 @@
 
 ---
 
+# ⭐ АКТУАЛЬНЫЙ СТАТУС — 2026-07-17 (источник правды; всё ниже этого блока — исторический лог)
+
+**Прод:** `igovazd.am`, HEAD = `3addfe5`. Прод-БД мигрирована (`srv2026.hstgr.io`, additive — таблица `Notification`, колонки `Project.formatCategory/language`, ранее Interest/moderation/roles/brand-поля). Смоук зелёный.
+
+## ✅ ЗАДЕПЛОЕНО НА ПРОД (всё работает)
+- **Фаза 1** (`c33e3e2`): email-уведомления, кабинет создателя, фикс чёрного экрана, аватар в хедере, авто-Code, Genre multi-select, Film/Serial, рег без модерации, модерация проектов, роли (MODERATOR/PUBLISHER), кабинет бренда (Interest/expressInterest), быстрая заливка+авто-перевод, генерация постера (Nano Banana Pro), #20² single-page форма.
+- **Фаза 2** (`3ca72bc`): чистка admin-формы, единый page-hero на всех публичных страницах, Registrations→Users (табы), creator-форма 1:1 с admin, translate-устойчивость (fallback-модель), фикс логаута (клиентская навигация), убраны анонимные Applications, телефон +374.
+- **Батч V1–V11 + V7** (`3addfe5`, 2026-07-17):
+  - V1 каталог респонсив + фикс кнопок карточек (overflow/clip на desktop, перенос длинного CTA).
+  - V2–V5 фильтры каталога: Формат, Возраст, Язык, Платформа, Страна; убрана верхняя плашка.
+  - V6 /reports респонсив + ROI + login-CTA.
+  - V7 переключатель валюты: убран из хедера, оставлен в футере.
+  - V8 бренд «Мои интересы» — add/remove A→Z.
+  - V9 **уведомления A→Z** — модель Notification, триггеры (интерес→владелец+суперадмины, сабмит→модераторы, approve/reject→владелец), страницы в 3 кабинетах + badge непрочитанных.
+  - V10 валидация форм — локализация ошибок (admin-логин целиком + users/portfolio/partners) + `required`.
+  - V11 security — postcss ≥8.5.10.
+  - Admin-логин полностью локализован (форма+ошибки, hy/ru/en).
+
+## 🔎 АУДИТ 2026-07-17 (4 разведчика по коду) — fix.md был устаревшим, реальность ниже
+- **#11 Поиск персон** — оказалось УЖЕ СДЕЛАНО: `getKnownPeople()` (`src/lib/data/actors.ts:22`) + `<datalist>` в `actors-editor.tsx`, автозаполнение role/kind/photo, подключено в admin new/edit И creator-форме. Только проверить в /qa.
+- **Локализация creator-формы** — оказалось УЖЕ СДЕЛАНО: creator переиспользует admin `project-form.tsx` с `makeUI(mode==="creator"?locale:"en")`, всё через `t()`. Осталась мелочь (закрыта сегодня, см. ниже).
+
+## ✅ СДЕЛАНО СЕГОДНЯ (2026-07-17, локально, tsc 0 — НЕ на проде)
+- [x] **Фаза 1 — хвост локализации creator-формы:** `multi-select.tsx` видимая кнопка `Add "{q}"` + aria-label Remove → i18n (`ui.addOption/remove`); `poster-generator.tsx` aria Close/Remove; `image-uploader.tsx` aria Remove. Новые ключи `ui.addOption/remove/close` (hy чистый).
+- [x] **Фаза 2 — тех-долг:** убран мёртвый `soon`-label (`brand/layout.tsx`+`brand-sidebar.tsx`); удалены мёртвые ключи `creatorUploadSoon/ProjectsSoon`; поправлен stale-коммент `requireModerator` (`require.ts`).
+
+## ✅ Фаза 3 — РЕШЕНО ЮЗЕРОМ + СДЕЛАНО (2026-07-17, локально, tsc 0)
+- [x] **Ответ на интерес → решение: НЕ строить.** Юзер: «отвечает только iGovazd». Creator accept/decline НЕ делаем; интересы обрабатывает админ (уже видит их в `/admin/interests`). `Interest.MUTUAL/DECLINED` остаются в enum, но не используются (enum не трогаем — удаление значений = миграция прод-БД, лишний риск).
+- [x] **Анонимность → решение: убрать обещание.** Юзер: имена открыты. Удалён неиспользуемый ключ `catalog.anonymizedNotice`; переписаны `about.pillar2Body` и `faq.q3.answer` — больше НЕ обещают «скрыто до взаимного интереса». Код и так показывал имена открыто → теперь тексты соответствуют. Уведомление с именем бренда создателю = корректно.
+- [x] **GARM Brand-Safety → решение: удалить всё.** В коде GARM/safety-UI НЕ БЫЛО (только план в доках) — удалять нечего; не строим. Из планов ниже вычеркнуть.
+- [ ] **Google OAuth** (по готовности) — код готов (`lib/auth/google.ts`, роуты `/api/auth/google/*`), ждёт `GOOGLE_CLIENT_ID/SECRET` в env. Задача юзера.
+
+## 🟡 ОСТАЛОСЬ — тех-долг (НЕ быстрая чистка — by-design/отложено)
+- [ ] Захардкоженные англ. taglines / portfolio-метрики (`i18n.ts:5` TODO) → ждёт Content-i18n механизма.
+- [ ] `estValue`/`exposureTotal` (`format.ts:19-21`) — placeholder-числа, ждут currency-spec / реальных данных.
+- [ ] Примитивный genre-matcher рекомендаций бренда (`brand-dashboard.ts:48`) — намеренно «простой фильтр», улучшать при желании.
+- ~~`ModerationStatus.DRAFT` не используется~~ — НЕВЕРНО: DRAFT используется (`projects.ts:124`, moderation-страницы). Не долг.
+- ~~`i18n-brand.ts` → merge~~ — файла уже НЕТ (удалён ранее). Закрыто.
+
+## 🔵 ОСТАЛОСЬ — операционка / гигиена
+- [ ] `noreply@igovazd.am` — проверить, создан ли ящик (нужен для писем).
+- [ ] Google OAuth creds в hPanel — когда юзер создаст OAuth-клиент.
+- [ ] Полный **/qa прогон на проде** — системно не делали.
+- [ ] Автотестов нет вообще (не срочно).
+- [ ] Пере-ревью старого Logic-Review 2026-07-08 (мёртвые колонки Application note/budget, Setting/default_lang) — частично устарел, проверить актуальность.
+
+---
+
+# 🧪 QA-ПЛАН 2026-07-17 (ОДОБРЕН ЮЗЕРОМ) — A→Z, все роли, UI/UX
+
+Легенда: **M** = мануальный (браузер, Playwright MCP — gstack /browse на Windows не работает) · **A** = автотест (предложение). Роли: Гость / Создатель / Бренд / Админ. Языки: hy/ru/en. Вьюпорты: desktop 1280 + mobile 375. Тест-данные с префиксом `QA-` (чистить после). **Google OAuth — ПРОПУСК** (нет creds). Баги по ходу → сюда в fix.md с severity.
+
+**Стратегия параллелизма (браузер = один сеанс, нельзя дублировать):** статические/код-проверки (i18n-дыры, гомоглифы, инвентарь кнопок/ссылок, проверка правок сессии) → параллельные агенты (Fable 5 на механику-скан, sonnet на аудит). Браузерные A→Z потоки → одна последовательная линия (я или один агент). Автотесты (G) — отдельный объём, только по доп. команде.
+
+## 0. Среда
+- 0.1 dev :3001 (200) ✅ + Docker MySQL 3307 healthy ✅.
+- 0.2 Тест-данные `QA-*`, почистить после.
+
+## A. Гость / публичный сайт
+- A1 (M) Home: hero, «Как работает», Featured (6 карт), stats, About, FAQ, Contact, footer + console.
+- A2 (M) Навигация хедера + лого.
+- A3 (M) Каталог: сетка, фильтры (Формат/Возраст/Язык/Платформа/Страна/Жанр/Пол), сортировка, grid/list, поиск.
+- A4 (M/UI) Карточка: кнопки, перенос длинного CTA, нет висячей запятой/пустых метрик.
+- A5 (M) /reports/[id]: hero/key-facts/cast/ROI/login-CTA респонсив.
+- A6 (M) Портфолио, О нас, Контакты, how-it-works, terms, privacy + все ссылки.
+- A7 (M) Контакт-форма: пустой→локализ.ошибки, валидный→успех.
+- A8 (UI) Языки hy↔ru↔en (хедер+футер) + валюта только футер.
+- A9 (UI) Mobile 375: бургер, фильтр-sheet, карточки, футер-switcher.
+
+## B. Регистрация + авторизация (все роли)
+- B1 (M) Рег создателя QA-Creator → APPROVED → /account.
+- B2 (M) Рег бренда QA-Brand → APPROVED → /account/brand.
+- B3 (M/UI) Валидация рег: пустые/невалид email/слабый пароль → inline-локализ.; глаз-пароль.
+- B4 (M) Логин member (верный/неверный) + логаут (клиентский, без краша).
+- B5 (M) Логин админа /admin/login — локализ. ошибка hy/ru/en + форма.
+- B6 (—) Google OAuth — ПРОПУСК.
+
+## C. Кабинет создателя + подача проекта (A→Z)
+- C1 (M) /account карточки.
+- C2 (M) «Мои проекты» + статус-пилюли.
+- C3 (M) ★ Подача /account/projects/new — ВСЕ секции: title hy/ru/en + Translate, synopsis, жанры (multi-select + кнопка «Ավելացнел»), Film/Serial→эпизоды/минуты, страны/платформы/кинотеатры, студия datalist, возраст, формат, актёры/crew + datalist автозаполнение (#11), тиры, press-kit, постер-генератор (не сабмитит форму), автосейв.
+- C4 (M) Submit → PENDING, авто-Code, creator НЕ ставит isActive.
+- C5 (M/UI) Форма локализована hy/ru/en (chrome + aria Remove/Close).
+- C6 (M) Уведомления создателя + badge.
+
+## D. Кабинет бренда (A→Z)
+- D1 (M) Dashboard.
+- D2 (M) Browse + express-interest toggle.
+- D3 (M) My Interests + withdraw.
+- D4 (M) Profile save + export JSON.
+- D5 (M/UI) Sidebar без мёртвого «Скоро» + badge.
+- D6 (M) Уведомления бренда.
+
+## E. Админка (SUPERADMIN)
+- E1 (M) Moderation: PENDING QA-Creator → Approve → в каталоге.
+- E2 (M) Reject → уведомление создателю.
+- E3 (M) Проекты CRUD: create/edit (фото→Save без краша)/delete/Duplicate.
+- E4 (M) Users (Staff/Members) create/сброс пароля локализ.
+- E5 (M) Interests / Registrations / Media / Notifications badge.
+- E6 (UI) Admin-nav все разделы.
+
+## F. UI/UX кросс-роль
+- F1 i18n: нет англ. дыр в hy/ru; нет кириллических гомоглифов (скрипт = 0).
+- F2 Анонимность: About pillar2 + FAQ q3 — нет обещания «аноним до взаимного».
+- F3 Каталог: нет плашки анонимности.
+- F4 Responsive desktop/mobile ключевых.
+- F5 States: empty/loading/error/overflow.
+- F6 Console 0 ошибок на каждом маршруте.
+- F7 Клик по КАЖДОЙ кнопке/ссылке — нет мёртвых.
+
+## G. Автотесты (предложение, НЕ без доп. команды)
+- G1 (A) Юнит: renderNotification, parseNotificationData, getKnownPeople dedupe, format.ts guard.
+- G2 (A) Интеграция actions: register→APPROVED, createCreatorProject→PENDING, expressInterest/withdraw, admin approve→isActive.
+- G3 (A) i18n-гард в CI: нет гомоглифов + все ключи hy/ru/en.
+- G4 (A) E2E Playwright smoke: гость→каталог→report, creator→submit, brand→interest.
+
+---
+
+## ✅ РЕЗУЛЬТАТЫ ПРОГОНА QA-ПЛАНА — 2026-07-17 (Playwright MCP, dev :3001, tsc 0)
+
+Оркестрировано: 4 статик-агента (i18n/гомоглифы, правки сессии, мёртвые кнопки/гарды, корень каталог-багов) + одна последовательная браузерная линия (я). Прогон A→E, роли Гость/Создатель/Бренд/Админ, hy/ru, desktop 1280 + mobile 375. Тест-данные `QA-*` созданы и **почищены** после (qa-creator/qa-brand/проект #44/уведомления удалены из локальной БД).
+
+### ✅ Проверено ЧИСТО (работает)
+- **A. Гость:** home (hero/how-it-works/Featured 6/stats/about/FAQ/contact/footer, console 0), навигация+лого, каталог (все фильтры V2–V5 присутствуют, верхней плашки нет V4, сортировка/grid-list/поиск), report /reports/32 (галерея/key-facts/cast/ROI-CTA, **валюта ֏ консистентна с каталогом — V7 ✅**), публичные роуты portfolio/about/how-it-works/terms/privacy = 200, контакт-форма happy-path («Շնորհակալություն…», без чёрного экрана), переключение языка hy↔ru, mobile 375 (нет гориз. скролла V1, бургер + фильтр-sheet).
+- **B. Авторизация:** рег creator→APPROVED→/account (аватар «QC», авто-логин), рег brand→APPROVED→**/account/brand** (F13 фикс ✅, не тупик), логаут клиентский (редирект на /, без краша), admin-логин: неверный→«Неверный email или пароль.» (V10 локализ. ✅), верный→/admin.
+- **C. Создатель:** /account (3 карточки), «Мои проекты»+статус-пилюли, **форма подачи = полный паритет с админской** (#304 ✅: все 9 секций, авто-Код, жанр multi-select 40, Фильм/Сериал, Формат/Язык, студия-datalist, переводы+Translate, автосейв черновика, **datalist автозаполнения персон #11 — 20 known people ✅**, актёры/тиры, постер-генератор), submit→PENDING+авто-Код `#PP-2026-9013` (creator не ставит isActive), уведомления создателя.
+- **D. Бренд:** dashboard (аватар «QB», рекомендации, недавние), Browse+express-interest toggle (→«Интерес отправлен» V8 ✅), My Interests+withdraw (V8 ✅), Profile (Email ro/Company/Website/Categories/Budget/Скачать JSON), **sidebar без мёртвого «Скоро» D5 ✅**, уведомления.
+- **E. Админ:** nav все 9 разделов + бейджи (Moderation 1 / Notifications 2), **Moderation: Approve QA-проекта → APPROVED+isActive=1+/reports/44=200 (E1 ✅)**, Projects edit+Save→редирект без «This page couldn't load» (баг #14 не воспроизв.), Users Staff/Members (qa-юзеры видны), Interests (F14 закрыт — раздел есть).
+- **V9 уведомления A→Z ✅** — все 3 триггера подтверждены в БД: PROJECT_SUBMITTED→admin, INTEREST→admin, PROJECT_APPROVED→creator.
+- **F. Статик-агенты:** гомоглифы **0** (i18n.ts чист), мёртвых кнопок/ссылок **0**, формат-гарды F6/F7 на месте (нет висячей запятой/пустых метрик), V7 CurrencySwitcher только в футере, все обязательные ключи (ui/auth/genre×44/formErr) в hy/ru/en.
+
+### 🐛 НАЙДЕНО + ИСПРАВЛЕНО (tsc 0, каталог-фиксы проверены в браузере)
+- **[MED] Каталог-фильтр «Формат» возвращал 0** — `formatCategory` пуст у ВСЕХ проектов (колонка добавлена поздно, `kind` тоже бесполезен — везде FILM). Фикс: `deriveFormatCategory()` (`form-shared.ts`) выводит бакет из токена `format`/`genre` («Series»→SERIES, «Feature/Film/Movie/Documentary»→FEATURE, +sitcom/podcast/reality/short/program), kind как запасной; применён в `projects.ts` (list+detail DTO). **Проверено:** Сериал→3, Полнометражный→5 = 8. Бакеты без данных законно пусты. Чинит и локальные, и прод-данные без миграции.
+- **[MED] Каталог-фасет «Страна» разбивал `Diaspora (US, France)`** на «Diaspora (US» + «France)». Фикс: `splitCountries()` (`format.ts`) — парсер, уважающий скобки (не режет запятую внутри `()`). **Проверено:** один пункт `Diaspora (US, France)`.
+- **[LOW] Подзаголовок регистрации** обещал «Доступ открывается после проверки администратором» — противоречит авто-APPROVED. Переписан (hy/ru/en): доступ сразу после регистрации.
+- **[LOW] Профиль бренда, MultiSelect категорий** (`profile-form.tsx:77`) без `addLabel/removeLabel` → англ. дефолты «Add»/«Remove». Фикс: проброшены `t("ui.addOption")/t("ui.remove")`.
+- **[LOW] `multi-select.tsx` кнопка добавления опции** без aria-label → добавлен (a11y).
+- **[LOW] i18n `about.*` hy** латиница «Product placement» → транслитерация «Փրոդակթ փլեյսմենթ» (как на home). ru/en — заимствованный термин, оставлены.
+
+**Файлы фикса:** `format.ts`, `form-shared.ts`, `projects.ts`, `i18n.ts`, `profile-form.tsx`, `multi-select.tsx`. **Миграция БД НЕ нужна** (деривация рантайм, схема не менялась).
+
+### 🟡 ОСТАЛОСЬ — данные/операционка (не код-баг)
+- **[DATA] Проект #38 «ԱՐԱՄ»** на проде+локально: `format`=«Movie · 1h 40m · Color», genre=«Biographical Drama» — введено англ. вручную → торчит на home/каталоге/dashboard посреди hy. Чистить в админке (пересохранить с канон. жанром + арм. форматом). Не код-баг.
+- **[HOUSEKEEPING] Leftover** `e2e.creator.test@example.com` (User id 6) — мусор прошлой сессии, оставлен на решение юзера.
+- B6 Google OAuth — ПРОПУСК (нет creds, как в плане).
+
+### Деплой этого QA-батча
+Код-фиксы готовы локально (tsc 0). Деплой — по команде юзера: git push (Hostinger соберёт), **db push НЕ нужен**. Прод-данные автоматически станут фильтруемыми по Формату (деривация рантайм). #38 — почистить в админке отдельно.
+
+---
+
 ## ✅ СТАТУС 2026-07-15: батч РЕАЛИЗОВАН ЛОКАЛЬНО (tsc 0, E2E зелёный)
 
 Всё оркестрировано параллельными агентами (coder/architect/scout). Готово и проверено локально (dev :3001, browse E2E):

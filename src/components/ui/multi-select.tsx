@@ -19,6 +19,10 @@ interface MultiSelectProps {
   /** Allow adding free-text values not present in `options` (e.g. Studio). */
   allowCustom?: boolean;
   className?: string;
+  /** Label for the "Add" custom-option button and the "Remove" chip aria-label
+   *  (localized by callers via `t("ui.addOption")`/`t("ui.remove")`). */
+  addLabel?: string;
+  removeLabel?: string;
 }
 
 function normalizeOptions(options: string[] | MultiSelectOption[]): MultiSelectOption[] {
@@ -36,6 +40,8 @@ export function MultiSelect({
   name,
   allowCustom = false,
   className,
+  addLabel = "Add",
+  removeLabel = "Remove",
 }: MultiSelectProps) {
   const normalized = useMemo(() => normalizeOptions(options), [options]);
   const [open, setOpen] = useState(false);
@@ -140,7 +146,7 @@ export function MultiSelect({
                 e.stopPropagation();
                 removeValue(v);
               }}
-              aria-label={`Remove ${labelFor(v)}`}
+              aria-label={`${removeLabel} ${labelFor(v)}`}
               className="rounded-full p-0.5 transition-colors hover:bg-primary/20"
             >
               <X className="h-3 w-3" />
@@ -209,6 +215,7 @@ export function MultiSelect({
             <li>
               <button
                 type="button"
+                aria-label={`${addLabel} “${query.trim()}”`}
                 onClick={() => {
                   addCustom(query);
                   setQuery("");
@@ -216,7 +223,7 @@ export function MultiSelect({
                 }}
                 className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-primary transition-colors hover:bg-muted"
               >
-                Add “{query.trim()}”
+                {addLabel} “{query.trim()}”
               </button>
             </li>
           )}

@@ -6,6 +6,7 @@ import type { Locale } from "@/lib/i18n";
 import { formatMoney, formatMoneyRange } from "@/lib/currency";
 import { getRates } from "@/lib/currency/rates";
 import type { CurrencyCode } from "@/lib/currency";
+import { deriveFormatCategory } from "@/app/admin/(panel)/projects/form-shared";
 
 /** locale → en → base fallback chain for a per-locale content field. Returns
    the first non-empty candidate in that order. */
@@ -138,7 +139,7 @@ const getProjectsCached = unstable_cache(
     synopsis: pickLocale(locale, { hy: p.synopsisHy, ru: p.synopsisRu, en: p.synopsisEn }, p.synopsis),
     poster: p.poster ?? "",
     format: effectiveFormat(locale, p),
-    formatCategory: p.formatCategory,
+    formatCategory: deriveFormatCategory(p.formatCategory, p.kind, `${p.format} ${p.genre}`),
     language: p.language,
     studio: p.studio,
     countries: localizeCountries(locale, p.countries),
@@ -198,7 +199,7 @@ const getProjectCached = unstable_cache(
     poster: p.poster ?? "",
     gallery: p.gallery ?? "[]",
     format: effectiveFormat(locale, p),
-    formatCategory: p.formatCategory,
+    formatCategory: deriveFormatCategory(p.formatCategory, p.kind, `${p.format} ${p.genre}`),
     language: p.language,
     studio: p.studio,
     status: p.status,

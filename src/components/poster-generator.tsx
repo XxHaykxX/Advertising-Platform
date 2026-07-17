@@ -137,7 +137,7 @@ export function PosterGenerator({
               type="button"
               onClick={() => setOpen(false)}
               className="text-muted-foreground hover:text-foreground"
-              aria-label="Close"
+              aria-label={t("ui.close")}
             >
               <X className="h-4 w-4" />
             </button>
@@ -192,7 +192,7 @@ export function PosterGenerator({
             {source && (
               <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                 {source.name}
-                <button type="button" onClick={() => setSource(null)} aria-label="Remove">
+                <button type="button" onClick={() => setSource(null)} aria-label={t("ui.remove")}>
                   <X className="h-3 w-3" />
                 </button>
               </span>
