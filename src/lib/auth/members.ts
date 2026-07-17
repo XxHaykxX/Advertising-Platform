@@ -21,7 +21,7 @@ export type CreateMemberResult =
 
 /** Create an APPROVED member account. Password is bcrypt-hashed; the account
    can sign in immediately — no admin moderation step. An admin may still
-   REJECT/BLOCK it later from /admin/registrations. */
+   REJECT/BLOCK it later from the Members tab on /admin/users. */
 export async function createMember(input: {
   name: string;
   email: string;

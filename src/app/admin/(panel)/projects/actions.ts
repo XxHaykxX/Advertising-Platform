@@ -17,7 +17,8 @@ export type ProjectFormValues = {
   genre: string; // legacy single-genre display value; kept in sync with genres[0]
   genres: string[]; // multi-genre picks (Genre MultiSelect)
   synopsis: string;
-  // ── Per-locale translations (fall back to title/synopsis above) ──
+  // ── Per-locale translations — the form only submits these; title/synopsis
+  // above are derived from them (ru, then hy, then en) in buildData ──
   titleHy: string;
   titleRu: string;
   titleEn: string;
@@ -148,18 +149,27 @@ function buildData(fd: FormData): ProjectFormValues {
   // CSV/single-string columns the rest of the app still reads.
   const genres = jsonArray<string>(fd, "genres");
   const kind = enumVal(fd, "kind", KIND_VALUES, "FILM");
+  // The form no longer submits generic title/synopsis fields — only the
+  // per-locale ones. Derive the legacy title/synopsis columns from them
+  // (ru first, per spec default, then hy, then en).
+  const titleHy = str(fd, "titleHy", VARCHAR_MAX);
+  const titleRu = str(fd, "titleRu", VARCHAR_MAX);
+  const titleEn = str(fd, "titleEn", VARCHAR_MAX);
+  const synopsisHy = str(fd, "synopsisHy");
+  const synopsisRu = str(fd, "synopsisRu");
+  const synopsisEn = str(fd, "synopsisEn");
   return {
-    title: str(fd, "title", VARCHAR_MAX),
+    title: (titleRu || titleHy || titleEn).slice(0, VARCHAR_MAX),
     code: str(fd, "code", VARCHAR_MAX),
     genre: (genres[0] || "").slice(0, VARCHAR_MAX),
     genres,
-    synopsis: str(fd, "synopsis"),
-    titleHy: str(fd, "titleHy", VARCHAR_MAX),
-    titleRu: str(fd, "titleRu", VARCHAR_MAX),
-    titleEn: str(fd, "titleEn", VARCHAR_MAX),
-    synopsisHy: str(fd, "synopsisHy"),
-    synopsisRu: str(fd, "synopsisRu"),
-    synopsisEn: str(fd, "synopsisEn"),
+    synopsis: synopsisRu || synopsisHy || synopsisEn,
+    titleHy,
+    titleRu,
+    titleEn,
+    synopsisHy,
+    synopsisRu,
+    synopsisEn,
     poster: str(fd, "poster", VARCHAR_MAX),
     gallery: str(fd, "gallery"),
     format: str(fd, "format", VARCHAR_MAX),
@@ -195,9 +205,9 @@ function buildData(fd: FormData): ProjectFormValues {
 }
 
 function validate(data: ProjectFormValues): string | null {
-  if (!data.title) return "Title is required.";
+  if (!data.title) return "Enter a title in at least one language.";
   if (data.genres.length === 0) return "Genre is required.";
-  if (!data.synopsis) return "Synopsis is required.";
+  if (!data.synopsis) return "Enter a synopsis in at least one language.";
   return null;
 }
 

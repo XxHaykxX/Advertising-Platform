@@ -1,7 +1,7 @@
+import Link from "next/link";
 import { CalendarClock, CalendarDays, DollarSign } from "lucide-react";
 import { AccentBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ApplyDialog } from "@/components/apply-dialog";
 import { Reveal } from "@/components/ui/reveal";
 import { formatFullDate, formatMonthYear, parseStringArray } from "@/lib/data/format";
 import { DEFAULT_LOCALE, intlLocale, localizeValue, makeUI, type Locale } from "@/lib/i18n";
@@ -122,16 +122,9 @@ export function KeyFacts({
               {project.placementType ? (
                 <AccentBadge>{localizeValue(locale, "placement", project.placementType)}</AccentBadge>
               ) : null}
-              <ApplyDialog
-                projectId={project.id}
-                projectTitle={project.title}
-                locale={locale}
-                trigger={
-                  <Button variant="primary" size="lg" className="whitespace-nowrap">
-                    {t("btn.expressInterest")}
-                  </Button>
-                }
-              />
+              <Button asChild variant="primary" size="lg" className="whitespace-nowrap">
+                <Link href="/login">{t("cta.loginToApply")}</Link>
+              </Button>
             </div>
           </div>
         </Reveal>

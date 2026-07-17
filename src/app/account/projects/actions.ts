@@ -1,61 +1,51 @@
 "use server";
 
 import { revalidatePath, revalidateTag } from "next/cache";
-import { Prisma, type ProjectKind } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireMember } from "@/lib/auth/require";
 import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
 import { notifyNewProjectForModeration } from "@/lib/mail";
+import { PLACEMENT_TYPE_VALUES, KIND_VALUES } from "@/app/admin/(panel)/projects/form-shared";
+import type { ProjectFormValues, ProjectFormState } from "@/app/admin/(panel)/projects/actions";
 
-/* #16: creator self-serve project submission. A CREATOR posts a light-weight
-   form (a small subset of the admin project-form.tsx fields); the resulting
-   row always starts moderationStatus=PENDING / isActive=false — it only
-   reaches the public catalog once a moderator approves it in
-   /admin/moderation (see admin/(panel)/moderation/actions.ts). Kept
-   independent from admin/(panel)/projects/actions.ts (deliberately not
-   imported/reused — different zone, different trust level: staff-authored
-   projects go straight to APPROVED, creator-authored ones never do). */
+/* #16 (expanded 2026-07-16): the Creator self-serve submission form
+   (/account/projects/new) now reuses admin/(panel)/projects/project-form.tsx
+   wholesale (mode="creator") instead of a second, separately maintained
+   lightweight form — so buildData/validate/parseActorRows/parseTierRows
+   below are a full 1:1 copy of admin/(panel)/projects/actions.ts, using its
+   exported ProjectFormValues/ProjectFormState types so this action drops
+   straight into ProjectForm's `action` prop. Deliberately duplicated rather
+   than imported (same "different zone, different trust level" reasoning as
+   the auto-code generator further down): staff-authored projects go straight
+   to APPROVED, creator-authored ones never do — moderationStatus/isActive/
+   ownerId are forced below and must never be reachable from the form. */
 
-const KIND_VALUES = ["FILM", "SERIAL"] as const;
+const STATUS_VALUES = ["PRE_PRODUCTION", "FILMING", "POST_PRODUCTION", "RELEASED"] as const;
+const GENDER_VALUES = ["All", "Male", "Female"] as const;
 
 // MySQL caps a plain (non-@db.Text) Prisma String column at VarChar(191) —
 // same boundary as the admin form's buildData().
 const VARCHAR_MAX = 191;
 
-export type CreatorProjectFormValues = {
-  title: string;
-  synopsis: string;
-  genres: string[];
-  kind: ProjectKind;
-  episodes: number | null;
-  episodeMinutes: number | null;
-  poster: string;
-  format: string;
-  studio: string;
-  countries: string;
-};
-
-export type CreatorProjectFormState = {
-  error?: string;
-  values?: CreatorProjectFormValues;
-  // On success the action returns { ok: true, redirect } instead of calling
-  // redirect() itself — same useActionState + client-navigation pattern as
-  // register/actions.ts and admin/(panel)/projects/actions.ts (a nested
-  // redirect() inside this response crashes the in-flight flight tree).
-  ok?: boolean;
-  redirect?: string;
-};
-
 function str(fd: FormData, key: string, maxLen?: number) {
   const v = String(fd.get(key) || "").trim();
   return maxLen ? v.slice(0, maxLen) : v;
 }
+function int(fd: FormData, key: string, fallback = 0) {
+  const n = parseInt(String(fd.get(key) || ""), 10);
+  return Number.isFinite(n) ? n : fallback;
+}
+/** Blank input -> null instead of 0, for the optional AMD money fields. */
 function intOrNull(fd: FormData, key: string): number | null {
   const raw = String(fd.get(key) || "").trim();
   if (!raw) return null;
   const n = parseInt(raw, 10);
   return Number.isFinite(n) ? n : null;
+}
+function bool(fd: FormData, key: string) {
+  return fd.get(key) === "on";
 }
 function enumVal<T extends string>(fd: FormData, key: string, allowed: readonly T[], fallback: T): T {
   const v = String(fd.get(key) || "");
@@ -70,31 +60,142 @@ function jsonArray<T>(fd: FormData, key: string): T[] {
   }
 }
 
-function buildData(fd: FormData): CreatorProjectFormValues {
+/** "YYYY-MM-DD" (or "") -> Date | null for a Prisma DateTime? column. */
+function dateOrNull(value: string): Date | null {
+  if (!value) return null;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+/** "YouTube, Kinodaran, TV" -> JSON string[] (or null when empty) for the
+   nullable @db.Text Json column. */
+function platformsToJson(csv: string): string | null {
+  const arr = csv
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return arr.length ? JSON.stringify(arr) : null;
+}
+
+/** "url1\nurl2" or "url1, url2" -> JSON string[] (or null when empty) for the
+   nullable @db.Text gallery column. Splits on newlines and commas. */
+function galleryToJson(input: string): string | null {
+  const arr = input
+    .split(/[\n,]/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return arr.length ? JSON.stringify(arr) : null;
+}
+
+function buildData(fd: FormData): ProjectFormValues {
   const genres = jsonArray<string>(fd, "genres");
   const kind = enumVal(fd, "kind", KIND_VALUES, "FILM");
+  const titleHy = str(fd, "titleHy", VARCHAR_MAX);
+  const titleRu = str(fd, "titleRu", VARCHAR_MAX);
+  const titleEn = str(fd, "titleEn", VARCHAR_MAX);
+  const synopsisHy = str(fd, "synopsisHy");
+  const synopsisRu = str(fd, "synopsisRu");
+  const synopsisEn = str(fd, "synopsisEn");
   return {
-    title: str(fd, "title", VARCHAR_MAX),
-    synopsis: str(fd, "synopsis"),
+    title: (titleRu || titleHy || titleEn).slice(0, VARCHAR_MAX),
+    code: str(fd, "code", VARCHAR_MAX),
+    genre: (genres[0] || "").slice(0, VARCHAR_MAX),
     genres,
+    synopsis: synopsisRu || synopsisHy || synopsisEn,
+    titleHy,
+    titleRu,
+    titleEn,
+    synopsisHy,
+    synopsisRu,
+    synopsisEn,
+    poster: str(fd, "poster", VARCHAR_MAX),
+    gallery: str(fd, "gallery"),
+    format: str(fd, "format", VARCHAR_MAX),
+    studio: str(fd, "studio", VARCHAR_MAX),
     kind,
     episodes: kind === "SERIAL" ? intOrNull(fd, "episodes") : null,
     episodeMinutes: kind === "SERIAL" ? intOrNull(fd, "episodeMinutes") : null,
-    poster: str(fd, "poster", VARCHAR_MAX),
-    format: str(fd, "format", VARCHAR_MAX),
-    studio: str(fd, "studio", VARCHAR_MAX),
-    countries: str(fd, "countries", VARCHAR_MAX),
+    status: enumVal(fd, "status", STATUS_VALUES, "PRE_PRODUCTION"),
+    releaseLabel: str(fd, "releaseLabel", VARCHAR_MAX),
+    countries: jsonArray<string>(fd, "countries").join(", ").slice(0, VARCHAR_MAX),
+    audienceGender: enumVal(fd, "audienceGender", GENDER_VALUES, "All"),
+    audienceAge: str(fd, "audienceAge", VARCHAR_MAX),
+    ageRating: str(fd, "ageRating", VARCHAR_MAX),
+    projViews: str(fd, "projViews", VARCHAR_MAX),
+    budgetMinAmd: intOrNull(fd, "budgetMinAmd"),
+    budgetMaxAmd: intOrNull(fd, "budgetMaxAmd"),
+    cpmMinAmd: intOrNull(fd, "cpmMinAmd"),
+    cpmMaxAmd: intOrNull(fd, "cpmMaxAmd"),
+    priceMinAmd: intOrNull(fd, "priceMinAmd"),
+    priceMaxAmd: intOrNull(fd, "priceMaxAmd"),
+    // Never trusted from the form for a Creator submission — forced to false
+    // below regardless of what buildData parses here.
+    isActive: bool(fd, "isActive"),
+    sortOrder: int(fd, "sortOrder"),
+    applicationDeadline: str(fd, "applicationDeadline"),
+    releaseDate: str(fd, "releaseDate"),
+    platforms: jsonArray<string>(fd, "platforms").join(", ").slice(0, VARCHAR_MAX),
+    placementType: enumVal(fd, "placementType", [...PLACEMENT_TYPE_VALUES, ""] as const, ""),
+    priceNote: str(fd, "priceNote", VARCHAR_MAX),
+    tagline: str(fd, "tagline", VARCHAR_MAX),
+    subgenre: str(fd, "subgenre", VARCHAR_MAX),
+    references: str(fd, "references"),
+    cinemas: jsonArray<string>(fd, "cinemas").join(", "),
   };
 }
 
-function isValid(data: CreatorProjectFormValues): boolean {
-  return !!(data.title && data.synopsis && data.genres.length > 0);
+function validate(data: ProjectFormValues, t: ReturnType<typeof makeUI>): string | null {
+  if (!data.title) return t("account.form.errTitleRequired");
+  if (data.genres.length === 0) return t("account.form.errGenreRequired");
+  if (!data.synopsis) return t("account.form.errSynopsisRequired");
+  return null;
+}
+
+// ── Inline cast/crew + sponsorship tiers (#20², carried over from admin) ──
+const ACTOR_KIND_VALUES = ["CAST", "CREW"] as const;
+type ActorInput = { name?: string; role?: string; kind?: string; photo?: string };
+type TierInput = { name?: string; priceAmd?: number; benefits?: string };
+
+/** "line 1\nline 2" -> JSON string[] (trimmed, blanks dropped) for the
+   benefits @db.Text column. */
+function benefitsToJson(input: string): string {
+  const arr = (input || "")
+    .split("\n")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  return JSON.stringify(arr);
+}
+
+/** Rows for prisma.actor.createMany (projectId added by the caller). Blank-name
+   rows are dropped; kind falls back to CAST. */
+function parseActorRows(fd: FormData) {
+  return jsonArray<ActorInput>(fd, "actorsRows")
+    .filter((r) => (r.name || "").trim())
+    .map((r, i) => ({
+      name: (r.name || "").trim(),
+      role: (r.role || "").trim(),
+      kind: (ACTOR_KIND_VALUES as readonly string[]).includes(r.kind ?? "") ? r.kind! : "CAST",
+      photo: (r.photo || "").trim() || null,
+      sortOrder: i,
+    }));
+}
+
+/** Rows for prisma.sponsorshipTier.createMany (projectId added by the caller). */
+function parseTierRows(fd: FormData) {
+  return jsonArray<TierInput>(fd, "tiersRows")
+    .filter((r) => (r.name || "").trim())
+    .map((r, i) => ({
+      name: (r.name || "").trim().slice(0, VARCHAR_MAX),
+      priceAmd: Math.max(0, Number(r.priceAmd) || 0),
+      benefits: benefitsToJson(r.benefits || ""),
+      sortOrder: i,
+    }));
 }
 
 // ── Auto Code generation (#PP-YYYY-NNNN) ───────────────────────────────────
 // Deliberately duplicated from admin/(panel)/projects/actions.ts rather than
 // imported — that module is a different zone/trust boundary for this task.
-// Uniqueness is still enforced by the DB's @unique constraint; create()
+// Uniqueness is still enforced by the DB's @unique constraint; createCreatorProject
 // below retries with a freshly generated code on a P2002 race.
 function nextProjectCode(usedCodes: string[], year: number): string {
   const prefix = `#PP-${year}-`;
@@ -116,9 +217,9 @@ async function generateProjectCode(): Promise<string> {
 }
 
 export async function createCreatorProject(
-  _prev: CreatorProjectFormState,
+  _prev: ProjectFormState,
   fd: FormData,
-): Promise<CreatorProjectFormState> {
+): Promise<ProjectFormState> {
   const user = await requireMember();
   const locale = await getLocale();
   const t = makeUI(locale);
@@ -132,41 +233,65 @@ export async function createCreatorProject(
   }
 
   const data = buildData(fd);
-  if (!isValid(data)) return { error: t("account.form.errRequired"), values: data };
+  const error = validate(data, t);
+  if (error) return { error, values: data };
 
-  const maxAttempts = 5;
+  // Same auto-code retry loop as admin createProject — the form never
+  // submits a code (readonly/hidden in create mode), so this always runs.
+  const autoCode = !data.code;
+  const maxAttempts = autoCode ? 5 : 1;
+  const actorRows = parseActorRows(fd);
+  const tierRows = parseTierRows(fd);
+
+  const projectData = {
+    ...data,
+    genres: data.genres.length ? JSON.stringify(data.genres) : null,
+    synopsisHy: data.synopsisHy || null,
+    synopsisRu: data.synopsisRu || null,
+    synopsisEn: data.synopsisEn || null,
+    poster: data.poster || null,
+    gallery: galleryToJson(data.gallery),
+    applicationDeadline: dateOrNull(data.applicationDeadline),
+    releaseDate: dateOrNull(data.releaseDate),
+    platforms: platformsToJson(data.platforms),
+    placementType: data.placementType || null,
+    priceNote: data.priceNote || null,
+    tagline: data.tagline || null,
+    subgenre: data.subgenre || null,
+    references: data.references || null,
+    cinemas: data.cinemas || null,
+    // ── Never trusted from the form — forced server-side ──
+    // ownerId is always the submitting member.
+    ownerId: user.id,
+    // Creator submissions always start PENDING + inactive: they only reach
+    // the public catalog once a moderator approves them in
+    // /admin/moderation (unlike staff-authored projects in
+    // admin/(panel)/projects/actions.ts, which go straight to APPROVED).
+    moderationStatus: "PENDING" as const,
+    isActive: false,
+  };
+
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    const code = await generateProjectCode();
+    const code = autoCode ? await generateProjectCode() : data.code;
     try {
-      const project = await prisma.project.create({
-        data: {
-          code,
-          title: data.title,
-          genre: data.genres[0],
-          genres: JSON.stringify(data.genres),
-          synopsis: data.synopsis,
-          poster: data.poster || null,
-          format: data.format,
-          studio: data.studio,
-          countries: data.countries,
-          kind: data.kind,
-          episodes: data.episodes,
-          episodeMinutes: data.episodeMinutes,
-          // ownerId is always the submitting member — never trusted from the form.
-          ownerId: user.id,
-          // Creator submissions always start PENDING + inactive: they only
-          // reach the public catalog once a moderator approves them (unlike
-          // staff-authored projects in admin/(panel)/projects/actions.ts,
-          // which go straight to APPROVED).
-          moderationStatus: "PENDING",
-          isActive: false,
-        },
-        select: { id: true, title: true, code: true, ownerId: true },
+      const created = await prisma.$transaction(async (tx) => {
+        const project = await tx.project.create({ data: { ...projectData, code } });
+        if (actorRows.length) {
+          await tx.actor.createMany({
+            data: actorRows.map((r) => ({ ...r, projectId: project.id })),
+          });
+        }
+        if (tierRows.length) {
+          await tx.sponsorshipTier.createMany({
+            data: tierRows.map((r) => ({ ...r, projectId: project.id })),
+          });
+        }
+        return project;
       });
 
       // #22: notify the moderation team by email. Fire-and-forget / non-blocking
       // so a mail outage never breaks a creator's submission.
-      notifyNewProjectForModeration(project).catch(() => {});
+      notifyNewProjectForModeration({ id: created.id, title: created.title }).catch(() => {});
 
       revalidateTag("projects", "max");
       revalidatePath("/account/projects");
@@ -174,11 +299,11 @@ export async function createCreatorProject(
       return { ok: true, redirect: "/account/projects" };
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
-        if (attempt < maxAttempts) continue; // regenerate + retry
+        if (autoCode && attempt < maxAttempts) continue; // regenerate + retry
         return { error: t("account.form.errCode"), values: data };
       }
       throw e;
     }
   }
-  return { error: "Could not generate a unique project code — please retry.", values: data };
+  return { error: t("account.form.errCode"), values: data };
 }

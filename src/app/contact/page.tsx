@@ -1,5 +1,6 @@
 import { SiteHeader } from "@/components/site-header";
 import { Footer } from "@/components/footer";
+import { PageHero } from "@/components/ui/page-hero";
 import { ContactForm } from "@/components/contact-page/contact-form";
 import { ContactMethods } from "@/components/contact-page/contact-methods";
 import { getProjects } from "@/lib/data/projects";
@@ -22,6 +23,9 @@ export default async function ContactPage() {
   return (
     <>
       <SiteHeader />
+
+      <PageHero title={t("contactPage.title")} subtitle={t("contactPage.subtitle")} locale={locale} />
+
       <main className="relative min-h-screen bg-background">
         {/* Subtle decorative background */}
         <div className="pointer-events-none fixed inset-0 overflow-hidden">
@@ -30,20 +34,6 @@ export default async function ContactPage() {
         </div>
 
         <div className="relative z-10">
-          {/* Intro */}
-          <div className="border-b border-border/50 bg-gradient-to-b from-background to-background/50 py-12 sm:py-16">
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-              <div className="mx-auto max-w-2xl text-center">
-                <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-5xl">
-                  {t("contactPage.title")}
-                </h1>
-                <p className="mt-4 text-lg text-muted-foreground">
-                  {t("contactPage.subtitle")}
-                </p>
-              </div>
-            </div>
-          </div>
-
           {/* Two-column layout */}
           <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
             <div className="grid gap-12 lg:grid-cols-2">

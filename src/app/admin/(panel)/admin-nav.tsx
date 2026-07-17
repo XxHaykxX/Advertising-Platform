@@ -6,26 +6,24 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Film,
-  Inbox,
   Users,
   Images,
   Handshake,
   FolderOpen,
-  UserCheck,
   ShieldCheck,
   Heart,
 } from "lucide-react";
 import type { Role } from "@prisma/client";
 import { canEditContent, canManageUsers, canModerate } from "@/lib/auth/permissions";
-import { getPendingCount } from "./registrations/actions";
 import { getPendingModerationCount } from "./moderation/actions";
 
 // Per-role nav visibility. Dashboard is universal; everything else is gated
 // by what that role is actually allowed to do:
 //  - SUPERADMIN sees everything.
-//  - PUBLISHER (content editor) sees Projects/Media/Registrations, not the
-//    super-admin-only platform-wide views (Applications, Portfolio, Partners,
-//    Users — Portfolio/Partners have no ownerId to scope by Publisher).
+//  - PUBLISHER (content editor) sees Projects/Media, not the super-admin-only
+//    platform-wide views (Interests, Portfolio, Partners, Users — Portfolio/
+//    Partners have no ownerId to scope by Publisher, and Users now also hosts
+//    the Members/registrations tab).
 //  - MODERATOR (project moderation only) sees Dashboard + Moderation — no
 //    content-edit tools, no user/settings management.
 const NAV = [
@@ -33,8 +31,6 @@ const NAV = [
   { href: "/admin/moderation", label: "Moderation", icon: ShieldCheck, show: canModerate },
   { href: "/admin/projects", label: "Projects", icon: Film, show: canEditContent },
   { href: "/admin/media", label: "Media", icon: FolderOpen, show: canEditContent },
-  { href: "/admin/registrations", label: "Registrations", icon: UserCheck, show: canEditContent },
-  { href: "/admin/applications", label: "Applications", icon: Inbox, show: canManageUsers },
   { href: "/admin/interests", label: "Interests", icon: Heart, show: canManageUsers },
   { href: "/admin/portfolio", label: "Portfolio", icon: Images, show: canManageUsers },
   { href: "/admin/partners", label: "Partners", icon: Handshake, show: canManageUsers },
@@ -45,26 +41,11 @@ export function AdminNav({ role }: { role: Role }) {
   const pathname = usePathname();
   const items = NAV.filter((item) => item.show(role));
 
-  // Pending-registrations badge — the count doubles as the "new sign-up"
+  // Pending-moderation badge — the count doubles as the "needs review"
   // notification. Fetched via a direct Server Action call (not a form), so
-  // this stays a plain client-side read with no dedicated API route. Refetches
-  // on every route change, which covers the common case of reviewing
-  // registrations then navigating elsewhere.
-  const [pendingCount, setPendingCount] = useState(0);
-  useEffect(() => {
-    let alive = true;
-    getPendingCount()
-      .then((n) => {
-        if (alive) setPendingCount(n);
-      })
-      .catch(() => {});
-    return () => {
-      alive = false;
-    };
-  }, [pathname]);
-
-  // Pending-moderation badge — same fetch-on-route-change pattern as the
-  // registrations badge above, just against the project moderation queue.
+  // this stays a plain client-side read with no dedicated API route.
+  // Refetches on every route change, which covers the common case of
+  // reviewing the moderation queue then navigating elsewhere.
   const [pendingModerationCount, setPendingModerationCount] = useState(0);
   useEffect(() => {
     let alive = true;
@@ -101,11 +82,6 @@ export function AdminNav({ role }: { role: Role }) {
           >
             <item.icon className="h-4 w-4" />
             {item.label}
-            {item.href === "/admin/registrations" && pendingCount > 0 && (
-              <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-primary px-1.5 text-[11px] font-semibold text-primary-foreground">
-                {pendingCount}
-              </span>
-            )}
             {item.href === "/admin/moderation" && pendingModerationCount > 0 && (
               <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-primary px-1.5 text-[11px] font-semibold text-primary-foreground">
                 {pendingModerationCount}

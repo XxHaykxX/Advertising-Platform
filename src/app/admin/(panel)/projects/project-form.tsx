@@ -6,19 +6,15 @@ import { Languages, Loader2, RotateCcw, Sparkles, X } from "lucide-react";
 import { AGE_RATING_VALUES, KIND_VALUES, PLACEMENT_TYPE_VALUES, parseCsvInput } from "./form-shared";
 import { ImageUploader, type ImageUploaderHandle } from "./image-uploader";
 import { ActorsSection, type ActorRow } from "./actors-editor";
+import type { PersonSuggestion } from "@/lib/data/actors";
 import { TiersSection, type TierRow } from "./tiers-editor";
 import { MultiSelect } from "@/components/ui/multi-select";
-import { PosterGenerator } from "@/components/poster-generator";
+import { PosterGenerator, type PosterGenerateInput, type PosterGenerateResult } from "@/components/poster-generator";
 import { GENRES } from "@/lib/genres";
 import { type ProjectFormState, type ProjectFormValues } from "./actions";
 import { translateProjectAction, type TranslateProjectState } from "./translate-action";
 import { generatePosterAction } from "./poster-action";
-import { makeUI } from "@/lib/i18n";
-
-// Admin panel chrome is English-only for now (see the rest of this form) —
-// hardcode the "en" translator so the Translate button's copy still comes
-// from the shared i18n dict (#21) instead of a one-off duplicate string.
-const t = makeUI("en");
+import { makeUI, type Locale } from "@/lib/i18n";
 
 type TranslateLang = "hy" | "ru" | "en";
 
@@ -91,12 +87,9 @@ const EMPTY: ProjectFormInitial = {
   cinemas: "",
 };
 
-const STATUS_OPTIONS = [
-  { value: "PRE_PRODUCTION", label: "Pre-production" },
-  { value: "FILMING", label: "Filming" },
-  { value: "POST_PRODUCTION", label: "Post-production" },
-  { value: "RELEASED", label: "Released" },
-] as const;
+// Labels come from t("projectForm.status.*") at render time (admin's t is
+// pinned to "en", matching the strings this list used to hardcode).
+const STATUS_OPTIONS = ["PRE_PRODUCTION", "FILMING", "POST_PRODUCTION", "RELEASED"] as const;
 
 const GENDER_OPTIONS = ["All", "Male", "Female"] as const;
 
@@ -133,8 +126,13 @@ export function ProjectForm({
   initialTiers = [],
   submitLabel,
   studios = [],
+  knownPeople = [],
   projectId,
   ownerHasAvatar = false,
+  mode = "admin",
+  locale = "en",
+  translateAction = translateProjectAction,
+  posterAction,
 }: {
   action: (prev: ProjectFormState, fd: FormData) => Promise<ProjectFormState>;
   initial?: ProjectFormInitial;
@@ -147,6 +145,9 @@ export function ProjectForm({
   /** Distinct studio names already used elsewhere — powers a <datalist>
    *  autocomplete on the Studio field. */
   studios?: string[];
+  /** People previously entered as cast/crew on any project (#11) — powers
+   *  the Cast & Crew name autocomplete/autofill. */
+  knownPeople?: PersonSuggestion[];
   /** Existing project id (edit mode only) — forwarded to generatePosterAction
    *  so the logo overlay can pull project.owner.avatar (#26). Unset on
    *  create: no owner yet, so the action falls back to the current staff
@@ -156,7 +157,33 @@ export function ProjectForm({
    *  staff user on create) has an avatar set — gates the "logo" checkbox in
    *  the poster generator panel. */
   ownerHasAvatar?: boolean;
+  /** "creator" reuses this whole component for the Creator self-serve
+   *  submission form (/account/projects/new) instead of a second, separately
+   *  maintained form. It only changes what's NOT trusted to that side: the
+   *  Visibility (isActive) section is hidden — moderationStatus/isActive are
+   *  always forced server-side in that action, never form-controlled. Every
+   *  other field/section renders identically. Defaults to "admin". */
+  mode?: "admin" | "creator";
+  /** UI locale for mode="creator" only — admin chrome always renders in "en"
+   *  regardless of this prop (see the `t` assignment below). Defaults to
+   *  "en" so an admin-mode caller that never sets it behaves exactly as
+   *  before. */
+  locale?: Locale;
+  /** Backing action for the "Translate" button. Defaults to the staff-gated
+   *  admin translateProjectAction; the creator form passes its own
+   *  member-gated twin (see account/projects/translate-action.ts) so the
+   *  button works without hitting the staff-only gate. */
+  translateAction?: (fd: FormData) => Promise<TranslateProjectState>;
+  /** Backing action for the "Generate poster" panel. Defaults to the admin
+   *  generatePosterAction (wrapped below to forward projectId); the creator
+   *  form passes its own member-gated twin (see account/projects/poster-action.ts). */
+  posterAction?: (input: PosterGenerateInput) => Promise<PosterGenerateResult>;
 }) {
+  // Admin panel chrome stays English-only (#21/#15) — mode="creator" is the
+  // only side that follows the caller's locale; admin ignores it entirely so
+  // this component renders byte-identical to before for staff.
+  const t = makeUI(mode === "creator" ? locale : "en");
+
   const [state, formAction, pending] = useActionState<ProjectFormState, FormData>(action, {});
 
   // On a failed submit (validation error), the server echoes back exactly
@@ -199,26 +226,11 @@ export function ProjectForm({
   // below the grid while the trigger stays compact in the Poster field.
   const [posterOpen, setPosterOpen] = useState(false);
 
-  // ── Translate (#21): title/synopsis + hy/ru/en refs are plain uncontrolled
-  // fields (defaultValue), so the "Translate" button fills the other two
-  // languages by writing straight into the DOM via refs — no controlled
-  // state needed, and the results stay freely editable afterwards, same as
-  // any hand-typed value, since the native <form> reads .value at submit.
-  const titleRef = useRef<HTMLInputElement>(null);
-  const synopsisRef = useRef<HTMLTextAreaElement>(null);
-
-  // ── Generate poster (#26) ── posterUploaderRef lets the panel push its
-  // result straight into the (otherwise self-contained) poster ImageUploader
-  // without lifting that component's state up. getDefaultPromptForPoster
-  // reads the *current* title/genres/synopsis at the moment the panel first
-  // opens (not a value frozen at mount) since title/synopsis are uncontrolled refs.
-  const posterUploaderRef = useRef<ImageUploaderHandle>(null);
-  function getDefaultPromptForPoster(): string {
-    const title = titleRef.current?.value || data.title;
-    const synopsis = synopsisRef.current?.value || data.synopsis;
-    return [title, genres.join(", "), synopsis].filter(Boolean).join(". ");
-  }
-
+  // ── Translate (#21): hy/ru/en refs are plain uncontrolled fields
+  // (defaultValue), so the "Translate" button fills the other two languages
+  // by writing straight into the DOM via refs — no controlled state needed,
+  // and the results stay freely editable afterwards, same as any hand-typed
+  // value, since the native <form> reads .value at submit.
   const titleRefs: Record<TranslateLang, React.RefObject<HTMLInputElement | null>> = {
     hy: useRef<HTMLInputElement>(null),
     ru: useRef<HTMLInputElement>(null),
@@ -229,6 +241,24 @@ export function ProjectForm({
     ru: useRef<HTMLTextAreaElement>(null),
     en: useRef<HTMLTextAreaElement>(null),
   };
+
+  // ── Generate poster (#26) ── posterUploaderRef lets the panel push its
+  // result straight into the (otherwise self-contained) poster ImageUploader
+  // without lifting that component's state up. getDefaultPromptForPoster
+  // reads the *current* title/genres/synopsis at the moment the panel first
+  // opens (not a value frozen at mount) since title/synopsis are uncontrolled refs.
+  const posterUploaderRef = useRef<ImageUploaderHandle>(null);
+  // Default wraps admin's generatePosterAction with this form's own
+  // projectId prop (only meaningful on edit) — computed here rather than as
+  // a destructuring default so it can close over `projectId`.
+  const resolvedPosterAction =
+    posterAction ?? ((input: PosterGenerateInput) => generatePosterAction({ ...input, projectId }));
+  function getDefaultPromptForPoster(): string {
+    const title = titleRefs.ru.current?.value || titleRefs.hy.current?.value || titleRefs.en.current?.value || "";
+    const synopsis =
+      synopsisRefs.ru.current?.value || synopsisRefs.hy.current?.value || synopsisRefs.en.current?.value || "";
+    return [title, genres.join(", "), synopsis].filter(Boolean).join(". ");
+  }
   const [translating, startTranslate] = useTransition();
   const [translateError, setTranslateError] = useState<NonNullable<TranslateProjectState["errorCode"]> | null>(null);
 
@@ -356,25 +386,16 @@ export function ProjectForm({
   function handleTranslate() {
     setTranslateError(null);
     // Source = whichever per-locale title field is already filled (ru first,
-    // per spec default), falling back to the generic title/synopsis fields
-    // above (treated as "ru") when none of hy/ru/en is filled yet.
+    // per spec default).
     const langPriority: TranslateLang[] = ["ru", "hy", "en"];
-    let sourceLang: TranslateLang = "ru";
-    let sourceTitle = "";
-    let sourceSynopsis = "";
     const hit = langPriority.find((l) => (titleRefs[l].current?.value || "").trim());
-    if (hit) {
-      sourceLang = hit;
-      sourceTitle = titleRefs[hit].current?.value || "";
-      sourceSynopsis = synopsisRefs[hit].current?.value || "";
-    } else {
-      sourceTitle = titleRef.current?.value || "";
-      sourceSynopsis = synopsisRef.current?.value || "";
-    }
-    if (!sourceTitle.trim() && !sourceSynopsis.trim()) {
+    if (!hit) {
       setTranslateError("emptyFields");
       return;
     }
+    const sourceLang = hit;
+    const sourceTitle = titleRefs[hit].current?.value || "";
+    const sourceSynopsis = synopsisRefs[hit].current?.value || "";
 
     const fd = new FormData();
     fd.set("sourceLang", sourceLang);
@@ -382,7 +403,7 @@ export function ProjectForm({
     fd.set("synopsis", sourceSynopsis);
 
     startTranslate(async () => {
-      const res = await translateProjectAction(fd);
+      const res = await translateAction(fd);
       if (res.errorCode) {
         setTranslateError(res.errorCode);
         return;
@@ -410,21 +431,21 @@ export function ProjectForm({
 
       {draftFound && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-primary/40 bg-primary/10 px-4 py-3 text-sm">
-          <span className="text-foreground">You have an unsaved draft from a previous session.</span>
+          <span className="text-foreground">{t("projectForm.draftFound")}</span>
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={restoreDraft}
               className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:opacity-90"
             >
-              <RotateCcw className="h-3.5 w-3.5" /> Restore draft
+              <RotateCcw className="h-3.5 w-3.5" /> {t("projectForm.restoreDraft")}
             </button>
             <button
               type="button"
               onClick={discardDraft}
               className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-semibold text-foreground hover:border-primary/40"
             >
-              <X className="h-3.5 w-3.5" /> Discard
+              <X className="h-3.5 w-3.5" /> {t("projectForm.discardDraft")}
             </button>
           </div>
         </div>
@@ -432,32 +453,27 @@ export function ProjectForm({
 
       {/* ── General ── */}
       <section className="space-y-4 rounded-2xl border border-border bg-card p-6">
-        <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">General</h2>
+        <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">{t("projectForm.section.general")}</h2>
+        <Field label={t("projectForm.field.code")}>
+          {isEdit ? (
+            <input name="code" defaultValue={data.code} readOnly className={`${inputCls} cursor-not-allowed opacity-70`} />
+          ) : (
+            <div className={`${inputCls} cursor-not-allowed text-muted-foreground`}>
+              {t("projectForm.generatedAutomatically")}
+            </div>
+          )}
+        </Field>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Title *">
-            <input ref={titleRef} name="title" defaultValue={data.title} placeholder="A Star Is Born" className={inputCls} />
-          </Field>
-          <Field label="Code">
-            {isEdit ? (
-              <input name="code" defaultValue={data.code} readOnly className={`${inputCls} cursor-not-allowed opacity-70`} />
-            ) : (
-              <div className={`${inputCls} cursor-not-allowed text-muted-foreground`}>
-                Generated automatically
-              </div>
-            )}
-          </Field>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Genre *">
+          <Field label={t("projectForm.field.genre")}>
             <MultiSelect
               options={GENRES}
               value={genres}
               onChange={setGenres}
               name="genres"
-              placeholder="Select genres…"
+              placeholder={t("projectForm.genresPlaceholder")}
             />
           </Field>
-          <Field label="Poster">
+          <Field label={t("projectForm.field.poster")}>
             {/* "Upload poster" and the "Generate poster" trigger sit on ONE row
                 (trailing slot) so the generate action stays next to upload even
                 after a poster is uploaded (preview thumbs render below). The
@@ -468,10 +484,10 @@ export function ProjectForm({
               name="poster"
               dir="projects"
               initial={posterInitial}
-              label="Upload poster"
+              label={t("projectForm.uploadPoster")}
               trailing={
                 <>
-                  <span className="text-xs uppercase tracking-wide text-muted-foreground">or</span>
+                  <span className="text-xs uppercase tracking-wide text-muted-foreground">{t("projectForm.or")}</span>
                   <button
                     type="button"
                     onClick={() => setPosterOpen(true)}
@@ -489,33 +505,23 @@ export function ProjectForm({
           hideTrigger
           open={posterOpen}
           onOpenChange={setPosterOpen}
-          action={(input) => generatePosterAction({ ...input, projectId })}
+          action={resolvedPosterAction}
           getDefaultPrompt={getDefaultPromptForPoster}
           hasOwnerAvatar={ownerHasAvatar}
           onUse={(path) => posterUploaderRef.current?.addPath(path)}
           t={t}
         />
-        <Field label="Synopsis *">
-          <textarea
-            ref={synopsisRef}
-            name="synopsis"
-            defaultValue={data.synopsis}
-            rows={4}
-            placeholder="One-line logline, then what the story is about…"
-            className={`${inputCls} resize-none`}
-          />
-        </Field>
-        <Field label="Gallery (storyboard stills — up to 5 shown)">
+        <Field label={t("projectForm.field.gallery")}>
           <ImageUploader
             key={`gallery-${restoreNonce}`}
             name="gallery"
             dir="projects"
             multiple
             initial={galleryInitial}
-            label="Upload gallery images"
+            label={t("projectForm.uploadGalleryImages")}
           />
         </Field>
-        <Field label="Kind">
+        <Field label={t("projectForm.field.kind")}>
           <div className="flex gap-5 pt-1">
             {KIND_VALUES.map((k) => (
               <label key={k} className="inline-flex items-center gap-2 text-sm text-foreground">
@@ -527,14 +533,14 @@ export function ProjectForm({
                   onChange={() => setKind(k)}
                   className="h-4 w-4 accent-primary"
                 />
-                {k === "FILM" ? "Film" : "Serial"}
+                {k === "FILM" ? t("projectForm.kindFilm") : t("projectForm.kindSerial")}
               </label>
             ))}
           </div>
         </Field>
         {kind === "SERIAL" ? (
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Episodes">
+            <Field label={t("projectForm.field.episodes")}>
               <input
                 name="episodes"
                 type="number"
@@ -544,7 +550,7 @@ export function ProjectForm({
                 className={inputCls}
               />
             </Field>
-            <Field label="Minutes per episode">
+            <Field label={t("projectForm.field.episodeMinutes")}>
               <input
                 name="episodeMinutes"
                 type="number"
@@ -556,26 +562,21 @@ export function ProjectForm({
             </Field>
           </div>
         ) : null}
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Format">
-            <input name="format" defaultValue={data.format} placeholder="50 ep × 1m 15s" className={inputCls} />
-          </Field>
-          <Field label="Studio">
-            <input name="studio" defaultValue={data.studio} list="studio-list" placeholder="Armenfilm, Sharm Holding…" className={inputCls} />
-            <datalist id="studio-list">
-              {studios.map((s) => (
-                <option key={s} value={s} />
-              ))}
-            </datalist>
-          </Field>
-        </div>
+        <Field label={t("projectForm.field.studio")}>
+          <input name="studio" defaultValue={data.studio} list="studio-list" placeholder={t("projectForm.studioPlaceholder")} className={inputCls} />
+          <datalist id="studio-list">
+            {studios.map((s) => (
+              <option key={s} value={s} />
+            ))}
+          </datalist>
+        </Field>
       </section>
 
       {/* ── Translations ── */}
       <section className="space-y-4 rounded-2xl border border-border bg-card p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">
-            Translations (hy / ru / en)
+            {t("projectForm.section.translations")}
           </h2>
           <button
             type="button"
@@ -593,18 +594,18 @@ export function ProjectForm({
           </p>
         )}
         <div className="grid gap-4 sm:grid-cols-3">
-          <Field label="Title (HY)">
+          <Field label={t("projectForm.field.titleHy")}>
             <input ref={titleRefs.hy} name="titleHy" defaultValue={data.titleHy} placeholder="Վերնագիր հայերեն" className={inputCls} />
           </Field>
-          <Field label="Title (RU)">
+          <Field label={t("projectForm.field.titleRu")}>
             <input ref={titleRefs.ru} name="titleRu" defaultValue={data.titleRu} placeholder="Название по-русски" className={inputCls} />
           </Field>
-          <Field label="Title (EN)">
+          <Field label={t("projectForm.field.titleEn")}>
             <input ref={titleRefs.en} name="titleEn" defaultValue={data.titleEn} placeholder="Title in English" className={inputCls} />
           </Field>
         </div>
         <div className="grid gap-4 sm:grid-cols-3">
-          <Field label="Synopsis (HY)">
+          <Field label={t("projectForm.field.synopsisHy")}>
             <textarea
               ref={synopsisRefs.hy}
               name="synopsisHy"
@@ -614,7 +615,7 @@ export function ProjectForm({
               className={`${inputCls} resize-none`}
             />
           </Field>
-          <Field label="Synopsis (RU)">
+          <Field label={t("projectForm.field.synopsisRu")}>
             <textarea
               ref={synopsisRefs.ru}
               name="synopsisRu"
@@ -624,7 +625,7 @@ export function ProjectForm({
               className={`${inputCls} resize-none`}
             />
           </Field>
-          <Field label="Synopsis (EN)">
+          <Field label={t("projectForm.field.synopsisEn")}>
             <textarea
               ref={synopsisRefs.en}
               name="synopsisEn"
@@ -639,28 +640,25 @@ export function ProjectForm({
 
       {/* ── Status & release ── */}
       <section className="space-y-4 rounded-2xl border border-border bg-card p-6">
-        <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">Status & release</h2>
-        <div className="grid gap-4 sm:grid-cols-3">
-          <Field label="Status">
+        <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">{t("projectForm.section.statusRelease")}</h2>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label={t("projectForm.field.status")}>
             <select name="status" defaultValue={data.status} className={inputCls}>
               {STATUS_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
+                <option key={o} value={o}>
+                  {t(`projectForm.status.${o}`)}
                 </option>
               ))}
             </select>
           </Field>
-          <Field label="Release label">
-            <input name="releaseLabel" defaultValue={data.releaseLabel} placeholder="Q1 2027" className={inputCls} />
-          </Field>
-          <Field label="Countries">
+          <Field label={t("projectForm.field.countries")}>
             <MultiSelect
               options={[]}
               value={countries}
               onChange={setCountries}
               name="countries"
               allowCustom
-              placeholder="US, UK, …"
+              placeholder={t("projectForm.countriesPlaceholder")}
             />
           </Field>
         </div>
@@ -668,9 +666,9 @@ export function ProjectForm({
 
       {/* ── Placement ── */}
       <section className="space-y-4 rounded-2xl border border-border bg-card p-6">
-        <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">Placement</h2>
+        <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">{t("projectForm.section.placement")}</h2>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Application deadline">
+          <Field label={t("projectForm.field.applicationDeadline")}>
             <input
               name="applicationDeadline"
               type="date"
@@ -678,40 +676,40 @@ export function ProjectForm({
               className={inputCls}
             />
           </Field>
-          <Field label="Release date">
+          <Field label={t("projectForm.field.releaseDate")}>
             <input name="releaseDate" type="date" defaultValue={data.releaseDate} className={inputCls} />
           </Field>
-          <Field label="Platforms">
+          <Field label={t("projectForm.field.platforms")}>
             <MultiSelect
               options={[]}
               value={platforms}
               onChange={setPlatforms}
               name="platforms"
               allowCustom
-              placeholder="YouTube, Kinodaran, TV"
+              placeholder={t("projectForm.platformsPlaceholder")}
             />
           </Field>
-          <Field label="Placement type">
+          <Field label={t("projectForm.field.placementType")}>
             <select name="placementType" defaultValue={data.placementType} className={inputCls}>
               <option value="">—</option>
               {PLACEMENT_TYPE_VALUES.map((pt) => (
                 <option key={pt} value={pt}>
-                  {pt}
+                  {t(`placement.${pt}`)}
                 </option>
               ))}
             </select>
           </Field>
-          <Field label="Price note (optional caption)">
+          <Field label={t("projectForm.field.priceNote")}>
             <input
               name="priceNote"
               defaultValue={data.priceNote}
-              placeholder="/ scene"
+              placeholder={t("projectForm.priceNotePlaceholder")}
               className={inputCls}
             />
           </Field>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Price min (AMD)">
+          <Field label={t("projectForm.field.priceMin")}>
             <input
               name="priceMinAmd"
               type="number"
@@ -721,7 +719,7 @@ export function ProjectForm({
               className={inputCls}
             />
           </Field>
-          <Field label="Price max (AMD)">
+          <Field label={t("projectForm.field.priceMax")}>
             <input
               name="priceMaxAmd"
               type="number"
@@ -732,28 +730,26 @@ export function ProjectForm({
             />
           </Field>
         </div>
-        <p className="text-xs text-muted-foreground">
-          Leave price empty → the site shows &ldquo;Price on request&rdquo;.
-        </p>
+        <p className="text-xs text-muted-foreground">{t("projectForm.priceHint")}</p>
       </section>
 
       {/* ── Audience & value ── */}
       <section className="space-y-4 rounded-2xl border border-border bg-card p-6">
-        <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">Audience & value</h2>
+        <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">{t("projectForm.section.audienceValue")}</h2>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Audience gender">
+          <Field label={t("projectForm.field.audienceGender")}>
             <select name="audienceGender" defaultValue={data.audienceGender} className={inputCls}>
               {GENDER_OPTIONS.map((g) => (
                 <option key={g} value={g}>
-                  {g}
+                  {t(`gender.${g}`)}
                 </option>
               ))}
             </select>
           </Field>
-          <Field label="Audience age">
-            <input name="audienceAge" defaultValue={data.audienceAge} placeholder="16-30" className={inputCls} />
+          <Field label={t("projectForm.field.audienceAge")}>
+            <input name="audienceAge" defaultValue={data.audienceAge} placeholder={t("projectForm.audienceAgePlaceholder")} className={inputCls} />
           </Field>
-          <Field label="Age rating (poster badge)">
+          <Field label={t("projectForm.field.ageRating")}>
             <select name="ageRating" defaultValue={data.ageRating} className={inputCls}>
               {AGE_RATING_VALUES.map((r) => (
                 <option key={r} value={r}>
@@ -762,117 +758,66 @@ export function ProjectForm({
               ))}
             </select>
           </Field>
-          <Field label="Projected views">
-            <input name="projViews" defaultValue={data.projViews} placeholder="2.4M" className={inputCls} />
-          </Field>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="CPM min (AMD)">
-            <input
-              name="cpmMinAmd"
-              type="number"
-              min={0}
-              defaultValue={numOrEmpty(data.cpmMinAmd)}
-              placeholder="3000"
-              className={inputCls}
-            />
-          </Field>
-          <Field label="CPM max (AMD)">
-            <input
-              name="cpmMaxAmd"
-              type="number"
-              min={0}
-              defaultValue={numOrEmpty(data.cpmMaxAmd)}
-              placeholder="8000"
-              className={inputCls}
-            />
-          </Field>
-          <Field label="Budget min (AMD)">
-            <input
-              name="budgetMinAmd"
-              type="number"
-              min={0}
-              defaultValue={numOrEmpty(data.budgetMinAmd)}
-              placeholder="5000000"
-              className={inputCls}
-            />
-          </Field>
-          <Field label="Budget max (AMD)">
-            <input
-              name="budgetMaxAmd"
-              type="number"
-              min={0}
-              defaultValue={numOrEmpty(data.budgetMaxAmd)}
-              placeholder="20000000"
-              className={inputCls}
-            />
-          </Field>
         </div>
       </section>
 
       {/* ── Press-kit details ── */}
       <section className="space-y-4 rounded-2xl border border-border bg-card p-6">
         <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">
-          Press-kit details
+          {t("projectForm.section.pressKit")}
         </h2>
-        <Field label="Tagline / logline (one line, shown in the hero)">
+        <Field label={t("projectForm.field.tagline")}>
           <input
             name="tagline"
             defaultValue={data.tagline}
-            placeholder="A star is born — and fame has a price."
+            placeholder={t("projectForm.taglinePlaceholder")}
             className={inputCls}
           />
         </Field>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Subgenre (shown next to genre)">
-            <input name="subgenre" defaultValue={data.subgenre} placeholder="Musical" className={inputCls} />
-          </Field>
-          <Field label="Comparable titles (comma-separated)">
-            <input
-              name="references"
-              defaultValue={data.references}
-              placeholder="Bohemian Rhapsody, Ray, Michael"
-              className={inputCls}
-            />
-          </Field>
-        </div>
-        <Field label="Cinemas / exhibition venues">
+        <Field label={t("projectForm.field.references")}>
+          <input
+            name="references"
+            defaultValue={data.references}
+            placeholder={t("projectForm.referencesPlaceholder")}
+            className={inputCls}
+          />
+        </Field>
+        <Field label={t("projectForm.field.cinemas")}>
           <MultiSelect
             options={[]}
             value={cinemas}
             onChange={setCinemas}
             name="cinemas"
             allowCustom
-            placeholder="Cinema Star, Moscow Cinema, Kino Park"
+            placeholder={t("projectForm.cinemasPlaceholder")}
           />
         </Field>
       </section>
 
       {/* ── Cast & crew (inline, #20²) ── */}
       <section className="space-y-4 rounded-2xl border border-border bg-card p-6">
-        <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">Cast &amp; crew</h2>
-        <ActorsSection value={actors} onChange={setActors} />
+        <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">{t("projectForm.section.castCrew")}</h2>
+        <ActorsSection value={actors} onChange={setActors} knownPeople={knownPeople} t={t} />
       </section>
 
       {/* ── Sponsorship tiers (inline, #20²) ── */}
       <section className="space-y-4 rounded-2xl border border-border bg-card p-6">
-        <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">Sponsorship tiers</h2>
-        <TiersSection value={tiers} onChange={setTiers} />
+        <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">{t("projectForm.section.sponsorshipTiers")}</h2>
+        <TiersSection value={tiers} onChange={setTiers} t={t} />
       </section>
 
-      {/* ── Visibility ── */}
-      <section className="space-y-4 rounded-2xl border border-border bg-card p-6">
-        <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">Visibility</h2>
-        <div className="grid gap-4 sm:grid-cols-2">
+      {/* ── Visibility ── admin only: a Creator never controls publication —
+          moderationStatus/isActive are always forced server-side for them
+          (see account/projects/actions.ts). */}
+      {mode !== "creator" && (
+        <section className="space-y-4 rounded-2xl border border-border bg-card p-6">
+          <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">{t("projectForm.section.visibility")}</h2>
           <label className="inline-flex items-center gap-2 text-sm text-foreground">
             <input type="checkbox" name="isActive" defaultChecked={data.isActive} className="h-4 w-4 accent-primary" />
-            Active (show in catalog)
+            {t("projectForm.activeCheckbox")}
           </label>
-          <Field label="Sort order">
-            <input name="sortOrder" type="number" defaultValue={data.sortOrder} placeholder="0" className={inputCls} />
-          </Field>
-        </div>
-      </section>
+        </section>
+      )}
 
       {state.error && (
         <p className="rounded-lg border border-primary/40 bg-primary/10 px-4 py-2.5 text-sm text-primary">
@@ -889,8 +834,11 @@ export function ProjectForm({
           {(pending || navigating) && <Loader2 className="h-4 w-4 animate-spin" />}
           {submitLabel}
         </button>
-        <Link href="/admin/projects" className="text-sm text-muted-foreground hover:text-foreground">
-          Cancel
+        <Link
+          href={mode === "creator" ? "/account/projects" : "/admin/projects"}
+          className="text-sm text-muted-foreground hover:text-foreground"
+        >
+          {t("projectForm.cancel")}
         </Link>
       </div>
     </form>

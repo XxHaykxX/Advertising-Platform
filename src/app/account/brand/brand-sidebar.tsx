@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutDashboard, Search, Heart, User, Bell, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { LogoutButton } from "@/components/logout-button";
 
 type NavItem = {
   href: string;
@@ -17,8 +18,8 @@ type NavItem = {
 /** Left-nav for the BRAND cabinet (#23) — mirrors the filmustageplacement.com
  *  reference (Dashboard / Browse Projects / My Interests / My Profile /
  *  Notifications-soon / Log Out). Client component only for the active-link
- *  highlight (usePathname); the actual logout is a plain <form action>
- *  around the shared account/actions.ts logout Server Action. */
+ *  highlight (usePathname); the actual logout goes through the shared
+ *  LogoutButton around the account/actions.ts logout Server Action. */
 export function BrandSidebar({
   labels,
   logoutAction,
@@ -32,7 +33,7 @@ export function BrandSidebar({
     soon: string;
     logout: string;
   };
-  logoutAction: () => void | Promise<void>;
+  logoutAction: () => Promise<{ redirect: string }>;
 }) {
   const pathname = usePathname();
 
@@ -82,15 +83,15 @@ export function BrandSidebar({
         </div>
       </nav>
 
-      <form action={logoutAction} className="mt-6 border-t border-border pt-4">
-        <button
-          type="submit"
+      <div className="mt-6 border-t border-border pt-4">
+        <LogoutButton
+          action={logoutAction}
           className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         >
           <LogOut className="h-4 w-4 shrink-0" />
           {labels.logout}
-        </button>
-      </form>
+        </LogoutButton>
+      </div>
     </aside>
   );
 }

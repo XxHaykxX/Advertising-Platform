@@ -1,6 +1,6 @@
 "use server";
 
-import { createApplication } from "@/lib/data/applications";
+import { notifyContactMessage } from "@/lib/mail";
 import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
 
@@ -40,17 +40,17 @@ export async function submitLead(
 
   if (message.length > 5000) return { ok: false, error: t("formErr.messageLong"), values };
 
-  const projectIdRaw = String(formData.get("projectId") || "").trim();
-  const projectId = projectIdRaw ? Number(projectIdRaw) : undefined;
   const projectTitle = String(formData.get("projectTitle") || "").trim().slice(0, 200) || undefined;
 
-  await createApplication({
-    name,
-    email,
-    message: message || undefined,
-    projectId: projectId !== undefined && !Number.isNaN(projectId) ? projectId : undefined,
-    projectTitle,
-  });
+  // Used to land in the Application table alongside placement leads; that
+  // inbox is gone now (#37), so this stays the public "get in touch" form
+  // but just notifies the admin by email instead. Best-effort: a flaky SMTP
+  // hop must not turn into a broken "message sent" screen for the visitor.
+  try {
+    await notifyContactMessage({ name, email, message: message || undefined, projectTitle });
+  } catch (err) {
+    console.error("[leads] failed to notify admin of contact message:", err);
+  }
 
   return { ok: true };
 }

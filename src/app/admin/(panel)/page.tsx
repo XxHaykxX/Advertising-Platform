@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Film, Inbox, Users } from "lucide-react";
+import { Film, Users } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth/require";
 import { Button } from "@/components/ui/button";
@@ -9,13 +9,12 @@ export default async function AdminDashboard() {
   const isSuperadmin = user.role === "SUPERADMIN";
 
   // Publishers only ever see their own projects; a super-admin gets the
-  // platform-wide counts (all projects, all users, unhandled applications).
-  const [projectCount, userCount, newAppCount] = await Promise.all([
+  // platform-wide counts (all projects, all users).
+  const [projectCount, userCount] = await Promise.all([
     isSuperadmin
       ? prisma.project.count()
       : prisma.project.count({ where: { ownerId: user.id } }),
     isSuperadmin ? prisma.user.count() : Promise.resolve(null),
-    isSuperadmin ? prisma.application.count({ where: { status: "new" } }) : Promise.resolve(null),
   ]);
 
   const cards = [
@@ -28,13 +27,6 @@ export default async function AdminDashboard() {
     },
     ...(isSuperadmin
       ? [
-          {
-            label: "New applications",
-            value: newAppCount ?? 0,
-            sub: "awaiting review",
-            icon: Inbox,
-            href: "/admin/applications",
-          },
           {
             label: "Users",
             value: userCount ?? 0,
@@ -77,14 +69,9 @@ export default async function AdminDashboard() {
           <Link href="/admin/projects">Manage projects</Link>
         </Button>
         {isSuperadmin && (
-          <>
-            <Button asChild variant="secondary">
-              <Link href="/admin/applications">Review applications</Link>
-            </Button>
-            <Button asChild variant="secondary">
-              <Link href="/admin/users">Manage users</Link>
-            </Button>
-          </>
+          <Button asChild variant="secondary">
+            <Link href="/admin/users">Manage users</Link>
+          </Button>
         )}
       </div>
     </div>

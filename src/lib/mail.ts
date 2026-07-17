@@ -247,3 +247,41 @@ export async function sendPasswordResetEmail(email: string, resetUrl: string): P
     console.error("[mail] failed to send password reset email:", err);
   }
 }
+
+type ContactMessageInput = { name: string; email: string; message?: string; projectTitle?: string };
+
+/** The public /contact form (#37) notifies the admin by email instead of
+   writing to the (now removed) Applications inbox — CTA replies straight to
+   the sender's address since there's no admin page to open. */
+export function contactMessageTemplate(input: ContactMessageInput) {
+  const subject = `Նոր հաղորդագրություն կայքից / Новое сообщение с сайта — ${input.name}`;
+  const projectLine = input.projectTitle
+    ? `<br/>${input.projectTitle}`
+    : "";
+  const html = layout(
+    `
+    <p><strong>Նոր հաղորդագրություն կոնտակտային ձևից</strong><br/>
+    ${input.name} · ${input.email}${projectLine}${input.message ? `<br/>${input.message}` : ""}</p>
+    <p><strong>Новое сообщение с контактной формы</strong><br/>
+    ${input.name} · ${input.email}${projectLine}${input.message ? `<br/>${input.message}` : ""}</p>
+    <p><strong>New contact form message</strong><br/>
+    ${input.name} · ${input.email}${projectLine}${input.message ? `<br/>${input.message}` : ""}</p>
+    `,
+    "Պատասխանել / Ответить / Reply",
+    `mailto:${input.email}`,
+  );
+  const text = [
+    `${input.name} <${input.email}>${input.projectTitle ? ` — ${input.projectTitle}` : ""}${input.message ? `\n${input.message}` : ""}`,
+  ].join("\n\n");
+  return { subject, html, text };
+}
+
+export async function notifyContactMessage(input: ContactMessageInput) {
+  const adminEmail = await resolveAdminEmail();
+  if (!adminEmail) {
+    console.warn("[mail] no admin email available — skipping contact message notice");
+    return { ok: false };
+  }
+  const { subject, html, text } = contactMessageTemplate(input);
+  return sendMail({ to: adminEmail, subject, html, text });
+}

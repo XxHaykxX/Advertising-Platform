@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { SiteHeader } from "@/components/site-header";
 import { Footer } from "@/components/footer";
+import { PageHero } from "@/components/ui/page-hero";
 import { LegalPage, type LegalSection } from "@/components/legal-page";
 import { getLocale } from "@/lib/data/locale";
 import { getCurrency } from "@/lib/data/currency";
@@ -173,8 +174,8 @@ export default async function TermsPage() {
   return (
     <>
       <SiteHeader />
+      <PageHero title={t("legal.termsTitle")} locale={locale} />
       <LegalPage
-        title={t("legal.termsTitle")}
         updated={c.updated}
         intro={c.intro}
         sections={c.sections}

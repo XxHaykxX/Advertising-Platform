@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth/require";
+import { getKnownPeople } from "@/lib/data/actors";
 import { updateProject } from "../../actions";
 import {
   formatDateInput,
@@ -44,6 +45,10 @@ export default async function EditProjectPage({
     distinct: ["studio"],
   });
   const studios = studioRows.map((r) => r.studio).sort();
+
+  // People previously entered as cast/crew on any project (#11), for the
+  // Cast & Crew name autocomplete.
+  const knownPeople = await getKnownPeople();
 
   const initial: ProjectFormInitial = {
     title: p.title,
@@ -119,6 +124,7 @@ export default async function EditProjectPage({
         }))}
         submitLabel="Save"
         studios={studios}
+        knownPeople={knownPeople}
         projectId={pid}
         ownerHasAvatar={!!p.owner.avatar}
       />

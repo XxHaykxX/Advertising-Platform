@@ -6,10 +6,11 @@ import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { LayoutDashboard, LogIn, LogOut, Menu, X } from "lucide-react";
 import type { Role } from "@prisma/client";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { CurrencySwitcher } from "@/components/currency-switcher";
+import { LogoutButton } from "@/components/logout-button";
 import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
 import { DEFAULT_CURRENCY, type CurrencyCode } from "@/lib/currency";
 import { cn } from "@/lib/utils";
@@ -27,6 +28,19 @@ export type SiteHeaderUser = {
 };
 
 const STAFF_ROLES: Role[] = ["SUPERADMIN", "PUBLISHER", "MODERATOR"];
+
+/** Pages opening on the dark cinematic hero (landing's own + every
+ *  `PageHero` page) — see the `onDark` comment below. */
+const DARK_HERO_PATHS = new Set([
+  "/",
+  "/about",
+  "/catalog",
+  "/portfolio",
+  "/contact",
+  "/how-it-works",
+  "/privacy",
+  "/terms",
+]);
 
 function useNav(t: ReturnType<typeof makeUI>) {
   return [
@@ -138,16 +152,14 @@ function UserMenu({
             <LayoutDashboard className="h-4 w-4" />
             {t("nav.cabinet")}
           </Link>
-          <form action={logoutAction}>
-            <button
-              type="submit"
-              role="menuitem"
-              className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-            >
-              <LogOut className="h-4 w-4" />
-              {t("nav.logout")}
-            </button>
-          </form>
+          <LogoutButton
+            action={logoutAction}
+            role="menuitem"
+            className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+          >
+            <LogOut className="h-4 w-4" />
+            {t("nav.logout")}
+          </LogoutButton>
         </div>
       )}
     </div>
@@ -182,9 +194,11 @@ export function Header({
   const pathname = usePathname();
   const t = makeUI(locale);
   const NAV = useNav(t);
-  // Landing + About open on a dark cinematic hero — while the transparent
-  // header floats over it, switch text to a light-on-dark scheme.
-  const onDark = (pathname === "/" || pathname === "/about") && !scrolled && !menuOpen;
+  // Every page that opens on the dark cinematic PageHero (plus the landing
+  // page, which has its own bespoke hero) — while the transparent header
+  // floats over it, switch text to a light-on-dark scheme.
+  const onDark =
+    DARK_HERO_PATHS.has(pathname ?? "") && !scrolled && !menuOpen;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -296,20 +310,14 @@ export function Header({
                       </span>
                     </span>
                   </Link>
-                  <form
+                  <LogoutButton
                     action={STAFF_ROLES.includes(user.role) ? staffLogout : memberLogout}
+                    onClick={() => setMenuOpen(false)}
+                    className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "w-full gap-2")}
                   >
-                    <Button
-                      type="submit"
-                      variant="secondary"
-                      size="sm"
-                      className="w-full gap-2"
-                      onClick={() => setMenuOpen(false)}
-                    >
-                      <LogOut className="h-4 w-4" />
-                      {t("nav.logout")}
-                    </Button>
-                  </form>
+                    <LogOut className="h-4 w-4" />
+                    {t("nav.logout")}
+                  </LogoutButton>
                 </div>
               ) : (
                 <div className="flex flex-col gap-2 pt-2">

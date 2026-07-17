@@ -46,7 +46,14 @@ const LANG_NAMES: Record<TranslateLang, string> = {
 };
 
 const API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
-const TIMEOUT_MS = 15_000;
+// Tuned for "fast AND reliable": a successful call is a single request (no
+// added latency); failures recover by immediately trying a DIFFERENT model
+// (see `models()`) rather than waiting on the overloaded one. Only if every
+// model fails with a transient error do we pause briefly and sweep once more.
+const TIMEOUT_MS = 18_000; // fail a hung request fast, then fall to the next model
+const MAX_ROUNDS = 2; // full model-sweep attempts before giving up
+const ROUND_PAUSE_MS = 500; // brief pause between sweeps (only on all-transient failure)
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 function apiKey(): string {
   const key = process.env.GOOGLE_AI_API_KEY;
@@ -57,8 +64,16 @@ function apiKey(): string {
   return key;
 }
 
-function modelName(): string {
-  return process.env.GOOGLE_AI_MODEL || "gemini-2.5-flash";
+// Primary model comes from env (set GOOGLE_AI_MODEL=gemini-flash-latest on
+// prod). "gemini-3.1-flash-lite" is a confirmed-working fallback for the same
+// key, tried when the primary is overloaded/unavailable. The default is a
+// currently-working alias (the old "gemini-2.5-flash" now 404s for this key).
+// Deduped so a single working model isn't attempted twice.
+const DEFAULT_MODEL = "gemini-flash-latest";
+const FALLBACK_MODEL = "gemini-3.1-flash-lite";
+function models(): string[] {
+  const primary = process.env.GOOGLE_AI_MODEL || DEFAULT_MODEL;
+  return [...new Set([primary, FALLBACK_MODEL])];
 }
 
 /** Strips a ```json ... ``` (or bare ```) fence the model sometimes wraps its
@@ -89,8 +104,9 @@ async function translateOne(
   targetLang: TranslateLang,
   title: string,
   synopsis: string,
+  model: string,
 ): Promise<{ title: string; synopsis: string }> {
-  const url = `${API_BASE}/${modelName()}:generateContent?key=${apiKey()}`;
+  const url = `${API_BASE}/${model}:generateContent?key=${apiKey()}`;
   const prompt =
     `Translate the following film title and synopsis from ${LANG_NAMES[sourceLang]} to ${LANG_NAMES[targetLang]}. ` +
     `Return strictly a JSON object shaped {"title": "...", "synopsis": "..."} with no extra commentary or markdown. ` +
@@ -139,6 +155,35 @@ async function translateOne(
   return parseTranslationJson(text);
 }
 
+/** translateOne + resilience: try each model in `models()` in order; on a
+ *  transient failure (503/429/timeout/network) move straight to the next model
+ *  (no backoff — a fresh model beats waiting on an overloaded one). If every
+ *  model fails transiently, pause briefly and sweep once more (MAX_ROUNDS).
+ *  A misconfig (notConfigured) throws immediately — retrying can't help. The
+ *  happy path is a single request, so success stays fast. */
+async function translateOneRobust(
+  sourceLang: TranslateLang,
+  targetLang: TranslateLang,
+  title: string,
+  synopsis: string,
+): Promise<{ title: string; synopsis: string }> {
+  const modelList = models();
+  let lastErr: unknown;
+  for (let round = 0; round < MAX_ROUNDS; round++) {
+    for (const model of modelList) {
+      try {
+        return await translateOne(sourceLang, targetLang, title, synopsis, model);
+      } catch (e) {
+        lastErr = e;
+        // A missing key can't be fixed by retrying — surface it now.
+        if (e instanceof TranslateError && e.code === "notConfigured") throw e;
+      }
+    }
+    if (round < MAX_ROUNDS - 1) await sleep(ROUND_PAUSE_MS);
+  }
+  throw lastErr;
+}
+
 /** Translates title+synopsis from sourceLang into every language in
  *  `targets` (typically the other two site locales), in parallel. A single
  *  target failing doesn't drop the others — its slot is simply omitted from
@@ -158,7 +203,7 @@ export async function translateFields(args: {
 
   const wanted = targets.filter((t) => t !== sourceLang);
   const settled = await Promise.allSettled(
-    wanted.map(async (t) => [t, await translateOne(sourceLang, t, title, synopsis)] as const),
+    wanted.map(async (t) => [t, await translateOneRobust(sourceLang, t, title, synopsis)] as const),
   );
 
   const out: Record<string, { title: string; synopsis: string }> = {};

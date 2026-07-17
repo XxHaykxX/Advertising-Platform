@@ -9,14 +9,14 @@ import { setMemberStatus } from "@/lib/auth/members";
 export async function approveMember(userId: number) {
   await requireContentEditor();
   await setMemberStatus(userId, "APPROVED");
-  revalidatePath("/admin/registrations");
+  revalidatePath("/admin/users");
 }
 
 /** Reject a pending registration. Rejected members can be approved later if reconsidered. */
 export async function rejectMember(userId: number) {
   await requireContentEditor();
   await setMemberStatus(userId, "REJECTED");
-  revalidatePath("/admin/registrations");
+  revalidatePath("/admin/users");
 }
 
 /** Block an approved member — locks them out immediately (setMemberStatus is
@@ -24,14 +24,14 @@ export async function rejectMember(userId: number) {
 export async function blockMember(userId: number) {
   await requireContentEditor();
   await setMemberStatus(userId, "BLOCKED");
-  revalidatePath("/admin/registrations");
+  revalidatePath("/admin/users");
 }
 
 /** Unblock a blocked member — restores them straight to APPROVED. */
 export async function unblockMember(userId: number) {
   await requireContentEditor();
   await setMemberStatus(userId, "APPROVED");
-  revalidatePath("/admin/registrations");
+  revalidatePath("/admin/users");
 }
 
 /** Count of brand/creator registrations awaiting review — drives the sidebar

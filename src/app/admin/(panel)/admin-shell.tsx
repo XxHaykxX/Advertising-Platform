@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { LogOut, Menu, X } from "lucide-react";
 import type { Role } from "@prisma/client";
 import { logout } from "@/app/admin/actions";
+import { LogoutButton } from "@/components/logout-button";
 import { Logo } from "@/components/ui/logo";
 import { AdminNav } from "./admin-nav";
 
@@ -76,19 +77,19 @@ export function AdminShell({
 
         <AdminNav role={role} />
 
-        <form action={logout} className="border-t border-border p-3">
+        <div className="border-t border-border p-3">
           <div className="mb-2 px-3">
             <p className="truncate text-sm font-medium text-foreground">{name}</p>
             <p className="truncate text-xs text-muted-foreground">{email}</p>
           </div>
-          <button
-            type="submit"
+          <LogoutButton
+            action={logout}
             className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >
             <LogOut className="h-4 w-4" />
             Sign out
-          </button>
-        </form>
+          </LogoutButton>
+        </div>
       </aside>
 
       {/* Content — extra top padding on mobile to clear the fixed top bar */}

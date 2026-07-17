@@ -1,16 +1,14 @@
+import Link from "next/link";
 import { Info, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ApplyDialog } from "@/components/apply-dialog";
 import { Reveal } from "@/components/ui/reveal";
 import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
 import type { ProjectDetailDTO } from "@/lib/types";
 
 export function ExpressInterestBanner({
-  project,
   className,
   locale = DEFAULT_LOCALE,
 }: {
-  project: Pick<ProjectDetailDTO, "id" | "title">;
   className?: string;
   locale?: Locale;
 }) {
@@ -19,16 +17,9 @@ export function ExpressInterestBanner({
     <div
       className={`flex flex-wrap items-center justify-between gap-4 rounded-xl border border-primary/20 bg-primary/5 px-5 py-4 ${className ?? ""}`}
     >
-      <ApplyDialog
-        projectId={project.id}
-        projectTitle={project.title}
-        locale={locale}
-        trigger={
-          <Button variant="primary" size="sm">
-            {t("btn.expressInterest")}
-          </Button>
-        }
-      />
+      <Button asChild variant="primary" size="sm">
+        <Link href="/login">{t("cta.loginToApply")}</Link>
+      </Button>
     </div>
   );
 }
@@ -88,7 +79,7 @@ export function RoiSnapshot({
               {t("roi.poweredBy")}
             </p>
 
-            <ExpressInterestBanner project={project} className="mt-6" locale={locale} />
+            <ExpressInterestBanner className="mt-6" locale={locale} />
           </div>
         </Reveal>
       </div>

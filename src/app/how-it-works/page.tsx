@@ -6,6 +6,7 @@ import { Section } from "@/components/ui/section";
 import { Container } from "@/components/ui/container";
 import { Reveal } from "@/components/ui/reveal";
 import { Button } from "@/components/ui/button";
+import { PageHero } from "@/components/ui/page-hero";
 import { getLocale } from "@/lib/data/locale";
 import { getCurrency } from "@/lib/data/currency";
 import { makeUI } from "@/lib/i18n";
@@ -13,7 +14,7 @@ import { makeUI } from "@/lib/i18n";
 export const metadata: Metadata = {
   title: "How It Works — iGovazd",
   description:
-    "Explore how iGovazd connects brands with filmmakers. Browse projects anonymously, express interest, and close authentic placements.",
+    "Explore how iGovazd connects brands with filmmakers. Browse projects, express interest, and close authentic placements.",
   alternates: { canonical: "/how-it-works" },
 };
 
@@ -46,21 +47,7 @@ export default async function HowItWorksPage() {
     <>
       <SiteHeader />
 
-      {/* Hero section */}
-      <Section className="border-b border-border">
-        <Container>
-          <div className="mx-auto max-w-3xl text-center">
-            <Reveal>
-              <h1 className="text-5xl font-bold md:text-6xl">{t("hiw.heroTitle")}</h1>
-            </Reveal>
-            <Reveal delay={0.1}>
-              <p className="mt-6 text-lg text-muted-foreground">
-                {t("hiw.heroSubtitle")}
-              </p>
-            </Reveal>
-          </div>
-        </Container>
-      </Section>
+      <PageHero title={t("hiw.heroTitle")} subtitle={t("hiw.heroSubtitle")} locale={locale} />
 
       {/* Two-column steps section */}
       <Section>

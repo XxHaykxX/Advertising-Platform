@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireContentEditor } from "@/lib/auth/require";
+import { getKnownPeople } from "@/lib/data/actors";
 import { createProject } from "../actions";
 import { ProjectForm } from "../project-form";
 
@@ -15,6 +16,10 @@ export default async function NewProjectPage() {
     distinct: ["studio"],
   });
   const studios = rows.map((r) => r.studio).sort();
+
+  // People previously entered as cast/crew on any project (#11), for the
+  // Cast & Crew name autocomplete.
+  const knownPeople = await getKnownPeople();
 
   // No owner yet on create — the poster generator's logo overlay (#26) falls
   // back to the current staff user's own avatar (see poster-action.ts).
@@ -34,6 +39,7 @@ export default async function NewProjectPage() {
         action={createProject}
         submitLabel="Create project"
         studios={studios}
+        knownPeople={knownPeople}
         ownerHasAvatar={!!me?.avatar}
       />
     </div>

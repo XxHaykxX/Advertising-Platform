@@ -3,10 +3,11 @@ import { prisma } from "@/lib/prisma";
 import type { Locale } from "@/lib/i18n";
 import type { InterestStatus } from "@prisma/client";
 
-/* #23 — Interest is a BRAND member's "Express Interest" signal on a Project,
- * distinct from the anonymous Application lead-capture form (src/lib/actions
- * /applications.ts). Small enough that this file skips unstable_cache — same
- * "owner-scoped, low-traffic" reasoning as brand-profile.ts. */
+/* #23 — Interest is a BRAND member's "Express Interest" signal on a Project.
+ * It's the only placement-lead channel now (#37 removed the anonymous
+ * Application lead-capture form). Small enough that this file skips
+ * unstable_cache — same "owner-scoped, low-traffic" reasoning as
+ * brand-profile.ts. */
 
 export type BrandInterestDTO = {
   id: number;

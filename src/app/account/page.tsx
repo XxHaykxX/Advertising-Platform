@@ -3,12 +3,14 @@ import { redirect } from "next/navigation";
 import { FileUp, FolderKanban, LogOut } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { Section } from "@/components/ui/section";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Reveal } from "@/components/ui/reveal";
 import { requireMember } from "@/lib/auth/require";
 import { prisma } from "@/lib/prisma";
 import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
+import { LogoutButton } from "@/components/logout-button";
 import { logout } from "./actions";
 
 /* #16: for CREATOR members the two placeholder cards below became live links
@@ -64,12 +66,13 @@ export default async function AccountPage() {
                 <ProfileRow label={t("register.accountType")} value={roleLabel} />
               </div>
 
-              <form action={logout} className="mt-6">
-                <Button type="submit" variant="secondary" size="md" className="w-full gap-2">
-                  <LogOut className="h-4 w-4" />
-                  {t("account.logout")}
-                </Button>
-              </form>
+              <LogoutButton
+                action={logout}
+                className={cn(buttonVariants({ variant: "secondary", size: "md" }), "mt-6 w-full gap-2")}
+              >
+                <LogOut className="h-4 w-4" />
+                {t("account.logout")}
+              </LogoutButton>
             </div>
           </Reveal>
 

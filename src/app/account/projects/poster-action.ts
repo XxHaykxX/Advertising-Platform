@@ -1,10 +1,10 @@
 "use server";
 
-// Server action backing the "Generate poster" panel in
-// project-submit-form.tsx (#26). Member gate only (requireMember) — deliberate
-// twin of admin/(panel)/projects/poster-action.ts rather than a shared
-// export, same "different trust zone" reasoning as createCreatorProject in
-// ./actions.ts. The creator's own avatar is always the logo source (they're
+// Server action backing the "Generate poster" panel in project-form.tsx
+// (#26) when it renders in mode="creator". Member gate only (requireMember) —
+// deliberate twin of admin/(panel)/projects/poster-action.ts rather than a
+// shared export, same "different trust zone" reasoning as createCreatorProject
+// in ./actions.ts. The creator's own avatar is always the logo source (they're
 // always the project's owner-to-be, unlike the admin form which may act on
 // someone else's existing project).
 import { requireMember } from "@/lib/auth/require";

@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import { AccentBadge, GenreBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ApplyDialog } from "@/components/apply-dialog";
 import { daysUntil, formatFullDate, formatMonthYear, parseStringArray, splitCountries } from "@/lib/data/format";
 import { cn } from "@/lib/utils";
 import { DEFAULT_LOCALE, intlLocale, localizeValue, makeUI, type Locale } from "@/lib/i18n";
@@ -137,16 +136,9 @@ export function ProjectCard({
         </p>
 
         <div className="relative z-20 mt-auto flex gap-3 pt-6">
-          <ApplyDialog
-            projectId={project.id}
-            projectTitle={project.title}
-            locale={locale}
-            trigger={
-              <Button variant="primary" size="sm">
-                {t("btn.requestDetails")}
-              </Button>
-            }
-          />
+          <Button asChild variant="primary" size="sm">
+            <Link href="/login">{t("cta.loginToApply")}</Link>
+          </Button>
           <Button asChild variant="secondary" size="sm">
             <Link href={`/reports/${project.id}`}>{t("btn.viewReport")}</Link>
           </Button>

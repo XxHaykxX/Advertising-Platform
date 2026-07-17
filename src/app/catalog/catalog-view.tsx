@@ -17,9 +17,9 @@ import {
 } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
+import { PageHero } from "@/components/ui/page-hero";
 import { AccentBadge, GenreBadge } from "@/components/ui/badge";
 import { ProjectCard } from "@/components/project-card";
-import { ApplyDialog } from "@/components/apply-dialog";
 import { Footer } from "@/components/footer";
 import { Header, type SiteHeaderUser } from "@/components/header";
 import { daysUntil, formatFullDate, splitCountries } from "@/lib/data/format";
@@ -111,16 +111,9 @@ function ProjectRow({ project, locale = DEFAULT_LOCALE }: { project: ProjectList
         <Button asChild variant="primary" size="sm">
           <Link href={`/reports/${project.id}`}>{t("btn.viewReport")}</Link>
         </Button>
-        <ApplyDialog
-          projectId={project.id}
-          projectTitle={project.title}
-          locale={locale}
-          trigger={
-            <Button variant="ghost" size="sm">
-              {t("btn.requestDetails")}
-            </Button>
-          }
-        />
+        <Button asChild variant="ghost" size="sm">
+          <Link href="/login">{t("cta.loginToApply")}</Link>
+        </Button>
       </div>
     </div>
   );
@@ -380,6 +373,12 @@ export function CatalogView({
   return (
     <>
       <Header user={user} locale={locale} currency={currency} />
+
+      <PageHero
+        title={t("catalog.heroTitle")}
+        subtitle={t("catalog.heroSubtitle")}
+        locale={locale}
+      />
 
       <Container className="pt-6">
         <div className="mb-8 flex items-center gap-2 rounded-xl border border-border bg-muted/60 px-4 py-3 text-sm text-muted-foreground">
