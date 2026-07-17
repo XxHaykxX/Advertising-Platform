@@ -65,6 +65,26 @@ model User {
   projects  Project[]
   interests Interest[] // Interest rows this user (as a BRAND) has expressed
   passwordResetTokens PasswordResetToken[]
+  notifications Notification[]
+}
+
+/// In-app notification (#25 / V9). Text is NOT stored translated — only a
+/// `type` + a small JSON `data` payload; the UI renders localized copy in the
+/// viewer's current locale (see src/lib/notifications.ts). `link` is an
+/// in-app href the row navigates to when clicked.
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    Int // recipient
+  type      String // INTEREST | PROJECT_SUBMITTED | PROJECT_APPROVED | PROJECT_REJECTED
+  data      String?  @db.Text // JSON payload: { projectTitle, brandName, projectId, … }; MySQL forbids TEXT defaults, so nullable — code treats null as "{}"
+  link      String   @default("") // in-app href, e.g. "/reports/12" or "/admin/moderation"
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+  @@index([userId, createdAt])
 }
 
 /// One-time password-reset tokens (email flow, #forgot-password). Only a
@@ -144,6 +164,8 @@ model Project {
   episodes         Int? // episode count, for SERIAL
   episodeMinutes   Int? // per-episode runtime, for SERIAL
   genres           String?          @db.Text // JSON string[] multi-genre; nullable, same pattern as platforms/cinemas — `genre` above stays as the primary display value
+  formatCategory   String           @default("") // marketing format bucket (FEATURE|SERIES|SITCOM|…), separate from `kind`; drives the catalog Format filter
+  language         String           @default("") // primary language (Armenian|Russian|English|…); drives the catalog Language filter
 
   applicationDeadline DateTime?
   releaseDate         DateTime?

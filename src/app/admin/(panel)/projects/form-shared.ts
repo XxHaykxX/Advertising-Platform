@@ -6,6 +6,23 @@ export const PLACEMENT_TYPE_VALUES = ["In-Frame", "Story Integration", "Mention"
 
 export const KIND_VALUES = ["FILM", "SERIAL"] as const;
 
+// Marketing format bucket (drives the catalog Format filter) — distinct from
+// KIND_VALUES, which only decides episode fields. Labeled via
+// t(`formatCategory.${v}`) / localizeValue(locale, "formatCategory", v).
+export const FORMAT_CATEGORY_VALUES = [
+  "FEATURE",
+  "SERIES",
+  "SITCOM",
+  "PODCAST",
+  "REALITY",
+  "PROGRAM",
+  "SHORT",
+] as const;
+
+// Primary-language bucket (catalog Language filter). Labeled via
+// t(`language.${v}`) / localizeValue(locale, "language", v).
+export const LANGUAGE_VALUES = ["Armenian", "Russian", "English", "Georgian", "Other"] as const;
+
 export const AGE_RATING_VALUES = ["", "0+", "6+", "12+", "16+", "18+"] as const;
 
 /** Date | null -> "YYYY-MM-DD" for prefilling an <input type=date>. */

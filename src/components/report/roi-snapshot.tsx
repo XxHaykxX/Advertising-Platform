@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Info, TrendingUp } from "lucide-react";
+import { Info, Lock, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/ui/reveal";
 import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
@@ -15,9 +15,10 @@ export function ExpressInterestBanner({
   const t = makeUI(locale);
   return (
     <div
-      className={`flex flex-wrap items-center justify-between gap-4 rounded-xl border border-primary/20 bg-primary/5 px-5 py-4 ${className ?? ""}`}
+      className={`flex flex-col items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 px-5 py-5 text-center ${className ?? ""}`}
     >
-      <Button asChild variant="primary" size="sm">
+      <Lock className="h-5 w-5 text-primary" />
+      <Button asChild variant="primary" size="sm" className="w-full sm:w-auto">
         <Link href="/login">{t("cta.loginToApply")}</Link>
       </Button>
     </div>
@@ -55,7 +56,7 @@ export function RoiSnapshot({
             </div>
 
             {project.projViews || project.cpmDisplay ? (
-              <div className="mt-6 grid grid-cols-2 gap-6">
+              <div className="mt-6 grid grid-cols-1 gap-6 min-[420px]:grid-cols-2">
                 {project.projViews ? (
                   <div>
                     <div className="text-2xl font-extrabold text-foreground">{project.projViews}</div>

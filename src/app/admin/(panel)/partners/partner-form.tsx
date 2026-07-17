@@ -49,7 +49,7 @@ export function PartnerForm({
       <section className="space-y-4 rounded-2xl border border-border bg-card p-6">
         <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">Partner</h2>
         <Field label="Name *">
-          <input name="name" defaultValue={data.name} className={inputCls} />
+          <input name="name" defaultValue={data.name} required className={inputCls} />
         </Field>
         <Field label="Logo URL">
           <input name="logo" defaultValue={data.logo} placeholder="https://…" className={inputCls} />

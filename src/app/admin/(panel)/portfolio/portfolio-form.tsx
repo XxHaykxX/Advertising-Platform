@@ -52,10 +52,10 @@ export function PortfolioForm({
         <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">Case study</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Title *">
-            <input name="title" defaultValue={data.title} className={inputCls} />
+            <input name="title" defaultValue={data.title} required className={inputCls} />
           </Field>
           <Field label="Brand *">
-            <input name="brand" defaultValue={data.brand} className={inputCls} />
+            <input name="brand" defaultValue={data.brand} required className={inputCls} />
           </Field>
         </div>
         <Field label="Description *">

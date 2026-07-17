@@ -65,6 +65,8 @@ export default async function EditProjectPage({
     poster: p.poster ?? "",
     gallery: parseGalleryInput(p.gallery),
     format: p.format,
+    formatCategory: p.formatCategory,
+    language: p.language,
     studio: p.studio,
     kind: p.kind,
     episodes: p.episodes,

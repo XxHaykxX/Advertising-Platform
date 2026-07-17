@@ -14,6 +14,8 @@ import {
   setUserPassword,
 } from "@/lib/auth/password";
 import { requireSuperadmin } from "@/lib/auth/require";
+import { getLocale } from "@/lib/data/locale";
+import { makeUI } from "@/lib/i18n";
 
 export type ActionState = { error?: string; ok?: boolean; redirect?: string };
 
@@ -50,22 +52,24 @@ export async function login(
   _prev: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
+  const t = makeUI(await getLocale());
+
   const ip = await clientIp();
   if (rateLimited(ip)) {
-    return { error: "Too many attempts. Try again in a few minutes." };
+    return { error: t("login.errTooManyAttempts") };
   }
 
   const email = String(formData.get("email") || "").trim().toLowerCase();
   const password = String(formData.get("password") || "");
-  if (!email || !password) return { error: "Please enter your email and password." };
+  if (!email || !password) return { error: t("login.errFillBoth") };
 
   const result = await verifyUserPassword(email, password);
   if (!result.ok) {
     if (result.reason === "deactivated") {
-      return { error: "This account has been deactivated. Contact the administrator." };
+      return { error: t("login.errDeactivated") };
     }
     recordFailure(ip);
-    return { error: "Incorrect email or password." };
+    return { error: t("login.errInvalid") };
   }
 
   // Members (BRAND / CREATOR) must never obtain an admin session — they sign in
@@ -76,7 +80,7 @@ export async function login(
     result.user.role !== "MODERATOR"
   ) {
     recordFailure(ip);
-    return { error: "Incorrect email or password." };
+    return { error: t("login.errInvalid") };
   }
 
   attempts.delete(ip);

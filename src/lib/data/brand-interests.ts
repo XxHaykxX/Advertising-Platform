@@ -68,3 +68,10 @@ export async function getBrandInterestMap(brandId: number): Promise<Map<number, 
   });
   return new Map(rows.map((r) => [r.projectId, r.status]));
 }
+
+/** Live count of the current brand's expressed interests — drives the
+ *  sidebar badge (#24), same "small, low-traffic, skip unstable_cache"
+ *  reasoning as the rest of this file. */
+export async function getBrandInterestCount(brandId: number): Promise<number> {
+  return prisma.interest.count({ where: { brandId } });
+}

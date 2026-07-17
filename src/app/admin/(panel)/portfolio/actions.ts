@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect, notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireSuperadmin } from "@/lib/auth/require";
+import { getLocale } from "@/lib/data/locale";
+import { makeUI } from "@/lib/i18n";
 
 // MySQL caps a plain (non-@db.Text) Prisma String column at VarChar(191);
 // anything longer throws an unhandled P2000 ("value too long"). Truncate at
@@ -45,16 +47,19 @@ function buildData(fd: FormData): PortfolioFormValues {
    as a JSON object (not array/scalar) — matches the DTO's documented shape
    `{"views":"2.1M","recall":"+38%"}`. Returns the parsed-and-reserialized
    JSON string on success (`null` on failure/empty). */
-function validateMetrics(raw: string): { error?: string; json: string | null } {
+function validateMetrics(
+  raw: string,
+  t: ReturnType<typeof makeUI>,
+): { error?: string; json: string | null } {
   if (!raw) return { json: null };
   try {
     const parsed = JSON.parse(raw);
     if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
-      return { error: "Metrics must be a JSON object, e.g. {\"views\":\"2.1M\"}." , json: null };
+      return { error: t("formErr.metricsNotObject"), json: null };
     }
     return { json: JSON.stringify(parsed) };
   } catch {
-    return { error: "Metrics is not valid JSON.", json: null };
+    return { error: t("formErr.metricsNotJson"), json: null };
   }
 }
 
@@ -75,12 +80,13 @@ export async function createPortfolio(
   fd: FormData,
 ): Promise<PortfolioFormState> {
   await requireSuperadmin();
+  const t = makeUI(await getLocale());
   const data = buildData(fd);
 
   const fieldError = validate(data);
   if (fieldError) return { error: fieldError, values: data };
 
-  const { error: metricsError, json: metrics } = validateMetrics(data.metrics);
+  const { error: metricsError, json: metrics } = validateMetrics(data.metrics, t);
   if (metricsError) return { error: metricsError, values: data };
 
   await prisma.portfolio.create({
@@ -104,6 +110,7 @@ export async function updatePortfolio(
   fd: FormData,
 ): Promise<PortfolioFormState> {
   await requireSuperadmin();
+  const t = makeUI(await getLocale());
 
   const existing = await prisma.portfolio.findUnique({ where: { id }, select: { id: true } });
   if (!existing) notFound();
@@ -112,7 +119,7 @@ export async function updatePortfolio(
   const fieldError = validate(data);
   if (fieldError) return { error: fieldError, values: data };
 
-  const { error: metricsError, json: metrics } = validateMetrics(data.metrics);
+  const { error: metricsError, json: metrics } = validateMetrics(data.metrics, t);
   if (metricsError) return { error: metricsError, values: data };
 
   await prisma.portfolio.update({

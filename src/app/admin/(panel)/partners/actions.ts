@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect, notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireSuperadmin } from "@/lib/auth/require";
+import { getLocale } from "@/lib/data/locale";
+import { makeUI } from "@/lib/i18n";
 
 // MySQL caps a plain (non-@db.Text) Prisma String column at VarChar(191);
 // anything longer throws an unhandled P2000 ("value too long"). Truncate at
@@ -37,8 +39,8 @@ function buildData(fd: FormData): PartnerFormValues {
   };
 }
 
-function validate(data: PartnerFormValues): string | null {
-  if (!data.name) return "Name is required.";
+function validate(data: PartnerFormValues, t: ReturnType<typeof makeUI>): string | null {
+  if (!data.name) return t("formErr.company");
   return null;
 }
 
@@ -53,8 +55,9 @@ export async function createPartner(
   fd: FormData,
 ): Promise<PartnerFormState> {
   await requireSuperadmin();
+  const t = makeUI(await getLocale());
   const data = buildData(fd);
-  const error = validate(data);
+  const error = validate(data, t);
   if (error) return { error, values: data };
 
   await prisma.partner.create({
@@ -76,12 +79,13 @@ export async function updatePartner(
   fd: FormData,
 ): Promise<PartnerFormState> {
   await requireSuperadmin();
+  const t = makeUI(await getLocale());
 
   const existing = await prisma.partner.findUnique({ where: { id }, select: { id: true } });
   if (!existing) notFound();
 
   const data = buildData(fd);
-  const error = validate(data);
+  const error = validate(data, t);
   if (error) return { error, values: data };
 
   await prisma.partner.update({

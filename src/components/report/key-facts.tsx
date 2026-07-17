@@ -118,11 +118,11 @@ export function KeyFacts({
               ) : null}
             </div>
 
-            <div className="flex flex-col items-start gap-3 lg:items-end lg:border-l lg:border-border lg:pl-6">
+            <div className="flex flex-col items-start gap-3 border-t border-border pt-5 lg:items-end lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
               {project.placementType ? (
                 <AccentBadge>{localizeValue(locale, "placement", project.placementType)}</AccentBadge>
               ) : null}
-              <Button asChild variant="primary" size="lg" className="whitespace-nowrap">
+              <Button asChild variant="primary" size="lg" className="w-full whitespace-nowrap lg:w-auto">
                 <Link href="/login">{t("cta.loginToApply")}</Link>
               </Button>
             </div>

@@ -5,9 +5,10 @@ import { prisma } from "@/lib/prisma";
 import { requireMember } from "@/lib/auth/require";
 import { getLocale } from "@/lib/data/locale";
 import { getBrandProfile } from "@/lib/data/brand-profile";
-import { getBrandInterests } from "@/lib/data/brand-interests";
+import { getBrandInterestCount, getBrandInterests } from "@/lib/data/brand-interests";
 import { BRAND_CATEGORIES, BUDGET_RANGES } from "@/lib/brand-categories";
 import { makeUI } from "@/lib/i18n";
+import { createNotification, notifyRoles } from "@/lib/data/notifications";
 
 /* #23 — BRAND-cabinet server actions. Every action re-checks requireMember()
  * + role === "BRAND" itself (defense in depth — the layout gate already
@@ -33,7 +34,13 @@ export async function expressInterest(projectId: number): Promise<ExpressInteres
 
   if (!Number.isInteger(projectId)) return { ok: false, error: t("account.brand.expressInterestError") };
 
+  let isNew = false;
   try {
+    const existing = await prisma.interest.findUnique({
+      where: { brandId_projectId: { brandId: user.id, projectId } },
+      select: { id: true },
+    });
+    isNew = !existing;
     await prisma.interest.upsert({
       where: { brandId_projectId: { brandId: user.id, projectId } },
       create: { brandId: user.id, projectId, status: "SENT" },
@@ -43,8 +50,57 @@ export async function expressInterest(projectId: number): Promise<ExpressInteres
     return { ok: false, error: t("account.brand.expressInterestError") };
   }
 
+  // Notify only on a genuinely new interest — a repeat click (upsert no-op)
+  // must not re-notify. Notification failures never fail the interest itself.
+  if (isNew) {
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+      select: { ownerId: true, title: true },
+    });
+    if (project) {
+      const payload = {
+        type: "INTEREST" as const,
+        data: { projectId, projectTitle: project.title, brandName: user.name },
+      };
+      // Owning creator (or staff owner) — link to the public report they can view.
+      await createNotification(project.ownerId, { ...payload, link: `/reports/${projectId}` });
+      // Superadmins watch all interests; exclude the owner to avoid a duplicate.
+      await notifyRoles(["SUPERADMIN"], { ...payload, link: "/admin/interests" }, project.ownerId);
+    }
+  }
+
   revalidateBrandPaths();
   return { ok: true };
+}
+
+/** Delete the current BRAND member's Interest row on `projectId` — the other
+ *  half of the toggle (expressInterest ⇄ withdrawInterest). deleteMany (not
+ *  delete) so a double-click / already-withdrawn race is a no-op instead of
+ *  a P2025 "record not found" throw. */
+export async function withdrawInterest(projectId: number): Promise<ExpressInterestResult> {
+  const user = await requireMember();
+  const locale = await getLocale();
+  const t = makeUI(locale);
+  if (user.role !== "BRAND") return { ok: false, error: t("account.brand.expressInterestError") };
+
+  if (!Number.isInteger(projectId)) return { ok: false, error: t("account.brand.expressInterestError") };
+
+  try {
+    await prisma.interest.deleteMany({ where: { brandId: user.id, projectId } });
+  } catch {
+    return { ok: false, error: t("account.brand.expressInterestError") };
+  }
+
+  revalidateBrandPaths();
+  return { ok: true };
+}
+
+/** Current BRAND member's interest count — feeds the sidebar badge, same
+ *  direct-Server-Action-call pattern as admin-nav's getPendingModerationCount. */
+export async function getInterestCount(): Promise<number> {
+  const user = await requireMember();
+  if (user.role !== "BRAND") return 0;
+  return getBrandInterestCount(user.id);
 }
 
 export type BrandProfileFormState = {

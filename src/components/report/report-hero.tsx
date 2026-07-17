@@ -98,25 +98,25 @@ export function ReportHero({
               ) : null}
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2 sm:gap-3">
               {project.projViews ? (
-                <div className="rounded-xl border border-border bg-card p-4">
+                <div className="rounded-xl border border-border bg-card p-3 sm:p-4">
                   <Eye className="h-4 w-4 text-primary" />
-                  <div className="mt-2 text-lg font-bold text-foreground">{project.projViews}</div>
+                  <div className="mt-2 break-words text-base font-bold text-foreground sm:text-lg">{project.projViews}</div>
                   <div className="text-xs text-muted-foreground">{t("report.projectedViews")}</div>
                 </div>
               ) : null}
               {project.cpmDisplay ? (
-                <div className="rounded-xl border border-border bg-card p-4">
+                <div className="rounded-xl border border-border bg-card p-3 sm:p-4">
                   <DollarSign className="h-4 w-4 text-primary" />
-                  <div className="mt-2 text-lg font-bold text-foreground">{project.cpmDisplay}</div>
+                  <div className="mt-2 break-words text-base font-bold text-foreground sm:text-lg">{project.cpmDisplay}</div>
                   <div className="text-xs text-muted-foreground">{t("report.cpm")}</div>
                 </div>
               ) : null}
               {project.budgetDisplay ? (
-                <div className="rounded-xl border border-border bg-card p-4">
+                <div className="rounded-xl border border-border bg-card p-3 sm:p-4">
                   <Wallet className="h-4 w-4 text-primary" />
-                  <div className="mt-2 text-lg font-bold text-foreground">{project.budgetDisplay}</div>
+                  <div className="mt-2 break-words text-base font-bold text-foreground sm:text-lg">{project.budgetDisplay}</div>
                   <div className="text-xs text-muted-foreground">{t("report.budgetRange")}</div>
                 </div>
               ) : null}

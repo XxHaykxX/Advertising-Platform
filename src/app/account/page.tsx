@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { FileUp, FolderKanban, LogOut } from "lucide-react";
+import { Bell, FileUp, FolderKanban, LogOut } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { Section } from "@/components/ui/section";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { LogoutButton } from "@/components/logout-button";
+import { getUnreadNotificationCount } from "@/lib/actions/notifications";
 import { logout } from "./actions";
 
 /* #16: for CREATOR members the two placeholder cards below became live links
@@ -32,10 +33,11 @@ export default async function AccountPage() {
   // profile) that was otherwise unreachable — no nav link pointed to it. Send them
   // straight there so express-interest & recommendations are actually usable.
   if (user.role === "BRAND") redirect("/account/brand");
-  const [locale, dbUser, projectsCount] = await Promise.all([
+  const [locale, dbUser, projectsCount, unreadCount] = await Promise.all([
     getLocale(),
     prisma.user.findUnique({ where: { id: user.id }, select: { company: true } }),
     user.role === "CREATOR" ? prisma.project.count({ where: { ownerId: user.id } }) : Promise.resolve(0),
+    getUnreadNotificationCount(),
   ]);
   const t = makeUI(locale);
   // BRAND is redirected to /account/brand above, so this page is CREATOR-only.
@@ -111,6 +113,29 @@ export default async function AccountPage() {
                     </p>
                     <Button asChild variant="secondary" size="md" className="mt-6">
                       <Link href="/account/projects">{t("account.myProjects")}</Link>
+                    </Button>
+                  </div>
+                </Reveal>
+                <Reveal delay={0.15}>
+                  <div className="flex h-full flex-col items-start rounded-2xl border border-border bg-card p-6">
+                    <div className="flex w-full items-center justify-between">
+                      <div className="grid h-11 w-11 place-items-center rounded-xl bg-primary/10 text-primary">
+                        <Bell className="h-5 w-5" />
+                      </div>
+                      {unreadCount > 0 && (
+                        <span className="grid h-5 min-w-5 place-items-center rounded-full bg-primary px-1.5 text-[11px] font-semibold text-primary-foreground">
+                          {unreadCount}
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="mt-4 text-lg font-semibold text-foreground">
+                      {t("notif.title")}
+                    </h3>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {t("notif.subtitle")}
+                    </p>
+                    <Button asChild variant="secondary" size="md" className="mt-6">
+                      <Link href="/account/notifications">{t("notif.title")}</Link>
                     </Button>
                   </div>
                 </Reveal>

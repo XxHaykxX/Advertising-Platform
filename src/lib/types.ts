@@ -6,6 +6,8 @@ export interface ProjectListDTO {
   synopsis: string;
   poster: string;
   format: string;
+  formatCategory: string; // marketing format bucket (FEATURE|SERIES|…); "" when unset
+  language: string; // primary language (Armenian|Russian|…); "" when unset
   studio: string;
   countries: string;
   audienceGender: string;

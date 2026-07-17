@@ -11,7 +11,6 @@ import {
   LayoutGrid,
   List,
   Search,
-  ShieldCheck,
   SlidersHorizontal,
   X,
 } from "lucide-react";
@@ -22,7 +21,8 @@ import { AccentBadge, GenreBadge } from "@/components/ui/badge";
 import { ProjectCard } from "@/components/project-card";
 import { Footer } from "@/components/footer";
 import { Header, type SiteHeaderUser } from "@/components/header";
-import { daysUntil, formatFullDate, splitCountries } from "@/lib/data/format";
+import { daysUntil, formatFullDate, parseStringArray, splitCountries } from "@/lib/data/format";
+import { FORMAT_CATEGORY_VALUES, LANGUAGE_VALUES } from "@/app/admin/(panel)/projects/form-shared";
 import { cn } from "@/lib/utils";
 import { DEFAULT_LOCALE, intlLocale, localizeValue, makeUI, UI, LOCALES, type Locale } from "@/lib/i18n";
 import { DEFAULT_CURRENCY, type CurrencyCode } from "@/lib/currency";
@@ -38,6 +38,30 @@ type ViewMode = "grid" | "list";
 // the visitor has selected for display.
 function budgetBoundsAmd(p: ProjectListDTO): [number, number] {
   return [p.budgetMinAmd ?? 0, p.budgetMaxAmd ?? 0];
+}
+
+// Fixed age buckets (V3). A project's free-text audienceAge ("16-55") is parsed
+// to a numeric [lo, hi] range and a bucket matches when the two ranges overlap
+// — a single project can therefore satisfy several buckets. "45+" caps at 200.
+// The "ALL" bucket spans everything and is labeled from catalog.genderAll.
+const AGE_BUCKETS: { value: string; lo: number; hi: number }[] = [
+  { value: "ALL", lo: 0, hi: 200 },
+  { value: "0-12", lo: 0, hi: 12 },
+  { value: "13-17", lo: 13, hi: 17 },
+  { value: "18-24", lo: 18, hi: 24 },
+  { value: "25-44", lo: 25, hi: 44 },
+  { value: "45+", lo: 45, hi: 200 },
+];
+
+/** "16-55" -> [16, 55]; "45+" -> [45, 200]; "30" -> [30, 30]; unparseable -> null. */
+function parseAgeRange(s: string): [number, number] | null {
+  const range = s.match(/(\d+)\s*-\s*(\d+)/);
+  if (range) return [Number(range[1]), Number(range[2])];
+  const plus = s.match(/(\d+)\s*\+/);
+  if (plus) return [Number(plus[1]), 200];
+  const single = s.match(/(\d+)/);
+  if (single) return [Number(single[1]), Number(single[1])];
+  return null;
 }
 
 function parseViews(v: string): number {
@@ -107,11 +131,11 @@ function ProjectRow({ project, locale = DEFAULT_LOCALE }: { project: ProjectList
         </div>
       </div>
 
-      <div className="flex shrink-0 gap-3">
-        <Button asChild variant="primary" size="sm">
+      <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:gap-3">
+        <Button asChild variant="primary" size="sm" className="w-full sm:w-auto">
           <Link href={`/reports/${project.id}`}>{t("btn.viewReport")}</Link>
         </Button>
-        <Button asChild variant="ghost" size="sm">
+        <Button asChild variant="ghost" size="sm" className="w-full sm:w-auto">
           <Link href="/login">{t("cta.loginToApply")}</Link>
         </Button>
       </div>
@@ -186,9 +210,24 @@ export function CatalogView({
     () => statuses.map((s) => ({ value: s, label: t(`report.status.${s}`) })),
     [statuses, t],
   );
+  // Distinct platforms / countries actually present across the projects — the
+  // Format/Language filters instead always show their full closed value sets.
+  const platformOptions = useMemo(
+    () => Array.from(new Set(projects.flatMap((p) => parseStringArray(p.platforms)))).sort(),
+    [projects],
+  );
+  const countryOptions = useMemo(
+    () => Array.from(new Set(projects.flatMap((p) => splitCountries(p.countries)))).sort(),
+    [projects],
+  );
 
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+  const [selectedFormats, setSelectedFormats] = useState<string[]>([]);
+  const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
+  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
+  const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
+  const [selectedAges, setSelectedAges] = useState<string[]>([]);
   const [gender, setGender] = useState<Gender>("All");
   const [budgetMin, setBudgetMin] = useState("");
   const [budgetMax, setBudgetMax] = useState("");
@@ -205,6 +244,11 @@ export function CatalogView({
   const activeFilterCount =
     selectedGenres.length +
     selectedStatuses.length +
+    selectedFormats.length +
+    selectedLanguages.length +
+    selectedPlatforms.length +
+    selectedCountries.length +
+    selectedAges.length +
     (gender !== "All" ? 1 : 0) +
     (budgetMin !== "" || budgetMax !== "" ? 1 : 0);
 
@@ -221,6 +265,11 @@ export function CatalogView({
   const hasFilters =
     selectedGenres.length > 0 ||
     selectedStatuses.length > 0 ||
+    selectedFormats.length > 0 ||
+    selectedLanguages.length > 0 ||
+    selectedPlatforms.length > 0 ||
+    selectedCountries.length > 0 ||
+    selectedAges.length > 0 ||
     gender !== "All" ||
     budgetMin !== "" ||
     budgetMax !== "" ||
@@ -229,19 +278,30 @@ export function CatalogView({
   const clearAll = () => {
     setSelectedGenres([]);
     setSelectedStatuses([]);
+    setSelectedFormats([]);
+    setSelectedLanguages([]);
+    setSelectedPlatforms([]);
+    setSelectedCountries([]);
+    setSelectedAges([]);
     setGender("All");
     setBudgetMin("");
     setBudgetMax("");
     setSearch("");
   };
 
-  const toggleGenre = (g: string) => {
-    setSelectedGenres((prev) => (prev.includes(g) ? prev.filter((x) => x !== g) : [...prev, g]));
-  };
+  // One toggle factory for every checkbox facet — flips a value in/out of the
+  // given selection array.
+  const makeToggle =
+    (setter: React.Dispatch<React.SetStateAction<string[]>>) => (value: string) =>
+      setter((prev) => (prev.includes(value) ? prev.filter((x) => x !== value) : [...prev, value]));
 
-  const toggleStatus = (s: string) => {
-    setSelectedStatuses((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]));
-  };
+  const toggleGenre = makeToggle(setSelectedGenres);
+  const toggleStatus = makeToggle(setSelectedStatuses);
+  const toggleFormat = makeToggle(setSelectedFormats);
+  const toggleLanguage = makeToggle(setSelectedLanguages);
+  const togglePlatform = makeToggle(setSelectedPlatforms);
+  const toggleCountry = makeToggle(setSelectedCountries);
+  const toggleAge = makeToggle(setSelectedAges);
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -251,7 +311,30 @@ export function CatalogView({
     let list = projects.filter((p) => {
       if (selectedGenres.length > 0 && !selectedGenres.includes(p.genre)) return false;
       if (selectedStatuses.length > 0 && !selectedStatuses.includes(p.status)) return false;
+      if (selectedFormats.length > 0 && !selectedFormats.includes(p.formatCategory)) return false;
+      if (selectedLanguages.length > 0 && !selectedLanguages.includes(p.language)) return false;
       if (gender !== "All" && p.audienceGender !== gender) return false;
+
+      if (selectedPlatforms.length > 0) {
+        const pls = parseStringArray(p.platforms);
+        if (!selectedPlatforms.some((s) => pls.includes(s))) return false;
+      }
+
+      if (selectedCountries.length > 0) {
+        const cs = splitCountries(p.countries);
+        if (!selectedCountries.some((s) => cs.includes(s))) return false;
+      }
+
+      if (selectedAges.length > 0) {
+        const range = parseAgeRange(p.audienceAge);
+        if (!range) return false;
+        const [a, b] = range;
+        const overlaps = selectedAges.some((bv) => {
+          const bucket = AGE_BUCKETS.find((x) => x.value === bv);
+          return bucket ? a <= bucket.hi && b >= bucket.lo : false;
+        });
+        if (!overlaps) return false;
+      }
 
       if (min !== null || max !== null) {
         const [pMin, pMax] = budgetBoundsAmd(p);
@@ -286,6 +369,11 @@ export function CatalogView({
     projects,
     selectedGenres,
     selectedStatuses,
+    selectedFormats,
+    selectedLanguages,
+    selectedPlatforms,
+    selectedCountries,
+    selectedAges,
     gender,
     budgetMin,
     budgetMax,
@@ -314,6 +402,16 @@ export function CatalogView({
         </div>
       </div>
 
+      <CheckboxFilter
+        label={t("catalog.format")}
+        options={FORMAT_CATEGORY_VALUES.map((v) => ({
+          value: v,
+          label: localizeValue(locale, "formatCategory", v),
+        }))}
+        selected={selectedFormats}
+        onToggle={toggleFormat}
+      />
+
       <div className="border-t border-border py-4">
         <h3 className="mb-1 text-sm font-semibold text-foreground">{t("catalog.targetAudience")}</h3>
         <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -334,6 +432,24 @@ export function CatalogView({
             >
               {g === "All" ? t("catalog.genderAll") : g === "Male" ? t("catalog.genderMale") : t("catalog.genderFemale")}
             </button>
+          ))}
+        </div>
+
+        {/* Age buckets (V3) — multi-select, under the same Target-audience section. */}
+        <p className="mb-2 mt-4 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          {t("catalog.age")}
+        </p>
+        <div className="flex flex-col gap-2.5">
+          {AGE_BUCKETS.map((b) => (
+            <label key={b.value} className="flex items-center gap-2 text-sm text-foreground">
+              <input
+                type="checkbox"
+                checked={selectedAges.includes(b.value)}
+                onChange={() => toggleAge(b.value)}
+                className="h-4 w-4 rounded border-border accent-primary"
+              />
+              {b.value === "ALL" ? t("catalog.genderAll") : b.value}
+            </label>
           ))}
         </div>
       </div>
@@ -367,6 +483,36 @@ export function CatalogView({
         selected={selectedStatuses}
         onToggle={toggleStatus}
       />
+
+      <CheckboxFilter
+        label={t("catalog.language")}
+        options={LANGUAGE_VALUES.map((v) => ({
+          value: v,
+          label: localizeValue(locale, "language", v),
+        }))}
+        selected={selectedLanguages}
+        onToggle={toggleLanguage}
+      />
+
+      {/* Platform / Country only appear when the catalog actually carries such
+          values — an empty facet would render a bare header with no options. */}
+      {platformOptions.length > 0 ? (
+        <CheckboxFilter
+          label={t("catalog.platform")}
+          options={platformOptions.map((p) => ({ value: p, label: p }))}
+          selected={selectedPlatforms}
+          onToggle={togglePlatform}
+        />
+      ) : null}
+
+      {countryOptions.length > 0 ? (
+        <CheckboxFilter
+          label={t("catalog.country")}
+          options={countryOptions.map((c) => ({ value: c, label: c }))}
+          selected={selectedCountries}
+          onToggle={toggleCountry}
+        />
+      ) : null}
     </>
   );
 
@@ -380,14 +526,7 @@ export function CatalogView({
         locale={locale}
       />
 
-      <Container className="pt-6">
-        <div className="mb-8 flex items-center gap-2 rounded-xl border border-border bg-muted/60 px-4 py-3 text-sm text-muted-foreground">
-          <ShieldCheck className="h-4 w-4 shrink-0 text-primary" />
-          {t("catalog.anonymizedNotice")}
-        </div>
-      </Container>
-
-      <Container className="pb-20">
+      <Container className="pt-8 pb-20">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-[240px_1fr]">
           {/* Desktop sidebar — on mobile the filters move into a bottom-sheet */}
           <aside className="hidden lg:block">

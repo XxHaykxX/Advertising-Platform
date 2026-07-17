@@ -3,35 +3,41 @@
 import { useMemo, useState, useTransition } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Check, Film, Loader2, MapPin, Search, Sparkles, Users } from "lucide-react";
+import { Check, Film, Heart, Loader2, MapPin, Search, Sparkles, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GenreBadge } from "@/components/ui/badge";
 import { splitCountries } from "@/lib/data/format";
 import { DEFAULT_LOCALE, localizeValue, makeUI, type Locale } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
 import type { ProjectListDTO } from "@/lib/types";
 import type { InterestStatus } from "@prisma/client";
-import { expressInterest } from "../actions";
+import { expressInterest, withdrawInterest } from "../actions";
 
-/** Express Interest button for a single Browse card — a client-local
+/** Express Interest toggle for a single Browse card (#24) — a client-local
  *  useTransition + Server Action call, same "no manual optimistic state"
  *  pattern as admin/(panel)/registrations/row-actions.tsx: the action's
  *  revalidatePath() refreshes this page's props after it resolves, so the
- *  button's own `pending` flag is all the local state it needs. */
+ *  button's own `pending` flag is all the local state it needs. Already-sent
+ *  state is clickable too (calls withdrawInterest) — hover swaps the icon/
+ *  label to Х/"Remove" so the toggle affordance is obvious before the click. */
 function ExpressInterestButton({
   projectId,
   status,
   labelIdle,
   labelSent,
+  labelRemove,
   errorMessage,
 }: {
   projectId: number;
   status: InterestStatus | undefined;
   labelIdle: string;
   labelSent: string;
+  labelRemove: string;
   errorMessage: string;
 }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [hover, setHover] = useState(false);
   const alreadySent = status !== undefined;
 
   return (
@@ -40,12 +46,14 @@ function ExpressInterestButton({
         type="button"
         variant={alreadySent ? "secondary" : "primary"}
         size="sm"
-        disabled={pending || alreadySent}
-        className="gap-1.5"
+        disabled={pending}
+        className={cn("gap-1.5", alreadySent && hover && "border-danger/40 text-danger")}
+        onMouseEnter={() => setHover(true)}
+        onMouseLeave={() => setHover(false)}
         onClick={() =>
           startTransition(async () => {
             setError(null);
-            const res = await expressInterest(projectId);
+            const res = alreadySent ? await withdrawInterest(projectId) : await expressInterest(projectId);
             if (!res.ok) setError(res.error ?? errorMessage);
           })
         }
@@ -53,9 +61,11 @@ function ExpressInterestButton({
         {pending ? (
           <Loader2 className="h-3.5 w-3.5 animate-spin" />
         ) : alreadySent ? (
-          <Check className="h-3.5 w-3.5" />
-        ) : null}
-        {alreadySent ? labelSent : labelIdle}
+          hover ? <X className="h-3.5 w-3.5" /> : <Check className="h-3.5 w-3.5" />
+        ) : (
+          <Heart className="h-3.5 w-3.5" />
+        )}
+        {alreadySent ? (hover ? labelRemove : labelSent) : labelIdle}
       </Button>
       {error ? <p className="text-xs text-danger">{error}</p> : null}
     </div>
@@ -69,6 +79,7 @@ function BrowseCard({
   onRequestLabel,
   interestLabel,
   interestSentLabel,
+  interestRemoveLabel,
   interestErrorLabel,
 }: {
   project: ProjectListDTO;
@@ -77,6 +88,7 @@ function BrowseCard({
   onRequestLabel: string;
   interestLabel: string;
   interestSentLabel: string;
+  interestRemoveLabel: string;
   interestErrorLabel: string;
 }) {
   const countries = splitCountries(project.countries);
@@ -135,6 +147,7 @@ function BrowseCard({
             status={status}
             labelIdle={interestLabel}
             labelSent={interestSentLabel}
+            labelRemove={interestRemoveLabel}
             errorMessage={interestErrorLabel}
           />
         </div>
@@ -197,6 +210,7 @@ export function BrowseView({
               onRequestLabel={t("btn.viewReport")}
               interestLabel={t("btn.expressInterest")}
               interestSentLabel={t("account.brand.alreadyInterested")}
+              interestRemoveLabel={t("btn.removeInterest")}
               interestErrorLabel={t("account.brand.expressInterestError")}
             />
           ))}

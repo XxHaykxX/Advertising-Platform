@@ -6,6 +6,8 @@ import bcrypt from "bcryptjs";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireSuperadmin } from "@/lib/auth/require";
+import { getLocale } from "@/lib/data/locale";
+import { makeUI } from "@/lib/i18n";
 
 export type FormState = { error?: string };
 export type ResetState = { ok?: boolean; error?: string };
@@ -18,14 +20,15 @@ function str(fd: FormData, key: string) {
    Super-admin creates all Publisher logins — there is no self-registration. */
 export async function createPublisher(_p: FormState, fd: FormData): Promise<FormState> {
   await requireSuperadmin();
+  const t = makeUI(await getLocale());
 
   const email = str(fd, "email").toLowerCase();
   const name = str(fd, "name");
   const password = str(fd, "password");
 
-  if (!email) return { error: "Email is required." };
-  if (!name) return { error: "Company name is required." };
-  if (password.length < 8) return { error: "Password must be at least 8 characters." };
+  if (!email) return { error: t("formErr.email") };
+  if (!name) return { error: t("formErr.name") };
+  if (password.length < 8) return { error: t("auth.resetWeak") };
 
   const passwordHash = await bcrypt.hash(password, 10);
 
@@ -35,7 +38,7 @@ export async function createPublisher(_p: FormState, fd: FormData): Promise<Form
     });
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
-      return { error: "A user with this email already exists." };
+      return { error: t("register.errEmailTaken") };
     }
     throw err;
   }
@@ -63,9 +66,10 @@ export async function resetUserPassword(
   fd: FormData,
 ): Promise<ResetState> {
   await requireSuperadmin();
+  const t = makeUI(await getLocale());
 
   const password = str(fd, "password");
-  if (password.length < 8) return { error: "Password must be at least 8 characters." };
+  if (password.length < 8) return { error: t("auth.resetWeak") };
 
   const passwordHash = await bcrypt.hash(password, 10);
   await prisma.user.update({ where: { id }, data: { passwordHash } });

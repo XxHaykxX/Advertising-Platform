@@ -5,14 +5,18 @@ import Link from "next/link";
 import { Loader2, Lock } from "lucide-react";
 import { login, type ActionState } from "@/app/admin/actions";
 import { PasswordInput } from "@/components/ui/password-input";
+import { makeUI, type Locale } from "@/lib/i18n";
 
 export function LoginForm({
   from,
   initialEmail = "",
+  locale,
 }: {
   from: string;
   initialEmail?: string;
+  locale: Locale;
 }) {
+  const t = makeUI(locale);
   const [state, formAction, pending] = useActionState<ActionState, FormData>(
     login,
     {},
@@ -32,7 +36,7 @@ export function LoginForm({
 
       <label className="block">
         <span className="mb-1.5 block text-sm font-medium text-foreground">
-          Email
+          {t("form.email")}
         </span>
         <input
           name="email"
@@ -48,9 +52,9 @@ export function LoginForm({
 
       <label className="block">
         <div className="mb-1.5 flex items-center justify-between">
-          <span className="text-sm font-medium text-foreground">Password</span>
+          <span className="text-sm font-medium text-foreground">{t("login.password")}</span>
           <Link href="/forgot" className="text-xs font-medium text-primary hover:underline">
-            Forgot password?
+            {t("auth.forgotLink")}
           </Link>
         </div>
         <PasswordInput
@@ -69,7 +73,7 @@ export function LoginForm({
           defaultChecked={Boolean(initialEmail)}
           className="h-4 w-4 rounded border-border text-primary accent-primary"
         />
-        Remember me
+        {t("auth.rememberMe")}
       </label>
 
       {state.error && (
@@ -86,12 +90,12 @@ export function LoginForm({
         {pending ? (
           <>
             <Loader2 className="h-4 w-4 animate-spin" />
-            Signing in…
+            {t("auth.signingIn")}
           </>
         ) : (
           <>
             <Lock className="h-4 w-4" />
-            Sign in
+            {t("login.signIn")}
           </>
         )}
       </button>

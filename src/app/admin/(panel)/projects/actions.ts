@@ -28,6 +28,8 @@ export type ProjectFormValues = {
   poster: string;
   gallery: string; // newline/comma-separated image URLs in the form; JSON string[] at rest
   format: string;
+  formatCategory: string; // marketing format bucket (FEATURE|SERIES|…); "" when unset
+  language: string; // primary language (Armenian|Russian|…); "" when unset
   studio: string;
   // ── Film/Serial (#19) ──
   kind: ProjectKind;
@@ -173,6 +175,8 @@ function buildData(fd: FormData): ProjectFormValues {
     poster: str(fd, "poster", VARCHAR_MAX),
     gallery: str(fd, "gallery"),
     format: str(fd, "format", VARCHAR_MAX),
+    formatCategory: str(fd, "formatCategory", VARCHAR_MAX),
+    language: str(fd, "language", VARCHAR_MAX),
     studio: str(fd, "studio", VARCHAR_MAX),
     kind,
     episodes: kind === "SERIAL" ? intOrNull(fd, "episodes") : null,

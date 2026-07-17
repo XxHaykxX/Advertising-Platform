@@ -11,6 +11,7 @@ import { formatFullDate } from "@/lib/data/format";
 import { intlLocale, localizeValue, makeUI } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import type { InterestStatus } from "@prisma/client";
+import { RemoveInterestButton } from "./remove-interest-button";
 
 const STATUS_PILL: Record<InterestStatus, string> = {
   SENT: "border-border bg-muted text-muted-foreground",
@@ -96,10 +97,15 @@ export default async function BrandInterestsPage() {
                 </p>
               </div>
 
-              <div className="shrink-0">
+              <div className="flex shrink-0 flex-col items-end gap-2">
                 <Button asChild variant="secondary" size="sm">
                   <Link href={`/reports/${interest.project.id}`}>{t("btn.viewReport")}</Link>
                 </Button>
+                <RemoveInterestButton
+                  projectId={interest.project.id}
+                  label={t("btn.removeInterest")}
+                  errorMessage={t("account.brand.expressInterestError")}
+                />
               </div>
             </div>
           ))}

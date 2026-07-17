@@ -289,3 +289,101 @@
 - **F8 [low] — не чинилось** — формат «60m/24episodes» это сохранённые ДАННЫЕ теста #39 (генератор #19 в норме для новых).
 - **F9 [low] — данные** — англ. поля на карточке #38 (АРАМ) введены админом вручную, не код-баг.
 - **F14 [low] — на решение** — express-interest бренда не виден в админке (нет раздела Interests). Нужно продуктовое решение: эскалировать ли брендовые интересы админу/создателю.
+
+---
+
+## 🆕 РАУНД 2026-07-17 — визуальные / респонсив баги (после деплоя Фазы-2, прод `3ca72bc`)
+
+Юзер обходит живой прод (igovazd.am), диктует по одному. СОБИРАЕМ ВСЁ, потом фиксим+тестим одним заходом, потом деплой. Ничего не начинаем, пока список не закрыт.
+
+Легенда: `[ ]` не начато · `[~]` в работе · `[x]` готово+протест.
+
+- [ ] **V1 — /catalog: респонсивность + кнопки** (task #17). На https://igovazd.am/catalog проблемы с адаптивом (узкие/мобильные вьюпорты) и с кнопками. Проверить также остальные страницы на те же проблемы (grid карточек, панель фильтров/сортировки, view-toggle grid/list, hero). Детали — уточнить у юзера / воспроизвести на мобильном вьюпорте.
+- [ ] **V2 — /catalog: фильтр «Ձևачափ» (Формат)** (task #18). Добавить в сайдбар фильтров новую секцию-заголовок **Ձևачափ** с чекбоксами-категориями:
+  - Լիամետրаж ֆիлм (полнометражный фильм)
+  - Սериал
+  - Սиթком
+  - Փодкаст
+  - Ռеалиты шоу
+  - Հагордум (передача)
+  - Карчаметраж филм (короткометражка)
+  ⚠️ Источник данных: поле **Format** удалили из формы на #7. Решить — вернуть Format в форму проекта / расширить `kind` (сейчас Film|Serial) / новое поле enum. Локализовать hy/ru/en. Фасет+фильтрация в catalog-view + data-layer.
+- [ ] **V3 — /catalog: фильтр ՏԱՐԻՔ (Возраст)** (task #19). В секции «Թираխайин ласаран» ПОСЛЕ ՍԵՌ (пол) добавить ՏԱՐԻՔ: Բолорь / 0-12 տарекан / 13-17 / 18-24 / 25-44 / 45+. UI как у пола (toggle/select). Локализ hy/ru/en, фильтрация по audienceAge.
+- [ ] **V4 — /catalog: убрать верхнюю плашку** (task #20). Удалить строку-нотис вверху («Հашветвутьюннерь ананун ен, минчев форцадарц…» — про анонимность). Юзер: инфо не нужна.
+- [ ] **V5 — /catalog: доп. фильтры (язык/платформа/страна)** (task #21). В ТЕКУЩИЙ батч (юзер: сейчас, не позже). Рядом с сортировкой добавить фасеты: язык, платформа, страна и др. Данные: платформа+страна у проектов ЕСТЬ → сразу. Язык — поля НЕТ, добавить в схему+форму. Локализ hy/ru/en.
+- [ ] **V6 — /reports/[id]: респонсив + ROI-блок / login-CTA** (task #22). На https://igovazd.am/reports/1 блок «Прогноз ROI» (`report/roi-snapshot.tsx`): (1) проблемы с респонсивностью; (2) кнопка «Войдите, чтобы оставить заявку» висит в пустой широкой band внизу — некрасиво, не на месте (появилось после #12 ApplyDialog→login-link). Переработать layout: разместить CTA логично + компактно, адаптив на узких вьюпортах. Проверить весь /reports на респонсив (report-hero, key-facts и т.д.).
+- [ ] **V7 — /reports/[id]: консистентность данных (валюта)** (task #23). Юзер: «инфа должна полностью соответствовать». Наблюдение: свитчер = AMD, но report показывает € (€137 982–€275 964 + €22 838–€28 548 /scene), а на /catalog тот же #PP-2026-8540 = ֏ (58М–116М AMD). Report не уважает выбранную валюту / конвертация несогласована. ⚠️ УТОЧНИТЬ трактовку: соответствовать (а) валюте селектора / (б) значениям каталога / (в) между двумя ценами. Проверить currency-provider, formatMoney, localeSwitcher на report vs catalog.
+
+---
+
+## 🆕 ФАЗА B — крупный функционал (2026-07-17, после каталог-батча V1–V7)
+
+- [ ] **V8 — Бренд «Мои интересы» A→Z** (task #24). Кабинет /account/brand: добавить в интересы / список / удалить из интересов / состояние кнопки на карточке+report. Модель Interest есть. Юзер: процесс непонятен/не реализован — довести полностью.
+- [ ] **V9 — Система уведомлений** (task #25). Кнопка «Уведомления · Скоро» = placeholder. Реализовать A→Z: модель Notification, триггеры (интерес/заявка/модерация/статус), бейдж непрочитанных, список, отметить прочитанным. Админка + кабинеты creator/brand. Убрать «Скоро».
+- [ ] **V10 — Валидация форм + подсказки ошибок (аудит всей системы)** (task #26). Многие формы молчат при ошибке (неверный пароль/логин), нет placeholder-подсказок. Пройти ВСЕ формы (login ×2, register, complete, forgot/reset, contact, project-form admin+creator, users, tiers/actors) → inline-ошибки, серверные ошибки наружу локализованно (hy/ru/en), placeholder где нет.
+
+### Порядок Фазы B: B1=V8 (Interests) → B2=V9 (Notifications) → B3=V10 (валидация).
+- [ ] **V11 — PostCSS override ≥8.5.10 (security)** (task #26+? see tasklist). Advisory postcss<8.5.10 XSS (</style>). Прямой=8.5.16 safe; уязвима только вложенная next/node_modules/postcss@8.4.31 (build-time, юзер-CSS в app нет → near-zero). Фикс: package.json `overrides:{"postcss":"^8.5.10"}` → npm install → `next build` обязан пройти (форс внутр. пина Next рискован — если ломается билд, откат). Делать ПОСЛЕ пишущих агентов.
+
+---
+
+## ✅ СТАТУС 2026-07-17 — батч V1–V8 РЕАЛИЗОВАН ЛОКАЛЬНО (:3001, tsc=0), НЕ на проде
+
+Оркестрировано 3 агента (opus catalog-lane, sonnet report-lane, sonnet interests-lane) + form-audit scout. Все hy-строки чисты от гомоглифов.
+- **V1 [x]** респонсив каталога: footer-кнопки flex-col/w-full → sm:flex-row (project-card + ProjectRow).
+- **V2 [x]** фильтр Формат (7 категорий, formatCategory) — schema+form+data+filter, всегда полный набор.
+- **V3 [x]** фильтр Возраст (бакеты 0-12…45+, overlap-логика) в Target audience.
+- **V4 [x]** верхняя плашка-нотис удалена (+import ShieldCheck убран).
+- **V5 [x]** фильтры Язык(language, новая колонка)/Платформа/Страна (Platform/Country — distinct, условный рендер).
+- **V6 [x]** /reports ROI-CTA переделан (центр, Lock, w-full мобил), report-hero/key-facts респонсив.
+- **V8 [x]** Бренд «Мои интересы» A→Z: withdrawInterest, toggle на Browse (Heart→Check→hover X/Remove), remove-button на Interests, badge в sidebar, empty-state. Interest-модель без изменений. +ключ btn.removeInterest (добавлен в i18n.ts). МИНОР: на тач-девайсах у активной кнопки Browse нет pre-tap подсказки «удалить» (на Interests есть явная Remove — не блокер).
+
+### ⚠️ ДЕПЛОЙ-ПРИМЕЧАНИЯ
+- **Прод БД: `prisma db push` ДО пуша** — 2 новые колонки `Project.formatCategory`, `Project.language` (обе `String @default("")`, аддитивно). Локально уже сделано (:3307).
+- Локальный dev-фикс: prisma engine DLL держал прод-сервер :3002 → остановлен; полный `prisma generate` сделан; dev :3001 перезапущен.
+
+### V7 [~] — ждёт решения юзера (валюта, не баг). V9/V10/V11 — Фаза B, не начаты (V10 аудит form-audit в процессе).
+
+---
+
+## 📋 V10 ПЛАН (form-audit, аудит 18 форм) — для Фазы B3
+
+**Гуд (ошибки локализованы+показываются):** member login /login ✓, register, forgot, reset-password, contact, complete(google), brand-profile.
+
+**Блок 1 — КРИТИЧНО (жалоба юзера #1):**
+- `/admin/actions.ts::login` — 5 хардкод-EN ошибок (строки 55/60/65/68/79) → обернуть в t(); достать locale в экшене (как в /login/actions.ts:37-38). Форма показывает ошибку ок (login-form.tsx:75-79), но текст английский при hy/ru. → member-login работает, ADMIN-login = английский. Нужны новые ключи login.errTooManyAttempts, login.errDeactivated; reuse login.errInvalid.
+
+**Блок 2 — MEDIUM (admin workflow):**
+- `/admin/(panel)/users/user-form.tsx` + actions — добавить required на email/name/password; локализовать (reuse formErr.email, auth.resetWeak); resetUserPassword хардкод (строка 68)→t("auth.resetWeak").
+- `/admin/(panel)/portfolio/actions.ts` validateMetrics (53/57) — новые ключи formErr.metricsNotObject, formErr.metricsNotJson; +required на title/brand.
+- `/admin/(panel)/partners/actions.ts` (41) "Name is required." → t (новый formErr.company или partnerName).
+
+**Блок 3 — POLISH:**
+- `project-form.tsx` — required на title/titleHy/titleRu/titleEn.
+
+**Новые i18n ключи (5):** login.errTooManyAttempts, login.errDeactivated, formErr.company, formErr.metricsNotObject, formErr.metricsNotJson (hy/ru/en у form-audit в отчёте). Reuse: formErr.name/email/emailInvalid, auth.resetWeak, register.errEmailTaken, login.errInvalid.
+
+---
+## ✅ V10 + V11 РЕАЛИЗОВАНО ЛОКАЛЬНО (2026-07-17, tsc=0, next build=0)
+**V11 (postcss security):** package.json `overrides.postcss ^8.5.10` → resolved 8.5.19 везде (next+tailwind deduped). `next build` EXIT 0 (запуск напрямую через bash — npm-скрипт использует POSIX env-префикс, на Windows/cmd падает; на Hostinger/Linux ок).
+**V10 (валидация форм):**
+- Block1 (крит, жалоба #1): `admin/actions.ts::login` — 5 хардкод-EN ошибок → `t()` через `getLocale()+makeUI` (как /login). Ошибки admin-логина теперь hy/ru/en по cookie. Новые ключи: login.errTooManyAttempts, login.errDeactivated, login.errFillBoth; reuse login.errInvalid. (chrome формы оставлен EN — staff-панель.)
+- Block2: users/actions.ts+user-form.tsx (required email/name/password, локализ.), portfolio/actions.ts validateMetrics(t) + portfolio-form required, partners/actions.ts validate(t) + partner-form required. Новые ключи: formErr.company/metricsNotObject/metricsNotJson.
+- Block3: project-form.tsx required на titleHy/Ru/En.
+- i18n.ts: +6 ключей (я, чтобы не конфликтовать с агентами). Гомоглифов нет.
+Файлы НЕ на проде. Деплой не требует db push (схема не менялась в V10/V11).
+
+## ОСТАЛОСЬ: V9 (уведомления A→Z, task#25 — большой, нужен Notification-модель+schema push), V7 (валюта, task#23 — ждёт решения юзера).
+
+---
+## 🐛 FIX (2026-07-17) — desktop-баг кнопки карточки каталога
+project-card.tsx футер: `sm:flex-row sm:w-auto` → длинный CTA («Войдите, чтобы оставить заявку»/hy 34 симв.) шире узкой grid-карточки (footer 228px, кнопка 306px) → вылезал за карточку, обрезался `overflow-hidden`. Затем при w-full клипился `whitespace-nowrap`+`h-9`.
+Фикс: кнопки full-width в столбик на всех ширинах (убрал sm:flex-row/sm:w-auto) + primary разрешён перенос (`h-auto min-h-9 whitespace-normal py-1.5 leading-tight`). Проверено Playwright на hy (худший случай): clipped=false, overflow=false, 2 строки, выровнены по 3 карточкам. ru/en короче → ок.
+Причина «локально не менялось»: прод-артефакт `next build` осел в `.next`; снёс `.next`+рестарт dev.
+
+## ✅ V9 УВЕДОМЛЕНИЯ — РЕАЛИЗОВАНО ЛОКАЛЬНО (tsc=0)
+Notification-модель (userId/type/data-JSON/link/read) + локальный db push (⚠ прод нужен `prisma db push` — новая таблица Notification). data-layer (createNotification/notifyRoles/get/markRead/markAllRead) + server-actions + pure render-helper (локализация по locale зрителя). Триггеры: интерес→владелец+SUPERADMIN, сабмит→SUPERADMIN+MODERATOR, approve/reject→владелец. UI: общий NotificationList + страницы в brand (+sidebar badge, убрал «Скоро»), creator (/account/notifications + карточка), admin (/admin/notifications + nav badge). i18n +14 ключей (hy чистый). НЕ на проде.
+
+## ✅ V7 РЕШЕНО (2026-07-17) — валюта
+Решение юзера: переключатель валюты убрать из ШАПКИ (header), оставить в ФУТЕРЕ. Мультивалюта сохранена.
+header.tsx: удалены оба `<CurrencySwitcher>` (desktop-кластер + mobile-меню) + импорт. LocaleSwitcher в шапке остался. footer.tsx не тронут (свитчер там). Prop `currency` в Header оставлен (3 вызывателя передают, безвреден). Проверено Playwright: header без валюты, footer с валютой. tsc 0.

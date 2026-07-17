@@ -135,11 +135,22 @@ export function ProjectCard({
           {project.priceNote ? <span className="ml-1">({project.priceNote})</span> : null}
         </p>
 
-        <div className="relative z-20 mt-auto flex gap-3 pt-6">
-          <Button asChild variant="primary" size="sm">
+        {/* Grid cards are narrow (≈33vw on desktop) and the primary CTA label
+            is long in every locale, so a side-by-side row overflows the card
+            (clipped by overflow-hidden). Stack both buttons full-width at all
+            breakpoints — never overflows, aligns across cards. */}
+        <div className="relative z-20 mt-auto flex flex-col gap-2 pt-6">
+          {/* Long CTA label in ru/hy — allow it to wrap to 2 lines (the base
+              Button is nowrap + fixed height, which clips it in a narrow card). */}
+          <Button
+            asChild
+            variant="primary"
+            size="sm"
+            className="h-auto min-h-9 w-full whitespace-normal py-1.5 text-center leading-tight"
+          >
             <Link href="/login">{t("cta.loginToApply")}</Link>
           </Button>
-          <Button asChild variant="secondary" size="sm">
+          <Button asChild variant="secondary" size="sm" className="w-full">
             <Link href={`/reports/${project.id}`}>{t("btn.viewReport")}</Link>
           </Button>
         </div>

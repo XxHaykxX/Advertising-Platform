@@ -9,7 +9,6 @@ import type { Role } from "@prisma/client";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { LocaleSwitcher } from "@/components/locale-switcher";
-import { CurrencySwitcher } from "@/components/currency-switcher";
 import { LogoutButton } from "@/components/logout-button";
 import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
 import { DEFAULT_CURRENCY, type CurrencyCode } from "@/lib/currency";
@@ -237,7 +236,8 @@ export function Header({
           {/* Right cluster (desktop) */}
           <div className="hidden items-center gap-3 lg:flex">
             <LocaleSwitcher current={locale} onDark={onDark} />
-            <CurrencySwitcher current={currency} onDark={onDark} />
+            {/* Currency switcher lives only in the footer now — removed from the
+                top nav per product decision (V7). */}
             {user ? (
               <UserMenu user={user} locale={locale} onDark={onDark} />
             ) : (
@@ -290,7 +290,6 @@ export function Header({
               <div className="mt-2 flex items-center gap-2 border-t border-border pt-4">
                 <div className="ml-auto flex items-center gap-2">
                   <LocaleSwitcher current={locale} />
-                  <CurrencySwitcher current={currency} />
                 </div>
               </div>
               {user ? (

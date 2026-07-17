@@ -7,6 +7,7 @@ import { requireMember } from "@/lib/auth/require";
 import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
 import { notifyNewProjectForModeration } from "@/lib/mail";
+import { notifyRoles } from "@/lib/data/notifications";
 import { PLACEMENT_TYPE_VALUES, KIND_VALUES } from "@/app/admin/(panel)/projects/form-shared";
 import type { ProjectFormValues, ProjectFormState } from "@/app/admin/(panel)/projects/actions";
 
@@ -111,6 +112,8 @@ function buildData(fd: FormData): ProjectFormValues {
     poster: str(fd, "poster", VARCHAR_MAX),
     gallery: str(fd, "gallery"),
     format: str(fd, "format", VARCHAR_MAX),
+    formatCategory: str(fd, "formatCategory", VARCHAR_MAX),
+    language: str(fd, "language", VARCHAR_MAX),
     studio: str(fd, "studio", VARCHAR_MAX),
     kind,
     episodes: kind === "SERIAL" ? intOrNull(fd, "episodes") : null,
@@ -292,6 +295,14 @@ export async function createCreatorProject(
       // #22: notify the moderation team by email. Fire-and-forget / non-blocking
       // so a mail outage never breaks a creator's submission.
       notifyNewProjectForModeration({ id: created.id, title: created.title }).catch(() => {});
+
+      // In-app notification for the moderation team (#25 / V9), same audience
+      // as the email above. Non-blocking failure (notifyRoles swallows).
+      await notifyRoles(["SUPERADMIN", "MODERATOR"], {
+        type: "PROJECT_SUBMITTED",
+        data: { projectId: created.id, projectTitle: created.title, creatorName: user.name },
+        link: "/admin/moderation",
+      });
 
       revalidateTag("projects", "max");
       revalidatePath("/account/projects");

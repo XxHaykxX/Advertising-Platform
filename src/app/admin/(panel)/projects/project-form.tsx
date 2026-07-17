@@ -3,7 +3,14 @@
 import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { Languages, Loader2, RotateCcw, Sparkles, X } from "lucide-react";
-import { AGE_RATING_VALUES, KIND_VALUES, PLACEMENT_TYPE_VALUES, parseCsvInput } from "./form-shared";
+import {
+  AGE_RATING_VALUES,
+  FORMAT_CATEGORY_VALUES,
+  KIND_VALUES,
+  LANGUAGE_VALUES,
+  PLACEMENT_TYPE_VALUES,
+  parseCsvInput,
+} from "./form-shared";
 import { ImageUploader, type ImageUploaderHandle } from "./image-uploader";
 import { ActorsSection, type ActorRow } from "./actors-editor";
 import type { PersonSuggestion } from "@/lib/data/actors";
@@ -57,6 +64,8 @@ const EMPTY: ProjectFormInitial = {
   poster: "",
   gallery: "",
   format: "",
+  formatCategory: "",
+  language: "",
   studio: "",
   kind: "FILM",
   episodes: null,
@@ -538,6 +547,28 @@ export function ProjectForm({
             ))}
           </div>
         </Field>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label={t("projectForm.field.formatCategory")}>
+            <select name="formatCategory" defaultValue={data.formatCategory} className={inputCls}>
+              <option value="">—</option>
+              {FORMAT_CATEGORY_VALUES.map((v) => (
+                <option key={v} value={v}>
+                  {t(`formatCategory.${v}`)}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field label={t("projectForm.field.language")}>
+            <select name="language" defaultValue={data.language} className={inputCls}>
+              <option value="">—</option>
+              {LANGUAGE_VALUES.map((v) => (
+                <option key={v} value={v}>
+                  {t(`language.${v}`)}
+                </option>
+              ))}
+            </select>
+          </Field>
+        </div>
         {kind === "SERIAL" ? (
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label={t("projectForm.field.episodes")}>
@@ -595,13 +626,13 @@ export function ProjectForm({
         )}
         <div className="grid gap-4 sm:grid-cols-3">
           <Field label={t("projectForm.field.titleHy")}>
-            <input ref={titleRefs.hy} name="titleHy" defaultValue={data.titleHy} placeholder="Վերնագիր հայերեն" className={inputCls} />
+            <input ref={titleRefs.hy} name="titleHy" defaultValue={data.titleHy} required placeholder="Վերնագիր հայերեն" className={inputCls} />
           </Field>
           <Field label={t("projectForm.field.titleRu")}>
-            <input ref={titleRefs.ru} name="titleRu" defaultValue={data.titleRu} placeholder="Название по-русски" className={inputCls} />
+            <input ref={titleRefs.ru} name="titleRu" defaultValue={data.titleRu} required placeholder="Название по-русски" className={inputCls} />
           </Field>
           <Field label={t("projectForm.field.titleEn")}>
-            <input ref={titleRefs.en} name="titleEn" defaultValue={data.titleEn} placeholder="Title in English" className={inputCls} />
+            <input ref={titleRefs.en} name="titleEn" defaultValue={data.titleEn} required placeholder="Title in English" className={inputCls} />
           </Field>
         </div>
         <div className="grid gap-4 sm:grid-cols-3">

@@ -12,10 +12,12 @@ import {
   FolderOpen,
   ShieldCheck,
   Heart,
+  Bell,
 } from "lucide-react";
 import type { Role } from "@prisma/client";
 import { canEditContent, canManageUsers, canModerate } from "@/lib/auth/permissions";
 import { getPendingModerationCount } from "./moderation/actions";
+import { getUnreadNotificationCount } from "@/lib/actions/notifications";
 
 // Per-role nav visibility. Dashboard is universal; everything else is gated
 // by what that role is actually allowed to do:
@@ -35,6 +37,7 @@ const NAV = [
   { href: "/admin/portfolio", label: "Portfolio", icon: Images, show: canManageUsers },
   { href: "/admin/partners", label: "Partners", icon: Handshake, show: canManageUsers },
   { href: "/admin/users", label: "Users", icon: Users, show: canManageUsers },
+  { href: "/admin/notifications", label: "Notifications", icon: Bell, show: () => true },
 ];
 
 export function AdminNav({ role }: { role: Role }) {
@@ -47,11 +50,17 @@ export function AdminNav({ role }: { role: Role }) {
   // Refetches on every route change, which covers the common case of
   // reviewing the moderation queue then navigating elsewhere.
   const [pendingModerationCount, setPendingModerationCount] = useState(0);
+  const [unreadCount, setUnreadCount] = useState(0);
   useEffect(() => {
     let alive = true;
     getPendingModerationCount()
       .then((n) => {
         if (alive) setPendingModerationCount(n);
+      })
+      .catch(() => {});
+    getUnreadNotificationCount()
+      .then((n) => {
+        if (alive) setUnreadCount(n);
       })
       .catch(() => {});
     return () => {
@@ -85,6 +94,11 @@ export function AdminNav({ role }: { role: Role }) {
             {item.href === "/admin/moderation" && pendingModerationCount > 0 && (
               <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-primary px-1.5 text-[11px] font-semibold text-primary-foreground">
                 {pendingModerationCount}
+              </span>
+            )}
+            {item.href === "/admin/notifications" && unreadCount > 0 && (
+              <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-primary px-1.5 text-[11px] font-semibold text-primary-foreground">
+                {unreadCount}
               </span>
             )}
           </Link>

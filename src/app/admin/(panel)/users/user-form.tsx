@@ -23,11 +23,11 @@ export function UserForm({
       <section className="space-y-4 rounded-2xl border border-border bg-card p-6 shadow-sm">
         <label className="block">
           <span className={labelCls}>Email *</span>
-          <input name="email" type="email" autoComplete="off" className={inputCls} />
+          <input name="email" type="email" autoComplete="off" required className={inputCls} />
         </label>
         <label className="block">
           <span className={labelCls}>Company name *</span>
-          <input name="name" placeholder="Shown on the public portfolio" className={inputCls} />
+          <input name="name" placeholder="Shown on the public portfolio" required className={inputCls} />
         </label>
         <label className="block">
           <span className={labelCls}>Password *</span>
@@ -35,6 +35,7 @@ export function UserForm({
             name="password"
             autoComplete="new-password"
             placeholder="at least 8 characters"
+            required
             className={inputCls}
           />
           <span className="mt-1.5 block text-xs text-muted-foreground">
