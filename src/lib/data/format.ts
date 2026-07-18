@@ -31,17 +31,6 @@ export function splitCountries(s: string): string[] {
   return out.filter(Boolean);
 }
 
-// TODO(currency): route through formatMoney once estValue is real AMD.
-// estValue/exposureTotal are still placeholder numbers on a different track
-// (see currency feature spec) — left untouched for now.
-export function moneyShort(n: number): string {
-  return `$${n.toLocaleString("en-US")}`;
-}
-
-export function sumExposure(opps: { estValue: number }[]): number {
-  return opps.reduce((sum, o) => sum + o.estValue, 0);
-}
-
 /* Explicit month-name tables, keyed by the 2-letter app language. Deterministic
  * across server (Node ICU) and client (browser Intl) — avoids the hydration
  * mismatch that toLocaleDateString("hy-AM") caused when the server's ICU fell

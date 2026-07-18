@@ -14,9 +14,9 @@ export const metadata: Metadata = {
 };
 
 export default async function PortfolioPage() {
-  const [cases, locale, currency, user] = await Promise.all([
-    getPortfolio(),
-    getLocale(),
+  const locale = await getLocale();
+  const [cases, currency, user] = await Promise.all([
+    getPortfolio(locale),
     getCurrency(),
     getSiteHeaderUser(),
   ]);

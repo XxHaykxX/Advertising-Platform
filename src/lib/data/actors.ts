@@ -25,6 +25,16 @@ export async function getKnownPeople(): Promise<PersonSuggestion[]> {
     take: 2000,
     select: { name: true, role: true, kind: true, photo: true },
   });
+  return dedupePeople(rows);
+}
+
+/** Dedupe cast/crew rows by case-insensitive trimmed name, first occurrence
+ *  wins (callers pass rows newest-first so the most recent credit survives),
+ *  blank names dropped, capped at 500. Pure — extracted from getKnownPeople so
+ *  the dedupe rule is unit-testable without a DB. */
+export function dedupePeople(
+  rows: { name: string; role: string; kind: string; photo: string | null }[],
+): PersonSuggestion[] {
   const byName = new Map<string, PersonSuggestion>();
   for (const r of rows) {
     const key = r.name.trim().toLowerCase();

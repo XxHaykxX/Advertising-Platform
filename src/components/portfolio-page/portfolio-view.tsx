@@ -47,7 +47,7 @@ export function PortfolioView({
           ) : (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
               {cases.map((c, i) => (
-                <CaseCard key={c.id} data={c} index={i} onOpen={() => setActiveIndex(i)} />
+                <CaseCard key={c.id} data={c} index={i} onOpen={() => setActiveIndex(i)} locale={locale} />
               ))}
             </div>
           )}

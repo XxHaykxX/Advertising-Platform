@@ -51,6 +51,8 @@ next-env.d.ts
 
 # playwright test output
 .playwright-mcp/
+test-results/
+playwright-report/
 
 # dev server logs
 placement/dev-3001.log

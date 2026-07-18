@@ -308,6 +308,18 @@ export const UI: Record<string, Dict> = {
   "category.Sportswear": { ru: "Спортивная одежда", en: "Sportswear", hy: "Սպորտային հագուստ" },
   "category.Technology": { ru: "Технологии", en: "Technology", hy: "Տեխնոլոգիաներ" },
   "category.Travel & Luggage": { ru: "Путешествия и багаж", en: "Travel & Luggage", hy: "Ճամփորդություն և ուղեբեռ" },
+
+  // ── Portfolio case-study metric labels (localizeValue(locale, "metric", key)) ──
+  // Keyed by the raw JSON metric key stored in Portfolio.metrics. Unknown keys
+  // fall back to formatMetricLabel() in metrics.ts, so future keys still render.
+  "metric.views": { ru: "Просмотры", en: "Views", hy: "Դիտումներ" },
+  "metric.recall": { ru: "Запоминаемость", en: "Recall", hy: "Հիշվողություն" },
+  "metric.ctr": { ru: "CTR", en: "CTR", hy: "CTR" },
+  "metric.storeVisits": { ru: "Визиты в магазин", en: "Store Visits", hy: "Այցեր խանութ" },
+  "metric.shares": { ru: "Репосты", en: "Shares", hy: "Տարածումներ" },
+  "metric.sentiment": { ru: "Тональность", en: "Sentiment", hy: "Տրամադրվածություն" },
+  "metric.searchLift": { ru: "Рост поиска", en: "Search Lift", hy: "Որոնման աճ" },
+  "metric.recallDurability": { ru: "Устойчивость запоминания", en: "Recall Durability", hy: "Հիշվողության կայունություն" },
   "catalog.budgetRange": { ru: "Диапазон бюджета", en: "Budget Range", hy: "Բյուջեի միջակայք" },
   "catalog.min": { ru: "Мин", en: "Min", hy: "Նվազ." },
   "catalog.max": { ru: "Макс", en: "Max", hy: "Առավ." },

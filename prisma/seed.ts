@@ -62,11 +62,6 @@ async function main() {
     });
   }
 
-  // 5. Settings (default locale)
-  await prisma.setting.upsert({
-    where: { key: "default_lang" }, update: {}, create: { key: "default_lang", value: "en" },
-  });
-
   console.log(
     `Seeded: admin + ${SEED_PROJECTS.length} projects + ${SEED_PORTFOLIO.length} portfolio cases + ${SEED_PARTNERS.length} partners`
   );

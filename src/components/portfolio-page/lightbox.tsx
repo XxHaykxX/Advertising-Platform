@@ -6,7 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, Film, X } from "lucide-react";
 import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
 import type { PortfolioDTO } from "@/lib/types";
-import { formatMetricLabel, parseMetrics } from "./metrics";
+import { localizeMetricLabel, parseMetrics } from "./metrics";
 
 export function CaseLightbox({
   cases,
@@ -134,7 +134,7 @@ export function CaseLightbox({
                       className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary"
                     >
                       {value}
-                      <span className="font-normal text-primary/70">{formatMetricLabel(key)}</span>
+                      <span className="font-normal text-primary/70">{localizeMetricLabel(locale, key)}</span>
                     </span>
                   ))}
                 </div>

@@ -76,17 +76,3 @@ export interface PartnerDTO {
   logo: string | null;
   url: string | null;
 }
-
-export interface ApplicationDTO {
-  id: number;
-  name: string;
-  email: string | null;
-  company: string | null;
-  projectId: number | null;
-  projectTitle: string | null;
-  budget: string | null;
-  message: string | null;
-  status: string;
-  note: string | null;
-  createdAt: string;
-}

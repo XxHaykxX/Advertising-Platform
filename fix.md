@@ -148,9 +148,9 @@
 
 **Файлы фикса:** `format.ts`, `form-shared.ts`, `projects.ts`, `i18n.ts`, `profile-form.tsx`, `multi-select.tsx`. **Миграция БД НЕ нужна** (деривация рантайм, схема не менялась).
 
-### 🟡 ОСТАЛОСЬ — данные/операционка (не код-баг)
-- **[DATA] Проект #38 «ԱՐԱՄ»** на проде+локально: `format`=«Movie · 1h 40m · Color», genre=«Biographical Drama» — введено англ. вручную → торчит на home/каталоге/dashboard посреди hy. Чистить в админке (пересохранить с канон. жанром + арм. форматом). Не код-баг.
-- **[HOUSEKEEPING] Leftover** `e2e.creator.test@example.com` (User id 6) — мусор прошлой сессии, оставлен на решение юзера.
+### ✅ ОСТАЛОСЬ — данные/операционка → ЗАКРЫТО 2026-07-18 (прод+локалка)
+- **[DATA] Проект «ԱՐԱՄ»** (прод id7 / локалка id38) ✅ нормализован под токены: `format="Feature · 100 min"`, `genre="Biography"` → на карточке hy рендерится «Ֆիլմ · 100 րоպе» / «Կենսագրական» (проверено live). UPDATE делать с `SET NAMES utf8mb4` (иначе двойная кодировка middot). Битый постер (`...e2e6d531.jpg` 404, файл потерян везде) → `poster=""` = чистый placeholder. Юзер может перезалить постер в админке.
+- **[HOUSEKEEPING] Leftover** `e2e.creator.test@example.com` (локалка User id6, 0 FK) ✅ удалён. На проде его нет (там demo `creator@/brand@test.igovazd.am` — не трогали).
 - B6 Google OAuth — ПРОПУСК (нет creds, как в плане).
 
 ### Деплой этого QA-батча

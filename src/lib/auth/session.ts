@@ -53,14 +53,19 @@ export async function verifySessionToken(
   }
 }
 
-/** Cookie options for the session. Pass a maxAge to persist across restarts;
-   omit it (undefined) for a session cookie that dies when the browser closes. */
-export function sessionCookieOptions(maxAgeSeconds: number | undefined = MAX_AGE_SECONDS) {
+/** Cookie options for the session. Called with no argument → persist with the
+   default 7-day maxAge. Called with an explicit `undefined` → omit maxAge, i.e.
+   a session cookie that dies when the browser closes (admin "remember me"
+   unchecked). Branch on `arguments.length` because a plain default parameter
+   can't distinguish "not passed" from "passed undefined" — both would fire the
+   default and wrongly persist the cookie. */
+export function sessionCookieOptions(maxAgeSeconds?: number) {
+  const effective = arguments.length > 0 ? maxAgeSeconds : MAX_AGE_SECONDS;
   return {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax" as const,
     path: "/",
-    ...(maxAgeSeconds !== undefined ? { maxAge: maxAgeSeconds } : {}),
+    ...(effective !== undefined ? { maxAge: effective } : {}),
   };
 }

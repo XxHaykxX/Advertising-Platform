@@ -8,11 +8,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Setting {
-  key   String @id
-  value String
-}
-
 enum Role {
   SUPERADMIN
   PUBLISHER
@@ -220,14 +215,23 @@ model SponsorshipTier {
 
 /// A past placement case study shown in the portfolio/case-studies section
 model Portfolio {
-  id          Int      @id @default(autoincrement())
-  title       String
-  brand       String
-  description String   @db.Text
-  image       String?
-  metrics     String?  @db.Text // JSON object, e.g. {"views":"2.1M","recall":"+38%"}
-  sortOrder   Int      @default(0)
-  createdAt   DateTime @default(now())
+  id             Int      @id @default(autoincrement())
+  title          String // legacy base — kept as the ultimate fallback (see pickLocale)
+  titleHy        String   @default("")
+  titleRu        String   @default("")
+  titleEn        String   @default("")
+  brand          String
+  description    String   @db.Text // legacy base — kept as the ultimate fallback
+  // Per-locale descriptions mirror Project.synopsisHy/Ru/En: nullable @db.Text
+  // (MySQL forbids literal defaults on TEXT columns, and translated copy easily
+  // exceeds the 191-char VarChar cap). Null/empty falls back to En, then base.
+  descriptionHy  String?  @db.Text
+  descriptionRu  String?  @db.Text
+  descriptionEn  String?  @db.Text
+  image          String?
+  metrics        String?  @db.Text // JSON object, e.g. {"views":"2.1M","recall":"+38%"}
+  sortOrder      Int      @default(0)
+  createdAt      DateTime @default(now())
 }
 
 /// A studio/platform partner logo shown in the trust/partners strip
@@ -240,27 +244,11 @@ model Partner {
 }
 
 /// Lead applications (Express Interest + contact form)
-model Application {
-  id           Int      @id @default(autoincrement())
-  name         String
-  email        String?
-  phone        String?
-  company      String?
-  projectId    Int?
-  projectTitle String?
-  budget       String?
-  message      String?  @db.Text
-  status       String   @default("new") // new | in_progress | closed
-  note         String?  @db.Text
-  createdAt    DateTime @default(now())
-}
-
 /// BRAND member's "Express Interest" on a project (#23 — brand cabinet).
-/// Distinct from Application: Interest is a lightweight, per-user signal tied
-/// to an authenticated BRAND account (drives /account/brand/interests),
-/// while Application is the anonymous lead-capture form. MUTUAL is reserved
-/// for a future two-sided reveal (creator also expresses interest back) —
-/// not set anywhere yet (TODO, see #23 report).
+/// A lightweight, per-user signal tied to an authenticated BRAND account
+/// (drives /account/brand/interests). MUTUAL is reserved for a future
+/// two-sided reveal (creator also expresses interest back) — not set
+/// anywhere yet (TODO, see #23 report).
 enum InterestStatus {
   SENT
   MUTUAL

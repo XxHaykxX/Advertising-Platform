@@ -22,11 +22,17 @@ export default async function EditPortfolioPage({
 
   const initial: PortfolioFormInitial = {
     title: p.title,
-    brand: p.brand,
     description: p.description,
+    brand: p.brand,
     image: p.image ?? "",
     metrics: p.metrics ?? "",
     sortOrder: p.sortOrder,
+    titleHy: p.titleHy,
+    titleRu: p.titleRu,
+    titleEn: p.titleEn,
+    descriptionHy: p.descriptionHy ?? "",
+    descriptionRu: p.descriptionRu ?? "",
+    descriptionEn: p.descriptionEn ?? "",
   };
 
   const action = updatePortfolio.bind(null, pid);

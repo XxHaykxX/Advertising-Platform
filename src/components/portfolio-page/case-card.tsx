@@ -3,16 +3,19 @@ import { motion } from "framer-motion";
 import { Film, TrendingUp } from "lucide-react";
 import { AccentBadge } from "@/components/ui/badge";
 import type { PortfolioDTO } from "@/lib/types";
-import { formatMetricLabel, parseMetrics } from "./metrics";
+import { DEFAULT_LOCALE, type Locale } from "@/lib/i18n";
+import { localizeMetricLabel, parseMetrics } from "./metrics";
 
 export function CaseCard({
   data: c,
   index,
   onOpen,
+  locale = DEFAULT_LOCALE,
 }: {
   data: PortfolioDTO;
   index: number;
   onOpen: () => void;
+  locale?: Locale;
 }) {
   const metrics = Object.entries(parseMetrics(c.metrics)).slice(0, 3);
 
@@ -58,7 +61,7 @@ export function CaseCard({
               >
                 <TrendingUp className="h-3 w-3 shrink-0" />
                 {value}
-                <span className="font-normal text-primary/70">{formatMetricLabel(key)}</span>
+                <span className="font-normal text-primary/70">{localizeMetricLabel(locale, key)}</span>
               </span>
             ))}
           </div>

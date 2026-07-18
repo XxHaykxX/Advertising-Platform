@@ -22,24 +22,49 @@ function int(fd: FormData, key: string, fallback = 0) {
 }
 
 export type PortfolioFormValues = {
+  // Legacy base columns — the form no longer submits generic title/description
+  // fields (#41); they're derived from the per-locale ones below and kept as
+  // the ultimate fallback in the data layer (see getPortfolio's pickLocale).
   title: string;
-  brand: string;
   description: string;
+  brand: string;
   image: string;
   metrics: string; // raw JSON text as typed in the form
   sortOrder: number;
+  // ── Per-locale translations (#41) — mirror Project's titleHy/synopsisHy set ──
+  titleHy: string;
+  titleRu: string;
+  titleEn: string;
+  descriptionHy: string;
+  descriptionRu: string;
+  descriptionEn: string;
 };
 
 export type PortfolioFormState = { error?: string; values?: PortfolioFormValues };
 
 function buildData(fd: FormData): PortfolioFormValues {
+  // The form only submits the per-locale fields — derive the legacy
+  // title/description columns from them (ru → hy → en priority, same as the
+  // project form) so the base fallback stays populated.
+  const titleHy = str(fd, "titleHy", VARCHAR_MAX);
+  const titleRu = str(fd, "titleRu", VARCHAR_MAX);
+  const titleEn = str(fd, "titleEn", VARCHAR_MAX);
+  const descriptionHy = str(fd, "descriptionHy");
+  const descriptionRu = str(fd, "descriptionRu");
+  const descriptionEn = str(fd, "descriptionEn");
   return {
-    title: str(fd, "title", VARCHAR_MAX),
+    title: (titleRu || titleHy || titleEn).slice(0, VARCHAR_MAX),
+    description: descriptionRu || descriptionHy || descriptionEn,
     brand: str(fd, "brand", VARCHAR_MAX),
-    description: str(fd, "description"),
     image: str(fd, "image", VARCHAR_MAX),
     metrics: str(fd, "metrics"),
     sortOrder: int(fd, "sortOrder"),
+    titleHy,
+    titleRu,
+    titleEn,
+    descriptionHy,
+    descriptionRu,
+    descriptionEn,
   };
 }
 
@@ -64,9 +89,9 @@ function validateMetrics(
 }
 
 function validate(data: PortfolioFormValues): string | null {
-  if (!data.title) return "Title is required.";
+  if (!data.title) return "Enter a title in at least one language.";
   if (!data.brand) return "Brand is required.";
-  if (!data.description) return "Description is required.";
+  if (!data.description) return "Enter a description in at least one language.";
   return null;
 }
 
@@ -92,8 +117,14 @@ export async function createPortfolio(
   await prisma.portfolio.create({
     data: {
       title: data.title,
+      titleHy: data.titleHy,
+      titleRu: data.titleRu,
+      titleEn: data.titleEn,
       brand: data.brand,
       description: data.description,
+      descriptionHy: data.descriptionHy || null,
+      descriptionRu: data.descriptionRu || null,
+      descriptionEn: data.descriptionEn || null,
       image: data.image || null,
       metrics,
       sortOrder: data.sortOrder,
@@ -126,8 +157,14 @@ export async function updatePortfolio(
     where: { id },
     data: {
       title: data.title,
+      titleHy: data.titleHy,
+      titleRu: data.titleRu,
+      titleEn: data.titleEn,
       brand: data.brand,
       description: data.description,
+      descriptionHy: data.descriptionHy || null,
+      descriptionRu: data.descriptionRu || null,
+      descriptionEn: data.descriptionEn || null,
       image: data.image || null,
       metrics,
       sortOrder: data.sortOrder,
