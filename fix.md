@@ -7,9 +7,15 @@
 
 ---
 
-# ⭐ АКТУАЛЬНЫЙ СТАТУС — 2026-07-17 (источник правды; всё ниже этого блока — исторический лог)
+# ⭐ АКТУАЛЬНЫЙ СТАТУС — 2026-07-18 (источник правды; всё ниже этого блока — исторический лог)
 
-**Прод:** `igovazd.am`, HEAD = `3addfe5`. Прод-БД мигрирована (`srv2026.hstgr.io`, additive — таблица `Notification`, колонки `Project.formatCategory/language`, ранее Interest/moderation/roles/brand-поля). Смоук зелёный.
+**Прод:** `igovazd.am`, HEAD = `ed9cb98`. Прод-БД мигрирована (`srv2026.hstgr.io`). Смоук зелёный (home/catalog/portfolio/admin-login/reports/login/register = 200; portfolio RU/HY метки локализованы).
+
+**2026-07-18 ДЕПЛОЙ батча #40 (commit `acc5aa9` + build-fix `ed9cb98`):** Content-i18n Portfolio (per-locale titleHy/Ru/En + descriptionHy/Ru/En, pickLocale fallback, метки метрик localizeMetricLabel, admin-форма 3-язычн.+Translate), тест-инфра vitest+Playwright (~70 тестов, 61 unit + e2e), фикс cookie «remember me OFF» (session.ts), матчер бренда (genres[]), дроп мёртвых таблиц Application+Setting (забэкаплены в scratchpad), чистка estValue/exposure.
+- **Прод-миграция вручную ПЕРЕД push:** +6 Portfolio-колонок (additive) + DROP Application/Setting + backfill En←base (6 строк). Application-строка = тест-лид юзера (ԱՐԱՄ), Setting = default_lang=en — обе мёртвые.
+- **⚠️ build упал 1-й раз:** `next build` тайпчекает vitest.config.ts/*.test.ts → на проде devDeps срезаны → `Cannot find module 'vitest/config'`. Фикс: tsconfig `exclude` тест/конфиг-файлов (`ed9cb98`). Урок — расширение [[deploy-types-in-deps]]: не только @types, но и любой файл, импортящий devDep, тайпчекается прод-билдом.
+
+**Прежний прод HEAD был `3addfe5`** (Notification, Project.formatCategory/language, Interest/moderation/roles/brand-поля).
 
 ## ✅ ЗАДЕПЛОЕНО НА ПРОД (всё работает)
 - **Фаза 1** (`c33e3e2`): email-уведомления, кабинет создателя, фикс чёрного экрана, аватар в хедере, авто-Code, Genre multi-select, Film/Serial, рег без модерации, модерация проектов, роли (MODERATOR/PUBLISHER), кабинет бренда (Interest/expressInterest), быстрая заливка+авто-перевод, генерация постера (Nano Banana Pro), #20² single-page форма.
