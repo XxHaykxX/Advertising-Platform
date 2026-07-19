@@ -144,7 +144,6 @@ export const UI: Record<string, Dict> = {
   "btn.close": { ru: "Закрыть", en: "Close", hy: "Փակել" },
   "btn.showAll": { ru: "Показать все", en: "Show All", hy: "Ցուցադրել բոլորը" },
   "btn.showLess": { ru: "Свернуть", en: "Show Less", hy: "Ցուցադրել քիչ" },
-  "btn.downloadPdf": { ru: "Скачать PDF", en: "Download PDF", hy: "Ներբեռնել PDF" },
   "btn.share": { ru: "Поделиться", en: "Share", hy: "Կիսվել" },
   "btn.registerAsPublisher": { ru: "Регистрация как продюсер", en: "Register as Publisher", hy: "Գրանցվել որպես պրոդյուսեր" },
   "btn.becomePartner": { ru: "Стать партнёром", en: "Become a partner", hy: "Դառնալ գործընկեր" },
