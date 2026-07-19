@@ -4,24 +4,44 @@ import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/ui/reveal";
 import { formatCompactNumber } from "@/lib/data/format";
 import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
+import { ReportInterestButton } from "@/components/report/report-interest-button";
+import type { SiteHeaderUser } from "@/components/header";
 import type { ProjectDetailDTO } from "@/lib/types";
 
+// Guests get the login CTA; a BRAND already viewing this report gets a real
+// Express Interest toggle (IA-6 — a link back to this same page was a dead
+// click; the sent/pending state is shared with key-facts's button via
+// ReportInterestContext, see that provider in page.tsx). Other signed-in
+// roles (CREATOR/staff) have no use for either action here, so the whole
+// banner is omitted.
 export function ExpressInterestBanner({
   className,
   locale = DEFAULT_LOCALE,
+  user = null,
 }: {
   className?: string;
   locale?: Locale;
+  user?: SiteHeaderUser | null;
 }) {
   const t = makeUI(locale);
+  if (user && user.role !== "BRAND") return null;
   return (
     <div
       className={`flex flex-col items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 px-5 py-5 text-center ${className ?? ""}`}
     >
       <Lock className="h-5 w-5 text-primary" />
-      <Button asChild variant="primary" size="sm" className="w-full sm:w-auto">
-        <Link href="/login">{t("cta.loginToApply")}</Link>
-      </Button>
+      {user?.role === "BRAND" ? (
+        <ReportInterestButton
+          labelIdle={t("btn.expressInterest")}
+          labelSent={t("account.brand.alreadyInterested")}
+          labelRemove={t("btn.removeInterest")}
+          errorMessage={t("account.brand.expressInterestError")}
+        />
+      ) : (
+        <Button asChild variant="primary" size="sm" className="w-full sm:w-auto">
+          <Link href="/login">{t("cta.loginToApply")}</Link>
+        </Button>
+      )}
     </div>
   );
 }
@@ -40,9 +60,11 @@ function MetricLabel({ children, tooltip }: { children: string; tooltip: string 
 export function RoiSnapshot({
   project,
   locale = DEFAULT_LOCALE,
+  user = null,
 }: {
   project: ProjectDetailDTO;
   locale?: Locale;
+  user?: SiteHeaderUser | null;
 }) {
   const t = makeUI(locale);
 
@@ -81,7 +103,7 @@ export function RoiSnapshot({
               {t("roi.poweredBy")}
             </p>
 
-            <ExpressInterestBanner className="mt-6" locale={locale} />
+            <ExpressInterestBanner className="mt-6" locale={locale} user={user} />
           </div>
         </Reveal>
       </div>

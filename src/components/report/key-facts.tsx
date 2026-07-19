@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/ui/reveal";
 import { formatFullDate, formatMonthYear, parseStringArray } from "@/lib/data/format";
 import { DEFAULT_LOCALE, intlLocale, localizeValue, makeUI, type Locale } from "@/lib/i18n";
+import { ReportInterestButton } from "@/components/report/report-interest-button";
+import type { SiteHeaderUser } from "@/components/header";
 import type { ProjectDetailDTO } from "@/lib/types";
 
 function Fact({
@@ -30,9 +32,11 @@ function Fact({
 export function KeyFacts({
   project,
   locale = DEFAULT_LOCALE,
+  user = null,
 }: {
   project: ProjectDetailDTO;
   locale?: Locale;
+  user?: SiteHeaderUser | null;
 }) {
   const t = makeUI(locale);
   const platforms = parseStringArray(project.platforms);
@@ -122,9 +126,23 @@ export function KeyFacts({
               {project.placementType ? (
                 <AccentBadge>{localizeValue(locale, "placement", project.placementType)}</AccentBadge>
               ) : null}
-              <Button asChild variant="primary" size="lg" className="w-full whitespace-nowrap lg:w-auto">
-                <Link href="/login">{t("cta.loginToApply")}</Link>
-              </Button>
+              {/* Guests get the login CTA; a BRAND already viewing this report
+                  gets a real Express Interest toggle (IA-6 — a link back to
+                  this same page was a dead click). Other signed-in roles
+                  (CREATOR/staff) have no use for either action here, so
+                  nothing is rendered. */}
+              {!user ? (
+                <Button asChild variant="primary" size="lg" className="w-full whitespace-nowrap lg:w-auto">
+                  <Link href="/login">{t("cta.loginToApply")}</Link>
+                </Button>
+              ) : user.role === "BRAND" ? (
+                <ReportInterestButton
+                  labelIdle={t("btn.expressInterest")}
+                  labelSent={t("account.brand.alreadyInterested")}
+                  labelRemove={t("btn.removeInterest")}
+                  errorMessage={t("account.brand.expressInterestError")}
+                />
+              ) : null}
             </div>
           </div>
         </Reveal>

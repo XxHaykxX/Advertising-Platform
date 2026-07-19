@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { notFound } from "next/navigation";
@@ -19,7 +20,7 @@ export type AuthedUser = {
    token is valid AND the user still has isActive=true — this is the instant-
    deactivation gate: a deactivated Publisher is locked out on the very next
    request, since we re-check the DB (not just the JWT) on every call. */
-export async function loadCurrentUser(): Promise<AuthedUser | null> {
+export const loadCurrentUser = cache(async function loadCurrentUser(): Promise<AuthedUser | null> {
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
   const session = await verifySessionToken(token);
   if (!session) return null;
@@ -34,7 +35,7 @@ export async function loadCurrentUser(): Promise<AuthedUser | null> {
     name: user.name,
     isActive: user.isActive,
   };
-}
+});
 
 /** Loads the current session's user only if it is an approved, active member
    (BRAND / CREATOR). Blocked/pending/rejected members and staff users → null.

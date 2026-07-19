@@ -75,3 +75,17 @@ export async function getBrandInterestMap(brandId: number): Promise<Map<number, 
 export async function getBrandInterestCount(brandId: number): Promise<number> {
   return prisma.interest.count({ where: { brandId } });
 }
+
+/** Single project's interest status for one brand — feeds the report page's
+ *  Express Interest button (IA-6) so it opens already reflecting SENT/MUTUAL/
+ *  DECLINED instead of always starting from scratch. */
+export async function getBrandInterestStatus(
+  brandId: number,
+  projectId: number,
+): Promise<InterestStatus | null> {
+  const row = await prisma.interest.findUnique({
+    where: { brandId_projectId: { brandId, projectId } },
+    select: { status: true },
+  });
+  return row?.status ?? null;
+}

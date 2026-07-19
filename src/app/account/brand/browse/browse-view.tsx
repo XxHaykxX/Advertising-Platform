@@ -44,14 +44,14 @@ function ExpressInterestButton({
   const alreadySent = status !== undefined;
 
   return (
-    <div className="flex flex-col items-end gap-1">
+    <div className="flex min-w-0 flex-1 flex-col items-end gap-1">
       <Button
         type="button"
         variant={alreadySent ? "secondary" : "primary"}
         size="sm"
         disabled={pending}
         className={cn(
-          "h-auto min-h-9 min-w-0 whitespace-normal py-2 text-center leading-tight",
+          "h-auto min-h-9 min-w-0 max-w-full whitespace-normal break-words py-2 text-center leading-tight",
           "gap-1.5",
           alreadySent && hover && "border-danger/40 text-danger"
         )}

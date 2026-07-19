@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import Link from "next/link";
 import { Loader2, Lock, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -23,11 +23,25 @@ export function LoginForm({
   const [state, formAction, pending] = useActionState<LoginState, FormData>(login, {});
   const message = state.error ?? notice;
 
+  // Controlled (not echoed via server state, unlike the email field above)
+  // so a failed submit can clear it below — React's automatic reset of an
+  // uncontrolled input skips onChange, leaving PasswordInput's eye toggle
+  // stuck enabled on a field that looks empty (IA-4).
+  const [password, setPassword] = useState("");
+
   // Navigate on the client with a fresh full request, so the just-set
   // session cookie is carried and the auth gate sees it (see actions.ts).
   useEffect(() => {
     if (state.ok && state.redirect) {
       window.location.assign(state.redirect);
+    }
+  }, [state]);
+
+  // IA-4: wipe the password on a failed submit so the field is genuinely
+  // empty and PasswordInput's eye toggle auto-disables.
+  useEffect(() => {
+    if (!state.ok && state.error) {
+      setPassword("");
     }
   }, [state]);
 
@@ -80,6 +94,8 @@ export function LoginForm({
             placeholder="••••••••"
             showLabel={t("auth.passwordShow")}
             hideLabel={t("auth.passwordHide")}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             className="w-full rounded-xl border border-border bg-background py-3 pl-10 pr-4 text-sm text-foreground outline-none transition-colors focus:border-primary/50"
           />
         </div>

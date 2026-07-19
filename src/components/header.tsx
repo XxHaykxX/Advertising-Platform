@@ -201,6 +201,9 @@ export function Header({
   const pathname = usePathname();
   const t = makeUI(locale);
   const NAV = useNav(t);
+  // Signed-in BRAND/CREATOR: header drops the marketing nav for a single
+  // cabinet link (see docs/superpowers/specs/2026-07-19-member-header-nav-design.md).
+  const isMember = user != null && !STAFF_ROLES.includes(user.role);
   // Every page that opens on the dark cinematic PageHero (plus the landing
   // page, which has its own bespoke hero) — while the transparent header
   // floats over it, switch text to a light-on-dark scheme.
@@ -227,18 +230,30 @@ export function Header({
 
           {/* Desktop nav */}
           <nav className="hidden items-center gap-8 lg:flex">
-            {NAV.map((item) => (
+            {isMember && user ? (
               <Link
-                key={item.href}
-                href={item.href}
+                href={cabinetHrefFor(user.role)}
                 className={cn(
                   "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors hover:bg-primary/10 hover:text-primary",
                   onDark ? "text-white/75" : "text-muted-foreground"
                 )}
               >
-                {item.label}
+                {t("nav.cabinet")}
               </Link>
-            ))}
+            ) : (
+              NAV.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors hover:bg-primary/10 hover:text-primary",
+                    onDark ? "text-white/75" : "text-muted-foreground"
+                  )}
+                >
+                  {item.label}
+                </Link>
+              ))
+            )}
           </nav>
 
           {/* Right cluster (desktop) */}
@@ -285,16 +300,17 @@ export function Header({
             className="overflow-hidden border-b border-border bg-background lg:hidden"
           >
             <Container className="flex flex-col gap-1 py-4">
-              {NAV.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setMenuOpen(false)}
-                  className="rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-                >
-                  {item.label}
-                </Link>
-              ))}
+              {!isMember &&
+                NAV.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMenuOpen(false)}
+                    className="rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+                  >
+                    {item.label}
+                  </Link>
+                ))}
               <div className="mt-2 flex items-center gap-2 border-t border-border pt-4">
                 <div className="ml-auto flex items-center gap-2">
                   <LocaleSwitcher current={locale} />
