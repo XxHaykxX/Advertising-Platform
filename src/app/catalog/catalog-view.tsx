@@ -21,7 +21,7 @@ import { AccentBadge, GenreBadge } from "@/components/ui/badge";
 import { ProjectCard } from "@/components/project-card";
 import { Footer } from "@/components/footer";
 import { Header, type SiteHeaderUser } from "@/components/header";
-import { daysUntil, formatFullDate, parseStringArray, splitCountries } from "@/lib/data/format";
+import { daysUntil, formatCompactNumber, formatFullDate, parseStringArray, splitCountries } from "@/lib/data/format";
 import { FORMAT_CATEGORY_VALUES, LANGUAGE_VALUES } from "@/app/admin/(panel)/projects/form-shared";
 import { cn } from "@/lib/utils";
 import { DEFAULT_LOCALE, intlLocale, localizeValue, makeUI, UI, LOCALES, type Locale } from "@/lib/i18n";
@@ -74,7 +74,15 @@ function parseViews(v: string): number {
   return num;
 }
 
-function ProjectRow({ project, locale = DEFAULT_LOCALE }: { project: ProjectListDTO; locale?: Locale }) {
+function ProjectRow({
+  project,
+  locale = DEFAULT_LOCALE,
+  user = null,
+}: {
+  project: ProjectListDTO;
+  locale?: Locale;
+  user?: SiteHeaderUser | null;
+}) {
   const t = makeUI(locale);
   const countries = splitCountries(project.countries);
   const deadlineDays = daysUntil(project.applicationDeadline);
@@ -116,7 +124,9 @@ function ProjectRow({ project, locale = DEFAULT_LOCALE }: { project: ProjectList
               .join(", ")}
           </span>
           {project.budgetDisplay ? <span>{project.budgetDisplay}</span> : null}
-          {project.projViews ? <span>{project.projViews} {t("card.projectedViews")}</span> : null}
+          {project.projViews ? (
+            <span>{formatCompactNumber(project.projViews, locale)} {t("card.projectedViews")}</span>
+          ) : null}
           {project.applicationDeadline ? (
             <span
               className={cn(
@@ -136,7 +146,13 @@ function ProjectRow({ project, locale = DEFAULT_LOCALE }: { project: ProjectList
           <Link href={`/reports/${project.id}`}>{t("btn.viewReport")}</Link>
         </Button>
         <Button asChild variant="ghost" size="sm" className="w-full sm:w-auto">
-          <Link href="/login">{t("cta.loginToApply")}</Link>
+          {user?.role === "BRAND" ? (
+            <Link href={`/reports/${project.id}`}>{t("btn.expressInterest")}</Link>
+          ) : user ? (
+            <Link href={`/reports/${project.id}`}>{t("btn.viewReport")}</Link>
+          ) : (
+            <Link href="/login">{t("cta.loginToApply")}</Link>
+          )}
         </Button>
       </div>
     </div>
@@ -626,13 +642,13 @@ export function CatalogView({
             ) : view === "grid" ? (
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
                 {filtered.map((project) => (
-                  <ProjectCard key={project.id} project={project} locale={locale} />
+                  <ProjectCard key={project.id} project={project} locale={locale} user={user} />
                 ))}
               </div>
             ) : (
               <div className="flex flex-col gap-4">
                 {filtered.map((project) => (
-                  <ProjectRow key={project.id} project={project} locale={locale} />
+                  <ProjectRow key={project.id} project={project} locale={locale} user={user} />
                 ))}
               </div>
             )}

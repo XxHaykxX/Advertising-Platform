@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Download, Share2 } from "lucide-react";
+import { Printer, Share2 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { VariantProps } from "class-variance-authority";
@@ -26,7 +26,7 @@ export function PrintButton({
       className={cn("no-print", className)}
       onClick={() => window.print()}
     >
-      <Download className="mr-1.5 h-4 w-4" />
+      <Printer className="mr-1.5 h-4 w-4" />
       {label}
     </Button>
   );

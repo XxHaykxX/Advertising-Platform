@@ -6,7 +6,9 @@ import { usePathname } from "next/navigation";
 import { LayoutDashboard, Search, Heart, User, Bell, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutButton } from "@/components/logout-button";
+import type { Locale } from "@/lib/i18n";
 import { getInterestCount } from "./actions";
+import { INTEREST_CHANGED_EVENT } from "./interest-events";
 import { getUnreadNotificationCount } from "@/lib/actions/notifications";
 
 type NavItem = {
@@ -26,6 +28,7 @@ type NavItem = {
 export function BrandSidebar({
   labels,
   logoutAction,
+  locale,
 }: {
   labels: {
     dashboard: string;
@@ -36,6 +39,7 @@ export function BrandSidebar({
     logout: string;
   };
   logoutAction: () => Promise<{ redirect: string }>;
+  locale?: Locale;
 }) {
   const pathname = usePathname();
 
@@ -54,9 +58,7 @@ export function BrandSidebar({
 
   // Interests badge (#24) — same direct-Server-Action-call pattern as
   // admin-nav's getPendingModerationCount: refetched on every route change,
-  // which covers the express/withdraw toggle on Browse and the remove button
-  // on My Interests (both revalidatePath the brand routes but don't remount
-  // this layout, so a fresh client fetch is what actually syncs the badge).
+  // which covers navigating back to a page after an add/remove elsewhere.
   const [interestCount, setInterestCount] = useState(0);
   const [unreadCount, setUnreadCount] = useState(0);
   useEffect(() => {
@@ -75,6 +77,23 @@ export function BrandSidebar({
       alive = false;
     };
   }, [pathname]);
+
+  // IA-8/IA-9 — the express/withdraw toggle on Browse and the remove button
+  // on My Interests act on the *same* route, so the effect above never
+  // re-runs (its deps are `[pathname]`) and the badge was stuck until the
+  // next navigation or a full reload. Those buttons emit
+  // INTEREST_CHANGED_EVENT once their Server Action resolves `ok`; refetch
+  // the count from the server here so add and remove both reflect
+  // immediately without double-counting anything client-side.
+  useEffect(() => {
+    function onInterestChanged() {
+      getInterestCount()
+        .then(setInterestCount)
+        .catch(() => {});
+    }
+    window.addEventListener(INTEREST_CHANGED_EVENT, onInterestChanged);
+    return () => window.removeEventListener(INTEREST_CHANGED_EVENT, onInterestChanged);
+  }, []);
 
   return (
     <aside className="w-full shrink-0 lg:w-60">
@@ -113,6 +132,7 @@ export function BrandSidebar({
       <div className="mt-6 border-t border-border pt-4">
         <LogoutButton
           action={logoutAction}
+          locale={locale}
           className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         >
           <LogOut className="h-4 w-4 shrink-0" />

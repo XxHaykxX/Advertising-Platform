@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import type { ProjectListDTO } from "@/lib/types";
 import type { InterestStatus } from "@prisma/client";
 import { expressInterest, withdrawInterest } from "../actions";
+import { emitInterestChanged } from "../interest-events";
 
 /** Express Interest toggle for a single Browse card (#24) — a client-local
  *  useTransition + Server Action call, same "no manual optimistic state"
@@ -19,7 +20,9 @@ import { expressInterest, withdrawInterest } from "../actions";
  *  revalidatePath() refreshes this page's props after it resolves, so the
  *  button's own `pending` flag is all the local state it needs. Already-sent
  *  state is clickable too (calls withdrawInterest) — hover swaps the icon/
- *  label to Х/"Remove" so the toggle affordance is obvious before the click. */
+ *  label to Х/"Remove" so the toggle affordance is obvious before the click.
+ *  Also emits INTEREST_CHANGED_EVENT on either branch so the sidebar badge
+ *  updates immediately without a reload (IA-8 add / IA-9 remove). */
 function ExpressInterestButton({
   projectId,
   status,
@@ -47,7 +50,11 @@ function ExpressInterestButton({
         variant={alreadySent ? "secondary" : "primary"}
         size="sm"
         disabled={pending}
-        className={cn("gap-1.5", alreadySent && hover && "border-danger/40 text-danger")}
+        className={cn(
+          "h-auto min-h-9 min-w-0 whitespace-normal py-2 text-center leading-tight",
+          "gap-1.5",
+          alreadySent && hover && "border-danger/40 text-danger"
+        )}
         onMouseEnter={() => setHover(true)}
         onMouseLeave={() => setHover(false)}
         onClick={() =>
@@ -55,6 +62,7 @@ function ExpressInterestButton({
             setError(null);
             const res = alreadySent ? await withdrawInterest(projectId) : await expressInterest(projectId);
             if (!res.ok) setError(res.error ?? errorMessage);
+            else emitInterestChanged();
           })
         }
       >
@@ -139,7 +147,7 @@ function BrowseCard({
         ) : null}
 
         <div className="mt-auto flex items-center justify-between gap-2 pt-5">
-          <Button asChild variant="ghost" size="sm">
+          <Button asChild variant="ghost" size="sm" className="shrink-0">
             <Link href={`/reports/${project.id}`}>{onRequestLabel}</Link>
           </Button>
           <ExpressInterestButton

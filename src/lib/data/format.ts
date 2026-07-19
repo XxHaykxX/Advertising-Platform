@@ -1,3 +1,5 @@
+import { intlLocale, type Locale } from "@/lib/i18n";
+
 export function parseStringArray(json: string | null): string[] {
   if (!json) return [];
   try {
@@ -81,4 +83,36 @@ export function daysUntil(iso: string | null): number | null {
   if (Number.isNaN(d.getTime())) return null;
   const diffMs = d.getTime() - Date.now();
   return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+}
+
+/** IA-2: view/metric counts (e.g. ProjectDetailDTO.projViews) are stored as
+ * admin-entered strings that may already be compact ("420K", "1.2M") or plain
+ * ("5000"). English keeps the compact abbreviation; hy/ru don't use "K"/"M"
+ * so they always render the fully grouped number ("420 000"). Also handles
+ * ranges ("5K – 10K") by reformatting every number token in the string, and
+ * leaves anything with no recognizable number untouched. */
+export function formatCompactNumber(value: string | number, locale: Locale): string {
+  if (typeof value === "number") return formatNumberToken(value, locale);
+  if (!value) return value;
+  let matched = false;
+  // Only tokens with a K/M suffix get reformatted ("420K", "1.2M"). A
+  // suffix-less number is left exactly as typed — it may already be grouped
+  // ("500 000" / "500,000"), and blindly re-parsing it as a float would
+  // mangle the grouping (e.g. "500 000" -> "5000").
+  const result = value.replace(/(\d+(?:\.\d+)?)\s*([kKmM])/g, (full, numPart: string, suffix: string) => {
+    const raw = parseFloat(numPart);
+    if (Number.isNaN(raw)) return full;
+    matched = true;
+    const upperSuffix = suffix.toUpperCase();
+    const multiplier = upperSuffix === "M" ? 1_000_000 : 1_000;
+    return formatNumberToken(raw * multiplier, locale);
+  });
+  return matched ? result : value;
+}
+
+function formatNumberToken(num: number, locale: Locale): string {
+  if (locale === "en") {
+    return new Intl.NumberFormat(intlLocale(locale), { notation: "compact", maximumFractionDigits: 1 }).format(num);
+  }
+  return new Intl.NumberFormat(intlLocale(locale), { maximumFractionDigits: 0 }).format(num);
 }

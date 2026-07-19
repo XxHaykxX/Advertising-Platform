@@ -27,7 +27,7 @@ export function CaseCard({
       viewport={{ once: true, margin: "-60px" }}
       transition={{ duration: 0.5, delay: (index % 3) * 0.08 }}
       onClick={onOpen}
-      className="flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card text-left card-lift"
+      className="flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-border bg-card text-left card-lift"
     >
       <div className="relative aspect-[16/10] shrink-0">
         {c.image ? (

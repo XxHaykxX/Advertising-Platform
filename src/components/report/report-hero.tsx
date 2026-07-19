@@ -5,7 +5,7 @@ import { PrintButton, ShareButton } from "@/components/report/report-actions";
 import { PosterSlider } from "@/components/report/poster-slider";
 import { StoryboardMarquee } from "@/components/report/storyboard-marquee";
 import { SynopsisDisclosure } from "@/components/report/synopsis-disclosure";
-import { parseStringArray, splitCountries } from "@/lib/data/format";
+import { formatCompactNumber, parseStringArray, splitCountries } from "@/lib/data/format";
 import { DEFAULT_LOCALE, localizeValue, makeUI, type Locale } from "@/lib/i18n";
 import type { ProjectDetailDTO } from "@/lib/types";
 
@@ -102,7 +102,7 @@ export function ReportHero({
               {project.projViews ? (
                 <div className="rounded-xl border border-border bg-card p-3 sm:p-4">
                   <Eye className="h-4 w-4 text-primary" />
-                  <div className="mt-2 break-words text-base font-bold text-foreground sm:text-lg">{project.projViews}</div>
+                  <div className="mt-2 break-words text-base font-bold text-foreground sm:text-lg">{formatCompactNumber(project.projViews, locale)}</div>
                   <div className="text-xs text-muted-foreground">{t("report.projectedViews")}</div>
                 </div>
               ) : null}

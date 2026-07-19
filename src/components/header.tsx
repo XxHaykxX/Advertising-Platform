@@ -28,6 +28,13 @@ export type SiteHeaderUser = {
 
 const STAFF_ROLES: Role[] = ["SUPERADMIN", "PUBLISHER", "MODERATOR"];
 
+/** Cabinet path for a signed-in user's role — staff (SUPERADMIN/PUBLISHER/
+ *  MODERATOR) land in `/admin`, members (BRAND/CREATOR) in `/account`. Shared
+ *  by UserMenu and the Wordmark so both routes stay in sync. */
+function cabinetHrefFor(role: Role): string {
+  return STAFF_ROLES.includes(role) ? "/admin" : "/account";
+}
+
 /** Pages opening on the dark cinematic hero (landing's own + every
  *  `PageHero` page) — see the `onDark` comment below. */
 const DARK_HERO_PATHS = new Set([
@@ -99,7 +106,7 @@ function UserMenu({
   const ref = useRef<HTMLDivElement>(null);
   const t = makeUI(locale);
   const isStaff = STAFF_ROLES.includes(user.role);
-  const cabinetHref = isStaff ? "/admin" : "/account";
+  const cabinetHref = cabinetHrefFor(user.role);
   const logoutAction = isStaff ? staffLogout : memberLogout;
 
   useEffect(() => {
@@ -153,6 +160,7 @@ function UserMenu({
           </Link>
           <LogoutButton
             action={logoutAction}
+            locale={locale}
             role="menuitem"
             className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-primary/10 hover:text-primary"
           >
@@ -165,10 +173,10 @@ function UserMenu({
   );
 }
 
-function Wordmark({ onDark }: { onDark: boolean }) {
+function Wordmark({ onDark, user }: { onDark: boolean; user: SiteHeaderUser | null }) {
   return (
     <Link
-      href="/"
+      href={user ? cabinetHrefFor(user.role) : "/"}
       className={cn(
         "text-lg font-bold tracking-tight",
         onDark ? "text-white" : "text-foreground"
@@ -215,7 +223,7 @@ export function Header({
     >
       <Container>
         <div className="flex h-16 items-center justify-between gap-4">
-          <Wordmark onDark={onDark} />
+          <Wordmark onDark={onDark} user={user} />
 
           {/* Desktop nav */}
           <nav className="hidden items-center gap-8 lg:flex">
@@ -311,7 +319,7 @@ export function Header({
                   </Link>
                   <LogoutButton
                     action={STAFF_ROLES.includes(user.role) ? staffLogout : memberLogout}
-                    onClick={() => setMenuOpen(false)}
+                    locale={locale}
                     className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "w-full gap-2")}
                   >
                     <LogOut className="h-4 w-4" />

@@ -40,6 +40,16 @@ export const UI: Record<string, Dict> = {
   "nav.openMenu": { ru: "Открыть меню", en: "Open menu", hy: "Բացել ընտրացանկը" },
   "nav.closeMenu": { ru: "Закрыть меню", en: "Close menu", hy: "Փակել ընտրացանկը" },
 
+  // ── logout confirm popup ────────────────────
+  "logout.confirmTitle": { ru: "Выйти из аккаунта?", en: "Log out?", hy: "Դուրս գա՞լ հաշվից" },
+  "logout.confirmMessage": {
+    ru: "Вы уверены, что хотите выйти?",
+    en: "Are you sure you want to log out?",
+    hy: "Համոզվա՞ծ եք, որ ցանկանում եք դուրս գալ։",
+  },
+  "logout.confirmYes": { ru: "Да, выйти", en: "Yes, log out", hy: "Այո, դուրս գալ" },
+  "logout.confirmNo": { ru: "Отмена", en: "No", hy: "Ոչ" },
+
   "about.heroTitle": { ru: "О нас", en: "About us", hy: "Մեր մասին" },
   "about.heroSubtitle": {
     ru: "iGovazd — маркетплейс, который соединяет бренды с создателями фильмов и контента для честного product placement.",
@@ -676,7 +686,9 @@ export const UI: Record<string, Dict> = {
   "report.backToCatalog": { ru: "Назад к каталогу", en: "Back to Catalog", hy: "Վերադառնալ կատալոգ" },
   "report.catalogLabel": { ru: "Каталог", en: "Catalog", hy: "Կատալոգ" },
   "report.share": { ru: "Поделиться", en: "Share", hy: "Կիսվել" },
-  "report.downloadPdf": { ru: "Скачать PDF", en: "Download PDF", hy: "Ներբեռնել PDF" },
+  // IA-12: window.print() opens the print dialog, not a download — label says
+  // "Print" (users can Save as PDF from there). Key name kept for compat.
+  "report.downloadPdf": { ru: "Печать", en: "Print", hy: "Տպել" },
   "report.prev": { ru: "Назад", en: "Previous", hy: "Նախորդ" },
   "report.next": { ru: "Вперёд", en: "Next", hy: "Հաջորդ" },
   "report.showMore": { ru: "Ещё", en: "More", hy: "Ավելին" },

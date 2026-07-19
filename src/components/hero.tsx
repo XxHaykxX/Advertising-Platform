@@ -197,12 +197,12 @@ export function Hero({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
 
       {/* ── Scroll indicator ─────────────────────────────────── */}
       <motion.a
-        href="#stats"
+        href="#how-it-works"
         aria-label={t("hero.scrollDown")}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1, duration: 0.8 }}
-        className="absolute bottom-6 left-1/2 z-10 -translate-x-1/2 text-neutral-500 transition-colors hover:text-neutral-800"
+        className="absolute bottom-6 left-1/2 z-10 -translate-x-1/2 cursor-pointer text-neutral-500 transition-colors hover:text-neutral-800"
       >
         <motion.span
           animate={reduce ? undefined : { y: [0, 8, 0] }}

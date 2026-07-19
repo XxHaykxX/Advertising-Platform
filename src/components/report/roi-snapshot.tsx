@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Info, Lock, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/ui/reveal";
+import { formatCompactNumber } from "@/lib/data/format";
 import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
 import type { ProjectDetailDTO } from "@/lib/types";
 
@@ -59,7 +60,7 @@ export function RoiSnapshot({
               <div className="mt-6 grid grid-cols-1 gap-6 min-[420px]:grid-cols-2">
                 {project.projViews ? (
                   <div>
-                    <div className="text-2xl font-extrabold text-foreground">{project.projViews}</div>
+                    <div className="text-2xl font-extrabold text-foreground">{formatCompactNumber(project.projViews, locale)}</div>
                     <MetricLabel tooltip={t("roi.projectedViewersTooltip")}>
                       {t("roi.projectedViewers")}
                     </MetricLabel>

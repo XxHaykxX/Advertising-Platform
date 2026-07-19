@@ -33,6 +33,7 @@ export default async function BrandLayout({ children }: { children: ReactNode })
             logout: t("account.logout"),
           }}
           logoutAction={logout}
+          locale={locale}
         />
         <main className="min-w-0 flex-1">{children}</main>
       </div>

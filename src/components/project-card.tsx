@@ -12,17 +12,20 @@ import {
 } from "lucide-react";
 import { AccentBadge, GenreBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { daysUntil, formatFullDate, formatMonthYear, parseStringArray, splitCountries } from "@/lib/data/format";
+import { daysUntil, formatCompactNumber, formatFullDate, formatMonthYear, parseStringArray, splitCountries } from "@/lib/data/format";
 import { cn } from "@/lib/utils";
 import { DEFAULT_LOCALE, intlLocale, localizeValue, makeUI, type Locale } from "@/lib/i18n";
+import type { SiteHeaderUser } from "@/components/header";
 import type { ProjectListDTO } from "@/lib/types";
 
 export function ProjectCard({
   project,
   locale = DEFAULT_LOCALE,
+  user = null,
 }: {
   project: ProjectListDTO;
   locale?: Locale;
+  user?: SiteHeaderUser | null;
 }) {
   const t = makeUI(locale);
   const countries = splitCountries(project.countries);
@@ -100,7 +103,7 @@ export function ProjectCard({
           {project.projViews ? (
             <div className="flex items-center gap-2">
               <Eye className="h-3.5 w-3.5 shrink-0" />
-              <span>{project.projViews} {t("card.projectedViews")}</span>
+              <span>{formatCompactNumber(project.projViews, locale)} {t("card.projectedViews")}</span>
             </div>
           ) : null}
           {releaseLabel ? (
@@ -148,7 +151,13 @@ export function ProjectCard({
             size="sm"
             className="h-auto min-h-9 w-full whitespace-normal py-1.5 text-center leading-tight"
           >
-            <Link href="/login">{t("cta.loginToApply")}</Link>
+            {user?.role === "BRAND" ? (
+              <Link href={`/reports/${project.id}`}>{t("btn.expressInterest")}</Link>
+            ) : user ? (
+              <Link href={`/reports/${project.id}`}>{t("btn.viewReport")}</Link>
+            ) : (
+              <Link href="/login">{t("cta.loginToApply")}</Link>
+            )}
           </Button>
           <Button asChild variant="secondary" size="sm" className="w-full">
             <Link href={`/reports/${project.id}`}>{t("btn.viewReport")}</Link>

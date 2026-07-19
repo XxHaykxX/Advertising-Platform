@@ -70,6 +70,7 @@ export default async function AccountPage() {
 
               <LogoutButton
                 action={logout}
+                locale={locale}
                 className={cn(buttonVariants({ variant: "secondary", size: "md" }), "mt-6 w-full gap-2")}
               >
                 <LogOut className="h-4 w-4" />
