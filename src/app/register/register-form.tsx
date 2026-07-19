@@ -13,6 +13,10 @@ export function RegisterForm({ locale, googleEnabled }: { locale: Locale; google
   const t = makeUI(locale);
   const [state, formAction, pending] = useActionState<RegisterState, FormData>(register, {});
   const [type, setType] = useState<"brand" | "creator">("brand");
+  // Password isn't echoed back via server state (avoid round-tripping a
+  // plaintext password); instead it's kept controlled client-side so React
+  // 19's post-action uncontrolled-input reset doesn't wipe it on error.
+  const [password, setPassword] = useState("");
 
   // Registration signs the member in immediately (no moderation queue) and
   // reports success + a destination instead of redirecting server-side: the
@@ -98,6 +102,7 @@ export function RegisterForm({ locale, googleEnabled }: { locale: Locale; google
             name="name"
             type="text"
             required
+            defaultValue={state.values?.name}
             placeholder={t("register.fullNamePlaceholder")}
             className="w-full rounded-xl border border-border bg-background py-3 pl-10 pr-4 text-sm text-foreground outline-none transition-colors focus:border-primary/50"
           />
@@ -112,6 +117,7 @@ export function RegisterForm({ locale, googleEnabled }: { locale: Locale; google
             name="email"
             type="email"
             required
+            defaultValue={state.values?.email}
             placeholder={type === "brand" ? t("register.emailPlaceholderBrand") : t("register.emailPlaceholderCreator")}
             className="w-full rounded-xl border border-border bg-background py-3 pl-10 pr-4 text-sm text-foreground outline-none transition-colors focus:border-primary/50"
           />
@@ -126,6 +132,8 @@ export function RegisterForm({ locale, googleEnabled }: { locale: Locale; google
             name="password"
             required
             autoComplete="new-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             placeholder={t("register.passwordPlaceholder")}
             showLabel={t("auth.passwordShow")}
             hideLabel={t("auth.passwordHide")}
@@ -143,6 +151,7 @@ export function RegisterForm({ locale, googleEnabled }: { locale: Locale; google
           <input
             name="company"
             type="text"
+            defaultValue={state.values?.company}
             placeholder={type === "brand" ? t("register.companyPlaceholder") : t("register.creatorOrgPlaceholder")}
             className="w-full rounded-xl border border-border bg-background py-3 pl-10 pr-4 text-sm text-foreground outline-none transition-colors focus:border-primary/50"
           />

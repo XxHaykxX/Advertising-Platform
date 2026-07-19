@@ -89,6 +89,7 @@ export function CompleteForm({
           <input
             name="company"
             type="text"
+            defaultValue={state.values?.company}
             placeholder={t("register.companyPlaceholder")}
             className="w-full rounded-xl border border-border bg-background py-3 pl-10 pr-4 text-sm text-foreground outline-none transition-colors focus:border-primary/50"
           />

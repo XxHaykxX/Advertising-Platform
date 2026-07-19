@@ -6,7 +6,7 @@ import { SESSION_COOKIE, createSessionToken, sessionCookieOptions } from "@/lib/
 import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
 
-export type LoginState = { error?: string; ok?: boolean; redirect?: string };
+export type LoginState = { error?: string; ok?: boolean; redirect?: string; email?: string };
 
 /* Per-IP throttle mirroring admin login. In-memory, resets on restart —
    acceptable for a single-node shared-hosting MVP. */
@@ -37,20 +37,23 @@ export async function login(
   const locale = await getLocale();
   const t = makeUI(locale);
 
-  const ip = await clientIp();
-  if (rateLimited(ip)) return { error: t("login.errInvalid") };
-
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
+
+  const ip = await clientIp();
+  if (rateLimited(ip)) return { error: t("login.errInvalid"), email };
 
   const result = await authenticateMember(email, password);
 
   if (!result.ok) {
     recordFailure(ip);
-    if (result.reason === "pending") return { error: t("login.errPending") };
-    if (result.reason === "blocked") return { error: t("login.errBlocked") };
-    if (result.reason === "rejected") return { error: t("login.errRejected") };
-    return { error: t("login.errInvalid") };
+    // Echo the submitted email back so the client can re-populate the field
+    // after React's post-action form reset (the password is intentionally
+    // NOT echoed back — cleared on failure is the correct security behavior).
+    if (result.reason === "pending") return { error: t("login.errPending"), email };
+    if (result.reason === "blocked") return { error: t("login.errBlocked"), email };
+    if (result.reason === "rejected") return { error: t("login.errRejected"), email };
+    return { error: t("login.errInvalid"), email };
   }
 
   attempts.delete(ip);

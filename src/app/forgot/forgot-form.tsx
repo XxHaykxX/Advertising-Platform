@@ -34,6 +34,10 @@ export function ForgotForm({ locale }: { locale: Locale }) {
             required
             autoComplete="username"
             placeholder={t("login.emailPlaceholder")}
+            // Echoed back from the server action's state so it survives
+            // React's automatic form reset after a failed submit — same
+            // pattern as /login/login-form.tsx.
+            defaultValue={state.email ?? ""}
             className="w-full rounded-xl border border-border bg-background py-3 pl-10 pr-4 text-sm text-foreground outline-none transition-colors focus:border-primary/50"
           />
         </div>

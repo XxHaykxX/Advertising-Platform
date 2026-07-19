@@ -17,7 +17,12 @@ import { requireSuperadmin } from "@/lib/auth/require";
 import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
 
-export type ActionState = { error?: string; ok?: boolean; redirect?: string };
+export type ActionState = {
+  error?: string;
+  ok?: boolean;
+  redirect?: string;
+  email?: string;
+};
 
 /* ── In-memory login rate limit (per IP). Resets on process restart —
    acceptable for a single-admin MVP on shared hosting. ── */
@@ -54,22 +59,27 @@ export async function login(
 ): Promise<ActionState> {
   const t = makeUI(await getLocale());
 
+  // Parsed up front (before any error branch) so it can be echoed back in
+  // every error response below — React 19 resets this uncontrolled input
+  // after the action runs, so without the echo a failed submit wipes what
+  // the admin typed (see /login for the same pattern).
+  const email = String(formData.get("email") || "").trim().toLowerCase();
+
   const ip = await clientIp();
   if (rateLimited(ip)) {
-    return { error: t("login.errTooManyAttempts") };
+    return { error: t("login.errTooManyAttempts"), email };
   }
 
-  const email = String(formData.get("email") || "").trim().toLowerCase();
   const password = String(formData.get("password") || "");
-  if (!email || !password) return { error: t("login.errFillBoth") };
+  if (!email || !password) return { error: t("login.errFillBoth"), email };
 
   const result = await verifyUserPassword(email, password);
   if (!result.ok) {
     if (result.reason === "deactivated") {
-      return { error: t("login.errDeactivated") };
+      return { error: t("login.errDeactivated"), email };
     }
     recordFailure(ip);
-    return { error: t("login.errInvalid") };
+    return { error: t("login.errInvalid"), email };
   }
 
   // Members (BRAND / CREATOR) must never obtain an admin session — they sign in
@@ -80,7 +90,7 @@ export async function login(
     result.user.role !== "MODERATOR"
   ) {
     recordFailure(ip);
-    return { error: t("login.errInvalid") };
+    return { error: t("login.errInvalid"), email };
   }
 
   attempts.delete(ip);

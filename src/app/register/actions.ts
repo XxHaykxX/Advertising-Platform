@@ -6,7 +6,16 @@ import { SESSION_COOKIE, createSessionToken, sessionCookieOptions } from "@/lib/
 import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
 
-export type RegisterState = { error?: string; ok?: boolean; redirect?: string };
+export type RegisterState = {
+  error?: string;
+  ok?: boolean;
+  redirect?: string;
+  // Echoed back on failed submits so React 19's uncontrolled-input reset
+  // after the action runs doesn't wipe what the user typed (same pattern as
+  // submitLead/portfolio-form). Password is deliberately excluded — it's
+  // kept alive client-side instead (see register-form.tsx).
+  values?: { name?: string; email?: string; company?: string };
+};
 
 export async function register(
   _prev: RegisterState,
@@ -20,15 +29,16 @@ export async function register(
   const password = String(formData.get("password") ?? "");
   const company = String(formData.get("company") ?? "").trim();
   const type = String(formData.get("type") ?? "brand");
+  const values = { name, email, company };
 
   if (!name || !email || !password) {
-    return { error: t("register.errFields") };
+    return { error: t("register.errFields"), values };
   }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    return { error: t("register.errFields") };
+    return { error: t("register.errFields"), values };
   }
   if (password.length < 8) {
-    return { error: t("register.errPasswordShort") };
+    return { error: t("register.errPasswordShort"), values };
   }
 
   const role = type === "creator" ? "CREATOR" : "BRAND";
@@ -43,9 +53,9 @@ export async function register(
 
   if (!result.ok) {
     if (result.reason === "email_taken") {
-      return { error: t("register.errEmailTaken") };
+      return { error: t("register.errEmailTaken"), values };
     }
-    return { error: t("register.errFields") };
+    return { error: t("register.errFields"), values };
   }
 
   // No moderation queue — the account is APPROVED immediately, so sign the

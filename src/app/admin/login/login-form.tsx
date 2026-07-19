@@ -44,7 +44,10 @@ export function LoginForm({
           required
           autoFocus
           autoComplete="username"
-          defaultValue={initialEmail}
+          // Echoed back from the server action's state so it survives React's
+          // automatic reset of this uncontrolled input after a failed submit
+          // (falls back to the remembered-email cookie on first render).
+          defaultValue={state.email ?? initialEmail}
           placeholder="you@example.com"
           className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:border-primary/50"
         />

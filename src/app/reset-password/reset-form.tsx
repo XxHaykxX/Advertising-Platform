@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { Loader2, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -13,6 +13,13 @@ export function ResetForm({ locale, token }: { locale: Locale; token: string }) 
     resetPassword,
     {},
   );
+
+  // Controlled (not echoed via server state, unlike the email fields
+  // elsewhere) so the passwords survive React's automatic form reset after a
+  // failed submit (mismatch / too weak) without round-tripping plaintext
+  // through the server action's returned state.
+  const [password, setPassword] = useState("");
+  const [passwordConfirm, setPasswordConfirm] = useState("");
 
   // Navigate on the client with a fresh full request — same pattern as
   // /login/login-form.tsx.
@@ -37,6 +44,8 @@ export function ResetForm({ locale, token }: { locale: Locale; token: string }) 
             placeholder="••••••••"
             showLabel={t("auth.passwordShow")}
             hideLabel={t("auth.passwordHide")}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             className="w-full rounded-xl border border-border bg-background py-3 pl-10 pr-4 text-sm text-foreground outline-none transition-colors focus:border-primary/50"
           />
         </div>
@@ -53,6 +62,8 @@ export function ResetForm({ locale, token }: { locale: Locale; token: string }) 
             placeholder="••••••••"
             showLabel={t("auth.passwordShow")}
             hideLabel={t("auth.passwordHide")}
+            value={passwordConfirm}
+            onChange={(e) => setPasswordConfirm(e.target.value)}
             className="w-full rounded-xl border border-border bg-background py-3 pl-10 pr-4 text-sm text-foreground outline-none transition-colors focus:border-primary/50"
           />
         </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState, useTransition } from "react";
+import { useActionState, useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { Loader2, KeyRound, Ban, RotateCcw, CheckCircle2 } from "lucide-react";
 import type { FormState, ResetState } from "./actions";
@@ -17,17 +17,37 @@ export function UserForm({
   action: (prev: FormState, fd: FormData) => Promise<FormState>;
 }) {
   const [state, formAction, pending] = useActionState<FormState, FormData>(action, {});
+  // New password is never echoed through server state (security), so it's
+  // kept controlled client-side instead — that also makes it immune to
+  // React 19's automatic reset of the form after a failed submit.
+  const [password, setPassword] = useState("");
 
   return (
     <form action={formAction} className="max-w-xl space-y-6">
       <section className="space-y-4 rounded-2xl border border-border bg-card p-6 shadow-sm">
         <label className="block">
           <span className={labelCls}>Email *</span>
-          <input name="email" type="email" autoComplete="off" required className={inputCls} />
+          <input
+            name="email"
+            type="email"
+            autoComplete="off"
+            required
+            // Echoed back from state.values so it survives React 19's
+            // automatic reset of this uncontrolled input after a failed
+            // submit (e.g. duplicate email).
+            defaultValue={state.values?.email ?? ""}
+            className={inputCls}
+          />
         </label>
         <label className="block">
           <span className={labelCls}>Company name *</span>
-          <input name="name" placeholder="Shown on the public portfolio" required className={inputCls} />
+          <input
+            name="name"
+            placeholder="Shown on the public portfolio"
+            required
+            defaultValue={state.values?.name ?? ""}
+            className={inputCls}
+          />
         </label>
         <label className="block">
           <span className={labelCls}>Password *</span>
@@ -36,6 +56,8 @@ export function UserForm({
             autoComplete="new-password"
             placeholder="at least 8 characters"
             required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             className={inputCls}
           />
           <span className="mt-1.5 block text-xs text-muted-foreground">
@@ -70,6 +92,16 @@ export function UserForm({
 function ResetPasswordForm({ id, onDone }: { id: number; onDone: () => void }) {
   const action = resetUserPassword.bind(null, id);
   const [state, formAction, pending] = useActionState<ResetState, FormData>(action, {});
+  // Controlled (not echoed via server state — passwords never round-trip
+  // through action state) so it survives React 19's automatic reset after a
+  // failed submit.
+  const [password, setPassword] = useState("");
+
+  // The field is now controlled, so it no longer auto-clears on success the
+  // way an uncontrolled input did — replicate that here explicitly.
+  useEffect(() => {
+    if (state.ok) setPassword("");
+  }, [state]);
 
   return (
     <form action={formAction} className="mt-2 flex flex-wrap items-center gap-2">
@@ -77,6 +109,8 @@ function ResetPasswordForm({ id, onDone }: { id: number; onDone: () => void }) {
         name="password"
         placeholder="New password (min. 8 chars)"
         autoComplete="new-password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
         className={`${inputCls} max-w-[220px] py-1.5`}
       />
       <button

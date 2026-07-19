@@ -7,7 +7,14 @@ import { SESSION_COOKIE, createSessionToken, sessionCookieOptions } from "@/lib/
 import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
 
-export type CompleteState = { error?: string; ok?: boolean; redirect?: string };
+export type CompleteState = {
+  error?: string;
+  ok?: boolean;
+  redirect?: string;
+  // Echoed back on failure so the company field survives React 19's
+  // post-action uncontrolled-input reset (same pattern as register/actions.ts).
+  values?: { company?: string };
+};
 
 /** Finish a Google sign-up: read the verified profile from the g_pending cookie,
    create an APPROVED member with the chosen account type, sign them in, and
@@ -25,6 +32,7 @@ export async function completeRegister(
 
   const type = String(formData.get("type") ?? "brand");
   const company = String(formData.get("company") ?? "").trim();
+  const values = { company };
   const role = type === "creator" ? "CREATOR" : "BRAND";
 
   const result = await createGoogleMember({
@@ -34,7 +42,7 @@ export async function completeRegister(
     role,
     company: company || null,
   });
-  if (!result.ok) return { error: t("register.errEmailTaken") };
+  if (!result.ok) return { error: t("register.errEmailTaken"), values };
 
   c.delete(G_PENDING_COOKIE);
 

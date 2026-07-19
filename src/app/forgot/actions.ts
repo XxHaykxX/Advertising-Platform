@@ -6,7 +6,7 @@ import { sendPasswordResetEmail, siteUrl } from "@/lib/mail";
 import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
 
-export type ForgotState = { ok?: boolean; error?: string };
+export type ForgotState = { ok?: boolean; error?: string; email?: string };
 
 /* Per-IP throttle, same shape as /login/actions.ts — this endpoint sends
    email, so it doubles as basic abuse protection against mail-bombing an
@@ -45,7 +45,7 @@ export async function requestPasswordReset(
   recordAttempt(ip);
 
   const email = String(formData.get("email") ?? "").trim();
-  if (!email) return { error: t("register.errFields") };
+  if (!email) return { error: t("register.errFields"), email };
 
   const rawToken = await createPasswordResetToken(email);
   if (rawToken) {
