@@ -16,6 +16,20 @@ import path from "node:path";
 //
 // Local dev falls back to the original public/uploads, so nothing changes there
 // and existing dev files keep working.
-export const UPLOADS_DIR = process.env.UPLOADS_DIR
-  ? path.resolve(process.env.UPLOADS_DIR)
-  : path.join(process.cwd(), "public", "uploads");
+//
+// Prod safety net: on Hostinger the app runs from …/domains/<domain>/nodejs and
+// that WHOLE dir is replaced on every git deploy — so writing inside it (the old
+// process.cwd()/public/uploads) silently wiped every upload on each push. If
+// UPLOADS_DIR isn't set, in production we therefore default to a sibling
+// `uploads` dir ONE LEVEL ABOVE cwd (…/domains/<domain>/uploads), which lives
+// outside the replaced app dir and survives deploys. Setting UPLOADS_DIR
+// explicitly (in the hPanel Node.js env UI) still overrides this.
+function resolveUploadsDir(): string {
+  if (process.env.UPLOADS_DIR) return path.resolve(process.env.UPLOADS_DIR);
+  if (process.env.NODE_ENV === "production") {
+    return path.resolve(process.cwd(), "..", "uploads");
+  }
+  return path.join(process.cwd(), "public", "uploads");
+}
+
+export const UPLOADS_DIR = resolveUploadsDir();
