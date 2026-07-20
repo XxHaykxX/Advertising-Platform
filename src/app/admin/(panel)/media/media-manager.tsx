@@ -1,9 +1,30 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Image from "next/image";
-import { ChevronLeft, ChevronRight, Copy, Trash2, X } from "lucide-react";
-import { deleteUpload, type MediaFile } from "@/lib/actions/uploads";
+import { ChevronLeft, ChevronRight, Copy, Loader2, Trash2, Upload, X } from "lucide-react";
+import { deleteUpload, uploadImage, type MediaFile } from "@/lib/actions/uploads";
+
+// Upload targets shown in the Media library. Each `slug` is the on-disk
+// subfolder under /uploads/ (see uploadImage's `dir` param); the grid groups
+// files by that first path segment so Cast & Crew / Catalog / Portfolio (and any
+// legacy folder like projects/actors/kino) each get their own section.
+const FOLDERS = [
+  { slug: "cast-crew", label: "Cast & Crew" },
+  { slug: "catalog", label: "Catalog" },
+  { slug: "portfolio", label: "Portfolio" },
+] as const;
+
+const FOLDER_LABEL: Record<string, string> = {
+  "cast-crew": "Cast & Crew",
+  catalog: "Catalog",
+  portfolio: "Portfolio",
+  actors: "Cast & Crew (legacy)",
+  projects: "Catalog (project posters)",
+  kino: "Demo — frames/posters",
+  hero: "Demo — hero banners",
+  misc: "Misc",
+};
 
 function humanSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -11,10 +32,65 @@ function humanSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
+/** First path segment after /uploads/ — the folder a file lives in. */
+function folderOf(path: string): string {
+  const parts = path.split("/").filter(Boolean); // ["uploads","<folder>","file"]
+  return parts.length >= 3 ? parts[1] : "misc";
+}
+
 export function MediaManager({ files }: { files: MediaFile[] }) {
   const [items, setItems] = useState(files);
   const [copied, setCopied] = useState<string | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+
+  const [folder, setFolder] = useState<string>(FOLDERS[0].slug);
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Flat, sorted list used by the lightbox (keeps prev/next simple); the grid
+  // renders the same items grouped by folder.
+  const flat = items;
+
+  const groups = useMemo(() => {
+    const byFolder = new Map<string, MediaFile[]>();
+    for (const f of items) {
+      const g = folderOf(f.path);
+      const arr = byFolder.get(g);
+      if (arr) arr.push(f);
+      else byFolder.set(g, [f]);
+    }
+    // Preferred folders first, then the rest alphabetically.
+    const preferred: string[] = FOLDERS.map((f) => f.slug);
+    return [...byFolder.entries()].sort(([a], [b]) => {
+      const ia = preferred.indexOf(a);
+      const ib = preferred.indexOf(b);
+      if (ia !== -1 || ib !== -1) return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+      return a.localeCompare(b);
+    });
+  }, [items]);
+
+  function onPickFiles(e: React.ChangeEvent<HTMLInputElement>) {
+    const picked = Array.from(e.target.files || []);
+    e.target.value = "";
+    if (!picked.length) return;
+    setError(null);
+    startTransition(async () => {
+      const added: MediaFile[] = [];
+      for (const file of picked) {
+        const fd = new FormData();
+        fd.append("file", file);
+        fd.append("dir", folder);
+        const res = await uploadImage(fd);
+        if (res.error) {
+          setError(res.error);
+          continue;
+        }
+        if (res.path) added.push({ path: res.path, size: file.size, mtime: Date.now() });
+      }
+      if (added.length) setItems((prev) => [...added, ...prev]);
+    });
+  }
 
   async function remove(path: string) {
     setItems((prev) => {
@@ -39,11 +115,11 @@ export function MediaManager({ files }: { files: MediaFile[] }) {
   }
 
   function showPrev() {
-    setLightboxIndex((i) => (i === null ? null : (i - 1 + items.length) % items.length));
+    setLightboxIndex((i) => (i === null ? null : (i - 1 + flat.length) % flat.length));
   }
 
   function showNext() {
-    setLightboxIndex((i) => (i === null ? null : (i + 1) % items.length));
+    setLightboxIndex((i) => (i === null ? null : (i + 1) % flat.length));
   }
 
   useEffect(() => {
@@ -55,55 +131,107 @@ export function MediaManager({ files }: { files: MediaFile[] }) {
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [lightboxIndex, items.length]);
+  }, [lightboxIndex, flat.length]);
 
-  if (items.length === 0) {
-    return <p className="text-sm text-muted-foreground">No uploaded files yet.</p>;
-  }
-
-  const activeFile = lightboxIndex !== null ? items[lightboxIndex] : null;
+  const activeFile = lightboxIndex !== null ? flat[lightboxIndex] : null;
 
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-      {items.map((f, i) => (
-        <div key={f.path} className="overflow-hidden rounded-xl border border-border bg-card">
+    <div className="space-y-8">
+      {/* Uploader — pick a folder, then one or more images. */}
+      <div className="rounded-xl border border-border bg-card p-4">
+        <div className="flex flex-wrap items-end gap-3">
+          <label className="block">
+            <span className="mb-1 block text-xs text-muted-foreground">Folder</span>
+            <select
+              value={folder}
+              onChange={(e) => setFolder(e.target.value)}
+              className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary/50"
+            >
+              {FOLDERS.map((f) => (
+                <option key={f.slug} value={f.slug}>
+                  {f.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
           <button
             type="button"
-            onClick={() => setLightboxIndex(i)}
-            aria-label="View image"
-            className="relative block aspect-square w-full bg-muted"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={pending}
+            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:opacity-90 disabled:opacity-60"
           >
-            <Image src={f.path} alt="" fill className="object-cover" sizes="200px" unoptimized />
+            {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+            {pending ? "Uploading…" : "Upload images"}
           </button>
-          <div className="space-y-2 p-3">
-            <p className="truncate text-xs text-muted-foreground" title={f.path}>
-              {f.path}
-            </p>
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-muted-foreground">{humanSize(f.size)}</span>
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => copy(f.path)}
-                  aria-label="Copy path"
-                  className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
-                >
-                  <Copy className="h-3.5 w-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => remove(f.path)}
-                  aria-label="Delete"
-                  className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-primary"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            </div>
-            {copied === f.path && <p className="text-xs text-success">Copied</p>}
-          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            multiple
+            onChange={onPickFiles}
+            className="hidden"
+          />
+          <p className="text-xs text-muted-foreground">
+            JPG / PNG / WebP, up to 8 MB each. Files go to <code>/uploads/{folder}/</code>.
+          </p>
         </div>
-      ))}
+        {error && <p className="mt-2 text-xs text-primary">{error}</p>}
+      </div>
+
+      {items.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No uploaded files yet.</p>
+      ) : (
+        groups.map(([groupSlug, groupFiles]) => (
+          <section key={groupSlug} className="space-y-3">
+            <h2 className="text-sm font-semibold text-foreground">
+              {FOLDER_LABEL[groupSlug] || groupSlug}{" "}
+              <span className="text-muted-foreground">({groupFiles.length})</span>
+            </h2>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+              {groupFiles.map((f) => (
+                <div key={f.path} className="overflow-hidden rounded-xl border border-border bg-card">
+                  <button
+                    type="button"
+                    onClick={() => setLightboxIndex(flat.findIndex((x) => x.path === f.path))}
+                    aria-label="View image"
+                    className="relative block aspect-square w-full bg-muted"
+                  >
+                    <Image src={f.path} alt="" fill className="object-cover" sizes="200px" unoptimized />
+                  </button>
+                  <div className="space-y-2 p-3">
+                    <p className="truncate text-xs text-muted-foreground" title={f.path}>
+                      {f.path}
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">{humanSize(f.size)}</span>
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => copy(f.path)}
+                          aria-label="Copy path"
+                          className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+                        >
+                          <Copy className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => remove(f.path)}
+                          aria-label="Delete"
+                          className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-primary"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                    {copied === f.path && <p className="text-xs text-success">Copied</p>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        ))
+      )}
 
       {activeFile && lightboxIndex !== null && (
         <div
@@ -113,7 +241,7 @@ export function MediaManager({ files }: { files: MediaFile[] }) {
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
         >
           <p className="absolute top-4 left-1/2 -translate-x-1/2 text-sm text-white/80">
-            {lightboxIndex + 1} / {items.length}
+            {lightboxIndex + 1} / {flat.length}
           </p>
           <button
             type="button"
@@ -123,7 +251,7 @@ export function MediaManager({ files }: { files: MediaFile[] }) {
           >
             <X className="h-5 w-5" />
           </button>
-          {items.length > 1 && (
+          {flat.length > 1 && (
             <button
               type="button"
               onClick={(e) => {
@@ -140,16 +268,9 @@ export function MediaManager({ files }: { files: MediaFile[] }) {
             className="relative h-[80vh] w-[80vw] max-h-[80vh] max-w-[80vw]"
             onClick={(e) => e.stopPropagation()}
           >
-            <Image
-              src={activeFile.path}
-              alt=""
-              fill
-              className="object-contain"
-              sizes="80vw"
-              unoptimized
-            />
+            <Image src={activeFile.path} alt="" fill className="object-contain" sizes="80vw" unoptimized />
           </div>
-          {items.length > 1 && (
+          {flat.length > 1 && (
             <button
               type="button"
               onClick={(e) => {
