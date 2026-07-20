@@ -69,7 +69,7 @@ export function CreatorSidebar({
   }, [pathname]);
 
   return (
-    <aside className="w-full shrink-0 lg:sticky lg:top-6 lg:h-fit lg:w-60 lg:self-start">
+    <aside className="w-full shrink-0 lg:sticky lg:top-20 lg:h-fit lg:w-60 lg:self-start">
       <nav className="flex flex-col gap-1">
         {items.map((item) => {
           const Icon = item.icon;

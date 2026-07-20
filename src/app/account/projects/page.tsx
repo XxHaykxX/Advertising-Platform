@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/ui/reveal";
 import { requireMember } from "@/lib/auth/require";
@@ -42,20 +41,10 @@ export default async function MyProjectsPage() {
   return (
     <>
       <Reveal>
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground md:text-4xl">
-              {t("account.myProjects")}
-            </h1>
-            <p className="mt-2 text-muted-foreground">{t("account.myProjectsSubtitle")}</p>
-          </div>
-          <Button asChild variant="primary" size="md" className="gap-2">
-            <Link href="/account/projects/new">
-              <Plus className="h-4 w-4" />
-              {t("account.submitProject")}
-            </Link>
-          </Button>
-        </div>
+        <h1 className="text-3xl font-bold text-foreground md:text-4xl">
+          {t("account.myProjects")}
+        </h1>
+        <p className="mt-2 text-muted-foreground">{t("account.myProjectsSubtitle")}</p>
       </Reveal>
 
       {projects.length === 0 ? (

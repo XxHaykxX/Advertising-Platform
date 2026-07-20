@@ -21,11 +21,15 @@ export function ProfileForm({
   name,
   email,
   avatar,
+  phone,
+  website,
   locale,
 }: {
   name: string;
   email: string;
   avatar: string;
+  phone: string;
+  website: string;
   locale: Locale;
 }) {
   const t = makeUI(locale);
@@ -66,6 +70,28 @@ export function ProfileForm({
             <p className="mb-2 text-xs text-muted-foreground">{t("account.profile.avatarHint")}</p>
             <MediaField name="avatar" initial={avatar} uploadDir="avatars" scope="member" label={t("btn.browse")} />
           </div>
+
+          <label className="mt-4 block max-w-md">
+            <span className={labelClass}>{t("account.profile.phone")}</span>
+            <input
+              name="phone"
+              type="tel"
+              defaultValue={phone}
+              placeholder={t("account.profile.phone")}
+              className={fieldClass}
+            />
+          </label>
+
+          <label className="mt-4 block max-w-md">
+            <span className={labelClass}>{t("account.profile.website")}</span>
+            <input
+              name="website"
+              type="url"
+              defaultValue={website}
+              placeholder={t("account.profile.website")}
+              className={fieldClass}
+            />
+          </label>
         </div>
 
         {state.error && (

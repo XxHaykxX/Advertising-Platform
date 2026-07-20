@@ -21,10 +21,12 @@ export async function logout(): Promise<{ ok: true; redirect: string }> {
 
 export type CreatorProfileFormState = { ok?: true; error?: string };
 
-/** Update the current CREATOR member's own profile — display name + avatar.
- *  Re-checks requireMember() + role itself (defense in depth; reachable via
- *  direct POST). Email stays read-only. The avatar path is whatever the
- *  member-scoped MediaField picked (/uploads/members/<id>/…) or "" to clear. */
+/** Update the current CREATOR member's own profile — display name, avatar,
+ *  phone, website. Re-checks requireMember() + role itself (defense in
+ *  depth; reachable via direct POST). Email stays read-only. The avatar path
+ *  is whatever the member-scoped MediaField picked (/uploads/members/<id>/…)
+ *  or "" to clear — validated below so a member can't point their avatar at
+ *  another member's uploads or an external URL. */
 export async function updateCreatorProfile(
   _prev: CreatorProfileFormState,
   formData: FormData,
@@ -35,13 +37,17 @@ export async function updateCreatorProfile(
   if (user.role !== "CREATOR") return { error: t("account.form.errRequired") };
 
   const name = String(formData.get("name") ?? "").trim();
-  const avatar = String(formData.get("avatar") ?? "").trim();
+  const rawAvatar = String(formData.get("avatar") ?? "").trim();
+  const phone = String(formData.get("phone") ?? "").trim();
+  const website = String(formData.get("website") ?? "").trim();
 
   if (!name) return { error: t("account.profile.nameRequired") };
 
+  const avatar = rawAvatar === "" || rawAvatar.startsWith(`/uploads/members/${user.id}/`) ? rawAvatar : "";
+
   await prisma.user.update({
     where: { id: user.id },
-    data: { name, avatar: avatar || null },
+    data: { name: name.slice(0, 120), avatar: avatar || null, phone: phone || null, website: website || null },
   });
 
   revalidatePath("/account");

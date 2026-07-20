@@ -50,10 +50,12 @@ model User {
   isActive     Boolean       @default(true)
   createdAt    DateTime      @default(now())
   avatar       String? // URL or data-URL avatar; falls back to initials from `name`
+  phone        String? // contact phone (brand + creator profile)
 
-  // ── BRAND-only profile fields (#23) — nullable so existing rows (staff +
-  // CREATOR members) stay valid without a backfill ──
-  website         String? // brand's homepage URL
+  // ── member profile fields (#23) — nullable so existing rows (staff) stay
+  // valid without a backfill. `website` is shared by brand + creator; the
+  // brandCategories/budgetRange pair is brand-only. ──
+  website         String? // homepage / portfolio URL (brand + creator)
   brandCategories String? @db.Text // JSON string[] — see src/lib/brand-categories.ts
   budgetRange     String? // one of BUDGET_RANGES in src/lib/brand-categories.ts
 
