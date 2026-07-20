@@ -6,6 +6,7 @@ import path from "node:path";
 import { requireUser } from "@/lib/auth/require";
 import { UPLOADS_DIR } from "@/lib/uploads-dir";
 import { findUploadUsage } from "@/lib/uploads-usage";
+import { optimizeImage, kindForDir } from "@/lib/images/optimize";
 
 // All uploads live under UPLOADS_DIR (see that module — an env-pinned absolute
 // path on Hostinger, public/uploads locally) and are served as /uploads/… by
@@ -48,10 +49,19 @@ export async function uploadImage(fd: FormData): Promise<UploadResult> {
   if (!ext) return { error: "Unsupported type — use JPG, PNG, WebP, GIF or AVIF." };
 
   const dir = safeSegment(String(fd.get("dir") || "misc"));
-  const name = `${Date.now()}-${randomUUID().slice(0, 8)}.${ext}`;
+
+  // Optimize (resize + recompress) to the target for this dir before saving.
+  let optimized;
+  try {
+    optimized = await optimizeImage(Buffer.from(await file.arrayBuffer()), kindForDir(dir));
+  } catch {
+    return { error: "Could not process image." };
+  }
+
+  const name = `${Date.now()}-${randomUUID().slice(0, 8)}.${optimized.ext}`;
   const destDir = path.join(UPLOAD_ROOT, dir);
   await mkdir(destDir, { recursive: true });
-  await writeFile(path.join(destDir, name), Buffer.from(await file.arrayBuffer()));
+  await writeFile(path.join(destDir, name), optimized.buffer);
 
   return { path: `/uploads/${dir}/${name}` };
 }

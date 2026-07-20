@@ -4,6 +4,7 @@ import { forwardRef, useImperativeHandle, useState } from "react";
 import Image from "next/image";
 import { ImageIcon, Trash2 } from "lucide-react";
 import { MediaPicker, type MediaPickerScope } from "@/components/media-picker";
+import { imageSizeHint } from "@/lib/images/size-hint";
 
 /** Imperative handle (#26) — lets a sibling component (the "Generate poster"
  *  panel) push a freshly generated image path into an uncontrolled
@@ -73,6 +74,8 @@ export const ImageUploader = forwardRef<ImageUploaderHandle, {
         </button>
         {trailing}
       </div>
+
+      <p className="text-xs text-muted-foreground">{imageSizeHint(dir)}</p>
 
       <MediaPicker
         open={pickerOpen}

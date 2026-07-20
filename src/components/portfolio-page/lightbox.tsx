@@ -72,7 +72,7 @@ export function CaseLightbox({
               <X className="h-5 w-5" />
             </button>
 
-            <div className="relative aspect-video w-full bg-muted">
+            <div className="relative aspect-[16/10] w-full bg-muted">
               <AnimatePresence mode="wait">
                 <motion.div
                   key={active.id}

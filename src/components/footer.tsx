@@ -28,11 +28,75 @@ const SOCIALS = [
 export function Footer({
   locale = DEFAULT_LOCALE,
   currency = DEFAULT_CURRENCY,
+  minimal = false,
 }: {
   locale?: Locale;
   currency?: CurrencyCode;
+  /** Compact footer for the signed-in member cabinet (brand/creator): drops the
+   *  public-site nav columns (Product/Company/Legal) — they'd only bounce a
+   *  cabinet-confined member back — keeping just wordmark, support contacts and
+   *  the locale/currency switchers. */
+  minimal?: boolean;
 }) {
   const t = makeUI(locale);
+
+  if (minimal) {
+    return (
+      <footer className="bg-section border-t border-border">
+        <Container className="py-8">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <span className="text-lg font-bold text-foreground">
+                <span className="text-primary">i</span>Govazd
+              </span>
+              <p className="mt-1 text-[13px] text-muted-foreground">
+                © 2026 iGovazd. {t("footer.rights")}
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-4">
+              <a
+                href="mailto:hello@igovazd.am"
+                className="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-primary"
+              >
+                <Mail className="h-4 w-4 shrink-0" />
+                hello@igovazd.am
+              </a>
+              <a
+                href="tel:+37400000000"
+                className="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-primary"
+              >
+                <Phone className="h-4 w-4 shrink-0" />
+                +374 00 000 000
+              </a>
+              <a
+                href="https://t.me/igovazd"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Telegram"
+                className="text-muted-foreground transition-colors hover:text-primary"
+              >
+                <TelegramIcon className="h-5 w-5" />
+              </a>
+              <a
+                href="https://wa.me/37400000000"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="WhatsApp"
+                className="text-muted-foreground transition-colors hover:text-primary"
+              >
+                <WhatsAppIcon className="h-5 w-5" />
+              </a>
+              <div className="flex items-center gap-2">
+                <LocaleSwitcher current={locale} openUp menuLeft />
+                <CurrencySwitcher current={currency} openUp menuLeft />
+              </div>
+            </div>
+          </div>
+        </Container>
+      </footer>
+    );
+  }
+
   return (
     <footer className="bg-section border-t border-border">
       <Container className="py-16 max-sm:py-12">

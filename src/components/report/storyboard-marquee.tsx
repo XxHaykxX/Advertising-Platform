@@ -100,7 +100,7 @@ export function StoryboardMarquee({ images, alt }: { images: string[]; alt: stri
       {doubled.map((src, i) => (
         <div
           key={i}
-          className="relative mr-3 aspect-video w-[clamp(200px,40vw,300px)] shrink-0 overflow-hidden rounded-lg border border-border bg-muted"
+          className="relative mr-3 aspect-[16/10] w-[clamp(200px,40vw,300px)] shrink-0 overflow-hidden rounded-lg border border-border bg-muted"
         >
           <Image
             src={src}

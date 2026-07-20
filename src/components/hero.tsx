@@ -54,7 +54,7 @@ function ParallaxColumn({
           <div
             key={i}
             aria-hidden
-            className="relative aspect-video w-full overflow-hidden rounded-xl bg-neutral-900 ring-1 ring-white/10 shadow-2xl shadow-black/60"
+            className="relative aspect-[16/10] w-full overflow-hidden rounded-xl bg-neutral-900 ring-1 ring-white/10 shadow-2xl shadow-black/60"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img

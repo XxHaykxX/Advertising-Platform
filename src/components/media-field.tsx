@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { ImageIcon, X } from "lucide-react";
 import { MediaPicker, type MediaPickerScope } from "@/components/media-picker";
+import { imageSizeHint } from "@/lib/images/size-hint";
 
 // Drop-in replacement for the old "<input> a URL" image fields (partner logo,
 // portfolio image, …). Mirrors the chosen /uploads/… path into a hidden input
@@ -59,6 +60,8 @@ export function MediaField({
           )}
         </div>
       </div>
+
+      <p className="text-xs text-muted-foreground">{imageSizeHint(uploadDir)}</p>
 
       <MediaPicker
         open={open}

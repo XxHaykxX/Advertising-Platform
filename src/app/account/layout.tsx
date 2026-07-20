@@ -51,7 +51,7 @@ export default async function AccountLayout({ children }: { children: ReactNode 
       ) : (
         <main className="flex-1">{children}</main>
       )}
-      <Footer locale={locale} currency={currency} />
+      <Footer locale={locale} currency={currency} minimal />
       <PushSubscribe locale={locale} vapidPublicKey={process.env.VAPID_PUBLIC_KEY ?? ""} />
       <NotificationToaster locale={locale} />
     </div>

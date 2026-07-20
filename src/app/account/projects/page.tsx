@@ -65,7 +65,7 @@ export default async function MyProjectsPage() {
             const viewable = p.moderationStatus === "APPROVED" && p.isActive;
             const inner = (
               <div className="h-full overflow-hidden rounded-2xl border border-border bg-card">
-                <div className="aspect-[2/3] w-full bg-muted">
+                <div className="aspect-[16/10] w-full bg-muted">
                   {p.poster && (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={p.poster} alt="" className="h-full w-full object-cover" />

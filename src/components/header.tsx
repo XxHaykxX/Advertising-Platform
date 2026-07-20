@@ -248,7 +248,9 @@ export function Header({
 
           {/* Right cluster (desktop) */}
           <div className="hidden items-center gap-3 lg:flex">
-            <LocaleSwitcher current={locale} onDark={onDark} />
+            {/* Members (BRAND/CREATOR) get no language bar in the top nav — it
+                lives in their cabinet footer instead. */}
+            {!isMember && <LocaleSwitcher current={locale} onDark={onDark} />}
             {/* Currency switcher lives only in the footer now — removed from the
                 top nav per product decision (V7). */}
             {user ? (
@@ -301,11 +303,13 @@ export function Header({
                     {item.label}
                   </Link>
                 ))}
-              <div className="mt-2 flex items-center gap-2 border-t border-border pt-4">
-                <div className="ml-auto flex items-center gap-2">
-                  <LocaleSwitcher current={locale} />
+              {!isMember && (
+                <div className="mt-2 flex items-center gap-2 border-t border-border pt-4">
+                  <div className="ml-auto flex items-center gap-2">
+                    <LocaleSwitcher current={locale} />
+                  </div>
                 </div>
-              </div>
+              )}
               {user ? (
                 <div className="flex flex-col gap-2 border-t border-border pt-4">
                   <Link

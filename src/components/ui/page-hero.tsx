@@ -134,7 +134,7 @@ export function PageHero({
           {[...FRAMES, ...FRAMES].map((n, i) => (
             <div
               key={i}
-              className="relative aspect-video h-full shrink-0 overflow-hidden rounded-lg ring-1 ring-white/10"
+              className="relative aspect-[16/10] h-full shrink-0 overflow-hidden rounded-lg ring-1 ring-white/10"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img

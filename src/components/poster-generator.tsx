@@ -200,7 +200,7 @@ export function PosterGenerator({
           </div>
 
           {(pending || resultPath) && (
-            <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-border bg-muted">
+            <div className="relative aspect-[16/10] w-full overflow-hidden rounded-lg border border-border bg-muted">
               {resultPath && !pending && (
                 <Image src={resultPath} alt="" fill className="object-cover" sizes="400px" unoptimized />
               )}
