@@ -5,7 +5,6 @@ import { Featured } from "@/components/featured";
 import { Trust } from "@/components/trust";
 import HowItWorks from "@/components/how-it-works";
 import GetStarted from "@/components/get-started";
-import Why from "@/components/why";
 import Faq from "@/components/faq";
 import Contact from "@/components/contact";
 import { Footer } from "@/components/footer";
@@ -28,7 +27,6 @@ export default async function Home() {
         <Featured projects={projects.slice(0, 6)} locale={locale} />
         <Trust locale={locale} />
         <GetStarted locale={locale} />
-        <Why locale={locale} />
         <Faq locale={locale} />
         <Contact locale={locale} />
       </main>

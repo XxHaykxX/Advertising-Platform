@@ -8,6 +8,7 @@ import { Container } from "@/components/ui/container";
 import { Reveal } from "@/components/ui/reveal";
 import { Button } from "@/components/ui/button";
 import { AboutHero } from "@/components/about-page/about-hero";
+import Why from "@/components/why";
 import { PartnersMarquee } from "@/components/partners-page/partners-marquee";
 import { PartnersGrid } from "@/components/partners-page/partners-grid";
 import { getLocale } from "@/lib/data/locale";
@@ -42,19 +43,22 @@ export default async function AboutPage() {
 
       <AboutHero locale={locale} />
 
-      {/* ── Mission — oversized editorial statement ───────────── */}
+      {/* ── Mission — centered editorial lead ─────────────────── */}
       <Section>
         <Container>
-          <div className="mx-auto max-w-4xl">
+          <div className="mx-auto max-w-3xl text-center">
             <Reveal>
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary">
+              <span className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-primary">
                 {t("about.missionTitle")}
-              </p>
+              </span>
             </Reveal>
             <Reveal delay={0.06}>
-              <h2 className="mt-5 text-balance text-3xl font-bold leading-[1.15] tracking-tight text-foreground sm:text-4xl md:text-[2.75rem]">
+              <p className="mt-7 text-balance text-xl font-medium leading-relaxed text-foreground sm:text-2xl sm:leading-relaxed">
                 {t("about.missionBody")}
-              </h2>
+              </p>
+            </Reveal>
+            <Reveal delay={0.12}>
+              <span className="mx-auto mt-9 block h-px w-16 bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
             </Reveal>
           </div>
         </Container>
@@ -140,6 +144,9 @@ export default async function AboutPage() {
           </div>
         </Container>
       </Section>
+
+      {/* ── Why we built this — story + founders ──────────────── */}
+      <Why locale={locale} />
 
       {/* ── Network — production studios & distribution partners ─ */}
       {partners.length > 0 ? (
