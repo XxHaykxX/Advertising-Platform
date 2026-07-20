@@ -1049,6 +1049,11 @@ export const UI: Record<string, Dict> = {
     en: "Poster generation failed. Please try again later.",
     hy: "Չհաջողվեց ստեղծել պաստառը։ Փորձեք ավելի ուշ։",
   },
+  "account.form.errPosterLimit": {
+    ru: "Достигнут дневной лимит генераций. Попробуйте завтра.",
+    en: "Daily generation limit reached. Please try again tomorrow.",
+    hy: "Օրական սահմանաչափը սպառված է։ Փորձեք վաղը։",
+  },
   "account.form.submitted": {
     ru: "Проект отправлен на модерацию. Мы уведомим вас, когда он будет рассмотрен.",
     en: "Project submitted for review. We'll let you know once it's been reviewed.",

@@ -4,11 +4,13 @@ import { randomUUID } from "node:crypto";
 import { mkdir, writeFile, unlink, readdir, stat } from "node:fs/promises";
 import path from "node:path";
 import { requireUser } from "@/lib/auth/require";
+import { UPLOADS_DIR } from "@/lib/uploads-dir";
 
-// All uploads live under public/uploads and are served as /uploads/… by Next's
-// static handler. On Hostinger the Node process is long-lived, so files written
-// at runtime persist on disk (unlike serverless).
-const UPLOAD_ROOT = path.join(process.cwd(), "public", "uploads");
+// All uploads live under UPLOADS_DIR (see that module — an env-pinned absolute
+// path on Hostinger, public/uploads locally) and are served as /uploads/… by
+// the Node route at app/uploads/[...path]/route.ts. On Hostinger the Node
+// process is long-lived, so files written at runtime persist on disk.
+const UPLOAD_ROOT = UPLOADS_DIR;
 const MAX_BYTES = 8 * 1024 * 1024; // 8 MB
 const EXT_BY_TYPE: Record<string, string> = {
   "image/jpeg": "jpg",

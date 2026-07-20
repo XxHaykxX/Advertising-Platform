@@ -19,6 +19,7 @@ import "server-only";
 import sharp from "sharp";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { UPLOADS_DIR } from "@/lib/uploads-dir";
 
 export type GeneratePosterInput = {
   /** Dynamic prompt base — the caller (UI) prefills this from
@@ -54,7 +55,11 @@ function apiKey(): string {
 }
 
 function modelName(): string {
-  return process.env.GOOGLE_IMAGE_MODEL || "gemini-3-pro-image";
+  // Default to the cheaper classic Nano Banana (gemini-2.5-flash-image) — it's
+  // ~3-6x cheaper per image than gemini-3-pro-image (Nano Banana Pro). Set
+  // GOOGLE_IMAGE_MODEL=gemini-3-pro-image to opt back into the pricier, higher
+  // detail / better-text Pro model.
+  return process.env.GOOGLE_IMAGE_MODEL || "gemini-2.5-flash-image";
 }
 
 function buildPromptText(prompt: string, posterText?: string): string {
@@ -120,7 +125,7 @@ async function loadAvatarBuffer(avatarUrl: string): Promise<Buffer | null> {
       return b64 ? Buffer.from(b64, "base64") : null;
     }
     if (avatarUrl.startsWith("/uploads/")) {
-      const abs = path.join(process.cwd(), "public", avatarUrl);
+      const abs = path.join(UPLOADS_DIR, avatarUrl.slice("/uploads/".length));
       return await readFile(abs);
     }
     if (/^https?:\/\//.test(avatarUrl)) {

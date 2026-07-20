@@ -10,8 +10,9 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { UPLOADS_DIR } from "@/lib/uploads-dir";
 
-const UPLOAD_ROOT = path.join(process.cwd(), "public", "uploads");
+const UPLOAD_ROOT = UPLOADS_DIR;
 const EXT_BY_TYPE: Record<string, string> = {
   "image/jpeg": "jpg",
   "image/png": "png",

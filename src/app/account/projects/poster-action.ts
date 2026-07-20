@@ -11,6 +11,7 @@ import { requireMember } from "@/lib/auth/require";
 import { prisma } from "@/lib/prisma";
 import { generatePoster } from "@/lib/image-gen";
 import { saveGeneratedImage } from "@/lib/uploads-fs";
+import { checkPosterQuota } from "@/lib/rate-limit";
 import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
 
@@ -31,6 +32,10 @@ export async function generateCreatorPosterAction(
   const t = makeUI(await getLocale());
 
   if (!input.prompt?.trim()) return { error: t("account.form.errPosterPrompt") };
+
+  // Hard per-user daily ceiling on the paid image API (abuse / runaway-cost
+  // guard). Checked before any API call, since the API call is what costs.
+  if (!checkPosterQuota(String(user.id)).ok) return { error: t("account.form.errPosterLimit") };
 
   let ownerAvatarUrl: string | undefined;
   if (input.withLogo) {

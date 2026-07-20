@@ -8,6 +8,7 @@ import { requireContentEditor } from "@/lib/auth/require";
 import { prisma } from "@/lib/prisma";
 import { generatePoster } from "@/lib/image-gen";
 import { saveGeneratedImage } from "@/lib/uploads-fs";
+import { checkPosterQuota } from "@/lib/rate-limit";
 
 export type GeneratePosterActionInput = {
   prompt: string;
@@ -29,6 +30,12 @@ export async function generatePosterAction(
   const user = await requireContentEditor();
 
   if (!input.prompt?.trim()) return { error: "Prompt is required." };
+
+  // Hard per-user daily ceiling on the paid image API (abuse / runaway-cost
+  // guard). Checked before any API call, since the API call is what costs.
+  if (!checkPosterQuota(String(user.id)).ok) {
+    return { error: "Daily generation limit reached. Please try again tomorrow." };
+  }
 
   let ownerAvatarUrl: string | undefined;
   if (input.withLogo) {
