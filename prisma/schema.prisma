@@ -64,6 +64,7 @@ model User {
   favorites Favorite[] // Favorite (shortlist) rows this user (as a BRAND) saved
   passwordResetTokens PasswordResetToken[]
   notifications Notification[]
+  pushSubscriptions PushSubscription[]
 }
 
 /// In-app notification (#25 / V9). Text is NOT stored translated — only a
@@ -83,6 +84,24 @@ model Notification {
 
   @@index([userId, read])
   @@index([userId, createdAt])
+}
+
+/// Web Push subscription (#push, 2026-07-20). One row per browser/device a user
+/// granted notification permission on. `endpoint` is the push-service URL (long
+/// → TEXT, so no unique index; dedup is done in code by deleting rows with the
+/// same endpoint before inserting). p256dh/auth are the client's encryption keys
+/// (from PushSubscription.getKey). Stale endpoints (410/404 on send) are pruned.
+model PushSubscription {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  endpoint  String   @db.Text
+  p256dh    String   @db.Text
+  auth      String   @db.Text
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 /// One-time password-reset tokens (email flow, #forgot-password). Only a

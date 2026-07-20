@@ -5,6 +5,7 @@ import type { Role } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireSuperadmin } from "@/lib/auth/require";
 import { sendMail, siteUrl } from "@/lib/mail";
+import { sendWebPushToMany } from "@/lib/push/web-push";
 
 /* Admin broadcast (#push/email) — a super-admin composes one message and fans
    it out to a filtered set of members, either as an in-app notification
@@ -72,6 +73,17 @@ export async function sendPushBroadcast(
       link: link || "",
     })),
   });
+
+  // Best-effort Web Push to the same recipients so it reaches them even with
+  // the site closed / on their phone.
+  try {
+    await sendWebPushToMany(
+      recipients.map((r) => r.id),
+      { title: title || "iGovazd", body: message, url: link || undefined },
+    );
+  } catch (err) {
+    console.error("[broadcast] web-push failed:", err);
+  }
 
   // Refresh both member notification feeds so badges/lists update.
   revalidatePath("/account/notifications");

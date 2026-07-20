@@ -7,8 +7,6 @@ import { LayoutDashboard, Search, Heart, User, Bell, LogOut } from "lucide-react
 import { cn } from "@/lib/utils";
 import { LogoutButton } from "@/components/logout-button";
 import type { Locale } from "@/lib/i18n";
-import { getInterestCount } from "./actions";
-import { INTEREST_CHANGED_EVENT } from "./interest-events";
 import { getUnreadNotificationCount } from "@/lib/actions/notifications";
 
 type NavItem = {
@@ -33,7 +31,7 @@ export function BrandSidebar({
   labels: {
     dashboard: string;
     browse: string;
-    interests: string;
+    favorites: string;
     profile: string;
     notifications: string;
     logout: string;
@@ -46,7 +44,7 @@ export function BrandSidebar({
   const items: NavItem[] = [
     { href: "/account/brand", label: labels.dashboard, icon: LayoutDashboard, exact: true },
     { href: "/account/brand/browse", label: labels.browse, icon: Search },
-    { href: "/account/brand/interests", label: labels.interests, icon: Heart },
+    { href: "/account/brand/favorites", label: labels.favorites, icon: Heart },
     { href: "/account/brand/notifications", label: labels.notifications, icon: Bell },
     { href: "/account/brand/profile", label: labels.profile, icon: User },
   ];
@@ -56,18 +54,13 @@ export function BrandSidebar({
     return pathname.startsWith(item.href);
   }
 
-  // Interests badge (#24) — same direct-Server-Action-call pattern as
+  // Notifications badge — same direct-Server-Action-call pattern as
   // admin-nav's getPendingModerationCount: refetched on every route change,
-  // which covers navigating back to a page after an add/remove elsewhere.
-  const [interestCount, setInterestCount] = useState(0);
+  // which covers navigating back to a page after it changes elsewhere.
+  // Favorites (#22) is a private shortlist and gets no badge.
   const [unreadCount, setUnreadCount] = useState(0);
   useEffect(() => {
     let alive = true;
-    getInterestCount()
-      .then((n) => {
-        if (alive) setInterestCount(n);
-      })
-      .catch(() => {});
     getUnreadNotificationCount()
       .then((n) => {
         if (alive) setUnreadCount(n);
@@ -77,23 +70,6 @@ export function BrandSidebar({
       alive = false;
     };
   }, [pathname]);
-
-  // IA-8/IA-9 — the express/withdraw toggle on Browse and the remove button
-  // on My Interests act on the *same* route, so the effect above never
-  // re-runs (its deps are `[pathname]`) and the badge was stuck until the
-  // next navigation or a full reload. Those buttons emit
-  // INTEREST_CHANGED_EVENT once their Server Action resolves `ok`; refetch
-  // the count from the server here so add and remove both reflect
-  // immediately without double-counting anything client-side.
-  useEffect(() => {
-    function onInterestChanged() {
-      getInterestCount()
-        .then(setInterestCount)
-        .catch(() => {});
-    }
-    window.addEventListener(INTEREST_CHANGED_EVENT, onInterestChanged);
-    return () => window.removeEventListener(INTEREST_CHANGED_EVENT, onInterestChanged);
-  }, []);
 
   return (
     <aside className="w-full shrink-0 lg:sticky lg:top-20 lg:h-fit lg:w-60 lg:self-start">
@@ -114,11 +90,6 @@ export function BrandSidebar({
             >
               <Icon className="h-4 w-4 shrink-0" />
               {item.label}
-              {item.href === "/account/brand/interests" && interestCount > 0 && (
-                <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-primary px-1.5 text-[11px] font-semibold text-primary-foreground">
-                  {interestCount}
-                </span>
-              )}
               {item.href === "/account/brand/notifications" && unreadCount > 0 && (
                 <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-primary px-1.5 text-[11px] font-semibold text-primary-foreground">
                   {unreadCount}

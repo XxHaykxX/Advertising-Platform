@@ -14,6 +14,7 @@ import { makeUI } from "@/lib/i18n";
 function revalidateFavoritePaths() {
   revalidatePath("/account/brand/browse");
   revalidatePath("/catalog");
+  revalidatePath("/account/brand/favorites");
 }
 
 export type FavoriteResult = { ok: true } | { ok: false; error: string };

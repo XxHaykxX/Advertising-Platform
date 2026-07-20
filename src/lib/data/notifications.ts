@@ -1,7 +1,18 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import type { Role } from "@prisma/client";
-import type { NotificationData, NotificationType } from "@/lib/notifications";
+import { renderNotification, type NotificationData, type NotificationType } from "@/lib/notifications";
+import { makeUI, DEFAULT_LOCALE } from "@/lib/i18n";
+import { sendWebPush, sendWebPushToMany } from "@/lib/push/web-push";
+
+/** Build the Web Push payload for a notification. Rendered in the default locale
+ *  (we don't persist a per-user locale) — fine for a short system push; the
+ *  in-app feed still renders in the viewer's current locale. */
+function pushPayload(n: NewNotification) {
+  const t = makeUI(DEFAULT_LOCALE);
+  const { title, body } = renderNotification(t, n.type, n.data ?? {});
+  return { title, body, url: n.link || undefined };
+}
 
 /** Notification data layer (#25 / V9). Creation helpers are called from the
  *  event sites (interest expressed, project submitted/approved/rejected); the
@@ -32,6 +43,13 @@ export async function createNotification(
   } catch (err) {
     console.error("[notifications] create failed:", err);
   }
+  // Best-effort Web Push — the in-app row is already saved, so a push failure
+  // (no subscription / no VAPID keys) must not affect the caller.
+  try {
+    await sendWebPush(userId, pushPayload(n));
+  } catch (err) {
+    console.error("[notifications] web-push failed:", err);
+  }
 }
 
 /** Fan-out to every active user holding one of `roles`, optionally excluding one
@@ -61,6 +79,8 @@ export async function notifyRoles(
         link: n.link ?? "",
       })),
     });
+    // Best-effort Web Push fan-out to the same recipients.
+    await sendWebPushToMany(recipients.map((r) => r.id), pushPayload(n));
   } catch (err) {
     console.error("[notifications] notifyRoles failed:", err);
   }
@@ -76,6 +96,15 @@ export async function getNotifications(userId: number, limit = 30) {
 
 export async function getUnreadCount(userId: number): Promise<number> {
   return prisma.notification.count({ where: { userId, read: false } });
+}
+
+/** Most recent unread notifications — feeds the live in-app toaster poll. */
+export async function getUnreadNotifications(userId: number, limit = 5) {
+  return prisma.notification.findMany({
+    where: { userId, read: false },
+    orderBy: { createdAt: "desc" },
+    take: limit,
+  });
 }
 
 /** Mark a single notification read — scoped to the owner so a user can't flip

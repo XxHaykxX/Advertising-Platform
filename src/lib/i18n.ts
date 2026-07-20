@@ -130,6 +130,7 @@ export const UI: Record<string, Dict> = {
   "btn.requestDetails": { ru: "Связаться", en: "Contact us", hy: "Կապվել" },
   "btn.expressInterest": { ru: "Проявить интерес", en: "Express Interest", hy: "Ցուցաբերել հետաքրքրություն" },
   "btn.removeInterest": { ru: "Убрать из интересов", en: "Remove from Interests", hy: "Հանել հետաքրքրություններից" },
+  "btn.removeFavorite": { ru: "Убрать", en: "Remove", hy: "Հեռացնել" },
   "cta.loginToApply": {
     ru: "Войдите, чтобы оставить заявку",
     en: "Sign in to express interest",
@@ -1263,6 +1264,7 @@ export const UI: Record<string, Dict> = {
   // (sidebar nav Dashboard/Log Out/Browse Projects reuse existing base keys —
   // account.title, account.logout, nav.browseProjects)
   "account.brand.navInterests": { ru: "Мои интересы", en: "My Interests", hy: "Իմ հետաքրքրությունները" },
+  "account.brand.navFavorites": { ru: "Избранное", en: "Favorites", hy: "Ընտրանի" },
   "account.brand.navProfile": { ru: "Мой профиль", en: "My Profile", hy: "Իմ պրոֆիլը" },
   "account.brand.navNotifications": { ru: "Уведомления", en: "Notifications", hy: "Ծանուցումներ" },
   "account.brand.soon": { ru: "Скоро", en: "Soon", hy: "Շուտով" },
@@ -1304,6 +1306,13 @@ export const UI: Record<string, Dict> = {
   "admin.interests.contact": { ru: "Контакт", en: "Contact", hy: "Կոնտակտ" },
   "notif.generic.title": { ru: "Уведомление", en: "Notification", hy: "Ծանուցում" },
   "notif.broadcast.title": { ru: "Объявление", en: "Announcement", hy: "Հայտարարություն" },
+  "push.title": { ru: "Уведомления", en: "Notifications", hy: "Ծանուցումներ" },
+  "push.subtitle": {
+    ru: "Получайте push, даже когда сайт закрыт",
+    en: "Get push even when the site is closed",
+    hy: "Ստացեք push նույնիսկ փակ կայքի դեպքում",
+  },
+  "push.enable": { ru: "Включить", en: "Enable", hy: "Միացնել" },
 
   // ── dashboard ──
   "account.brand.welcomeBack": { ru: "С возвращением, {name}", en: "Welcome back, {name}", hy: "Բարի վերադարձ, {name}" },
@@ -1342,6 +1351,20 @@ export const UI: Record<string, Dict> = {
   "account.brand.interestStatusMutual": { ru: "Взаимный интерес", en: "Mutual interest", hy: "Փոխադարձ հետաքրքրություն" },
   "account.brand.interestStatusDeclined": { ru: "Отклонено", en: "Declined", hy: "Մերժված" },
   "account.brand.interestedOn": { ru: "Интерес проявлен {date}", en: "Interest expressed {date}", hy: "Հետաքրքրությունը հայտնվել է {date}" },
+
+  // ── favorites (#22) ──
+  "account.brand.favoritesSubtitle": {
+    ru: "Проекты, которые вы сохранили",
+    en: "Projects you saved",
+    hy: "Ձեր պահած նախագծերը",
+  },
+  "account.brand.noFavoritesTitle": { ru: "Пока нет избранного", en: "No favorites yet", hy: "Ընտրանին դատարկ է" },
+  "account.brand.noFavoritesBody": {
+    ru: "Нажмите на сердечко на проекте, чтобы сохранить его сюда.",
+    en: "Tap the heart on a project to save it here.",
+    hy: "Սեղմեք նախագծի սրտիկը՝ այն այստեղ պահելու համար։",
+  },
+  "account.brand.favoritedOn": { ru: "Сохранено {date}", en: "Saved on {date}", hy: "Պահված է {date}" },
 
   // ── browse ──
   "account.brand.alreadyInterested": { ru: "Интерес отправлен", en: "Interest Sent", hy: "Հետաքրքրությունն ուղարկված է" },

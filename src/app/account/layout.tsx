@@ -6,6 +6,8 @@ import { makeUI } from "@/lib/i18n";
 import { Container } from "@/components/ui/container";
 import { SiteHeader } from "@/components/site-header";
 import { Footer } from "@/components/footer";
+import { PushSubscribe } from "@/components/notifications/push-subscribe";
+import { NotificationToaster } from "@/components/notifications/notification-toaster";
 import { CreatorSidebar } from "./creator-sidebar";
 import { logout } from "./actions";
 
@@ -50,6 +52,8 @@ export default async function AccountLayout({ children }: { children: ReactNode 
         <main className="flex-1">{children}</main>
       )}
       <Footer locale={locale} currency={currency} />
+      <PushSubscribe locale={locale} />
+      <NotificationToaster locale={locale} />
     </div>
   );
 }
