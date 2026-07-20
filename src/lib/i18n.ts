@@ -685,6 +685,7 @@ export const UI: Record<string, Dict> = {
 
   // ── report: hero / key facts / cast ────────────
   "report.backToCatalog": { ru: "Назад к каталогу", en: "Back to Catalog", hy: "Վերադառնալ կատալոգ" },
+  "report.back": { ru: "Назад", en: "Back", hy: "Հետ" },
   "report.catalogLabel": { ru: "Каталог", en: "Catalog", hy: "Կատալոգ" },
   "report.share": { ru: "Поделиться", en: "Share", hy: "Կիսվել" },
   // IA-12: window.print() opens the print dialog, not a download — label says

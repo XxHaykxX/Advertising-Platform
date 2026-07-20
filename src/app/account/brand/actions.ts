@@ -18,6 +18,7 @@ function revalidateBrandPaths() {
   revalidatePath("/account/brand");
   revalidatePath("/account/brand/browse");
   revalidatePath("/account/brand/interests");
+  revalidatePath("/account/brand/profile");
 }
 
 export type ExpressInterestResult = { ok: true } | { ok: false; error: string };

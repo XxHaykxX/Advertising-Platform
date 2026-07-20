@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MultiSelect } from "@/components/ui/multi-select";
@@ -18,11 +19,23 @@ const cardClass = "rounded-2xl border border-border bg-card p-6";
 
 export function ProfileForm({ profile, locale }: { profile: BrandProfileDTO; locale: Locale }) {
   const t = makeUI(locale);
+  const router = useRouter();
   const [state, formAction, pending] = useActionState<BrandProfileFormState, FormData>(
     updateBrandProfile,
     initialState,
   );
   const [categories, setCategories] = useState<string[]>(profile.brandCategories);
+  // Controlled so the value survives React's automatic form reset after the
+  // server action — an uncontrolled defaultValue reverts to the (stale) prop
+  // until the page refreshes (IA-15).
+  const [budgetRange, setBudgetRange] = useState(profile.budgetRange);
+
+  // After a successful save, pull the fresh server data so every consumer of
+  // the profile (this select, the dashboard) reflects the new value without a
+  // manual page reload (IA-15).
+  useEffect(() => {
+    if (state.ok) router.refresh();
+  }, [state.ok, router]);
 
   const categoryOptions = BRAND_CATEGORIES.map((c) => ({
     value: c,
@@ -87,7 +100,12 @@ export function ProfileForm({ profile, locale }: { profile: BrandProfileDTO; loc
 
           <label className="mt-4 block max-w-xs">
             <span className={labelClass}>{t("catalog.budgetRange")}</span>
-            <select name="budgetRange" defaultValue={profile.budgetRange} className={fieldClass}>
+            <select
+              name="budgetRange"
+              value={budgetRange}
+              onChange={(e) => setBudgetRange(e.target.value)}
+              className={fieldClass}
+            >
               <option value="">{t("account.brand.budgetSelectPlaceholder")}</option>
               {BUDGET_RANGES.map((b) => (
                 <option key={b.value} value={b.value}>

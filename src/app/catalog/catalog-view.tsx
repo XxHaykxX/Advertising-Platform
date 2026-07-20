@@ -343,7 +343,8 @@ export function CatalogView({
       if (selectedStatuses.length > 0 && !selectedStatuses.includes(p.status)) return false;
       if (selectedFormats.length > 0 && !selectedFormats.includes(p.formatCategory)) return false;
       if (selectedLanguages.length > 0 && !selectedLanguages.includes(p.language)) return false;
-      if (gender !== "All" && p.audienceGender !== gender) return false;
+      // A project targeting "All" audiences matches both Male and Female filters.
+      if (gender !== "All" && p.audienceGender !== "All" && p.audienceGender !== gender) return false;
 
       if (selectedPlatforms.length > 0) {
         const pls = parseStringArray(p.platforms);

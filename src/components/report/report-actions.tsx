@@ -1,12 +1,33 @@
 "use client";
 
 import { useState } from "react";
-import { Printer, Share2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, Printer, Share2 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { VariantProps } from "class-variance-authority";
 
 type ButtonVariantProps = VariantProps<typeof buttonVariants>;
+
+// Returns the user to wherever they came from (catalog, portfolio, favorites,
+// featured …) instead of a hardcoded /catalog (IA-14). Falls back to /catalog
+// when there's no in-app history (e.g. a shared deep link opened cold).
+export function BackButton({ label, fallbackHref = "/catalog" }: { label: string; fallbackHref?: string }) {
+  const router = useRouter();
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        if (window.history.length > 1) router.back();
+        else router.push(fallbackHref);
+      }}
+      className="inline-flex items-center gap-1.5 font-medium text-foreground transition-colors hover:text-primary"
+    >
+      <ArrowLeft className="h-4 w-4" />
+      {label}
+    </button>
+  );
+}
 
 // Report page action buttons need client-side handlers (window.print,
 // navigator.share/clipboard), while report-hero.tsx and investment.tsx stay

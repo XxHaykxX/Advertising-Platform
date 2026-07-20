@@ -1,7 +1,6 @@
-import Link from "next/link";
-import { ArrowLeft, DollarSign, Wallet, Eye } from "lucide-react";
+import { DollarSign, Wallet, Eye } from "lucide-react";
 import { Reveal } from "@/components/ui/reveal";
-import { PrintButton, ShareButton } from "@/components/report/report-actions";
+import { BackButton, PrintButton, ShareButton } from "@/components/report/report-actions";
 import { PosterSlider } from "@/components/report/poster-slider";
 import { StoryboardMarquee } from "@/components/report/storyboard-marquee";
 import { SynopsisDisclosure } from "@/components/report/synopsis-disclosure";
@@ -44,13 +43,7 @@ export function ReportHero({
       <div className="mx-auto w-full max-w-[1200px] px-6 max-sm:px-4">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-sm">
-            <Link
-              href="/catalog"
-              className="inline-flex items-center gap-1.5 font-medium text-foreground transition-colors hover:text-primary"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              {t("report.backToCatalog")}
-            </Link>
+            <BackButton label={t("report.back")} />
             <span className="text-muted-foreground">
               {t("report.catalogLabel")} | {project.code}
             </span>
