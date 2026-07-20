@@ -99,3 +99,23 @@ Local commits stacked on prod HEAD `0fed7d2`: `9dce696` → `8d0847a` → `84935
 ### STILL OPEN
 - **Sticky cabinet sidebar** — user says "doesn't stick". Offset fixed (top-20). Hypothesis: short dashboard has too little two-column scroll before the footer for sticky to show. Lenis/`overflow-x:clip` do NOT break sticky. Needs a browser test on a tall page (profile/catalog); if it fails there too, switch to a hard-pinned pattern like admin-shell.
 - Live push delivery not yet verified end-to-end (needs a real browser: grant permission → broadcast → confirm system notification with tab closed).
+
+---
+
+## DEPLOYED (2026-07-20 second wave) — prod HEAD `0d81a39`
+
+Pushed `0fed7d2 → bcef025 → 0d81a39`. Prod DB migrated by me remotely (docker mysql client → `srv2026.hstgr.io`, creds from `.env.hostinger`): `User.phone`, `PushSubscription`. First build (bcef025) FAILED — `@types/web-push` was in devDependencies (Hostinger prunes devDeps → tsc "Could not find declaration file for web-push"); diagnosed via unauthed route markers (new route → 307, old → 404) since MCP build logs were unavailable; fixed by moving it to dependencies (`0d81a39`). New build live: `/sw.js`=200, all new routes serve. User added 3 VAPID vars to hPanel + restart. VAPID also appended to `.env.hostinger` (gitignored). Web Push public key is a runtime prop (not NEXT_PUBLIC) so it activates with env + restart, no rebuild.
+
+## LOCAL batch after deploy (commit `fadd67c`, NOT pushed — user said "not yet")
+
+Prod stays `0d81a39`. This sits on top locally.
+- **Image optimization** `src/lib/images/optimize.ts` (sharp) wired into all three write paths (staff `uploads.ts`, member `member-uploads.ts`, generated `uploads-fs.ts`). Output **WebP**: avatar/logo 512×512 contain+alpha (q85), cast 800×800 cover (q80), everything else 16:10 ≤1600×1000 cover (q80); EXIF auto-rotate. Measured −41% wide / −92% avatar. New uploads/generations only.
+- **All display blocks unified to 16:10** except the two 1:1 squares (avatar/logo, cast). Fixed: creator My-projects (was 2:3), hero, page-hero, storyboard-marquee, portfolio lightbox, poster-gen preview (all aspect-video). Admin tables already 16:10 (h-10 w-16); partner logo stays object-contain.
+- **Upload size hint** `src/lib/images/size-hint.ts` (client-safe) under every image field in ImageUploader + MediaField (admin + creator).
+- **Cabinet footer** minimal variant (brand+creator) in `footer.tsx` — drops public nav columns, keeps wordmark + contacts (email/**phone**/Telegram/WhatsApp) + locale/currency; wired via `account/layout.tsx` `<Footer minimal/>`.
+- **Header** hides the language bar in the top nav for members (`!isMember`, desktop+mobile) — it lives in the footer now.
+- No migrations. Deploy = push → rebuild.
+
+## STILL OPEN (unchanged)
+- Sticky cabinet sidebar (offset fixed to top-20; needs a tall-page browser test).
+- Live Web Push end-to-end verification on prod.
