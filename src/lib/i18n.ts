@@ -1293,6 +1293,7 @@ export const UI: Record<string, Dict> = {
   "admin.interests.message": { ru: "Сообщение", en: "Message", hy: "Հաղորդագրություն" },
   "admin.interests.contact": { ru: "Контакт", en: "Contact", hy: "Կոնտակտ" },
   "notif.generic.title": { ru: "Уведомление", en: "Notification", hy: "Ծանուցում" },
+  "notif.broadcast.title": { ru: "Объявление", en: "Announcement", hy: "Հայտարարություն" },
 
   // ── dashboard ──
   "account.brand.welcomeBack": { ru: "С возвращением, {name}", en: "Welcome back, {name}", hy: "Բարի վերադարձ, {name}" },

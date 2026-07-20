@@ -12,6 +12,7 @@ import {
   FolderOpen,
   ShieldCheck,
   Bell,
+  Send,
 } from "lucide-react";
 import type { Role } from "@prisma/client";
 import { canEditContent, canManageUsers, canModerate } from "@/lib/auth/permissions";
@@ -35,6 +36,7 @@ const NAV = [
   { href: "/admin/portfolio", label: "Portfolio", icon: Images, show: canManageUsers },
   { href: "/admin/partners", label: "Partners", icon: Handshake, show: canManageUsers },
   { href: "/admin/users", label: "Users", icon: Users, show: canManageUsers },
+  { href: "/admin/broadcast", label: "Broadcast", icon: Send, show: canManageUsers },
   { href: "/admin/notifications", label: "Notifications", icon: Bell, show: () => true },
 ];
 

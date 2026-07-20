@@ -15,6 +15,7 @@ export const NOTIFICATION_TYPES = [
   "PROJECT_REJECTED", // moderator rejected the project → creator owner
   "INTEREST_APPROVED", // admin approved a brand's Interest (SENT → MUTUAL) → the brand
   "INTEREST_DECLINED", // admin declined a brand's Interest (SENT → DECLINED) → the brand
+  "BROADCAST", // admin push broadcast — free-text title/message to filtered members
 ] as const;
 
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
@@ -27,6 +28,9 @@ export type NotificationData = {
   projectTitle?: string;
   brandName?: string;
   creatorName?: string;
+  // BROADCAST only — admin-authored free text, shown verbatim (not localized).
+  title?: string;
+  message?: string;
 };
 
 export function parseNotificationData(
@@ -67,6 +71,10 @@ export function renderNotification(
       return { title: t("notif.interestApproved.title"), body: t("notif.interestApproved.body", vars) };
     case "INTEREST_DECLINED":
       return { title: t("notif.interestDeclined.title"), body: t("notif.interestDeclined.body", vars) };
+    case "BROADCAST":
+      // Admin-authored free text — shown verbatim, falling back to a localized
+      // generic title if the admin left the title blank.
+      return { title: data.title || t("notif.broadcast.title"), body: data.message ?? "" };
     default:
       return { title: t("notif.generic.title"), body: "" };
   }

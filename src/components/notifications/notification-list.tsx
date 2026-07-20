@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, Heart, Clapperboard, CheckCircle2, XCircle, CheckCheck } from "lucide-react";
+import { Bell, Heart, Clapperboard, CheckCircle2, XCircle, CheckCheck, Megaphone } from "lucide-react";
 import { makeUI, type Locale } from "@/lib/i18n";
 import {
   renderNotification,
@@ -28,6 +28,7 @@ const ICONS: Record<string, typeof Bell> = {
   PROJECT_SUBMITTED: Clapperboard,
   PROJECT_APPROVED: CheckCircle2,
   PROJECT_REJECTED: XCircle,
+  BROADCAST: Megaphone,
 };
 
 /** Shared notification feed for all three cabinets (brand / creator / admin).
