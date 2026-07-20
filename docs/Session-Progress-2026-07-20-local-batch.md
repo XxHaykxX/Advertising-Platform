@@ -63,3 +63,39 @@ User will `/compact` first, then say go. Decisions locked:
   - `admin-shell.tsx`: desktop `<aside>` is `md:static` today → make it `md:sticky md:top-0 md:h-screen overflow-y-auto` (keep the mobile off-canvas drawer as-is).
   - Creator sidebar `<aside>` / brand `<aside>`: `lg:sticky lg:top-0 lg:h-[calc(100vh-…)]` or `lg:self-start lg:sticky lg:top-6` with its own scroll.
 - After building: `npx tsc --noEmit` (ignore the stale `.next/types/.../interests/page.js` error — auto-heals), warm pages locally, tell user to test. Do NOT deploy.
+
+---
+
+## DONE after that plan (2026-07-20, still local-only, NOT deployed)
+
+Local commits stacked on prod HEAD `0fed7d2`: `9dce696` → `8d0847a` → `8493524` → `aa6d272` → `7dd8bcb` (favorites feature was folded into `7dd8bcb`).
+
+### Creator cabinet (commit 9dce696)
+- `src/app/account/creator-sidebar.tsx` (NEW) — mirror of brand sidebar: Главная (`/account`, exact) / Мои проекты (`/account/projects`) / Подать проект (`/account/projects/new`) / Уведомления (`/account/notifications`, unread badge) / Профиль (`/account/profile`) / Выйти. `lg:sticky`.
+- `account/layout.tsx` — two-column CREATOR shell (Container + flex + sidebar + main); BRAND untouched (keeps nested `account/brand/layout.tsx`). Creator pages (dashboard/projects/new/notifications) stripped of their own `Section`/`Container` (shell provides it).
+- NEW `/account/profile` page + form + `updateCreatorProfile` action (name + avatar via member-scope MediaField).
+- Sticky: `admin-shell.tsx` aside `md:static`→`md:sticky md:top-0 md:h-screen overflow-y-auto`; brand+creator aside `lg:sticky lg:top-20` (top-20 because SiteHeader is `sticky top-0 h-16`).
+
+### Admin Broadcast (commit 8d0847a, architect-reviewed)
+- `/admin/broadcast` (SUPERADMIN, nav item Send/`canManageUsers`) — two tabs Push + Email; audience all/brands/creators (APPROVED+active) with live counts. New `BROADCAST` notification type + free-text title/message + render case + Megaphone icon. Email fan-out batched 8-at-a-time (architect fix — was blasting all SMTP sockets). Internal-only link guard, HTML-escaped body.
+
+### Creator profile enrichment + projects cleanup (commit aa6d272; spec `docs/superpowers/specs/2026-07-20-creator-profile-and-projects-cleanup-design.md`)
+- Profile: editable phone + website/portfolio; read-only stats (member-since / role / status / projects total+approved). `updateCreatorProfile` caps name 120 + validates avatar to own `/uploads/members/<id>/` (architect fixes).
+- `/account/projects`: removed the redundant header "Submit" button (sidebar covers it).
+- Schema `User.phone` (migration `docs/prod-migrations/2026-07-20-user-phone.sql`), `website` repurposed brand+creator.
+
+### Brand Favorites rename + Web Push + live toaster (commit 7dd8bcb)
+- **Favorites**: brand sidebar "My Interests"→**"Избранное"**, repointed to NEW `/account/brand/favorites` (lists hearted projects from the Favorite table). Interest badge dropped; Interest-заявки removed from the brand menu (heart = private favorite, admin never sees it). Old `/account/brand/interests` route left orphaned.
+- **Web Push** (real system push, works site-closed / on phone — user requirement): `web-push` dep + VAPID keys (in local `.env`), `PushSubscription` table (migration `docs/prod-migrations/2026-07-20-push-subscription.sql`), `public/sw.js` service worker, `src/lib/push/web-push.ts` (send + prune 404/410), `src/lib/actions/push.ts` (save/delete subscription, dedup by TEXT endpoint). Hooked into `createNotification` + `notifyRoles` + admin broadcast. `push-subscribe.tsx` enable-prompt mounted in `account/layout.tsx`.
+- **Live toaster** `notification-toaster.tsx` — polls unread every ~10s, pretty slide-in, dedup via localStorage. `getUnreadNotificationsPreview` action.
+- Why NOT websocket: Hostinger Passenger kills long-lived sockets AND websocket can't deliver when the site is closed — only Web Push does.
+
+### PROD deploy checklist for this batch (when the user says go)
+1. Apply BOTH migrations on prod BEFORE push: `2026-07-20-user-phone.sql`, `2026-07-20-push-subscription.sql`.
+2. Add to hPanel Node env: `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT=mailto:hello@igovazd.am`, `NEXT_PUBLIC_VAPID_PUBLIC_KEY` (values in local `.env`).
+3. `web-push` + `@types/web-push` are in `dependencies` (Hostinger prunes devDeps at build).
+4. One controlled deploy (process-limit lesson).
+
+### STILL OPEN
+- **Sticky cabinet sidebar** — user says "doesn't stick". Offset fixed (top-20). Hypothesis: short dashboard has too little two-column scroll before the footer for sticky to show. Lenis/`overflow-x:clip` do NOT break sticky. Needs a browser test on a tall page (profile/catalog); if it fails there too, switch to a hard-pinned pattern like admin-shell.
+- Live push delivery not yet verified end-to-end (needs a real browser: grant permission → broadcast → confirm system notification with tab closed).
