@@ -18,15 +18,15 @@ function urlBase64ToUint8Array(base64: string): Uint8Array {
   return out;
 }
 
-const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "";
-
 /** Floating "enable browser notifications" prompt (#push). Registers the
  *  service worker, asks the browser for permission, subscribes via the Push API
  *  and stores the subscription server-side so the user gets real system push —
  *  even with the site closed / on their phone. Renders nothing when unsupported,
  *  already enabled, or dismissed. Shown only to signed-in users (mounted in the
- *  cabinet layout). */
-export function PushSubscribe({ locale }: { locale: Locale }) {
+ *  cabinet layout). The VAPID public key comes in as a prop read at runtime from
+ *  the server (process.env.VAPID_PUBLIC_KEY) so enabling push in prod needs only
+ *  an env var + restart — no rebuild (unlike a NEXT_PUBLIC build-time inline). */
+export function PushSubscribe({ locale, vapidPublicKey }: { locale: Locale; vapidPublicKey: string }) {
   const t = makeUI(locale);
   const [status, setStatus] = useState<Status>("loading");
   const [busy, setBusy] = useState(false);
@@ -40,7 +40,7 @@ export function PushSubscribe({ locale }: { locale: Locale }) {
         "serviceWorker" in navigator &&
         "PushManager" in window &&
         "Notification" in window &&
-        !!VAPID_PUBLIC_KEY;
+        !!vapidPublicKey;
       if (!supported) {
         if (alive) setStatus("unsupported");
         return;
@@ -87,7 +87,7 @@ export function PushSubscribe({ locale }: { locale: Locale }) {
       const reg = await navigator.serviceWorker.ready;
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) as BufferSource,
+        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey) as BufferSource,
       });
       const json = sub.toJSON();
       if (json.endpoint && json.keys) {
