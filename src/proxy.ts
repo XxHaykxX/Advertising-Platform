@@ -1,41 +1,57 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { SESSION_COOKIE, verifySessionToken } from "@/lib/auth/session";
 
-/* Protect the admin area. Everything under /admin requires a valid session,
-   except the login page itself. */
+const STAFF_ROLES = ["SUPERADMIN", "PUBLISHER", "MODERATOR"];
+
+/* Two guards, both driven off the (signature + expiry only) session token — the
+   authoritative isActive/role/status checks live server-side in
+   requireUser()/requireMember():
+     1. /admin — staff only; members and anonymous users get the login page.
+     2. Members (BRAND / CREATOR) are confined to their cabinet: any attempt to
+        reach the public site or the auth pages is bounced back to /account
+        (creator) or /account/brand (brand), even by editing the URL directly. */
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
-  const isLogin = pathname === "/admin/login";
 
-  const token = req.cookies.get(SESSION_COOKIE)?.value;
-  // Signature + expiry check only (no DB access here).
-  // The authoritative isActive/role gate is enforced by requireUser() server-side.
-  // Only STAFF sessions count as "authed" for /admin — a member (BRAND/CREATOR)
-  // token is treated as unauthenticated here, so it is shown the login page
-  // instead of being bounced into an infinite redirect against requireUser().
-  const session = await verifySessionToken(token);
-  const authed =
-    session !== null &&
-    (session.role === "SUPERADMIN" || session.role === "PUBLISHER" || session.role === "MODERATOR");
+  const session = await verifySessionToken(req.cookies.get(SESSION_COOKIE)?.value);
+  const isStaff = session !== null && STAFF_ROLES.includes(session.role);
+  const isMember = session !== null && (session.role === "BRAND" || session.role === "CREATOR");
 
-  if (!authed && !isLogin) {
-    const url = req.nextUrl.clone();
-    url.pathname = "/admin/login";
-    url.searchParams.set("from", pathname);
-    return NextResponse.redirect(url);
+  // --- 1. Admin area (staff only) ---
+  if (pathname.startsWith("/admin")) {
+    const isLogin = pathname === "/admin/login";
+    if (!isStaff && !isLogin) {
+      const url = req.nextUrl.clone();
+      url.pathname = "/admin/login";
+      url.searchParams.set("from", pathname);
+      return NextResponse.redirect(url);
+    }
+    if (isStaff && isLogin) {
+      const url = req.nextUrl.clone();
+      url.pathname = "/admin";
+      url.search = "";
+      return NextResponse.redirect(url);
+    }
+    return NextResponse.next();
   }
 
-  // Already logged in → bounce away from the login page.
-  if (authed && isLogin) {
-    const url = req.nextUrl.clone();
-    url.pathname = "/admin";
-    url.search = "";
-    return NextResponse.redirect(url);
+  // --- 2. Members are locked to their own cabinet ---
+  if (isMember) {
+    const inCabinet = pathname === "/account" || pathname.startsWith("/account/");
+    if (!inCabinet) {
+      const url = req.nextUrl.clone();
+      url.pathname = session!.role === "BRAND" ? "/account/brand" : "/account";
+      url.search = "";
+      return NextResponse.redirect(url);
+    }
   }
 
   return NextResponse.next();
 }
 
+// Run on every page request except Next internals, API routes, uploaded/served
+// files and anything with a file extension (assets). Broad enough to catch the
+// public site so the member confinement above can fire on "/" and friends.
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|api|uploads|.*\\.).*)"],
 };

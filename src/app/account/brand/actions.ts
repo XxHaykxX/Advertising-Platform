@@ -102,7 +102,7 @@ export async function submitApplication(
       // Owning creator (or staff owner) — link to the public report they can view.
       await createNotification(project.ownerId, { ...payload, link: `/reports/${projectId}` });
       // Superadmins watch all interests; exclude the owner to avoid a duplicate.
-      await notifyRoles(["SUPERADMIN"], { ...payload, link: "/admin/interests" }, project.ownerId);
+      await notifyRoles(["SUPERADMIN"], { ...payload, link: "/admin" }, project.ownerId);
     }
   } catch {
     // best-effort notification — ignore

@@ -5,6 +5,7 @@ import { mkdir, writeFile, unlink, readdir, stat } from "node:fs/promises";
 import path from "node:path";
 import { requireUser } from "@/lib/auth/require";
 import { UPLOADS_DIR } from "@/lib/uploads-dir";
+import { findUploadUsage } from "@/lib/uploads-usage";
 
 // All uploads live under UPLOADS_DIR (see that module — an env-pinned absolute
 // path on Hostinger, public/uploads locally) and are served as /uploads/… by
@@ -55,10 +56,20 @@ export async function uploadImage(fd: FormData): Promise<UploadResult> {
   return { path: `/uploads/${dir}/${name}` };
 }
 
-export async function deleteUpload(publicPath: string): Promise<{ ok?: boolean; error?: string }> {
+export async function deleteUpload(
+  publicPath: string,
+): Promise<{ ok?: boolean; error?: string; usedBy?: string[] }> {
   await requireUser();
   const abs = resolveInsideUploads(publicPath);
   if (!abs) return { error: "Invalid path." };
+
+  // Guard: refuse to delete a file that's still referenced somewhere, otherwise
+  // that project/portfolio/avatar would show a broken image on the live site.
+  const usedBy = await findUploadUsage(publicPath);
+  if (usedBy.length) {
+    return { error: `In use — can't delete. Referenced by: ${usedBy.join("; ")}`, usedBy };
+  }
+
   try {
     await unlink(abs);
   } catch {

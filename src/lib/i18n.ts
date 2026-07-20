@@ -189,6 +189,7 @@ export const UI: Record<string, Dict> = {
 
   // ── poster generator (#26) ─────────────────
   "btn.generatePoster": { ru: "Сгенерировать постер", en: "Generate poster", hy: "Ստեղծել պաստառ" },
+  "btn.browse": { ru: "Выбрать", en: "Browse", hy: "Ընտրել" },
   "poster.promptLabel": { ru: "Описание постера", en: "Poster prompt", hy: "Պաստառի նկարագրություն" },
   "poster.generating": { ru: "Генерация…", en: "Generating…", hy: "Ստեղծվում է…" },
   "poster.useThis": { ru: "Использовать", en: "Use this", hy: "Օգտագործել" },

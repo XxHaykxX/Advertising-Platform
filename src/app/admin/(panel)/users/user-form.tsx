@@ -26,6 +26,13 @@ export function UserForm({
     <form action={formAction} className="max-w-xl space-y-6">
       <section className="space-y-4 rounded-2xl border border-border bg-card p-6 shadow-sm">
         <label className="block">
+          <span className={labelCls}>Role *</span>
+          <select name="role" defaultValue="SUPERADMIN" className={inputCls}>
+            <option value="SUPERADMIN">Super-admin</option>
+            <option value="MODERATOR">Moderator</option>
+          </select>
+        </label>
+        <label className="block">
           <span className={labelCls}>Email *</span>
           <input
             name="email"
@@ -40,10 +47,10 @@ export function UserForm({
           />
         </label>
         <label className="block">
-          <span className={labelCls}>Company name *</span>
+          <span className={labelCls}>Name *</span>
           <input
             name="name"
-            placeholder="Shown on the public portfolio"
+            placeholder="Full name or company"
             required
             defaultValue={state.values?.name ?? ""}
             className={inputCls}
@@ -61,7 +68,7 @@ export function UserForm({
             className={inputCls}
           />
           <span className="mt-1.5 block text-xs text-muted-foreground">
-            Shown only once — hand it off to the publisher yourself.
+            Shown only once — hand it off to the user yourself.
           </span>
         </label>
       </section>
@@ -79,7 +86,7 @@ export function UserForm({
           className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-[--primary-hover] disabled:opacity-70"
         >
           {pending && <Loader2 className="h-4 w-4 animate-spin" />}
-          Create publisher
+          Create member
         </button>
         <Link href="/admin/users" className="text-sm text-muted-foreground hover:text-foreground">
           Cancel

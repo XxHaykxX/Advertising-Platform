@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Copy, Pencil, Trash2, Loader2 } from "lucide-react";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { deleteProject, duplicateProject, toggleActive } from "./actions";
 
 export function ActiveToggle({ id, active }: { id: number; active: boolean }) {
@@ -31,6 +32,7 @@ export function ActiveToggle({ id, active }: { id: number; active: boolean }) {
 export function DeleteButton({ id, title }: { id: number; title: string }) {
   const [pending, start] = useTransition();
   const [duplicating, startDuplicate] = useTransition();
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const router = useRouter();
   return (
     <div className="flex items-center gap-1">
@@ -63,16 +65,27 @@ export function DeleteButton({ id, title }: { id: number; title: string }) {
       <button
         type="button"
         disabled={pending}
-        onClick={() => {
-          if (confirm(`Delete project "${title}"? This cannot be undone.`)) {
-            start(() => deleteProject(id));
-          }
-        }}
+        onClick={() => setConfirmOpen(true)}
         className="grid h-8 w-8 place-items-center rounded-lg text-muted-foreground hover:bg-muted hover:text-primary"
         aria-label="Delete"
       >
         {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
       </button>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        title={`Delete “${title}”?`}
+        message="The project and all its images, cast, links and texts are permanently deleted. This cannot be undone."
+        confirmLabel="Delete"
+        pending={pending}
+        onCancel={() => setConfirmOpen(false)}
+        onConfirm={() =>
+          start(async () => {
+            await deleteProject(id);
+            setConfirmOpen(false);
+          })
+        }
+      />
     </div>
   );
 }

@@ -11,7 +11,6 @@ import {
   Handshake,
   FolderOpen,
   ShieldCheck,
-  Heart,
   Bell,
 } from "lucide-react";
 import type { Role } from "@prisma/client";
@@ -33,7 +32,6 @@ const NAV = [
   { href: "/admin/moderation", label: "Moderation", icon: ShieldCheck, show: canModerate },
   { href: "/admin/projects", label: "Projects", icon: Film, show: canEditContent },
   { href: "/admin/media", label: "Media", icon: FolderOpen, show: canEditContent },
-  { href: "/admin/interests", label: "Interests", icon: Heart, show: canManageUsers },
   { href: "/admin/portfolio", label: "Portfolio", icon: Images, show: canManageUsers },
   { href: "/admin/partners", label: "Partners", icon: Handshake, show: canManageUsers },
   { href: "/admin/users", label: "Users", icon: Users, show: canManageUsers },

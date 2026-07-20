@@ -67,7 +67,7 @@ export default async function UsersAdminPage() {
           className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-[--primary-hover] btn-glow"
         >
           <Plus className="h-4 w-4" />
-          New publisher
+          Create member
         </Link>
       </div>
 

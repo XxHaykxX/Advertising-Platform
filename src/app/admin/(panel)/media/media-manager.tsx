@@ -2,14 +2,23 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Image from "next/image";
-import { ChevronLeft, ChevronRight, Copy, Loader2, Trash2, Upload, X } from "lucide-react";
+import {
+  ArrowLeft,
+  ChevronLeft,
+  ChevronRight,
+  Copy,
+  Folder,
+  Images,
+  Loader2,
+  Trash2,
+  Upload,
+  X,
+} from "lucide-react";
 import { deleteUpload, uploadImage, type MediaFile } from "@/lib/actions/uploads";
 
-// Upload targets shown in the Media library. Each `slug` is the on-disk
-// subfolder under /uploads/ (see uploadImage's `dir` param); the grid groups
-// files by that first path segment so Cast & Crew / Catalog / Portfolio (and any
-// legacy folder like projects/actors/kino) each get their own section.
-const FOLDERS = [
+// Folders that always appear (even when empty) so you can open one and upload
+// into it. `slug` is the on-disk subfolder under /uploads/ (uploadImage `dir`).
+const CANONICAL = [
   { slug: "cast-crew", label: "Cast & Crew" },
   { slug: "catalog", label: "Catalog" },
   { slug: "portfolio", label: "Portfolio" },
@@ -21,10 +30,12 @@ const FOLDER_LABEL: Record<string, string> = {
   portfolio: "Portfolio",
   actors: "Cast & Crew (legacy)",
   projects: "Catalog (project posters)",
-  kino: "Demo — frames/posters",
+  kino: "Demo — frames / posters",
   hero: "Demo — hero banners",
   misc: "Misc",
 };
+
+const ALL = "__all__";
 
 function humanSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -38,49 +49,58 @@ function folderOf(path: string): string {
   return parts.length >= 3 ? parts[1] : "misc";
 }
 
+function labelOf(slug: string): string {
+  return FOLDER_LABEL[slug] || slug;
+}
+
 export function MediaManager({ files }: { files: MediaFile[] }) {
   const [items, setItems] = useState(files);
+  // null = root (folder list); ALL = every file; otherwise a folder slug.
+  const [open, setOpen] = useState<string | null>(null);
+
   const [copied, setCopied] = useState<string | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
-
-  const [folder, setFolder] = useState<string>(FOLDERS[0].slug);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Flat, sorted list used by the lightbox (keeps prev/next simple); the grid
-  // renders the same items grouped by folder.
-  const flat = items;
-
-  const groups = useMemo(() => {
-    const byFolder = new Map<string, MediaFile[]>();
+  // Folder list for the root view: canonical folders first (always shown), then
+  // any other folder that has files, each with a count + a thumbnail.
+  const folders = useMemo(() => {
+    const map = new Map<string, MediaFile[]>();
     for (const f of items) {
       const g = folderOf(f.path);
-      const arr = byFolder.get(g);
-      if (arr) arr.push(f);
-      else byFolder.set(g, [f]);
+      (map.get(g) || map.set(g, []).get(g)!).push(f);
     }
-    // Preferred folders first, then the rest alphabetically.
-    const preferred: string[] = FOLDERS.map((f) => f.slug);
-    return [...byFolder.entries()].sort(([a], [b]) => {
-      const ia = preferred.indexOf(a);
-      const ib = preferred.indexOf(b);
-      if (ia !== -1 || ib !== -1) return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
-      return a.localeCompare(b);
-    });
+    const order: string[] = [...CANONICAL.map((c) => c.slug)];
+    for (const slug of [...map.keys()].sort()) if (!order.includes(slug)) order.push(slug);
+    return order.map((slug) => ({
+      slug,
+      label: labelOf(slug),
+      files: map.get(slug) || [],
+    }));
   }, [items]);
+
+  // Files shown in the current view (a folder, or ALL).
+  const visible = useMemo(() => {
+    if (open === ALL) return items;
+    if (open) return items.filter((f) => folderOf(f.path) === open);
+    return [];
+  }, [items, open]);
 
   function onPickFiles(e: React.ChangeEvent<HTMLInputElement>) {
     const picked = Array.from(e.target.files || []);
     e.target.value = "";
-    if (!picked.length) return;
+    if (!picked.length || !open || open === ALL) return;
+    const dir = open;
     setError(null);
     startTransition(async () => {
       const added: MediaFile[] = [];
       for (const file of picked) {
         const fd = new FormData();
         fd.append("file", file);
-        fd.append("dir", folder);
+        fd.append("dir", dir);
         const res = await uploadImage(fd);
         if (res.error) {
           setError(res.error);
@@ -93,19 +113,16 @@ export function MediaManager({ files }: { files: MediaFile[] }) {
   }
 
   async function remove(path: string) {
-    setItems((prev) => {
-      const next = prev.filter((f) => f.path !== path);
-      const removedIndex = prev.findIndex((f) => f.path === path);
-      setLightboxIndex((i) => {
-        if (i === null || removedIndex === -1) return i;
-        if (next.length === 0) return null;
-        if (removedIndex < i) return i - 1;
-        if (removedIndex === i) return Math.min(i, next.length - 1);
-        return i;
-      });
-      return next;
-    });
-    await deleteUpload(path);
+    setNotice(null);
+    // Non-optimistic: the server refuses if the file is still referenced by a
+    // project / portfolio / cast / avatar (would 404 on the live site).
+    const res = await deleteUpload(path);
+    if (res.error) {
+      setNotice(res.error);
+      return;
+    }
+    setItems((prev) => prev.filter((f) => f.path !== path));
+    setLightboxIndex(null);
   }
 
   function copy(path: string) {
@@ -115,11 +132,10 @@ export function MediaManager({ files }: { files: MediaFile[] }) {
   }
 
   function showPrev() {
-    setLightboxIndex((i) => (i === null ? null : (i - 1 + flat.length) % flat.length));
+    setLightboxIndex((i) => (i === null ? null : (i - 1 + visible.length) % visible.length));
   }
-
   function showNext() {
-    setLightboxIndex((i) => (i === null ? null : (i + 1) % flat.length));
+    setLightboxIndex((i) => (i === null ? null : (i + 1) % visible.length));
   }
 
   useEffect(() => {
@@ -131,106 +147,155 @@ export function MediaManager({ files }: { files: MediaFile[] }) {
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [lightboxIndex, flat.length]);
+  }, [lightboxIndex, visible.length]);
 
-  const activeFile = lightboxIndex !== null ? flat[lightboxIndex] : null;
+  const activeFile = lightboxIndex !== null ? visible[lightboxIndex] : null;
 
-  return (
-    <div className="space-y-8">
-      {/* Uploader — pick a folder, then one or more images. */}
-      <div className="rounded-xl border border-border bg-card p-4">
-        <div className="flex flex-wrap items-end gap-3">
-          <label className="block">
-            <span className="mb-1 block text-xs text-muted-foreground">Folder</span>
-            <select
-              value={folder}
-              onChange={(e) => setFolder(e.target.value)}
-              className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary/50"
-            >
-              {FOLDERS.map((f) => (
-                <option key={f.slug} value={f.slug}>
-                  {f.label}
-                </option>
-              ))}
-            </select>
-          </label>
-
+  // ---- Root: folder list (file-manager home) ---------------------------------
+  if (open === null) {
+    return (
+      <div className="space-y-3">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+          {/* All files */}
           <button
             type="button"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={pending}
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:opacity-90 disabled:opacity-60"
+            onClick={() => setOpen(ALL)}
+            className="flex flex-col items-start gap-3 rounded-xl border border-border bg-card p-4 text-left transition-colors hover:border-primary/40"
           >
-            {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-            {pending ? "Uploading…" : "Upload images"}
+            <Images className="h-8 w-8 text-primary" />
+            <div>
+              <p className="text-sm font-semibold text-foreground">All files</p>
+              <p className="text-xs text-muted-foreground">{items.length} items</p>
+            </div>
           </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={onPickFiles}
-            className="hidden"
-          />
-          <p className="text-xs text-muted-foreground">
-            JPG / PNG / WebP, up to 8 MB each. Files go to <code>/uploads/{folder}/</code>.
-          </p>
+
+          {folders.map((f) => {
+            const thumb = f.files[0]?.path;
+            return (
+              <button
+                key={f.slug}
+                type="button"
+                onClick={() => setOpen(f.slug)}
+                className="flex flex-col items-start gap-3 rounded-xl border border-border bg-card p-4 text-left transition-colors hover:border-primary/40"
+              >
+                {thumb ? (
+                  <span className="relative h-10 w-10 overflow-hidden rounded-md bg-muted">
+                    <Image src={thumb} alt="" fill className="object-cover" sizes="40px" unoptimized />
+                  </span>
+                ) : (
+                  <Folder className="h-8 w-8 text-muted-foreground" />
+                )}
+                <div>
+                  <p className="text-sm font-semibold text-foreground">{f.label}</p>
+                  <p className="text-xs text-muted-foreground">{f.files.length} items</p>
+                </div>
+              </button>
+            );
+          })}
         </div>
-        {error && <p className="mt-2 text-xs text-primary">{error}</p>}
+
+        {notice && <Toast message={notice} onClose={() => setNotice(null)} />}
+      </div>
+    );
+  }
+
+  // ---- Inside a folder (or ALL) ----------------------------------------------
+  const inFolder = open !== ALL;
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-3">
+        <button
+          type="button"
+          onClick={() => {
+            setOpen(null);
+            setLightboxIndex(null);
+          }}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-sm text-foreground hover:border-primary/40"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Folders
+        </button>
+        <h2 className="text-sm font-semibold text-foreground">
+          {open === ALL ? "All files" : labelOf(open)}{" "}
+          <span className="text-muted-foreground">({visible.length})</span>
+        </h2>
+
+        {inFolder && (
+          <div className="ml-auto flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={pending}
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:opacity-90 disabled:opacity-60"
+            >
+              {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+              {pending ? "Uploading…" : "Upload here"}
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={onPickFiles}
+              className="hidden"
+            />
+          </div>
+        )}
       </div>
 
-      {items.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No uploaded files yet.</p>
+      {inFolder && (
+        <p className="text-xs text-muted-foreground">
+          JPG / PNG / WebP, up to 8 MB each. Files go to <code>/uploads/{open}/</code>.
+        </p>
+      )}
+      {error && <p className="text-xs text-primary">{error}</p>}
+
+      {visible.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          {inFolder ? "Empty folder — upload images with the button above." : "No files."}
+        </p>
       ) : (
-        groups.map(([groupSlug, groupFiles]) => (
-          <section key={groupSlug} className="space-y-3">
-            <h2 className="text-sm font-semibold text-foreground">
-              {FOLDER_LABEL[groupSlug] || groupSlug}{" "}
-              <span className="text-muted-foreground">({groupFiles.length})</span>
-            </h2>
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-              {groupFiles.map((f) => (
-                <div key={f.path} className="overflow-hidden rounded-xl border border-border bg-card">
-                  <button
-                    type="button"
-                    onClick={() => setLightboxIndex(flat.findIndex((x) => x.path === f.path))}
-                    aria-label="View image"
-                    className="relative block aspect-square w-full bg-muted"
-                  >
-                    <Image src={f.path} alt="" fill className="object-cover" sizes="200px" unoptimized />
-                  </button>
-                  <div className="space-y-2 p-3">
-                    <p className="truncate text-xs text-muted-foreground" title={f.path}>
-                      {f.path}
-                    </p>
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">{humanSize(f.size)}</span>
-                      <div className="flex items-center gap-1">
-                        <button
-                          type="button"
-                          onClick={() => copy(f.path)}
-                          aria-label="Copy path"
-                          className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
-                        >
-                          <Copy className="h-3.5 w-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => remove(f.path)}
-                          aria-label="Delete"
-                          className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-primary"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                    {copied === f.path && <p className="text-xs text-success">Copied</p>}
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+          {visible.map((f, i) => (
+            <div key={f.path} className="overflow-hidden rounded-xl border border-border bg-card">
+              <button
+                type="button"
+                onClick={() => setLightboxIndex(i)}
+                aria-label="View image"
+                className="relative block aspect-square w-full bg-muted"
+              >
+                <Image src={f.path} alt="" fill className="object-cover" sizes="200px" unoptimized />
+              </button>
+              <div className="space-y-2 p-3">
+                <p className="truncate text-xs text-muted-foreground" title={f.path}>
+                  {f.path}
+                </p>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">{humanSize(f.size)}</span>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => copy(f.path)}
+                      aria-label="Copy path"
+                      className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => remove(f.path)}
+                      aria-label="Delete"
+                      className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-primary"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
                   </div>
                 </div>
-              ))}
+                {copied === f.path && <p className="text-xs text-success">Copied</p>}
+              </div>
             </div>
-          </section>
-        ))
+          ))}
+        </div>
       )}
 
       {activeFile && lightboxIndex !== null && (
@@ -241,7 +306,7 @@ export function MediaManager({ files }: { files: MediaFile[] }) {
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
         >
           <p className="absolute top-4 left-1/2 -translate-x-1/2 text-sm text-white/80">
-            {lightboxIndex + 1} / {flat.length}
+            {lightboxIndex + 1} / {visible.length}
           </p>
           <button
             type="button"
@@ -251,7 +316,7 @@ export function MediaManager({ files }: { files: MediaFile[] }) {
           >
             <X className="h-5 w-5" />
           </button>
-          {flat.length > 1 && (
+          {visible.length > 1 && (
             <button
               type="button"
               onClick={(e) => {
@@ -270,7 +335,7 @@ export function MediaManager({ files }: { files: MediaFile[] }) {
           >
             <Image src={activeFile.path} alt="" fill className="object-contain" sizes="80vw" unoptimized />
           </div>
-          {flat.length > 1 && (
+          {visible.length > 1 && (
             <button
               type="button"
               onClick={(e) => {
@@ -285,6 +350,19 @@ export function MediaManager({ files }: { files: MediaFile[] }) {
           )}
         </div>
       )}
+
+      {notice && <Toast message={notice} onClose={() => setNotice(null)} />}
+    </div>
+  );
+}
+
+function Toast({ message, onClose }: { message: string; onClose: () => void }) {
+  return (
+    <div className="fixed inset-x-0 bottom-4 z-50 mx-auto flex max-w-lg items-start gap-3 rounded-xl border border-primary/40 bg-card px-4 py-3 shadow-lg">
+      <p className="flex-1 text-xs text-foreground">{message}</p>
+      <button type="button" onClick={onClose} aria-label="Dismiss" className="text-muted-foreground hover:text-foreground">
+        <X className="h-4 w-4" />
+      </button>
     </div>
   );
 }

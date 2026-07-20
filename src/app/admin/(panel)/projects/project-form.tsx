@@ -192,6 +192,9 @@ export function ProjectForm({
   // only side that follows the caller's locale; admin ignores it entirely so
   // this component renders byte-identical to before for staff.
   const t = makeUI(mode === "creator" ? locale : "en");
+  // Creator forms upload to the member's own namespace and the picker shows
+  // only their files; admin forms use the shared staff library.
+  const uploaderScope = mode === "creator" ? "member" : "staff";
 
   const [state, formAction, pending] = useActionState<ProjectFormState, FormData>(action, {});
 
@@ -494,6 +497,8 @@ export function ProjectForm({
               ref={posterUploaderRef}
               name="poster"
               dir="projects"
+              scope={uploaderScope}
+              browseLabel={t("btn.browse")}
               initial={posterInitial}
               label={t("projectForm.uploadPoster")}
               removeLabel={t("ui.remove")}
@@ -529,6 +534,8 @@ export function ProjectForm({
             name="gallery"
             dir="projects"
             multiple
+            scope={uploaderScope}
+            browseLabel={t("btn.browse")}
             initial={galleryInitial}
             label={t("projectForm.uploadGalleryImages")}
             removeLabel={t("ui.remove")}
@@ -838,7 +845,7 @@ export function ProjectForm({
       {/* ── Cast & crew (inline, #20²) ── */}
       <section className="space-y-4 rounded-2xl border border-border bg-card p-6">
         <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">{t("projectForm.section.castCrew")}</h2>
-        <ActorsSection value={actors} onChange={setActors} knownPeople={knownPeople} t={t} />
+        <ActorsSection value={actors} onChange={setActors} knownPeople={knownPeople} t={t} scope={uploaderScope} />
       </section>
 
       {/* ── Sponsorship tiers (inline, #20²) ── */}

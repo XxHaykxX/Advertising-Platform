@@ -2,67 +2,49 @@
 
 import { forwardRef, useImperativeHandle, useState } from "react";
 import Image from "next/image";
-import { Loader2, Trash2, Upload } from "lucide-react";
-import { uploadImage } from "@/lib/actions/uploads";
+import { ImageIcon, Trash2 } from "lucide-react";
+import { MediaPicker, type MediaPickerScope } from "@/components/media-picker";
 
 /** Imperative handle (#26) — lets a sibling component (the "Generate poster"
  *  panel) push a freshly generated image path into an uncontrolled
  *  ImageUploader without the parent form having to lift its state. */
 export type ImageUploaderHandle = { addPath: (path: string) => void };
 
-/** File-upload replacement for the old URL text fields. Uploaded paths are
- *  mirrored into a hidden <input> so the existing form plumbing (poster string /
+/** Image field backed by the MediaPicker: one "Browse" button opens the picker,
+ *  which itself lets you pick an existing image OR upload a new one from the
+ *  computer — so there's no separate upload button. Chosen paths are mirrored
+ *  into a hidden <input> so the existing form plumbing (poster string /
  *  newline-joined gallery) keeps working unchanged. */
 export const ImageUploader = forwardRef<ImageUploaderHandle, {
   name?: string; // when set, mirrors value into a hidden form field
   dir: string;
   multiple?: boolean;
   initial?: string; // single path, or newline-joined paths for multiple
-  label: string;
+  label?: string; // legacy prop (old upload button) — accepted but unused now
   onChange?: (paths: string[]) => void; // controlled mode (e.g. sub-editor rows)
-  trailing?: React.ReactNode; // rendered inline next to the upload button (e.g. an "or Generate poster" action)
+  trailing?: React.ReactNode; // rendered inline next to the browse button (e.g. an "or Generate poster" action)
   removeLabel?: string; // aria-label for the per-thumbnail remove button, localized by the caller
+  scope?: MediaPickerScope; // "member" (creator forms) uploads to /uploads/members/<id>/ and the picker shows only own files
+  browseLabel?: string; // label for the picker button
 }>(function ImageUploader({
   name,
   dir,
   multiple = false,
   initial = "",
-  label,
   onChange,
   trailing,
   removeLabel = "Remove",
+  scope = "staff",
+  browseLabel = "Browse",
 }, ref) {
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [paths, setPaths] = useState<string[]>(
     initial ? initial.split("\n").map((s) => s.trim()).filter(Boolean) : [],
   );
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
 
   function commit(next: string[]) {
     setPaths(next);
     onChange?.(next);
-  }
-
-  async function onPick(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files ?? []);
-    e.target.value = ""; // allow re-picking the same file
-    if (files.length === 0) return;
-    setBusy(true);
-    setError("");
-    const added: string[] = [];
-    for (const file of files) {
-      const fd = new FormData();
-      fd.append("file", file);
-      fd.append("dir", dir);
-      const res = await uploadImage(fd);
-      if (res.error) {
-        setError(res.error);
-      } else if (res.path) {
-        added.push(res.path);
-      }
-    }
-    commit(multiple ? [...paths, ...added] : added.slice(-1));
-    setBusy(false);
   }
 
   function removeAt(i: number) {
@@ -81,16 +63,24 @@ export const ImageUploader = forwardRef<ImageUploaderHandle, {
     <div className="space-y-3">
       {name ? <input type="hidden" name={name} value={hiddenValue} /> : null}
       <div className="flex items-center gap-3">
-        <label className="inline-flex cursor-pointer items-center gap-2 whitespace-nowrap rounded-lg border border-border px-3 py-2 text-sm text-foreground hover:border-primary/40">
-          <Upload className="h-4 w-4" />
-          {label}
-          <input type="file" accept="image/*" multiple={multiple} onChange={onPick} className="hidden" />
-        </label>
-        {busy && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
+        <button
+          type="button"
+          onClick={() => setPickerOpen(true)}
+          className="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border border-border px-3 py-2 text-sm text-foreground hover:border-primary/40"
+        >
+          <ImageIcon className="h-4 w-4" />
+          {browseLabel}
+        </button>
         {trailing}
       </div>
 
-      {error && <p className="text-xs text-primary">{error}</p>}
+      <MediaPicker
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onSelect={(path) => commit(multiple ? [...paths, path] : [path])}
+        scope={scope}
+        uploadDir={dir}
+      />
 
       {paths.length > 0 && (
         <div className="flex flex-wrap gap-3">

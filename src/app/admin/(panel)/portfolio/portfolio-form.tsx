@@ -4,6 +4,7 @@ import { useActionState, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { Languages, Loader2 } from "lucide-react";
 import { makeUI } from "@/lib/i18n";
+import { MediaField } from "@/components/media-field";
 import type { PortfolioFormState, PortfolioFormValues } from "./actions";
 import { translatePortfolioAction, type TranslatePortfolioState } from "./translate-action";
 
@@ -178,8 +179,8 @@ export function PortfolioForm({
           </Field>
         </div>
 
-        <Field label="Image URL">
-          <input name="image" defaultValue={data.image} placeholder="https://…" className={inputCls} />
+        <Field label="Image">
+          <MediaField name="image" initial={data.image} uploadDir="portfolio" />
         </Field>
         <Field label="Metrics (JSON)">
           <textarea

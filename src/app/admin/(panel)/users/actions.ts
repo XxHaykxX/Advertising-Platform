@@ -19,15 +19,24 @@ function str(fd: FormData, key: string) {
   return String(fd.get(key) || "").trim();
 }
 
-/** Create a new Publisher account (email + company name + password).
-   Super-admin creates all Publisher logins — there is no self-registration. */
-export async function createPublisher(_p: FormState, fd: FormData): Promise<FormState> {
+// Staff roles a super-admin can create from the Users page. Publisher is
+// intentionally NOT offered here anymore — only Super-admin and Moderator.
+const CREATABLE_ROLES = ["SUPERADMIN", "MODERATOR"] as const;
+type CreatableRole = (typeof CREATABLE_ROLES)[number];
+
+/** Create a new staff account (email + name + password + role). Super-admin
+   creates all staff logins — there is no self-registration for staff. */
+export async function createMember(_p: FormState, fd: FormData): Promise<FormState> {
   await requireSuperadmin();
   const t = makeUI(await getLocale());
 
   const email = str(fd, "email").toLowerCase();
   const name = str(fd, "name");
   const password = str(fd, "password");
+  const roleRaw = str(fd, "role");
+  const role: CreatableRole = (CREATABLE_ROLES as readonly string[]).includes(roleRaw)
+    ? (roleRaw as CreatableRole)
+    : "MODERATOR";
   // Echoed back on every error branch below so the non-password fields
   // survive React 19's automatic reset of these uncontrolled inputs after a
   // failed submit (same pattern as the portfolio form). The password itself
@@ -43,7 +52,7 @@ export async function createPublisher(_p: FormState, fd: FormData): Promise<Form
 
   try {
     await prisma.user.create({
-      data: { email, name, passwordHash, role: "PUBLISHER" },
+      data: { email, name, passwordHash, role },
     });
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {

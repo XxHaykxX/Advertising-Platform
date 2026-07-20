@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
+import { MediaField } from "@/components/media-field";
 import type { PartnerFormState, PartnerFormValues } from "./actions";
 
 export type PartnerFormInitial = PartnerFormValues;
@@ -51,8 +52,8 @@ export function PartnerForm({
         <Field label="Name *">
           <input name="name" defaultValue={data.name} required className={inputCls} />
         </Field>
-        <Field label="Logo URL">
-          <input name="logo" defaultValue={data.logo} placeholder="https://…" className={inputCls} />
+        <Field label="Logo">
+          <MediaField name="logo" initial={data.logo} uploadDir="partners" />
         </Field>
         <Field label="Website URL">
           <input name="url" defaultValue={data.url} placeholder="https://…" className={inputCls} />

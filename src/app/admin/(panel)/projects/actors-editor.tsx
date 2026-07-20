@@ -2,6 +2,7 @@
 
 import { Plus, Trash2 } from "lucide-react";
 import { ImageUploader } from "./image-uploader";
+import type { MediaPickerScope } from "@/components/media-picker";
 import type { PersonSuggestion } from "@/lib/data/actors";
 import type { makeUI } from "@/lib/i18n";
 
@@ -24,9 +25,11 @@ export function ActorsSection({
   onChange,
   knownPeople = [],
   t,
+  scope = "staff",
 }: {
   value: ActorRow[];
   onChange: (rows: ActorRow[]) => void;
+  scope?: MediaPickerScope;
   /** People previously entered on any project (#11) — backs a <datalist>
    *  autocomplete on the Name field. Picking (or exactly retyping) a known
    *  name autofills role/kind/photo for that row; the fields stay editable
@@ -127,6 +130,8 @@ export function ActorsSection({
             <ImageUploader
               key={r.photo}
               dir="actors"
+              scope={scope}
+              browseLabel={t("btn.browse")}
               initial={r.photo}
               label={r.photo ? t("projectForm.cast.replacePhoto") : t("projectForm.cast.uploadPhoto")}
               removeLabel={t("ui.remove")}

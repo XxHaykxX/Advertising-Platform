@@ -6,6 +6,7 @@ import { Prisma } from "@prisma/client";
 import type { ProjectStatus, ProjectKind } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireContentEditor } from "@/lib/auth/require";
+import { deleteUpload } from "@/lib/actions/uploads";
 import { PLACEMENT_TYPE_VALUES, KIND_VALUES } from "./form-shared";
 
 const STATUS_VALUES = ["PRE_PRODUCTION", "FILMING", "POST_PRODUCTION", "RELEASED"] as const;
@@ -455,13 +456,56 @@ export async function deleteProject(id: number) {
   const user = await requireContentEditor();
   const existing = await prisma.project.findUnique({
     where: { id },
-    select: { ownerId: true },
+    // Pull every image the project owns so we can wipe the files too, not just
+    // the DB rows — otherwise poster/gallery/cast photos are orphaned on disk.
+    select: {
+      ownerId: true,
+      poster: true,
+      gallery: true,
+      actors: { select: { photo: true } },
+    },
   });
   if (!existing) return;
   if (user.role !== "SUPERADMIN" && existing.ownerId !== user.id) return;
 
+  // Collect the project's own image paths BEFORE deleting, then delete the row
+  // (cascades to actors/tiers/interests/favorites via the schema), then remove
+  // the files. deleteUpload skips any file still referenced elsewhere (another
+  // project's gallery, a portfolio, an avatar), so shared images survive.
+  const imagePaths = collectProjectImagePaths(existing);
+
   await prisma.project.delete({ where: { id } });
+
+  for (const p of imagePaths) {
+    try {
+      await deleteUpload(p);
+    } catch {
+      // best-effort file cleanup — never let a stray unlink error block delete
+    }
+  }
+
   revalidateProjectPaths(id);
+}
+
+/** Every /uploads/… image a project owns: poster, gallery entries and cast/crew
+ *  photos. External URLs (not /uploads/…) are left untouched. */
+function collectProjectImagePaths(p: {
+  poster: string | null;
+  gallery: string | null;
+  actors: { photo: string | null }[];
+}): string[] {
+  const out: string[] = [];
+  if (p.poster) out.push(p.poster);
+  if (p.gallery) {
+    try {
+      const arr = JSON.parse(p.gallery);
+      if (Array.isArray(arr)) out.push(...arr.filter((x): x is string => typeof x === "string"));
+    } catch {
+      // malformed gallery JSON — nothing to clean up
+    }
+  }
+  for (const a of p.actors) if (a.photo) out.push(a.photo);
+  return [...new Set(out)].filter((x) => x.startsWith("/uploads/"));
 }
 
 export async function toggleActive(id: number, isActive: boolean) {
