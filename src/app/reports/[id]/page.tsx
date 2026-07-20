@@ -43,7 +43,7 @@ export default async function ReportPage({
     authed?.role === "BRAND" ? await getBrandInterestStatus(authed.id, pid) : null;
 
   return (
-    <ReportInterestProvider projectId={project.id} initialStatus={interestStatus}>
+    <ReportInterestProvider projectId={project.id} initialStatus={interestStatus} locale={locale}>
       <Header user={user} locale={locale} currency={currency} />
       <ReportTabs hasCast={project.actors.length > 0} locale={locale} />
       <div id="overview">

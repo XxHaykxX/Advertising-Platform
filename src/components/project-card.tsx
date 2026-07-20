@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { AccentBadge, GenreBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { FavoriteHeart } from "@/components/favorite-heart";
 import { daysUntil, formatCompactNumber, formatFullDate, formatMonthYear, parseStringArray, splitCountries } from "@/lib/data/format";
 import { cn } from "@/lib/utils";
 import { DEFAULT_LOCALE, intlLocale, localizeValue, makeUI, type Locale } from "@/lib/i18n";
@@ -22,10 +23,16 @@ export function ProjectCard({
   project,
   locale = DEFAULT_LOCALE,
   user = null,
+  favorited = false,
+  canFavorite = false,
+  signedIn = false,
 }: {
   project: ProjectListDTO;
   locale?: Locale;
   user?: SiteHeaderUser | null;
+  favorited?: boolean;
+  canFavorite?: boolean;
+  signedIn?: boolean;
 }) {
   const t = makeUI(locale);
   const countries = splitCountries(project.countries);
@@ -62,6 +69,14 @@ export function ProjectCard({
         <div className="absolute left-3 top-3">
           <GenreBadge>{localizeValue(locale, "genre", project.genre)}</GenreBadge>
         </div>
+        <FavoriteHeart
+          projectId={project.id}
+          initialFavorite={favorited}
+          canFavorite={canFavorite}
+          signedIn={signedIn}
+          addAria={t("favorite.addAria")}
+          removeAria={t("favorite.removeAria")}
+        />
       </div>
 
       <div className="flex flex-1 flex-col p-6">
@@ -138,27 +153,9 @@ export function ProjectCard({
           {project.priceNote ? <span className="ml-1">({project.priceNote})</span> : null}
         </p>
 
-        {/* Grid cards are narrow (≈33vw on desktop) and the primary CTA label
-            is long in every locale, so a side-by-side row overflows the card
-            (clipped by overflow-hidden). Stack both buttons full-width at all
-            breakpoints — never overflows, aligns across cards. */}
-        <div className="relative z-20 mt-auto flex flex-col gap-2 pt-6">
-          {/* Long CTA label in ru/hy — allow it to wrap to 2 lines (the base
-              Button is nowrap + fixed height, which clips it in a narrow card). */}
-          <Button
-            asChild
-            variant="primary"
-            size="sm"
-            className="h-auto min-h-9 w-full whitespace-normal py-1.5 text-center leading-tight"
-          >
-            {user?.role === "BRAND" ? (
-              <Link href={`/reports/${project.id}`}>{t("btn.expressInterest")}</Link>
-            ) : user ? (
-              <Link href={`/reports/${project.id}`}>{t("btn.viewReport")}</Link>
-            ) : (
-              <Link href="/login">{t("cta.loginToApply")}</Link>
-            )}
-          </Button>
+        {/* The interest action moved to the heart (favorite) + the report page's
+            Apply popup, so the card keeps a single "View report" CTA. */}
+        <div className="relative z-20 mt-auto pt-6">
           <Button asChild variant="secondary" size="sm" className="w-full">
             <Link href={`/reports/${project.id}`}>{t("btn.viewReport")}</Link>
           </Button>

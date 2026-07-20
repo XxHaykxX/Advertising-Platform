@@ -1,103 +1,30 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Check, Film, Heart, Loader2, MapPin, Search, Sparkles, Users, X } from "lucide-react";
+import { Film, MapPin, Search, Sparkles, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GenreBadge } from "@/components/ui/badge";
+import { FavoriteHeart } from "@/components/favorite-heart";
 import { splitCountries } from "@/lib/data/format";
 import { DEFAULT_LOCALE, localizeValue, makeUI, type Locale } from "@/lib/i18n";
-import { cn } from "@/lib/utils";
 import type { ProjectListDTO } from "@/lib/types";
-import type { InterestStatus } from "@prisma/client";
-import { expressInterest, withdrawInterest } from "../actions";
-import { emitInterestChanged } from "../interest-events";
-
-/** Express Interest toggle for a single Browse card (#24) — a client-local
- *  useTransition + Server Action call, same "no manual optimistic state"
- *  pattern as admin/(panel)/registrations/row-actions.tsx: the action's
- *  revalidatePath() refreshes this page's props after it resolves, so the
- *  button's own `pending` flag is all the local state it needs. Already-sent
- *  state is clickable too (calls withdrawInterest) — hover swaps the icon/
- *  label to Х/"Remove" so the toggle affordance is obvious before the click.
- *  Also emits INTEREST_CHANGED_EVENT on either branch so the sidebar badge
- *  updates immediately without a reload (IA-8 add / IA-9 remove). */
-function ExpressInterestButton({
-  projectId,
-  status,
-  labelIdle,
-  labelSent,
-  labelRemove,
-  errorMessage,
-}: {
-  projectId: number;
-  status: InterestStatus | undefined;
-  labelIdle: string;
-  labelSent: string;
-  labelRemove: string;
-  errorMessage: string;
-}) {
-  const [pending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
-  const [hover, setHover] = useState(false);
-  const alreadySent = status !== undefined;
-
-  return (
-    <div className="flex min-w-0 flex-1 flex-col items-end gap-1">
-      <Button
-        type="button"
-        variant={alreadySent ? "secondary" : "primary"}
-        size="sm"
-        disabled={pending}
-        className={cn(
-          "h-auto min-h-9 min-w-0 max-w-full whitespace-normal break-words py-2 text-center leading-tight",
-          "gap-1.5",
-          alreadySent && hover && "border-danger/40 text-danger"
-        )}
-        onMouseEnter={() => setHover(true)}
-        onMouseLeave={() => setHover(false)}
-        onClick={() =>
-          startTransition(async () => {
-            setError(null);
-            const res = alreadySent ? await withdrawInterest(projectId) : await expressInterest(projectId);
-            if (!res.ok) setError(res.error ?? errorMessage);
-            else emitInterestChanged();
-          })
-        }
-      >
-        {pending ? (
-          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-        ) : alreadySent ? (
-          hover ? <X className="h-3.5 w-3.5" /> : <Check className="h-3.5 w-3.5" />
-        ) : (
-          <Heart className="h-3.5 w-3.5" />
-        )}
-        {alreadySent ? (hover ? labelRemove : labelSent) : labelIdle}
-      </Button>
-      {error ? <p className="text-xs text-danger">{error}</p> : null}
-    </div>
-  );
-}
 
 function BrowseCard({
   project,
-  status,
+  favorited,
   locale,
   onRequestLabel,
-  interestLabel,
-  interestSentLabel,
-  interestRemoveLabel,
-  interestErrorLabel,
+  favoriteAddAria,
+  favoriteRemoveAria,
 }: {
   project: ProjectListDTO;
-  status: InterestStatus | undefined;
+  favorited: boolean;
   locale: Locale;
   onRequestLabel: string;
-  interestLabel: string;
-  interestSentLabel: string;
-  interestRemoveLabel: string;
-  interestErrorLabel: string;
+  favoriteAddAria: string;
+  favoriteRemoveAria: string;
 }) {
   const countries = splitCountries(project.countries);
 
@@ -120,6 +47,14 @@ function BrowseCard({
         <div className="absolute left-3 top-3">
           <GenreBadge>{localizeValue(locale, "genre", project.genre)}</GenreBadge>
         </div>
+        <FavoriteHeart
+          projectId={project.id}
+          initialFavorite={favorited}
+          canFavorite
+          signedIn
+          addAria={favoriteAddAria}
+          removeAria={favoriteRemoveAria}
+        />
       </div>
 
       <div className="flex flex-1 flex-col p-5">
@@ -146,18 +81,10 @@ function BrowseCard({
           <p className="mt-3 text-sm font-semibold text-foreground">{project.budgetDisplay}</p>
         ) : null}
 
-        <div className="mt-auto flex items-center justify-between gap-2 pt-5">
-          <Button asChild variant="ghost" size="sm" className="shrink-0">
+        <div className="mt-auto pt-5">
+          <Button asChild variant="ghost" size="sm" className="w-full">
             <Link href={`/reports/${project.id}`}>{onRequestLabel}</Link>
           </Button>
-          <ExpressInterestButton
-            projectId={project.id}
-            status={status}
-            labelIdle={interestLabel}
-            labelSent={interestSentLabel}
-            labelRemove={interestRemoveLabel}
-            errorMessage={interestErrorLabel}
-          />
         </div>
       </div>
     </div>
@@ -166,13 +93,13 @@ function BrowseCard({
 
 export function BrowseView({
   projects,
-  interested,
+  favorites,
   locale = DEFAULT_LOCALE,
   title,
 }: {
   projects: ProjectListDTO[];
-  /** projectId (stringified) -> InterestStatus, from Object.fromEntries(Map). */
-  interested: Record<string, InterestStatus>;
+  /** projectIds the brand has favorited (heart's initial filled state). */
+  favorites: Set<number>;
   locale?: Locale;
   title: string;
 }) {
@@ -213,13 +140,11 @@ export function BrowseView({
             <BrowseCard
               key={project.id}
               project={project}
-              status={interested[String(project.id)]}
+              favorited={favorites.has(project.id)}
               locale={locale}
               onRequestLabel={t("btn.viewReport")}
-              interestLabel={t("btn.expressInterest")}
-              interestSentLabel={t("account.brand.alreadyInterested")}
-              interestRemoveLabel={t("btn.removeInterest")}
-              interestErrorLabel={t("account.brand.expressInterestError")}
+              favoriteAddAria={t("favorite.addAria")}
+              favoriteRemoveAria={t("favorite.removeAria")}
             />
           ))}
         </div>

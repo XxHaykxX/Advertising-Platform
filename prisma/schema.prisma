@@ -59,6 +59,7 @@ model User {
 
   projects  Project[]
   interests Interest[] // Interest rows this user (as a BRAND) has expressed
+  favorites Favorite[] // Favorite (shortlist) rows this user (as a BRAND) saved
   passwordResetTokens PasswordResetToken[]
   notifications Notification[]
 }
@@ -178,6 +179,7 @@ model Project {
   actors        Actor[]
   tiers         SponsorshipTier[]
   interests     Interest[]
+  favorites     Favorite[]
 
   @@index([ownerId])
 }
@@ -261,6 +263,23 @@ model Interest {
   projectId Int
   status    InterestStatus  @default(SENT)
   createdAt DateTime        @default(now())
+  message   String?         @db.Text // application message from the brand (report popup)
+  contact   String? // optional contact override supplied with the application
+
+  brand   User    @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([brandId, projectId])
+  @@index([projectId])
+}
+
+/// Private brand shortlist ("favorite" heart on cards) — separate from Interest.
+/// Admins do NOT see favorites; this is the brand's own saved list.
+model Favorite {
+  id        Int      @id @default(autoincrement())
+  brandId   Int
+  projectId Int
+  createdAt DateTime @default(now())
 
   brand   User    @relation(fields: [brandId], references: [id], onDelete: Cascade)
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)

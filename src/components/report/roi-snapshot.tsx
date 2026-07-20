@@ -8,9 +8,9 @@ import { ReportInterestButton } from "@/components/report/report-interest-button
 import type { SiteHeaderUser } from "@/components/header";
 import type { ProjectDetailDTO } from "@/lib/types";
 
-// Guests get the login CTA; a BRAND already viewing this report gets a real
-// Express Interest toggle (IA-6 — a link back to this same page was a dead
-// click; the sent/pending state is shared with key-facts's button via
+// Guests get the login CTA; a BRAND already viewing this report gets the
+// Express Interest trigger, which opens the application popup (#23 — the
+// applied/open state is shared with key-facts's button via
 // ReportInterestContext, see that provider in page.tsx). Other signed-in
 // roles (CREATOR/staff) have no use for either action here, so the whole
 // banner is omitted.
@@ -34,8 +34,6 @@ export function ExpressInterestBanner({
         <ReportInterestButton
           labelIdle={t("btn.expressInterest")}
           labelSent={t("account.brand.alreadyInterested")}
-          labelRemove={t("btn.removeInterest")}
-          errorMessage={t("account.brand.expressInterestError")}
         />
       ) : (
         <Button asChild variant="primary" size="sm" className="w-full sm:w-auto">

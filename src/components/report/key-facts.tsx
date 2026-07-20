@@ -127,10 +127,10 @@ export function KeyFacts({
                 <AccentBadge>{localizeValue(locale, "placement", project.placementType)}</AccentBadge>
               ) : null}
               {/* Guests get the login CTA; a BRAND already viewing this report
-                  gets a real Express Interest toggle (IA-6 — a link back to
-                  this same page was a dead click). Other signed-in roles
-                  (CREATOR/staff) have no use for either action here, so
-                  nothing is rendered. */}
+                  gets the Express Interest trigger, which opens the
+                  application popup (#23 — a link back to this same page was
+                  a dead click). Other signed-in roles (CREATOR/staff) have no
+                  use for either action here, so nothing is rendered. */}
               {!user ? (
                 <Button asChild variant="primary" size="lg" className="w-full whitespace-nowrap lg:w-auto">
                   <Link href="/login">{t("cta.loginToApply")}</Link>
@@ -139,8 +139,6 @@ export function KeyFacts({
                 <ReportInterestButton
                   labelIdle={t("btn.expressInterest")}
                   labelSent={t("account.brand.alreadyInterested")}
-                  labelRemove={t("btn.removeInterest")}
-                  errorMessage={t("account.brand.expressInterestError")}
                 />
               ) : null}
             </div>

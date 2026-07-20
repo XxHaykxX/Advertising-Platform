@@ -1,21 +1,24 @@
 "use client";
 
-import { createContext, useContext, useState, useTransition } from "react";
+import { createContext, useContext, useState } from "react";
 import type { InterestStatus } from "@prisma/client";
-import { expressInterest, withdrawInterest } from "@/app/account/brand/actions";
+import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
+import { ApplicationDialog } from "@/components/report/application-dialog";
 
-/** Shared Express Interest state for the report page (IA-6 polish) — the page
- *  renders TWO buttons (key-facts up top, the ROI banner further down) that
- *  must agree on whether interest has been sent, so the toggle logic lives
- *  here once instead of duplicated per-button local state. Same "no
- *  emitInterestChanged, no reliance on revalidatePath" reasoning as before:
- *  expressInterest/withdrawInterest only revalidate /account/brand* paths, so
- *  this context flips its own `status` directly on success. */
+/** Shared Express Interest state for the report page (#23) — the page renders
+ *  TWO buttons (key-facts up top, the ROI banner further down) that must
+ *  agree on whether an application has been sent, and both need to open the
+ *  SAME popup rather than each mounting its own. `applied` seeds from
+ *  whatever Interest row already existed (getBrandInterestStatus in
+ *  page.tsx) and flips true the moment the popup's submitApplication call
+ *  succeeds — the dialog itself is mounted once, here, so either button's
+ *  openDialog() opens the one instance. */
 type ReportInterestContextValue = {
-  status: InterestStatus | null;
-  pending: boolean;
-  error: string | null;
-  toggle: (errorMessage: string) => void;
+  applied: boolean;
+  isOpen: boolean;
+  openDialog: () => void;
+  closeDialog: () => void;
+  markApplied: () => void;
 };
 
 const ReportInterestContext = createContext<ReportInterestContextValue | null>(null);
@@ -23,29 +26,37 @@ const ReportInterestContext = createContext<ReportInterestContextValue | null>(n
 export function ReportInterestProvider({
   projectId,
   initialStatus,
+  locale = DEFAULT_LOCALE,
   children,
 }: {
   projectId: number;
   initialStatus: InterestStatus | null;
+  locale?: Locale;
   children: React.ReactNode;
 }) {
-  const [status, setStatus] = useState<InterestStatus | null>(initialStatus);
-  const [pending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+  const [applied, setApplied] = useState(initialStatus !== null);
+  const [isOpen, setIsOpen] = useState(false);
+  const t = makeUI(locale);
 
-  const toggle = (errorMessage: string) => {
-    const alreadySent = status !== null;
-    startTransition(async () => {
-      setError(null);
-      const res = alreadySent ? await withdrawInterest(projectId) : await expressInterest(projectId);
-      if (!res.ok) setError(res.error ?? errorMessage);
-      else setStatus(alreadySent ? null : "SENT");
-    });
+  const value: ReportInterestContextValue = {
+    applied,
+    isOpen,
+    openDialog: () => setIsOpen(true),
+    closeDialog: () => setIsOpen(false),
+    markApplied: () => setApplied(true),
   };
 
   return (
-    <ReportInterestContext.Provider value={{ status, pending, error, toggle }}>
+    <ReportInterestContext.Provider value={value}>
       {children}
+      {isOpen ? (
+        <ApplicationDialog
+          projectId={projectId}
+          t={t}
+          onClose={() => setIsOpen(false)}
+          onSubmitted={() => setApplied(true)}
+        />
+      ) : null}
     </ReportInterestContext.Provider>
   );
 }

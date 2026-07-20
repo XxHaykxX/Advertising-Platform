@@ -201,8 +201,9 @@ export function Header({
   const pathname = usePathname();
   const t = makeUI(locale);
   const NAV = useNav(t);
-  // Signed-in BRAND/CREATOR: header drops the marketing nav for a single
-  // cabinet link (see docs/superpowers/specs/2026-07-19-member-header-nav-design.md).
+  // Signed-in BRAND/CREATOR: header drops the marketing nav entirely — the
+  // cabinet is reachable via the avatar menu / Wordmark instead
+  // (see docs/superpowers/specs/2026-07-19-member-header-nav-design.md).
   const isMember = user != null && !STAFF_ROLES.includes(user.role);
   // Every page that opens on the dark cinematic PageHero (plus the landing
   // page, which has its own bespoke hero) — while the transparent header
@@ -230,17 +231,7 @@ export function Header({
 
           {/* Desktop nav */}
           <nav className="hidden items-center gap-8 lg:flex">
-            {isMember && user ? (
-              <Link
-                href={cabinetHrefFor(user.role)}
-                className={cn(
-                  "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors hover:bg-primary/10 hover:text-primary",
-                  onDark ? "text-white/75" : "text-muted-foreground"
-                )}
-              >
-                {t("nav.cabinet")}
-              </Link>
-            ) : (
+            {!isMember &&
               NAV.map((item) => (
                 <Link
                   key={item.href}
@@ -252,8 +243,7 @@ export function Header({
                 >
                   {item.label}
                 </Link>
-              ))
-            )}
+              ))}
           </nav>
 
           {/* Right cluster (desktop) */}

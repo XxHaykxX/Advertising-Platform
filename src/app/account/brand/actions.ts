@@ -22,57 +22,6 @@ function revalidateBrandPaths() {
 
 export type ExpressInterestResult = { ok: true } | { ok: false; error: string };
 
-/** Create (or no-op if it already exists) a SENT Interest row for the current
- *  BRAND member on `projectId`. Upsert instead of create — a project already
- *  in MUTUAL/DECLINED must not be silently reset back to SENT by a repeat
- *  click, so `update: {}` is intentionally a no-op. */
-export async function expressInterest(projectId: number): Promise<ExpressInterestResult> {
-  const user = await requireMember();
-  const locale = await getLocale();
-  const t = makeUI(locale);
-  if (user.role !== "BRAND") return { ok: false, error: t("account.brand.expressInterestError") };
-
-  if (!Number.isInteger(projectId)) return { ok: false, error: t("account.brand.expressInterestError") };
-
-  let isNew = false;
-  try {
-    const existing = await prisma.interest.findUnique({
-      where: { brandId_projectId: { brandId: user.id, projectId } },
-      select: { id: true },
-    });
-    isNew = !existing;
-    await prisma.interest.upsert({
-      where: { brandId_projectId: { brandId: user.id, projectId } },
-      create: { brandId: user.id, projectId, status: "SENT" },
-      update: {},
-    });
-  } catch {
-    return { ok: false, error: t("account.brand.expressInterestError") };
-  }
-
-  // Notify only on a genuinely new interest — a repeat click (upsert no-op)
-  // must not re-notify. Notification failures never fail the interest itself.
-  if (isNew) {
-    const project = await prisma.project.findUnique({
-      where: { id: projectId },
-      select: { ownerId: true, title: true },
-    });
-    if (project) {
-      const payload = {
-        type: "INTEREST" as const,
-        data: { projectId, projectTitle: project.title, brandName: user.name },
-      };
-      // Owning creator (or staff owner) — link to the public report they can view.
-      await createNotification(project.ownerId, { ...payload, link: `/reports/${projectId}` });
-      // Superadmins watch all interests; exclude the owner to avoid a duplicate.
-      await notifyRoles(["SUPERADMIN"], { ...payload, link: "/admin/interests" }, project.ownerId);
-    }
-  }
-
-  revalidateBrandPaths();
-  return { ok: true };
-}
-
 /** Delete the current BRAND member's Interest row on `projectId` — the other
  *  half of the toggle (expressInterest ⇄ withdrawInterest). deleteMany (not
  *  delete) so a double-click / already-withdrawn race is a no-op instead of
@@ -101,6 +50,66 @@ export async function getInterestCount(): Promise<number> {
   const user = await requireMember();
   if (user.role !== "BRAND") return 0;
   return getBrandInterestCount(user.id);
+}
+
+/** #23 — the report page's Express Interest button now opens a popup asking
+ *  for an application message + optional contact instead of instant-toggling.
+ *  Upsert (not create-only) so a resend after MUTUAL/DECLINED — unlike
+ *  expressInterest's no-op update — overwrites the message/contact and
+ *  resets status back to SENT, since a fresh application is meant to reopen
+ *  the conversation. Always notifies (not just on a brand-new row): the
+ *  brand may be resubmitting with new details the admin should see. */
+export async function submitApplication(
+  projectId: number,
+  message: string,
+  contact: string,
+): Promise<ExpressInterestResult> {
+  const user = await requireMember();
+  const locale = await getLocale();
+  const t = makeUI(locale);
+  if (user.role !== "BRAND") return { ok: false, error: t("account.brand.expressInterestError") };
+
+  if (!Number.isInteger(projectId)) return { ok: false, error: t("account.brand.expressInterestError") };
+
+  const trimmedMessage = message.trim().slice(0, 2000) || null;
+  const trimmedContact = contact.trim().slice(0, 191) || null;
+  // Message is required (the popup enforces it client-side too) — reject an
+  // empty application submitted via a direct POST.
+  if (!trimmedMessage) return { ok: false, error: t("account.brand.expressInterestError") };
+
+  try {
+    await prisma.interest.upsert({
+      where: { brandId_projectId: { brandId: user.id, projectId } },
+      create: { brandId: user.id, projectId, status: "SENT", message: trimmedMessage, contact: trimmedContact },
+      update: { status: "SENT", message: trimmedMessage, contact: trimmedContact },
+    });
+  } catch {
+    return { ok: false, error: t("account.brand.expressInterestError") };
+  }
+
+  // Notification is best-effort — the application is already saved, so a DB
+  // hiccup here must not 500 the request or fail the submit.
+  try {
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+      select: { ownerId: true, title: true },
+    });
+    if (project) {
+      const payload = {
+        type: "INTEREST" as const,
+        data: { projectId, projectTitle: project.title, brandName: user.name },
+      };
+      // Owning creator (or staff owner) — link to the public report they can view.
+      await createNotification(project.ownerId, { ...payload, link: `/reports/${projectId}` });
+      // Superadmins watch all interests; exclude the owner to avoid a duplicate.
+      await notifyRoles(["SUPERADMIN"], { ...payload, link: "/admin/interests" }, project.ownerId);
+    }
+  } catch {
+    // best-effort notification — ignore
+  }
+
+  revalidateBrandPaths();
+  return { ok: true };
 }
 
 export type BrandProfileFormState = {

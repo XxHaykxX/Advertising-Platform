@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { PageHero } from "@/components/ui/page-hero";
 import { AccentBadge, GenreBadge } from "@/components/ui/badge";
 import { ProjectCard } from "@/components/project-card";
+import { FavoriteHeart } from "@/components/favorite-heart";
 import { Footer } from "@/components/footer";
 import { Header, type SiteHeaderUser } from "@/components/header";
 import { daysUntil, formatCompactNumber, formatFullDate, parseStringArray, splitCountries } from "@/lib/data/format";
@@ -78,10 +79,16 @@ function ProjectRow({
   project,
   locale = DEFAULT_LOCALE,
   user = null,
+  favorited = false,
+  canFavorite = false,
+  signedIn = false,
 }: {
   project: ProjectListDTO;
   locale?: Locale;
   user?: SiteHeaderUser | null;
+  favorited?: boolean;
+  canFavorite?: boolean;
+  signedIn?: boolean;
 }) {
   const t = makeUI(locale);
   const countries = splitCountries(project.countries);
@@ -103,6 +110,14 @@ function ProjectRow({
             <Film className="h-8 w-8 text-primary/40" />
           </div>
         )}
+        <FavoriteHeart
+          projectId={project.id}
+          initialFavorite={favorited}
+          canFavorite={canFavorite}
+          signedIn={signedIn}
+          addAria={t("favorite.addAria")}
+          removeAria={t("favorite.removeAria")}
+        />
       </div>
 
       <div className="min-w-0 flex-1">
@@ -144,15 +159,6 @@ function ProjectRow({
       <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:gap-3">
         <Button asChild variant="primary" size="sm" className="w-full sm:w-auto">
           <Link href={`/reports/${project.id}`}>{t("btn.viewReport")}</Link>
-        </Button>
-        <Button asChild variant="ghost" size="sm" className="w-full sm:w-auto">
-          {user?.role === "BRAND" ? (
-            <Link href={`/reports/${project.id}`}>{t("btn.expressInterest")}</Link>
-          ) : user ? (
-            <Link href={`/reports/${project.id}`}>{t("btn.viewReport")}</Link>
-          ) : (
-            <Link href="/login">{t("cta.loginToApply")}</Link>
-          )}
         </Button>
       </div>
     </div>
@@ -207,11 +213,19 @@ export function CatalogView({
   locale = DEFAULT_LOCALE,
   currency = DEFAULT_CURRENCY,
   user = null,
+  favorites = new Set(),
+  signedIn = false,
+  isBrand = false,
 }: {
   projects: ProjectListDTO[];
   locale?: Locale;
   currency?: CurrencyCode;
   user?: SiteHeaderUser | null;
+  /** projectIds the current BRAND visitor has favorited (#22) — empty for
+   *  guests/non-brand members, which renders every heart outline/inert. */
+  favorites?: Set<number>;
+  signedIn?: boolean;
+  isBrand?: boolean;
 }) {
   const t = makeUI(locale);
   const genres = useMemo(
@@ -642,13 +656,29 @@ export function CatalogView({
             ) : view === "grid" ? (
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
                 {filtered.map((project) => (
-                  <ProjectCard key={project.id} project={project} locale={locale} user={user} />
+                  <ProjectCard
+                    key={project.id}
+                    project={project}
+                    locale={locale}
+                    user={user}
+                    favorited={favorites.has(project.id)}
+                    canFavorite={isBrand}
+                    signedIn={signedIn}
+                  />
                 ))}
               </div>
             ) : (
               <div className="flex flex-col gap-4">
                 {filtered.map((project) => (
-                  <ProjectRow key={project.id} project={project} locale={locale} user={user} />
+                  <ProjectRow
+                    key={project.id}
+                    project={project}
+                    locale={locale}
+                    user={user}
+                    favorited={favorites.has(project.id)}
+                    canFavorite={isBrand}
+                    signedIn={signedIn}
+                  />
                 ))}
               </div>
             )}

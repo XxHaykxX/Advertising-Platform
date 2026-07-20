@@ -13,6 +13,8 @@ export const NOTIFICATION_TYPES = [
   "PROJECT_SUBMITTED", // a CREATOR submitted a project for moderation → moderators
   "PROJECT_APPROVED", // moderator approved the project → creator owner
   "PROJECT_REJECTED", // moderator rejected the project → creator owner
+  "INTEREST_APPROVED", // admin approved a brand's Interest (SENT → MUTUAL) → the brand
+  "INTEREST_DECLINED", // admin declined a brand's Interest (SENT → DECLINED) → the brand
 ] as const;
 
 export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
@@ -61,6 +63,10 @@ export function renderNotification(
       return { title: t("notif.approved.title"), body: t("notif.approved.body", vars) };
     case "PROJECT_REJECTED":
       return { title: t("notif.rejected.title"), body: t("notif.rejected.body", vars) };
+    case "INTEREST_APPROVED":
+      return { title: t("notif.interestApproved.title"), body: t("notif.interestApproved.body", vars) };
+    case "INTEREST_DECLINED":
+      return { title: t("notif.interestDeclined.title"), body: t("notif.interestDeclined.body", vars) };
     default:
       return { title: t("notif.generic.title"), body: "" };
   }
