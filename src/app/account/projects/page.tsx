@@ -1,8 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Plus } from "lucide-react";
-import { Container } from "@/components/ui/container";
-import { Section } from "@/components/ui/section";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/ui/reveal";
 import { requireMember } from "@/lib/auth/require";
@@ -42,78 +40,76 @@ export default async function MyProjectsPage() {
   };
 
   return (
-    <Section>
-      <Container>
-        <Reveal>
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <h1 className="text-3xl font-bold text-foreground md:text-4xl">
-                {t("account.myProjects")}
-              </h1>
-              <p className="mt-2 text-muted-foreground">{t("account.myProjectsSubtitle")}</p>
-            </div>
-            <Button asChild variant="primary" size="md" className="gap-2">
-              <Link href="/account/projects/new">
-                <Plus className="h-4 w-4" />
-                {t("account.submitProject")}
-              </Link>
+    <>
+      <Reveal>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground md:text-4xl">
+              {t("account.myProjects")}
+            </h1>
+            <p className="mt-2 text-muted-foreground">{t("account.myProjectsSubtitle")}</p>
+          </div>
+          <Button asChild variant="primary" size="md" className="gap-2">
+            <Link href="/account/projects/new">
+              <Plus className="h-4 w-4" />
+              {t("account.submitProject")}
+            </Link>
+          </Button>
+        </div>
+      </Reveal>
+
+      {projects.length === 0 ? (
+        <Reveal delay={0.05}>
+          <div className="mt-10 flex flex-col items-center gap-4 rounded-2xl border border-dashed border-border bg-card px-6 py-16 text-center">
+            <p className="text-muted-foreground">{t("account.noProjects")}</p>
+            <Button asChild variant="primary" size="md">
+              <Link href="/account/projects/new">{t("account.submitFirstProject")}</Link>
             </Button>
           </div>
         </Reveal>
-
-        {projects.length === 0 ? (
-          <Reveal delay={0.05}>
-            <div className="mt-10 flex flex-col items-center gap-4 rounded-2xl border border-dashed border-border bg-card px-6 py-16 text-center">
-              <p className="text-muted-foreground">{t("account.noProjects")}</p>
-              <Button asChild variant="primary" size="md">
-                <Link href="/account/projects/new">{t("account.submitFirstProject")}</Link>
-              </Button>
-            </div>
-          </Reveal>
-        ) : (
-          <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {projects.map((p, i) => {
-              // F4: only APPROVED projects are public (isActive) — let the creator
-              // open their live listing. Pending/rejected/draft aren't viewable yet,
-              // so those cards stay non-clickable (the status pill explains why).
-              const viewable = p.moderationStatus === "APPROVED" && p.isActive;
-              const inner = (
-                <div className="h-full overflow-hidden rounded-2xl border border-border bg-card">
-                  <div className="aspect-[2/3] w-full bg-muted">
-                    {p.poster && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={p.poster} alt="" className="h-full w-full object-cover" />
-                    )}
-                  </div>
-                  <div className="p-4">
-                    <span
-                      className={`inline-block rounded-full border px-2.5 py-1 text-xs font-medium ${STATUS_PILL[p.moderationStatus]}`}
-                    >
-                      {STATUS_LABEL[p.moderationStatus]}
-                    </span>
-                    <h3 className="mt-2 truncate font-semibold text-foreground">{p.title}</h3>
-                    <p className="text-xs text-muted-foreground">{p.code}</p>
-                  </div>
-                </div>
-              );
-              return (
-                <Reveal key={p.id} delay={0.05 * (i % 6)}>
-                  {viewable ? (
-                    <Link
-                      href={`/reports/${p.id}`}
-                      className="block h-full rounded-2xl transition-transform hover:-translate-y-0.5"
-                    >
-                      {inner}
-                    </Link>
-                  ) : (
-                    inner
+      ) : (
+        <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {projects.map((p, i) => {
+            // F4: only APPROVED projects are public (isActive) — let the creator
+            // open their live listing. Pending/rejected/draft aren't viewable yet,
+            // so those cards stay non-clickable (the status pill explains why).
+            const viewable = p.moderationStatus === "APPROVED" && p.isActive;
+            const inner = (
+              <div className="h-full overflow-hidden rounded-2xl border border-border bg-card">
+                <div className="aspect-[2/3] w-full bg-muted">
+                  {p.poster && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={p.poster} alt="" className="h-full w-full object-cover" />
                   )}
-                </Reveal>
-              );
-            })}
-          </div>
-        )}
-      </Container>
-    </Section>
+                </div>
+                <div className="p-4">
+                  <span
+                    className={`inline-block rounded-full border px-2.5 py-1 text-xs font-medium ${STATUS_PILL[p.moderationStatus]}`}
+                  >
+                    {STATUS_LABEL[p.moderationStatus]}
+                  </span>
+                  <h3 className="mt-2 truncate font-semibold text-foreground">{p.title}</h3>
+                  <p className="text-xs text-muted-foreground">{p.code}</p>
+                </div>
+              </div>
+            );
+            return (
+              <Reveal key={p.id} delay={0.05 * (i % 6)}>
+                {viewable ? (
+                  <Link
+                    href={`/reports/${p.id}`}
+                    className="block h-full rounded-2xl transition-transform hover:-translate-y-0.5"
+                  >
+                    {inner}
+                  </Link>
+                ) : (
+                  inner
+                )}
+              </Reveal>
+            );
+          })}
+        </div>
+      )}
+    </>
   );
 }

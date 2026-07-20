@@ -59,7 +59,7 @@ export function AdminShell({
 
       {/* Sidebar / drawer */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-60 shrink-0 flex-col border-r border-border bg-card transition-transform duration-200 md:static md:z-auto md:translate-x-0 ${
+        className={`fixed inset-y-0 left-0 z-40 flex w-60 shrink-0 flex-col border-r border-border bg-card transition-transform duration-200 md:sticky md:top-0 md:z-auto md:h-screen md:translate-x-0 md:self-start md:overflow-y-auto ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >

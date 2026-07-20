@@ -943,6 +943,22 @@ export const UI: Record<string, Dict> = {
   "account.title": { ru: "Кабинет", en: "Dashboard", hy: "Անձնական էջ" },
   "account.welcome": { ru: "Здравствуйте, {name}", en: "Welcome, {name}", hy: "Բարև, {name}" },
   "account.profile": { ru: "Профиль", en: "Profile", hy: "Պրոֆիլ" },
+  "account.profile.subtitle": {
+    ru: "Управляйте своим профилем создателя",
+    en: "Manage your creator profile",
+    hy: "Կառավարեք ձեր ստեղծագործողի պրոֆիլը",
+  },
+  "account.profile.avatar": { ru: "Аватар", en: "Avatar", hy: "Ավատար" },
+  "account.profile.avatarHint": {
+    ru: "Изображение профиля. Также используется как логотип при генерации постера.",
+    en: "Your profile picture. Also used as the logo when generating a poster.",
+    hy: "Ձեր պրոֆիլի նկարը։ Օգտագործվում է նաև որպես լոգո՝ պաստառ ստեղծելիս։",
+  },
+  "account.profile.nameRequired": {
+    ru: "Укажите имя",
+    en: "Name is required",
+    hy: "Անունը պարտադիր է",
+  },
   "account.company": { ru: "Компания", en: "Company", hy: "Ընկերություն" },
   "account.roleBrand": { ru: "Бренд", en: "Brand", hy: "Բրենդ" },
   "account.roleCreator": { ru: "Создатель", en: "Creator", hy: "Ստեղծագործող" },

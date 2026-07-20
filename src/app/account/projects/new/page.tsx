@@ -1,8 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
-import { Container } from "@/components/ui/container";
-import { Section } from "@/components/ui/section";
 import { Reveal } from "@/components/ui/reveal";
 import { requireMember } from "@/lib/auth/require";
 import { prisma } from "@/lib/prisma";
@@ -44,36 +42,34 @@ export default async function NewProjectPage() {
   const me = await prisma.user.findUnique({ where: { id: user.id }, select: { avatar: true } });
 
   return (
-    <Section>
-      <Container className="max-w-5xl">
-        <Reveal>
-          <Link
-            href="/account/projects"
-            className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            {t("account.form.cancel")}
-          </Link>
-          <h1 className="mb-2 mt-4 text-3xl font-bold text-foreground md:text-4xl">
-            {t("account.submitProject")}
-          </h1>
-          <p className="mb-6 text-muted-foreground">{t("account.submitProjectSubtitle")}</p>
-        </Reveal>
+    <>
+      <Reveal>
+        <Link
+          href="/account/projects"
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          {t("account.form.cancel")}
+        </Link>
+        <h1 className="mb-2 mt-4 text-3xl font-bold text-foreground md:text-4xl">
+          {t("account.submitProject")}
+        </h1>
+        <p className="mb-6 text-muted-foreground">{t("account.submitProjectSubtitle")}</p>
+      </Reveal>
 
-        <Reveal delay={0.05}>
-          <ProjectForm
-            action={createCreatorProject}
-            mode="creator"
-            locale={locale}
-            translateAction={translateCreatorProjectAction}
-            posterAction={generateCreatorPosterAction}
-            submitLabel={t("account.form.submit")}
-            studios={studios}
-            knownPeople={knownPeople}
-            ownerHasAvatar={!!me?.avatar}
-          />
-        </Reveal>
-      </Container>
-    </Section>
+      <Reveal delay={0.05}>
+        <ProjectForm
+          action={createCreatorProject}
+          mode="creator"
+          locale={locale}
+          translateAction={translateCreatorProjectAction}
+          posterAction={generateCreatorPosterAction}
+          submitLabel={t("account.form.submit")}
+          studios={studios}
+          knownPeople={knownPeople}
+          ownerHasAvatar={!!me?.avatar}
+        />
+      </Reveal>
+    </>
   );
 }
