@@ -86,7 +86,7 @@ export function LoginForm({
           </Link>
         </div>
         <div className="relative">
-          <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Lock className="pointer-events-none absolute left-3.5 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <PasswordInput
             name="password"
             required

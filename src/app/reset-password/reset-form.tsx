@@ -36,7 +36,7 @@ export function ResetForm({ locale, token }: { locale: Locale; token: string }) 
       <label className="block">
         <span className="mb-1.5 block text-sm font-semibold text-foreground">{t("auth.resetNewPassword")}</span>
         <div className="relative">
-          <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Lock className="pointer-events-none absolute left-3.5 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <PasswordInput
             name="password"
             required
@@ -54,7 +54,7 @@ export function ResetForm({ locale, token }: { locale: Locale; token: string }) 
       <label className="block">
         <span className="mb-1.5 block text-sm font-semibold text-foreground">{t("auth.resetConfirmPassword")}</span>
         <div className="relative">
-          <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Lock className="pointer-events-none absolute left-3.5 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <PasswordInput
             name="passwordConfirm"
             required
