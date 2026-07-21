@@ -38,7 +38,12 @@ export async function proxy(req: NextRequest) {
   // --- 2. Members are locked to their own cabinet ---
   if (isMember) {
     const inCabinet = pathname === "/account" || pathname.startsWith("/account/");
-    if (!inCabinet) {
+    // /reports/[id] is the media detail page both cabinets link to (dashboard
+    // interests, favorites, browse, creator projects) — it must stay reachable
+    // for members (IA-18/IA-19: confinement bounced these links back to the
+    // dashboard, so detail pages silently never opened).
+    const isReport = pathname === "/reports" || pathname.startsWith("/reports/");
+    if (!inCabinet && !isReport) {
       const url = req.nextUrl.clone();
       url.pathname = session!.role === "BRAND" ? "/account/brand" : "/account";
       url.search = "";
