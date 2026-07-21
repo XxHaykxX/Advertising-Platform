@@ -40,6 +40,10 @@ describe("renderNotification", () => {
         brandName: "BrandX",
         projectTitle: "ProjX",
         creatorName: "CreatorX",
+        // BROADCAST renders the admin's free text verbatim — without these the
+        // body is legitimately empty, which is covered by its own test below.
+        title: "TitleX",
+        message: "MessageX",
       });
       expect(title.length).toBeGreaterThan(0);
       expect(body.length).toBeGreaterThan(0);
@@ -57,6 +61,15 @@ describe("renderNotification", () => {
   it("interpolates the project title into the APPROVED body", () => {
     const { body } = renderNotification(t, "PROJECT_APPROVED", { projectTitle: "ԱՐԱՄ" });
     expect(body).toContain("ԱՐԱՄ");
+  });
+
+  it("renders BROADCAST admin free text verbatim, generic title when blank", () => {
+    const full = renderNotification(t, "BROADCAST", { title: "Hi", message: "News" });
+    expect(full).toEqual({ title: "Hi", body: "News" });
+    const blank = renderNotification(t, "BROADCAST", {});
+    expect(blank.title.length).toBeGreaterThan(0);
+    expect(blank.title).not.toMatch(/^notif\./);
+    expect(blank.body).toBe("");
   });
 
   it("falls back to a generic title + empty body for an unknown type", () => {
