@@ -14,7 +14,9 @@
     "test:e2e": "playwright test",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "i18n:export": "tsx scripts/i18n-export.ts",
+    "i18n:import": "tsx scripts/i18n-import.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

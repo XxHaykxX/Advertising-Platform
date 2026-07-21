@@ -64,3 +64,4 @@ placement/dev-3001.log
 
 # root-level screenshot/test artifacts
 /*.png
+i18n-export.csv
