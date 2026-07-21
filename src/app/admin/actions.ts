@@ -70,7 +70,9 @@ export async function login(
     return { error: t("login.errTooManyAttempts"), email };
   }
 
-  const password = String(formData.get("password") || "");
+  // Trimmed like every other password entry point — pasted passwords often
+  // carry a stray trailing space/newline. Interior spaces are kept.
+  const password = String(formData.get("password") || "").trim();
   if (!email || !password) return { error: t("login.errFillBoth"), email };
 
   const result = await verifyUserPassword(email, password);
@@ -148,9 +150,9 @@ export async function changePassword(
   // Settings is super-admin-only; also re-verifies isActive (instant deactivation).
   const user = await requireSuperadmin();
 
-  const current = String(formData.get("current") || "");
-  const next = String(formData.get("next") || "");
-  const confirm = String(formData.get("confirm") || "");
+  const current = String(formData.get("current") || "").trim();
+  const next = String(formData.get("next") || "").trim();
+  const confirm = String(formData.get("confirm") || "").trim();
 
   if (!current || !next) return { error: "Please fill in all fields." };
   if (next.length < 8) return { error: "New password must be at least 8 characters." };

@@ -38,7 +38,10 @@ export async function login(
   const t = makeUI(locale);
 
   const email = String(formData.get("email") ?? "").trim();
-  const password = String(formData.get("password") ?? "");
+  // Edge whitespace is trimmed everywhere a password is read (login, register,
+  // resets) — copy-pasted passwords often carry a stray trailing space/newline.
+  // Interior spaces are kept.
+  const password = String(formData.get("password") ?? "").trim();
 
   const ip = await clientIp();
   if (rateLimited(ip)) return { error: t("login.errInvalid"), email };

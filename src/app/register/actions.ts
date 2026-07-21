@@ -26,7 +26,9 @@ export async function register(
 
   const name = String(formData.get("name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();
-  const password = String(formData.get("password") ?? "");
+  // Trimmed like every other password entry point — pasted passwords often
+  // carry a stray trailing space/newline. Interior spaces are kept.
+  const password = String(formData.get("password") ?? "").trim();
   const company = String(formData.get("company") ?? "").trim();
   const type = String(formData.get("type") ?? "brand");
   const values = { name, email, company };

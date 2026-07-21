@@ -66,8 +66,10 @@ export async function resetPassword(
   const t = makeUI(locale);
 
   const token = String(formData.get("token") ?? "");
-  const password = String(formData.get("password") ?? "");
-  const passwordConfirm = String(formData.get("passwordConfirm") ?? "");
+  // Trimmed like every other password entry point — pasted passwords often
+  // carry a stray trailing space/newline. Interior spaces are kept.
+  const password = String(formData.get("password") ?? "").trim();
+  const passwordConfirm = String(formData.get("passwordConfirm") ?? "").trim();
 
   if (!token) return { error: t("auth.resetInvalidLink") };
   if (password !== passwordConfirm) return { error: t("auth.resetMismatch") };
