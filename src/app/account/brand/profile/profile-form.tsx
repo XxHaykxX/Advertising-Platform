@@ -32,10 +32,14 @@ export function ProfileForm({ profile, locale }: { profile: BrandProfileDTO; loc
 
   // After a successful save, pull the fresh server data so every consumer of
   // the profile (this select, the dashboard) reflects the new value without a
-  // manual page reload (IA-15).
+  // manual page reload (IA-15). Depend on the state OBJECT, not state.ok:
+  // useActionState returns a new object per dispatch, while `ok` stays `true`
+  // from the second consecutive save on — with [state.ok] the effect never
+  // re-fired, the post-action form reset left the select showing its
+  // page-load value, and the saved change looked lost (IA-15 reopen).
   useEffect(() => {
     if (state.ok) router.refresh();
-  }, [state.ok, router]);
+  }, [state, router]);
 
   const categoryOptions = BRAND_CATEGORIES.map((c) => ({
     value: c,
