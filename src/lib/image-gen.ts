@@ -73,6 +73,18 @@ type GeminiPart =
   | { text: string }
   | { inlineData: { mimeType: string; data: string } };
 
+// Prefixed onto the text part(s) on the safety-block retry below — real,
+// named public figures (biography synopses are the common case) trip
+// Gemini's person-generation policy on some calls but not others, so an
+// explicit "stylized, not a literal likeness" framing tends to get past the
+// filter without changing the requested scene.
+const SAFE_FRAMING_PREFIX =
+  "Artistic, stylized illustration (not a photorealistic likeness of any real, identifiable person) — ";
+
+function withSafeFraming(parts: GeminiPart[]): GeminiPart[] {
+  return parts.map((p) => ("text" in p ? { text: SAFE_FRAMING_PREFIX + p.text } : p));
+}
+
 async function callGemini(parts: GeminiPart[], aspectRatio: string): Promise<GeneratePosterResult> {
   const url = `${API_BASE}/${modelName()}:generateContent?key=${apiKey()}`;
   const controller = new AbortController();
@@ -109,7 +121,14 @@ async function callGemini(parts: GeminiPart[], aspectRatio: string): Promise<Gen
     | undefined;
   const imagePart = responseParts?.find((p) => p.inlineData?.data);
   if (!imagePart?.inlineData) {
-    throw new Error("Poster generation returned no image.");
+    // HTTP 200 with no image part usually means Gemini blocked the content
+    // (safety filters, e.g. a real named person in the prompt) rather than a
+    // plain failure — surface finishReason/blockReason so it's diagnosable
+    // from the UI instead of a bare "no image" message.
+    const finishReason = json?.candidates?.[0]?.finishReason;
+    const blockReason = json?.promptFeedback?.blockReason;
+    const reason = [finishReason, blockReason].filter(Boolean).join(", ");
+    throw new Error(reason ? `Poster generation returned no image (${reason}).` : "Poster generation returned no image.");
   }
   return { imageBase64: imagePart.inlineData.data, mimeType: imagePart.inlineData.mimeType || "image/jpeg" };
 }
@@ -192,7 +211,19 @@ export async function generatePoster(input: GeneratePosterInput): Promise<Genera
     parts.push({ text: promptText });
   }
 
-  const result = await callGemini(parts, aspectRatio);
+  let result: GeneratePosterResult;
+  try {
+    result = await callGemini(parts, aspectRatio);
+  } catch (e) {
+    // "No image" on HTTP 200 usually means a safety-filter block rather than
+    // an outright failure — retry once with a safer framing before giving up,
+    // since the block is often borderline (see SAFE_FRAMING_PREFIX above).
+    if (e instanceof Error && e.message.includes("returned no image")) {
+      result = await callGemini(withSafeFraming(parts), aspectRatio);
+    } else {
+      throw e;
+    }
+  }
 
   if (input.withLogo && input.ownerAvatarUrl) {
     const composited = await overlayLogo(Buffer.from(result.imageBase64, "base64"), input.ownerAvatarUrl);

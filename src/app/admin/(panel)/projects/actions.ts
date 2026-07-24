@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { Prisma } from "@prisma/client";
 import type { ProjectStatus, ProjectKind } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { requireContentEditor } from "@/lib/auth/require";
+import { requireContentEditor, requireSuperadmin } from "@/lib/auth/require";
 import { deleteUpload } from "@/lib/actions/uploads";
 import { PLACEMENT_TYPE_VALUES, KIND_VALUES } from "./form-shared";
 
@@ -534,6 +534,26 @@ export async function toggleActive(id: number, isActive: boolean) {
 
   await prisma.project.update({ where: { id }, data: { isActive } });
   revalidateProjectPaths(id);
+}
+
+// ── Drag-and-drop catalog ordering (T2) ────────────────────────────────────
+// sortOrder drives /catalog (src/lib/data/projects.ts orderBy sortOrder asc).
+// The admin list is a single global sequence across every project regardless
+// of owner, so this only makes sense from the SUPERADMIN's full-list view — a
+// Publisher only ever sees their own subset (page.tsx's ownerId scoping), and
+// reassigning sortOrder=index within that subset would scramble everyone
+// else's position in the public catalog. Gated with requireSuperadmin() (not
+// requireContentEditor, which a Publisher also passes) for that reason.
+export async function reorderProjects(orderedIds: number[]) {
+  await requireSuperadmin();
+  if (orderedIds.length === 0) return;
+
+  await prisma.$transaction(
+    orderedIds.map((id, index) =>
+      prisma.project.update({ where: { id }, data: { sortOrder: index } }),
+    ),
+  );
+  revalidateProjectPaths();
 }
 
 // ── Duplicate a project as a template (#20²) ───────────────────────────────

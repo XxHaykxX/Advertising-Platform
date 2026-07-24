@@ -3,6 +3,7 @@ import { Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth/require";
 import { ActiveToggle, DeleteButton } from "./row-actions";
+import { ReorderableProjectsTable } from "./reorder-list";
 
 const STATUS_LABEL: Record<string, string> = {
   PRE_PRODUCTION: "Pre-production",
@@ -45,6 +46,23 @@ export default async function ProjectsAdminPage() {
         <div className="mt-8 rounded-2xl border border-border bg-card py-16 text-center text-muted-foreground">
           No projects.
         </div>
+      ) : isSuperadmin ? (
+        // T2: catalog display order (sortOrder — see src/lib/data/projects.ts)
+        // is a single global sequence, so drag-to-reorder only makes sense
+        // from the superadmin's full-list view.
+        <div className="mt-6">
+          <ReorderableProjectsTable
+            projects={projects.map((p) => ({
+              id: p.id,
+              poster: p.poster,
+              title: p.title,
+              code: p.code,
+              statusLabel: STATUS_LABEL[p.status] ?? p.status,
+              isActive: p.isActive,
+              ownerName: p.owner.name,
+            }))}
+          />
+        </div>
       ) : (
         <div className="mt-6 overflow-x-auto rounded-2xl border border-border bg-card">
           <table className="w-full min-w-[900px] text-sm">
@@ -54,7 +72,6 @@ export default async function ProjectsAdminPage() {
                 <th className="px-4 py-3 font-medium">Title / Code</th>
                 <th className="px-4 py-3 font-medium">Status</th>
                 <th className="px-4 py-3 font-medium">Active</th>
-                {isSuperadmin && <th className="px-4 py-3 font-medium">Owner</th>}
                 <th className="px-4 py-3 font-medium"></th>
               </tr>
             </thead>
@@ -84,9 +101,6 @@ export default async function ProjectsAdminPage() {
                   <td className="px-4 py-3">
                     <ActiveToggle id={p.id} active={p.isActive} />
                   </td>
-                  {isSuperadmin && (
-                    <td className="px-4 py-3 text-muted-foreground">{p.owner.name}</td>
-                  )}
                   <td className="px-4 py-3">
                     <DeleteButton id={p.id} title={p.title} />
                   </td>
