@@ -1212,6 +1212,9 @@ export const UI: Record<string, Dict> = {
     en: "Tagline / logline (one line, shown in the hero)",
     hy: "Կարգախոս (մեկ տող, ցուցադրվում է գլխավոր բլոկում)",
   },
+  "projectForm.field.taglineHy": { ru: "Слоган (HY)", en: "Tagline (HY)", hy: "Կարգախոս (HY)" },
+  "projectForm.field.taglineRu": { ru: "Слоган (RU)", en: "Tagline (RU)", hy: "Կարգախոս (RU)" },
+  "projectForm.field.taglineEn": { ru: "Слоган (EN)", en: "Tagline (EN)", hy: "Կարգախոս (EN)" },
   "projectForm.taglinePlaceholder": {
     ru: "Звезда рождается — и у славы есть цена.",
     en: "A star is born — and fame has a price.",

@@ -223,7 +223,7 @@ const getProjectCached = unstable_cache(
         ? formatMoneyRange(p.priceMinAmd, p.priceMaxAmd, currency, rates, locale)
         : null,
     actors: p.actors.map((a) => ({ id: a.id, name: a.name, role: a.role, kind: a.kind, photo: a.photo ?? "" })),
-    tagline: p.tagline ?? "",
+    tagline: pickLocale(locale, { hy: p.taglineHy, ru: p.taglineRu, en: p.taglineEn }, p.tagline ?? ""),
     subgenre: p.subgenre ?? "",
     references: splitCommaList(p.references),
     cinemas: splitCommaList(p.cinemas),

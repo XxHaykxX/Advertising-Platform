@@ -91,6 +91,9 @@ const EMPTY: ProjectFormInitial = {
   placementType: "",
   priceNote: "",
   tagline: "",
+  taglineHy: "",
+  taglineRu: "",
+  taglineEn: "",
   subgenre: "",
   references: "",
   cinemas: "",
@@ -253,6 +256,11 @@ export function ProjectForm({
     ru: useRef<HTMLTextAreaElement>(null),
     en: useRef<HTMLTextAreaElement>(null),
   };
+  const taglineRefs: Record<TranslateLang, React.RefObject<HTMLInputElement | null>> = {
+    hy: useRef<HTMLInputElement>(null),
+    ru: useRef<HTMLInputElement>(null),
+    en: useRef<HTMLInputElement>(null),
+  };
 
   // ── Generate poster (#26) ── posterUploaderRef lets the panel push its
   // result straight into the (otherwise self-contained) poster ImageUploader
@@ -408,11 +416,13 @@ export function ProjectForm({
     const sourceLang = hit;
     const sourceTitle = titleRefs[hit].current?.value || "";
     const sourceSynopsis = synopsisRefs[hit].current?.value || "";
+    const sourceTagline = taglineRefs[hit].current?.value || "";
 
     const fd = new FormData();
     fd.set("sourceLang", sourceLang);
     fd.set("title", sourceTitle);
     fd.set("synopsis", sourceSynopsis);
+    fd.set("tagline", sourceTagline);
 
     startTranslate(async () => {
       const res = await translateAction(fd);
@@ -424,6 +434,7 @@ export function ProjectForm({
         const l = lang as TranslateLang;
         if (titleRefs[l]?.current) titleRefs[l].current!.value = value.title;
         if (synopsisRefs[l]?.current) synopsisRefs[l].current!.value = value.synopsis;
+        if (taglineRefs[l]?.current) taglineRefs[l].current!.value = value.tagline;
       }
       scheduleSaveDraft();
     });
@@ -678,6 +689,17 @@ export function ProjectForm({
             />
           </Field>
         </div>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Field label={t("projectForm.field.taglineHy")}>
+            <input ref={taglineRefs.hy} name="taglineHy" defaultValue={data.taglineHy || data.tagline} placeholder="Կարգախոս հայերեն" className={inputCls} />
+          </Field>
+          <Field label={t("projectForm.field.taglineRu")}>
+            <input ref={taglineRefs.ru} name="taglineRu" defaultValue={data.taglineRu} placeholder="Слоган по-русски" className={inputCls} />
+          </Field>
+          <Field label={t("projectForm.field.taglineEn")}>
+            <input ref={taglineRefs.en} name="taglineEn" defaultValue={data.taglineEn} placeholder="Tagline in English" className={inputCls} />
+          </Field>
+        </div>
       </section>
 
       {/* ── Status & release ── */}
@@ -812,14 +834,8 @@ export function ProjectForm({
         <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">
           {t("projectForm.section.pressKit")}
         </h2>
-        <Field label={t("projectForm.field.tagline")}>
-          <input
-            name="tagline"
-            defaultValue={data.tagline}
-            placeholder={t("projectForm.taglinePlaceholder")}
-            className={inputCls}
-          />
-        </Field>
+        {/* Tagline / logline moved into the Translations block above (now
+            per-locale hy/ru/en, filled by hand or the Translate button). */}
         <Field label={t("projectForm.field.references")}>
           <input
             name="references"

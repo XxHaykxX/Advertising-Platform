@@ -79,7 +79,7 @@ function models(): string[] {
 /** Strips a ```json ... ``` (or bare ```) fence the model sometimes wraps its
  *  answer in, then parses it into { title, synopsis }. Throws a readable
  *  Error if the result still isn't the expected shape. */
-function parseTranslationJson(raw: string): { title: string; synopsis: string } {
+function parseTranslationJson(raw: string): { title: string; synopsis: string; tagline: string } {
   const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
   const text = (fenced ? fenced[1] : raw).trim();
   let parsed: unknown;
@@ -94,7 +94,8 @@ function parseTranslationJson(raw: string): { title: string; synopsis: string } 
     console.error("[translate] response missing title/synopsis:", text.slice(0, 500));
     throw new TranslateError("genericError", "Translation response is missing title/synopsis.");
   }
-  return { title: obj.title, synopsis: obj.synopsis };
+  // tagline is optional — the source may not have one; default to "".
+  return { title: obj.title, synopsis: obj.synopsis, tagline: typeof obj.tagline === "string" ? obj.tagline : "" };
 }
 
 /** One generateContent call: translates a single title+synopsis pair from
@@ -104,14 +105,16 @@ async function translateOne(
   targetLang: TranslateLang,
   title: string,
   synopsis: string,
+  tagline: string,
   model: string,
-): Promise<{ title: string; synopsis: string }> {
+): Promise<{ title: string; synopsis: string; tagline: string }> {
   const url = `${API_BASE}/${model}:generateContent?key=${apiKey()}`;
   const prompt =
-    `Translate the following film title and synopsis from ${LANG_NAMES[sourceLang]} to ${LANG_NAMES[targetLang]}. ` +
-    `Return strictly a JSON object shaped {"title": "...", "synopsis": "..."} with no extra commentary or markdown. ` +
+    `Translate the following film title, synopsis and tagline (a short one-line logline) from ${LANG_NAMES[sourceLang]} to ${LANG_NAMES[targetLang]}. ` +
+    `Return strictly a JSON object shaped {"title": "...", "synopsis": "...", "tagline": "..."} with no extra commentary or markdown. ` +
+    `Keep the tagline short and punchy (one line). If a field is empty, return it as an empty string. ` +
     `Preserve proper nouns (names, studios, brands) as-is.\n\n` +
-    `Title: ${title}\nSynopsis: ${synopsis}`;
+    `Title: ${title}\nSynopsis: ${synopsis}\nTagline: ${tagline}`;
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
@@ -166,13 +169,14 @@ async function translateOneRobust(
   targetLang: TranslateLang,
   title: string,
   synopsis: string,
-): Promise<{ title: string; synopsis: string }> {
+  tagline: string,
+): Promise<{ title: string; synopsis: string; tagline: string }> {
   const modelList = models();
   let lastErr: unknown;
   for (let round = 0; round < MAX_ROUNDS; round++) {
     for (const model of modelList) {
       try {
-        return await translateOne(sourceLang, targetLang, title, synopsis, model);
+        return await translateOne(sourceLang, targetLang, title, synopsis, tagline, model);
       } catch (e) {
         lastErr = e;
         // A missing key can't be fixed by retrying — surface it now.
@@ -194,19 +198,21 @@ export async function translateFields(args: {
   sourceLang: TranslateLang;
   title: string;
   synopsis: string;
+  tagline?: string;
   targets: TranslateLang[];
-}): Promise<Record<string, { title: string; synopsis: string }>> {
+}): Promise<Record<string, { title: string; synopsis: string; tagline: string }>> {
   const { sourceLang, title, synopsis, targets } = args;
-  if (!title.trim() && !synopsis.trim()) {
-    throw new TranslateError("emptyFields", "Nothing to translate — fill in a title or synopsis first.");
+  const tagline = args.tagline ?? "";
+  if (!title.trim() && !synopsis.trim() && !tagline.trim()) {
+    throw new TranslateError("emptyFields", "Nothing to translate — fill in a title, synopsis or tagline first.");
   }
 
   const wanted = targets.filter((t) => t !== sourceLang);
   const settled = await Promise.allSettled(
-    wanted.map(async (t) => [t, await translateOneRobust(sourceLang, t, title, synopsis)] as const),
+    wanted.map(async (t) => [t, await translateOneRobust(sourceLang, t, title, synopsis, tagline)] as const),
   );
 
-  const out: Record<string, { title: string; synopsis: string }> = {};
+  const out: Record<string, { title: string; synopsis: string; tagline: string }> = {};
   const errors: TranslateError[] = [];
   for (const r of settled) {
     if (r.status === "fulfilled") {

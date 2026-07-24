@@ -191,7 +191,10 @@ model Project {
   priceNote           String?
 
   // ── Real press-kit fields (added for the Aram title, 2026-07-09) ──
-  tagline   String? // one-line logline, shown in the report hero
+  tagline   String? // one-line logline, shown in the report hero (base/fallback, mirrors `synopsis`)
+  taglineHy String? @db.Text // per-locale logline (IA-23 press-kit localization)
+  taglineRu String? @db.Text
+  taglineEn String? @db.Text
   subgenre  String? // e.g. "Musical" — narrower than `genre`
   references String? @db.Text // comparable titles ("Bohemian Rhapsody, Ray"), comma/JSON list
   cinemas    String? @db.Text // exhibition venues ("Cinema Star, Kino Park"), comma/JSON list

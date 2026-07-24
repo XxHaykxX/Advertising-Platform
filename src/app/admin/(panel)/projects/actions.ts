@@ -61,7 +61,10 @@ export type ProjectFormValues = {
   placementType: string; // "" | one of PLACEMENT_TYPE_VALUES
   priceNote: string;
   // ── Press-kit fields (Aram, 2026-07-09) ──
-  tagline: string; // one-line logline (hero)
+  tagline: string; // one-line logline (hero) — base/fallback, derived from the per-locale fields
+  taglineHy: string; // per-locale logline (mirrors synopsisHy/Ru/En)
+  taglineRu: string;
+  taglineEn: string;
   subgenre: string; // e.g. "Musical" (hero meta, next to genre)
   references: string; // comparable titles, comma-separated ("Bohemian Rhapsody, Ray")
   cinemas: string; // exhibition venues, comma-separated ("Cinema Star, Kino Park")
@@ -161,6 +164,9 @@ function buildData(fd: FormData): ProjectFormValues {
   const synopsisHy = str(fd, "synopsisHy");
   const synopsisRu = str(fd, "synopsisRu");
   const synopsisEn = str(fd, "synopsisEn");
+  const taglineHy = str(fd, "taglineHy", VARCHAR_MAX);
+  const taglineRu = str(fd, "taglineRu", VARCHAR_MAX);
+  const taglineEn = str(fd, "taglineEn", VARCHAR_MAX);
   return {
     title: (titleRu || titleHy || titleEn).slice(0, VARCHAR_MAX),
     code: str(fd, "code", VARCHAR_MAX),
@@ -202,7 +208,10 @@ function buildData(fd: FormData): ProjectFormValues {
     platforms: jsonArray<string>(fd, "platforms").join(", ").slice(0, VARCHAR_MAX),
     placementType: enumVal(fd, "placementType", [...PLACEMENT_TYPE_VALUES, ""] as const, ""),
     priceNote: str(fd, "priceNote", VARCHAR_MAX),
-    tagline: str(fd, "tagline", VARCHAR_MAX),
+    tagline: taglineRu || taglineHy || taglineEn, // base/fallback, mirrors synopsis
+    taglineHy,
+    taglineRu,
+    taglineEn,
     subgenre: str(fd, "subgenre", VARCHAR_MAX),
     references: str(fd, "references"),
     cinemas: jsonArray<string>(fd, "cinemas").join(", "),
@@ -334,6 +343,9 @@ export async function createProject(
     placementType: data.placementType || null,
     priceNote: data.priceNote || null,
     tagline: data.tagline || null,
+    taglineHy: data.taglineHy || null,
+    taglineRu: data.taglineRu || null,
+    taglineEn: data.taglineEn || null,
     subgenre: data.subgenre || null,
     references: data.references || null,
     cinemas: data.cinemas || null,
@@ -424,6 +436,9 @@ export async function updateProject(
           placementType: data.placementType || null,
           priceNote: data.priceNote || null,
           tagline: data.tagline || null,
+          taglineHy: data.taglineHy || null,
+          taglineRu: data.taglineRu || null,
+          taglineEn: data.taglineEn || null,
           subgenre: data.subgenre || null,
           references: data.references || null,
           cinemas: data.cinemas || null,

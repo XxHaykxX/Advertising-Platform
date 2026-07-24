@@ -12,7 +12,7 @@ export type TranslateProjectState = {
   // Short i18n code (translate.<code> in src/lib/i18n.ts) — never the raw
   // provider error, so the form can show a friendly localized message (#30).
   errorCode?: TranslateErrorCode;
-  values?: Partial<Record<TranslateLang, { title: string; synopsis: string }>>;
+  values?: Partial<Record<TranslateLang, { title: string; synopsis: string; tagline: string }>>;
 };
 
 function isLang(v: string): v is TranslateLang {
@@ -30,6 +30,7 @@ export async function translateProjectAction(fd: FormData): Promise<TranslatePro
   const sourceLangRaw = String(fd.get("sourceLang") || "");
   const title = String(fd.get("title") || "");
   const synopsis = String(fd.get("synopsis") || "");
+  const tagline = String(fd.get("tagline") || "");
 
   if (!isLang(sourceLangRaw)) {
     return { errorCode: "genericError" };
@@ -40,6 +41,7 @@ export async function translateProjectAction(fd: FormData): Promise<TranslatePro
       sourceLang: sourceLangRaw,
       title,
       synopsis,
+      tagline,
       targets: LANGS.filter((l) => l !== sourceLangRaw),
     });
     return { ok: true, values: result };
