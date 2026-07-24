@@ -69,5 +69,21 @@ Don't-break list (proposal §4): single `<form>` element wraps everything; keep 
 
 ### After redesign: QA all 16 (goal hook), then user local check, then prod migration + deploy.
 
+## ✅ ЗАДЕПЛОЕНО 2026-07-24 (prod HEAD ba648c1)
+Весь батч (16 задач + редизайн + QA + форм-UX) закоммичен `4a473a8→ba648c1`, push в main, Hostinger авто-деплой. Прод-БД мигрирована ДО push (Person + videoEmbedUrl/videoFile via remote srv2026.hstgr.io). Релиз **v1.8** (docs/release-notes-v1.8.md + -en.md). Гейт: tsc 0, vitest 62/62.
+
+**Дополнит. батч формы (после редизайна, тоже в деплое):**
+- Section rail УБРАН (юзер: лишний/глючный scroll-spy).
+- Code скрыт из формы (General) — hidden-input, #2 добит.
+- Курсор-рука (globals.css @layer base: button/role=button/a[href]→pointer, disabled→not-allowed).
+- edit-Save: остаётся на странице + зелёный «Saved»(3с)/красный «Unsaved» (create по-прежнему редиректит).
+- Cancel-кнопка справа рядом с Save (верхний Back to projects = левая навигация).
+
+**QA всей платформы (headed browse, брейкпоинты 375–1600):** 7 багов найдено+исправлено (B1–B7, детали docs/qa-findings-2026-07-24.md + матрица T1–T16). Публичка/кабинеты/админка чисто.
+
+**НЕ реализовано vs xlsx-схема** (список для друга): Film Duration, Placement Is-Exclusive/Available-Slots/Position(значения не совпад.), Reference Projects как rich-список(name+link/image), Director отдельным полем. Нужны новые поля БД.
+
+⏳ Осталось: живая проверка igovazd.am после сборки Hostinger.
+
 ## Status log
 - Batch 1 (#1,#2,#4,#6,#12) done. Batch 2/3 (#3,#5,#7,#8,#9,#10,#11,#13,#15,#16) done. Redesign #14 started (r-cast running). MP4 fix running (m1-mp4).
