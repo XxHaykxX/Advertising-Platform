@@ -102,7 +102,7 @@ export function LoginForm({
       </label>
 
       {message && (
-        <p className="rounded-xl border border-primary/40 bg-primary/10 px-4 py-2.5 text-sm text-primary">
+        <p className="rounded-xl border border-danger/40 bg-danger/10 px-4 py-2.5 text-sm text-danger">
           {message}
         </p>
       )}

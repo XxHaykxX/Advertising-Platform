@@ -34,7 +34,7 @@ export function Cast({
               <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
                 {t("cast.crewHeading")}
               </h3>
-              <CastCarousel actors={crew} prevLabel={t("report.prev")} nextLabel={t("report.next")} />
+              <CastCarousel actors={crew} prevLabel={t("report.prev")} nextLabel={t("report.next")} locale={locale} />
             </div>
           </Reveal>
         ) : null}
@@ -47,7 +47,7 @@ export function Cast({
                   {t("cast.castHeading")}
                 </h3>
               ) : null}
-              <CastCarousel actors={cast} prevLabel={t("report.prev")} nextLabel={t("report.next")} />
+              <CastCarousel actors={cast} prevLabel={t("report.prev")} nextLabel={t("report.next")} locale={locale} />
             </div>
           </Reveal>
         ) : null}

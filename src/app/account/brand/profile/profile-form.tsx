@@ -29,6 +29,10 @@ export function ProfileForm({ profile, locale }: { profile: BrandProfileDTO; loc
   // server action — an uncontrolled defaultValue reverts to the (stale) prop
   // until the page refreshes (IA-15).
   const [budgetRange, setBudgetRange] = useState(profile.budgetRange);
+  // Transient "Saved" confirmation — auto-hides a few seconds after each save
+  // instead of lingering forever (IA-28). Kept separate from `state.ok` (which
+  // stays true) so it can be re-shown and re-timed on every consecutive save.
+  const [showSaved, setShowSaved] = useState(false);
 
   // After a successful save, pull the fresh server data so every consumer of
   // the profile (this select, the dashboard) reflects the new value without a
@@ -38,7 +42,11 @@ export function ProfileForm({ profile, locale }: { profile: BrandProfileDTO; loc
   // re-fired, the post-action form reset left the select showing its
   // page-load value, and the saved change looked lost (IA-15 reopen).
   useEffect(() => {
-    if (state.ok) router.refresh();
+    if (!state.ok) return;
+    router.refresh();
+    setShowSaved(true);
+    const id = setTimeout(() => setShowSaved(false), 2500);
+    return () => clearTimeout(id);
   }, [state, router]);
 
   const categoryOptions = BRAND_CATEGORIES.map((c) => ({
@@ -131,7 +139,7 @@ export function ProfileForm({ profile, locale }: { profile: BrandProfileDTO; loc
             {pending && <Loader2 className="h-4 w-4 animate-spin" />}
             {t("account.brand.saveChanges")}
           </Button>
-          {state.ok && !pending ? (
+          {showSaved && !pending ? (
             <span className="text-sm font-medium text-success">{t("account.brand.saved")}</span>
           ) : null}
         </div>

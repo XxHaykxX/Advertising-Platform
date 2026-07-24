@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -268,6 +268,79 @@ export function CatalogView({
   // a stacked sidebar buries the results below a long filter column). Desktop
   // keeps the always-visible sidebar.
   const [filtersOpen, setFiltersOpen] = useState(false);
+
+  // Persist the filter selection for the tab session so leaving for a media
+  // detail page and pressing Back restores the filters instead of resetting
+  // everything to defaults (IA-24). Kept in sessionStorage (contained, no URL
+  // churn); "Clear all" naturally overwrites it with the empty state.
+  const FILTERS_KEY = "catalog:filters";
+  const restoredRef = useRef(false);
+  useEffect(() => {
+    if (restoredRef.current) return;
+    restoredRef.current = true;
+    try {
+      const raw = sessionStorage.getItem(FILTERS_KEY);
+      if (!raw) return;
+      const f = JSON.parse(raw);
+      if (Array.isArray(f.genres)) setSelectedGenres(f.genres);
+      if (Array.isArray(f.statuses)) setSelectedStatuses(f.statuses);
+      if (Array.isArray(f.formats)) setSelectedFormats(f.formats);
+      if (Array.isArray(f.languages)) setSelectedLanguages(f.languages);
+      if (Array.isArray(f.platforms)) setSelectedPlatforms(f.platforms);
+      if (Array.isArray(f.countries)) setSelectedCountries(f.countries);
+      if (Array.isArray(f.ages)) setSelectedAges(f.ages);
+      if (f.gender === "Male" || f.gender === "Female" || f.gender === "All") setGender(f.gender);
+      if (typeof f.budgetMin === "string") setBudgetMin(f.budgetMin);
+      if (typeof f.budgetMax === "string") setBudgetMax(f.budgetMax);
+      if (typeof f.search === "string") setSearch(f.search);
+      if (f.sort === "relevant" || f.sort === "views" || f.sort === "budget") setSort(f.sort);
+      if (f.view === "grid" || f.view === "list") setView(f.view);
+    } catch {
+      /* corrupt/blocked storage — fall back to defaults */
+    }
+  }, []);
+
+  useEffect(() => {
+    // Skip the very first render so we don't clobber stored filters with the
+    // empty defaults before the restore effect above has run.
+    if (!restoredRef.current) return;
+    try {
+      sessionStorage.setItem(
+        FILTERS_KEY,
+        JSON.stringify({
+          genres: selectedGenres,
+          statuses: selectedStatuses,
+          formats: selectedFormats,
+          languages: selectedLanguages,
+          platforms: selectedPlatforms,
+          countries: selectedCountries,
+          ages: selectedAges,
+          gender,
+          budgetMin,
+          budgetMax,
+          search,
+          sort,
+          view,
+        }),
+      );
+    } catch {
+      /* storage blocked — persistence is best-effort */
+    }
+  }, [
+    selectedGenres,
+    selectedStatuses,
+    selectedFormats,
+    selectedLanguages,
+    selectedPlatforms,
+    selectedCountries,
+    selectedAges,
+    gender,
+    budgetMin,
+    budgetMax,
+    search,
+    sort,
+    view,
+  ]);
 
   // Count of active filter facets (excluding free-text search, which has its
   // own always-visible box) — shown as a badge on the mobile "Filters" button.

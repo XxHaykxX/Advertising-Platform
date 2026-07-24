@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { DEFAULT_LOCALE, localizeValue, type Locale } from "@/lib/i18n";
 import type { ActorDTO } from "@/lib/types";
 
 function initials(name: string): string {
@@ -11,7 +12,7 @@ function initials(name: string): string {
   return (words[0][0] + words[1][0]).toUpperCase();
 }
 
-function ActorCard({ actor }: { actor: ActorDTO }) {
+function ActorCard({ actor, locale }: { actor: ActorDTO; locale: Locale }) {
   return (
     <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-4">
       {actor.photo ? (
@@ -29,7 +30,7 @@ function ActorCard({ actor }: { actor: ActorDTO }) {
       )}
       <div className="min-w-0">
         <p className="truncate font-semibold text-foreground">{actor.name}</p>
-        <p className="truncate text-xs text-muted-foreground">{actor.role}</p>
+        <p className="truncate text-xs text-muted-foreground">{localizeValue(locale, "role", actor.role)}</p>
       </div>
     </div>
   );
@@ -39,10 +40,12 @@ export function CastCarousel({
   actors,
   prevLabel,
   nextLabel,
+  locale = DEFAULT_LOCALE,
 }: {
   actors: ActorDTO[];
   prevLabel: string;
   nextLabel: string;
+  locale?: Locale;
 }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
 
@@ -51,7 +54,7 @@ export function CastCarousel({
     return (
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {actors.map((actor) => (
-          <ActorCard key={actor.id} actor={actor} />
+          <ActorCard key={actor.id} actor={actor} locale={locale} />
         ))}
       </div>
     );
@@ -75,7 +78,7 @@ export function CastCarousel({
             key={actor.id}
             className="shrink-0 snap-start basis-[85%] sm:basis-[calc((100%-0.75rem)/2)] lg:basis-[calc((100%-3*0.75rem)/4)]"
           >
-            <ActorCard actor={actor} />
+            <ActorCard actor={actor} locale={locale} />
           </div>
         ))}
       </div>

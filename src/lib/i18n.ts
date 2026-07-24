@@ -297,6 +297,28 @@ export const UI: Record<string, Dict> = {
   "placement.In-Frame": { ru: "В кадре", en: "In-Frame", hy: "Կադրում" },
   "placement.Story Integration": { ru: "Интеграция в сюжет", en: "Story Integration", hy: "Սյուժեի ինտեգրում" },
   "placement.Mention": { ru: "Упоминание", en: "Mention", hy: "Հիշատակում" },
+  // Cast & crew ROLES (IA-23) — localized via localizeValue(locale, "role", value).
+  // Roles are free text entered per actor, so this is best-effort: standard
+  // crew/cast roles map here (keyed by both the Armenian source, as stored, and
+  // the English source, for future entries); anything not listed falls back to
+  // the text as entered. Names are never translated (proper nouns).
+  "role.Ռեժիսոր": { ru: "Режиссёр", en: "Director", hy: "Ռեժիսոր" },
+  "role.Պրոդյուսեր": { ru: "Продюсер", en: "Producer", hy: "Պրոդյուսեր" },
+  "role.Գլխավոր պրոդյուսեր": { ru: "Главный продюсер", en: "Lead Producer", hy: "Գլխավոր պրոդյուսեր" },
+  "role.Գործադիր պրոդյուսեր": { ru: "Исполнительный продюсер", en: "Executive Producer", hy: "Գործադիր պրոդյուսեր" },
+  "role.Դերասան": { ru: "Актёр", en: "Actor", hy: "Դերասան" },
+  "role.Սցենարիստ": { ru: "Сценарист", en: "Screenwriter", hy: "Սցենարիստ" },
+  "role.Օպերատոր": { ru: "Оператор", en: "Cinematographer", hy: "Օպերատոր" },
+  "role.Կոմպոզիտոր": { ru: "Композитор", en: "Composer", hy: "Կոմպոզիտոր" },
+  "role.Director": { ru: "Режиссёр", en: "Director", hy: "Ռեժիսոր" },
+  "role.Producer": { ru: "Продюсер", en: "Producer", hy: "Պրոդյուսեր" },
+  "role.Lead Producer": { ru: "Главный продюсер", en: "Lead Producer", hy: "Գլխավոր պրոդյուսեր" },
+  "role.Executive Producer": { ru: "Исполнительный продюсер", en: "Executive Producer", hy: "Գործադիր պրոդյուսեր" },
+  "role.Screenwriter": { ru: "Сценарист", en: "Screenwriter", hy: "Սցենարիստ" },
+  "role.Writer": { ru: "Сценарист", en: "Writer", hy: "Սցենարիստ" },
+  "role.Actor": { ru: "Актёр", en: "Actor", hy: "Դերասան" },
+  "role.Cinematographer": { ru: "Оператор", en: "Cinematographer", hy: "Օպերատոր" },
+  "role.Composer": { ru: "Композитор", en: "Composer", hy: "Կոմպոզիտոր" },
   "formatCategory.FEATURE": { ru: "Полнометражный фильм", en: "Feature film", hy: "Լիամետրաժ ֆիլմ" },
   "formatCategory.SERIES": { ru: "Сериал", en: "Series", hy: "Սերիալ" },
   "formatCategory.SITCOM": { ru: "Ситком", en: "Sitcom", hy: "Սիթքոմ" },
