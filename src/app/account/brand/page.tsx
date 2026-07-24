@@ -43,7 +43,7 @@ function RecentCard({ project, locale }: { project: DashboardProjectDTO; locale:
       href={`/reports/${project.id}`}
       className="overflow-hidden rounded-2xl border border-border bg-card transition-colors hover:border-primary/40"
     >
-      <div className="aspect-[16/10] w-full bg-muted">
+      <div className="aspect-video w-full bg-muted">
         {project.poster ? (
           <Image
             src={project.poster}

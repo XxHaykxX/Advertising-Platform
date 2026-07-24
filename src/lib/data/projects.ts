@@ -233,6 +233,8 @@ const getProjectCached = unstable_cache(
       priceDisplay: formatMoney(tier.priceAmd, currency, rates, locale),
       benefits: parseJsonList(tier.benefits),
     })),
+    videoEmbedUrl: p.videoEmbedUrl ?? "",
+    videoFile: p.videoFile ?? "",
   };
   },
   ["project-detail"],

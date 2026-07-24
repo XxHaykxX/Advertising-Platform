@@ -33,6 +33,16 @@
      like the poster slider keep their own `overflow-x-auto`. */
   body { background: var(--background); color: var(--foreground); overflow-x: clip; }
   ::selection { background: var(--primary); color: #fff; }
+  /* Hand/pointer cursor on every actionable control. Native <button> defaults
+     to the arrow cursor; links are already pointer. Disabled controls keep
+     not-allowed so they read as inert. */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  summary,
+  label[for],
+  a[href] { cursor: pointer; }
+  button:disabled,
+  [aria-disabled="true"] { cursor: not-allowed; }
 }
 .grad-text { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .card-lift { transition: transform .35s cubic-bezier(.2,.8,.2,1), box-shadow .35s ease, border-color .35s ease; }
@@ -102,3 +112,4 @@ html { scrollbar-gutter: stable; }
   header, footer, .no-print { display: none !important; }
   body { background: #fff !important; }
 }
+

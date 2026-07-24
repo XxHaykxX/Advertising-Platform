@@ -150,6 +150,8 @@ function buildData(fd: FormData): ProjectFormValues {
     subgenre: str(fd, "subgenre", VARCHAR_MAX),
     references: str(fd, "references"),
     cinemas: jsonArray<string>(fd, "cinemas").join(", "),
+    videoEmbedUrl: str(fd, "videoEmbedUrl", VARCHAR_MAX),
+    videoFile: str(fd, "videoFile", VARCHAR_MAX),
   };
 }
 
@@ -272,6 +274,8 @@ export async function createCreatorProject(
     subgenre: data.subgenre || null,
     references: data.references || null,
     cinemas: data.cinemas || null,
+    videoEmbedUrl: data.videoEmbedUrl || null,
+    videoFile: data.videoFile || null,
     // ── Never trusted from the form — forced server-side ──
     // ownerId is always the submitting member.
     ownerId: user.id,

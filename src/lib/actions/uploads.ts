@@ -21,6 +21,13 @@ const EXT_BY_TYPE: Record<string, string> = {
   "image/gif": "gif",
   "image/avif": "avif",
 };
+// Video branch (project trailer upload, #10): no sharp pass — the file is
+// stored as-is. Kept small since this runs on Hostinger shared hosting.
+const MAX_BYTES_VIDEO = 50 * 1024 * 1024; // 50 MB
+const EXT_BY_TYPE_VIDEO: Record<string, string> = {
+  "video/mp4": "mp4",
+  "video/webm": "webm",
+};
 
 export type UploadResult = { path?: string; error?: string };
 
@@ -44,11 +51,26 @@ export async function uploadImage(fd: FormData): Promise<UploadResult> {
 
   const file = fd.get("file");
   if (!(file instanceof File) || file.size === 0) return { error: "No file provided." };
+
+  const dir = safeSegment(String(fd.get("dir") || "misc"));
+  const kind = String(fd.get("kind") || "image");
+
+  if (kind === "video") {
+    if (file.size > MAX_BYTES_VIDEO) return { error: "File too large (max 50 MB)." };
+    const ext = EXT_BY_TYPE_VIDEO[file.type];
+    if (!ext) return { error: "Unsupported type — use MP4 or WebM." };
+
+    const name = `${Date.now()}-${randomUUID().slice(0, 8)}.${ext}`;
+    const destDir = path.join(UPLOAD_ROOT, dir);
+    await mkdir(destDir, { recursive: true });
+    await writeFile(path.join(destDir, name), Buffer.from(await file.arrayBuffer()));
+
+    return { path: `/uploads/${dir}/${name}` };
+  }
+
   if (file.size > MAX_BYTES) return { error: "File too large (max 8 MB)." };
   const ext = EXT_BY_TYPE[file.type];
   if (!ext) return { error: "Unsupported type — use JPG, PNG, WebP, GIF or AVIF." };
-
-  const dir = safeSegment(String(fd.get("dir") || "misc"));
 
   // Optimize (resize + recompress) to the target for this dir before saving.
   let optimized;

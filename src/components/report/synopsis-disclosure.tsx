@@ -2,6 +2,7 @@
 
 import { useLayoutEffect, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
+import { renderRichText } from "@/lib/rich-text";
 
 /** Report-page synopsis that starts clamped to a few lines and expands on click,
     with a rotating chevron affordance. Client component — the surrounding hero
@@ -36,14 +37,16 @@ export function SynopsisDisclosure({
 
   return (
     <div className="mt-4 max-w-3xl">
+      {/* Description supports a tiny, SAFE markdown subset (bold/italic/links/
+          line breaks) — renderRichText escapes HTML first, so this can never
+          inject raw markup. See src/lib/rich-text.ts. */}
       <p
         ref={pRef}
         className={`text-base leading-relaxed text-muted-foreground transition-all ${
           open ? "" : "line-clamp-3"
         }`}
-      >
-        {text}
-      </p>
+        dangerouslySetInnerHTML={{ __html: renderRichText(text) }}
+      />
       {overflowing && (
         <button
           type="button"

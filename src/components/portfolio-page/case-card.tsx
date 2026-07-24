@@ -29,7 +29,7 @@ export function CaseCard({
       onClick={onOpen}
       className="flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-border bg-card text-left card-lift"
     >
-      <div className="relative aspect-[16/10] shrink-0">
+      <div className="relative aspect-video shrink-0">
         {c.image ? (
           <Image
             src={c.image}

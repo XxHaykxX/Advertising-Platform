@@ -30,7 +30,7 @@ function BrowseCard({
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card card-lift">
-      <div className="relative aspect-[16/10] shrink-0">
+      <div className="relative aspect-video shrink-0">
         {project.poster ? (
           <Image
             src={project.poster}
@@ -59,7 +59,6 @@ function BrowseCard({
 
       <div className="flex flex-1 flex-col p-5">
         <h3 className="text-base font-semibold text-foreground">{project.title}</h3>
-        <code className="text-xs text-muted-foreground">{project.code}</code>
 
         <div className="mt-3 flex flex-col gap-1.5 text-xs text-muted-foreground">
           <span>{project.format}</span>

@@ -68,6 +68,9 @@ export type ProjectFormValues = {
   subgenre: string; // e.g. "Musical" (hero meta, next to genre)
   references: string; // comparable titles, comma-separated ("Bohemian Rhapsody, Ray")
   cinemas: string; // exhibition venues, comma-separated ("Cinema Star, Kino Park")
+  // ── Video (#10) — shown on the detail/report page ──
+  videoEmbedUrl: string; // YouTube/Vimeo URL; "" when unset
+  videoFile: string; // uploaded MP4 path ("/uploads/…"); "" when unset
 };
 
 export type ProjectFormState = {
@@ -215,6 +218,8 @@ function buildData(fd: FormData): ProjectFormValues {
     subgenre: str(fd, "subgenre", VARCHAR_MAX),
     references: str(fd, "references"),
     cinemas: jsonArray<string>(fd, "cinemas").join(", "),
+    videoEmbedUrl: str(fd, "videoEmbedUrl", VARCHAR_MAX),
+    videoFile: str(fd, "videoFile", VARCHAR_MAX),
   };
 }
 
@@ -349,6 +354,8 @@ export async function createProject(
     subgenre: data.subgenre || null,
     references: data.references || null,
     cinemas: data.cinemas || null,
+    videoEmbedUrl: data.videoEmbedUrl || null,
+    videoFile: data.videoFile || null,
     // ownerId is always the creating user — never trusted from the form.
     ownerId: user.id,
     // #13: staff (SUPERADMIN/PUBLISHER) content is trusted and goes
@@ -442,6 +449,8 @@ export async function updateProject(
           subgenre: data.subgenre || null,
           references: data.references || null,
           cinemas: data.cinemas || null,
+          videoEmbedUrl: data.videoEmbedUrl || null,
+          videoFile: data.videoFile || null,
         },
       }),
       prisma.actor.deleteMany({ where: { projectId: id } }),

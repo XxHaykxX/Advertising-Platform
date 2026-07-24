@@ -98,6 +98,8 @@ export default async function EditProjectPage({
     subgenre: p.subgenre ?? "",
     references: p.references ?? "",
     cinemas: p.cinemas ?? "",
+    videoEmbedUrl: p.videoEmbedUrl ?? "",
+    videoFile: p.videoFile ?? "",
   };
 
   const action = updateProject.bind(null, pid);

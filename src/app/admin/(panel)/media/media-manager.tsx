@@ -3,13 +3,16 @@
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Image from "next/image";
 import {
+  AlertCircle,
   ArrowLeft,
+  CheckCircle2,
   ChevronLeft,
   ChevronRight,
   Copy,
   Folder,
   Images,
   Loader2,
+  Search,
   Trash2,
   Upload,
   X,
@@ -37,6 +40,8 @@ const FOLDER_LABEL: Record<string, string> = {
 
 const ALL = "__all__";
 
+type UploadQueueItem = { name: string; status: "pending" | "done" | "error"; error?: string };
+
 function humanSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
@@ -60,10 +65,18 @@ export function MediaManager({ files }: { files: MediaFile[] }) {
 
   const [copied, setCopied] = useState<string | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  // Filename search (#media search) — client-side substring filter over the
+  // current folder/ALL view. Reset on folder switch so a query doesn't leak
+  // between folders.
+  const [search, setSearch] = useState("");
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Drag-drop dropzone (#15) — highlighted while dragging over the folder
+  // view, and a per-file progress list shown while `uploadFiles` runs.
+  const [dropActive, setDropActive] = useState(false);
+  const [uploadQueue, setUploadQueue] = useState<UploadQueueItem[]>([]);
 
   // Folder list for the root view: canonical folders first (always shown), then
   // any other folder that has files, each with a count + a thumbnail.
@@ -89,27 +102,69 @@ export function MediaManager({ files }: { files: MediaFile[] }) {
     return [];
   }, [items, open]);
 
-  function onPickFiles(e: React.ChangeEvent<HTMLInputElement>) {
-    const picked = Array.from(e.target.files || []);
-    e.target.value = "";
+  // `visible` further narrowed by the filename search box (case-insensitive
+  // substring on the path, which includes the filename). Empty query = all.
+  const shown = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return visible;
+    return visible.filter((f) => f.path.toLowerCase().includes(q));
+  }, [visible, search]);
+
+  // New folder or new search query invalidates the lightbox index (it's
+  // positional into `shown`) — close it rather than risk showing the wrong file.
+  useEffect(() => {
+    setLightboxIndex(null);
+  }, [open, search]);
+
+  // Shared by the "Upload here" file input and the drag-drop dropzone — both
+  // just gather a File[] and hand it here. Uploads one at a time (uploadImage
+  // is still single-file) but tracks each file's own status in `uploadQueue`
+  // so the user sees per-file progress rather than one blanket spinner.
+  function uploadFiles(picked: File[]) {
     if (!picked.length || !open || open === ALL) return;
     const dir = open;
     setError(null);
+    setUploadQueue(picked.map((f) => ({ name: f.name, status: "pending" })));
     startTransition(async () => {
       const added: MediaFile[] = [];
-      for (const file of picked) {
+      for (let i = 0; i < picked.length; i++) {
+        const file = picked[i];
         const fd = new FormData();
         fd.append("file", file);
         fd.append("dir", dir);
         const res = await uploadImage(fd);
         if (res.error) {
           setError(res.error);
+          setUploadQueue((q) => q.map((it, idx) => (idx === i ? { ...it, status: "error", error: res.error } : it)));
           continue;
         }
+        setUploadQueue((q) => q.map((it, idx) => (idx === i ? { ...it, status: "done" } : it)));
         if (res.path) added.push({ path: res.path, size: file.size, mtime: Date.now() });
       }
       if (added.length) setItems((prev) => [...added, ...prev]);
     });
+  }
+
+  function onPickFiles(e: React.ChangeEvent<HTMLInputElement>) {
+    const picked = Array.from(e.target.files || []);
+    e.target.value = "";
+    uploadFiles(picked);
+  }
+
+  function onDragOver(e: React.DragEvent) {
+    if (!open || open === ALL) return;
+    e.preventDefault();
+    setDropActive(true);
+  }
+  function onDragLeave(e: React.DragEvent) {
+    e.preventDefault();
+    setDropActive(false);
+  }
+  function onDrop(e: React.DragEvent) {
+    if (!open || open === ALL) return;
+    e.preventDefault();
+    setDropActive(false);
+    uploadFiles(Array.from(e.dataTransfer.files || []).filter((f) => f.type.startsWith("image/")));
   }
 
   async function remove(path: string) {
@@ -132,10 +187,10 @@ export function MediaManager({ files }: { files: MediaFile[] }) {
   }
 
   function showPrev() {
-    setLightboxIndex((i) => (i === null ? null : (i - 1 + visible.length) % visible.length));
+    setLightboxIndex((i) => (i === null ? null : (i - 1 + shown.length) % shown.length));
   }
   function showNext() {
-    setLightboxIndex((i) => (i === null ? null : (i + 1) % visible.length));
+    setLightboxIndex((i) => (i === null ? null : (i + 1) % shown.length));
   }
 
   useEffect(() => {
@@ -147,9 +202,9 @@ export function MediaManager({ files }: { files: MediaFile[] }) {
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [lightboxIndex, visible.length]);
+  }, [lightboxIndex, shown.length]);
 
-  const activeFile = lightboxIndex !== null ? visible[lightboxIndex] : null;
+  const activeFile = lightboxIndex !== null ? shown[lightboxIndex] : null;
 
   // ---- Root: folder list (file-manager home) ---------------------------------
   if (open === null) {
@@ -202,7 +257,12 @@ export function MediaManager({ files }: { files: MediaFile[] }) {
   // ---- Inside a folder (or ALL) ----------------------------------------------
   const inFolder = open !== ALL;
   return (
-    <div className="space-y-4">
+    <div
+      className="space-y-4"
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
+    >
       <div className="flex flex-wrap items-center gap-3">
         <button
           type="button"
@@ -217,46 +277,92 @@ export function MediaManager({ files }: { files: MediaFile[] }) {
         </button>
         <h2 className="text-sm font-semibold text-foreground">
           {open === ALL ? "All files" : labelOf(open)}{" "}
-          <span className="text-muted-foreground">({visible.length})</span>
+          <span className="text-muted-foreground">
+            ({search.trim() ? `${shown.length} of ${visible.length}` : visible.length})
+          </span>
         </h2>
 
-        {inFolder && (
-          <div className="ml-auto flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={pending}
-              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:opacity-90 disabled:opacity-60"
-            >
-              {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-              {pending ? "Uploading…" : "Upload here"}
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={onPickFiles}
-              className="hidden"
-            />
-          </div>
-        )}
+        <div className="ml-auto flex items-center gap-2">
+          {visible.length > 0 && (
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search by filename…"
+                className="w-48 rounded-lg border border-border bg-card py-1.5 pl-8 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none sm:w-64"
+              />
+            </div>
+          )}
+          {inFolder && (
+            <>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={pending}
+                className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:opacity-90 disabled:opacity-60"
+              >
+                {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                {pending ? "Uploading…" : "Upload here"}
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={onPickFiles}
+                className="hidden"
+              />
+            </>
+          )}
+        </div>
       </div>
 
       {inFolder && (
-        <p className="text-xs text-muted-foreground">
-          JPG / PNG / WebP, up to 8 MB each. Files go to <code>/uploads/{open}/</code>.
-        </p>
+        <div
+          className={`flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed px-4 py-6 text-center transition-colors ${
+            dropActive ? "border-primary bg-primary/5" : "border-border"
+          }`}
+        >
+          <Upload className={`h-5 w-5 ${dropActive ? "text-primary" : "text-muted-foreground"}`} />
+          <p className="text-xs text-muted-foreground">
+            {dropActive ? "Drop to upload" : "Drag & drop images here, or use “Upload here” above"}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            JPG / PNG / WebP, up to 8 MB each. Files go to <code>/uploads/{open}/</code>.
+          </p>
+        </div>
       )}
       {error && <p className="text-xs text-primary">{error}</p>}
 
-      {visible.length === 0 ? (
+      {uploadQueue.length > 0 && (
+        <ul className="space-y-1 rounded-xl border border-border bg-card p-3">
+          {uploadQueue.map((item, i) => (
+            <li key={`${item.name}-${i}`} className="flex items-center gap-2 text-xs">
+              {item.status === "pending" && <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin text-muted-foreground" />}
+              {item.status === "done" && <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-success" />}
+              {item.status === "error" && <AlertCircle className="h-3.5 w-3.5 shrink-0 text-primary" />}
+              <span className="truncate text-foreground">{item.name}</span>
+              {item.status === "error" && item.error && (
+                <span className="truncate text-primary">— {item.error}</span>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {shown.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          {inFolder ? "Empty folder — upload images with the button above." : "No files."}
+          {visible.length > 0
+            ? "No files match your search."
+            : inFolder
+              ? "Empty folder — upload images with the button above."
+              : "No files."}
         </p>
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-          {visible.map((f, i) => (
+          {shown.map((f, i) => (
             <div key={f.path} className="overflow-hidden rounded-xl border border-border bg-card">
               <button
                 type="button"
@@ -306,7 +412,7 @@ export function MediaManager({ files }: { files: MediaFile[] }) {
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/80"
         >
           <p className="absolute top-4 left-1/2 -translate-x-1/2 text-sm text-white/80">
-            {lightboxIndex + 1} / {visible.length}
+            {lightboxIndex + 1} / {shown.length}
           </p>
           <button
             type="button"
@@ -316,7 +422,7 @@ export function MediaManager({ files }: { files: MediaFile[] }) {
           >
             <X className="h-5 w-5" />
           </button>
-          {visible.length > 1 && (
+          {shown.length > 1 && (
             <button
               type="button"
               onClick={(e) => {
@@ -335,7 +441,7 @@ export function MediaManager({ files }: { files: MediaFile[] }) {
           >
             <Image src={activeFile.path} alt="" fill className="object-contain" sizes="80vw" unoptimized />
           </div>
-          {visible.length > 1 && (
+          {shown.length > 1 && (
             <button
               type="button"
               onClick={(e) => {

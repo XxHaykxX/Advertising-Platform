@@ -14,7 +14,8 @@
 import { useEffect, useState, useTransition } from "react";
 import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
-import { Loader2, Sparkles, Upload, X } from "lucide-react";
+import { Images, Loader2, Sparkles, Upload, X } from "lucide-react";
+import { MediaPicker, type MediaPickerScope } from "@/components/media-picker";
 
 export type PosterGenerateInput = {
   prompt: string;
@@ -37,6 +38,8 @@ export function PosterGenerator({
   open: controlledOpen,
   onOpenChange,
   hideTrigger = false,
+  scope = "staff",
+  uploadDir = "projects",
 }: {
   action: (input: PosterGenerateInput) => Promise<PosterGenerateResult>;
   /** Computed lazily on first open, so it reflects whatever the user has
@@ -53,6 +56,13 @@ export function PosterGenerator({
   /** Hide the built-in trigger button — the caller renders its own (compact,
    *  next to "Upload poster"). Only makes sense together with `open`. */
   hideTrigger?: boolean;
+  /** Scope for the "From library" source-image picker (#13) — "member" shows
+   *  only the caller's own uploads, matching how ImageUploader/MediaField are
+   *  scoped elsewhere on the same form. Defaults to "staff" (admin). */
+  scope?: MediaPickerScope;
+  /** Subfolder the library picker's own "Upload from computer" writes new
+   *  files into. */
+  uploadDir?: string;
 }) {
   const [internalOpen, setInternalOpen] = useState(false);
   const isControlled = controlledOpen !== undefined;
@@ -67,6 +77,8 @@ export function PosterGenerator({
   const [posterText, setPosterText] = useState("");
   const [withLogo, setWithLogo] = useState(false);
   const [source, setSource] = useState<{ base64: string; mimeType: string; name: string } | null>(null);
+  const [sourcePickerOpen, setSourcePickerOpen] = useState(false);
+  const [sourceLoading, setSourceLoading] = useState(false);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [resultPath, setResultPath] = useState<string | null>(null);
@@ -93,6 +105,33 @@ export function PosterGenerator({
       if (base64) setSource({ base64, mimeType: file.type || "image/jpeg", name: file.name });
     };
     reader.readAsDataURL(file);
+  }
+
+  // Same as onPickSource, but for a path chosen from the MediaPicker library
+  // (#13) instead of a fresh OS file dialog — fetch it back and re-encode as
+  // base64 so it feeds the generate action the same way.
+  async function onPickSourceFromLibrary(publicPath: string) {
+    setSourceLoading(true);
+    try {
+      const res = await fetch(publicPath);
+      const blob = await res.blob();
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = String(reader.result || "");
+        const base64 = result.split(",")[1] || "";
+        if (base64) {
+          setSource({
+            base64,
+            mimeType: blob.type || "image/jpeg",
+            name: publicPath.split("/").pop() || "image",
+          });
+        }
+        setSourceLoading(false);
+      };
+      reader.readAsDataURL(blob);
+    } catch {
+      setSourceLoading(false);
+    }
   }
 
   function runGenerate() {
@@ -183,12 +222,25 @@ export function PosterGenerator({
             <span className={!hasOwnerAvatar ? "text-muted-foreground" : undefined}>{t("poster.withLogo")}</span>
           </label>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-xs text-foreground hover:border-primary/40">
               <Upload className="h-3.5 w-3.5" />
               {t("poster.fromImage")}
               <input type="file" accept="image/*" onChange={onPickSource} className="hidden" />
             </label>
+            <button
+              type="button"
+              onClick={() => setSourcePickerOpen(true)}
+              disabled={sourceLoading}
+              className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-xs text-foreground hover:border-primary/40 disabled:opacity-60"
+            >
+              {sourceLoading ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Images className="h-3.5 w-3.5" />
+              )}
+              {t("poster.fromLibrary")}
+            </button>
             {source && (
               <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                 {source.name}
@@ -199,8 +251,16 @@ export function PosterGenerator({
             )}
           </div>
 
+          <MediaPicker
+            open={sourcePickerOpen}
+            onClose={() => setSourcePickerOpen(false)}
+            onSelect={onPickSourceFromLibrary}
+            scope={scope}
+            uploadDir={uploadDir}
+          />
+
           {(pending || resultPath) && (
-            <div className="relative aspect-[16/10] w-full overflow-hidden rounded-lg border border-border bg-muted">
+            <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-border bg-muted">
               {resultPath && !pending && (
                 <Image src={resultPath} alt="" fill className="object-cover" sizes="400px" unoptimized />
               )}

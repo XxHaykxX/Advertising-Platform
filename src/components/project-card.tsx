@@ -52,7 +52,7 @@ export function ProjectCard({
         aria-label={project.title}
         className="absolute inset-0 z-10"
       />
-      <div className="relative aspect-[16/10] shrink-0">
+      <div className="relative aspect-video shrink-0">
         {project.poster ? (
           <Image
             src={project.poster}
@@ -86,9 +86,6 @@ export function ProjectCard({
             <AccentBadge>{localizeValue(locale, "placement", project.placementType)}</AccentBadge>
           ) : null}
         </div>
-        <code className="text-xs text-muted-foreground">{project.code}</code>
-        <p className="mt-3 line-clamp-2 text-sm text-muted-foreground">{project.synopsis}</p>
-
         <div className="mt-4 flex flex-col gap-2 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
             <Clapperboard className="h-3.5 w-3.5 shrink-0" />

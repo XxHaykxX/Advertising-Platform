@@ -96,7 +96,7 @@ function ProjectRow({
   const deadlineUrgent = deadlineDays !== null && deadlineDays <= 45;
   return (
     <div className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 card-lift sm:flex-row sm:items-center">
-      <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden rounded-lg sm:w-48">
+      <div className="relative aspect-video w-full shrink-0 overflow-hidden rounded-lg sm:w-48">
         {project.poster ? (
           <Image
             src={project.poster}

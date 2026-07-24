@@ -5,5 +5,5 @@ export function imageSizeHint(dir: string): string {
   const d = (dir || "").toLowerCase();
   if (d.includes("avatar") || d.includes("logo") || d.includes("partner")) return "512×512 (1:1)";
   if (d.includes("cast") || d.includes("crew") || d.includes("actor")) return "800×800 (1:1)";
-  return "16:10 · ≤1600×1000";
+  return "16:9 · ≤1600×900";
 }

@@ -44,6 +44,9 @@ export interface ProjectDetailDTO extends ProjectListDTO {
   references: string[]; // comparable titles, parsed from the comma list
   cinemas: string[]; // exhibition venues, parsed from the comma list
   tiers: TierDTO[]; // sponsorship packages (the productised offer)
+  // ── Video (#10) — rendered near the top of the report page ──
+  videoEmbedUrl: string; // YouTube/Vimeo URL; "" when unset
+  videoFile: string; // uploaded MP4 path; "" when unset
 }
 
 export interface ActorDTO {

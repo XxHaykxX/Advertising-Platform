@@ -60,7 +60,7 @@ export default async function BrandInterestsPage() {
               key={interest.id}
               className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 sm:flex-row sm:items-center"
             >
-              <div className="relative aspect-[16/10] w-full shrink-0 overflow-hidden rounded-lg sm:w-40">
+              <div className="relative aspect-video w-full shrink-0 overflow-hidden rounded-lg sm:w-40">
                 {interest.project.poster ? (
                   <Image
                     src={interest.project.poster}
@@ -89,7 +89,6 @@ export default async function BrandInterestsPage() {
                     {STATUS_LABEL[interest.status]}
                   </span>
                 </div>
-                <code className="text-xs text-muted-foreground">{interest.project.code}</code>
                 <p className="mt-2 text-xs text-muted-foreground">
                   {t("account.brand.interestedOn", {
                     date: formatFullDate(interest.createdAt, intlLocale(locale)),

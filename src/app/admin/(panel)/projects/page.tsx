@@ -2,15 +2,7 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth/require";
-import { ActiveToggle, DeleteButton } from "./row-actions";
-import { ReorderableProjectsTable } from "./reorder-list";
-
-const STATUS_LABEL: Record<string, string> = {
-  PRE_PRODUCTION: "Pre-production",
-  FILMING: "Filming",
-  POST_PRODUCTION: "Post-production",
-  RELEASED: "Released",
-};
+import { PlainProjectsTable, ReorderableProjectsTable, type ProjectRow } from "./reorder-list";
 
 export default async function ProjectsAdminPage() {
   const user = await requireUser();
@@ -25,6 +17,15 @@ export default async function ProjectsAdminPage() {
       owner: { select: { name: true } },
     },
   });
+
+  const rows: ProjectRow[] = projects.map((p) => ({
+    id: p.id,
+    poster: p.poster,
+    title: p.title,
+    status: p.status,
+    isActive: p.isActive,
+    ownerName: p.owner.name,
+  }));
 
   return (
     <div>
@@ -51,63 +52,11 @@ export default async function ProjectsAdminPage() {
         // is a single global sequence, so drag-to-reorder only makes sense
         // from the superadmin's full-list view.
         <div className="mt-6">
-          <ReorderableProjectsTable
-            projects={projects.map((p) => ({
-              id: p.id,
-              poster: p.poster,
-              title: p.title,
-              code: p.code,
-              statusLabel: STATUS_LABEL[p.status] ?? p.status,
-              isActive: p.isActive,
-              ownerName: p.owner.name,
-            }))}
-          />
+          <ReorderableProjectsTable projects={rows} />
         </div>
       ) : (
-        <div className="mt-6 overflow-x-auto rounded-2xl border border-border bg-card">
-          <table className="w-full min-w-[900px] text-sm">
-            <thead>
-              <tr className="border-b border-border bg-muted text-left text-xs uppercase tracking-wide text-muted-foreground">
-                <th className="px-4 py-3 font-medium">Poster</th>
-                <th className="px-4 py-3 font-medium">Title / Code</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium">Active</th>
-                <th className="px-4 py-3 font-medium"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {projects.map((p) => (
-                <tr key={p.id} className="border-b border-border last:border-b-0 hover:bg-muted/50">
-                  <td className="px-4 py-3">
-                    <div className="h-10 w-16 overflow-hidden rounded bg-muted">
-                      {p.poster && (
-                        /* eslint-disable-next-line @next/next/no-img-element */
-                        <img src={p.poster} alt="" className="h-full w-full object-cover" />
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <Link
-                      href={`/admin/projects/${p.id}/edit`}
-                      className="font-medium text-foreground hover:text-primary"
-                    >
-                      {p.title}
-                    </Link>
-                    <p className="text-xs text-muted-foreground">{p.code}</p>
-                  </td>
-                  <td className="px-4 py-3 text-muted-foreground">
-                    {STATUS_LABEL[p.status] ?? p.status}
-                  </td>
-                  <td className="px-4 py-3">
-                    <ActiveToggle id={p.id} active={p.isActive} />
-                  </td>
-                  <td className="px-4 py-3">
-                    <DeleteButton id={p.id} title={p.title} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="mt-6">
+          <PlainProjectsTable projects={rows} />
         </div>
       )}
     </div>

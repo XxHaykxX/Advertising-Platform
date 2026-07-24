@@ -2,26 +2,30 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { ImageIcon, X } from "lucide-react";
-import { MediaPicker, type MediaPickerScope } from "@/components/media-picker";
+import { FileVideo, ImageIcon, X } from "lucide-react";
+import { MediaPicker, isVideoPath, type MediaPickerAccept, type MediaPickerScope } from "@/components/media-picker";
 import { imageSizeHint } from "@/lib/images/size-hint";
 
 // Drop-in replacement for the old "<input> a URL" image fields (partner logo,
 // portfolio image, …). Mirrors the chosen /uploads/… path into a hidden input
 // so the existing form plumbing (a plain string field) keeps working unchanged.
 // Clicking Browse opens the shared MediaPicker (pick existing or upload new).
+// `accept` defaults to "image" so every existing caller is unaffected; pass
+// "video" for an MP4/WebM field (#10 project trailer upload).
 export function MediaField({
   name,
   initial = "",
   label = "Browse",
   uploadDir,
   scope = "staff",
+  accept = "image",
 }: {
   name: string;
   initial?: string;
   label?: string;
   uploadDir: string;
   scope?: MediaPickerScope;
+  accept?: MediaPickerAccept;
 }) {
   const [value, setValue] = useState(initial);
   const [open, setOpen] = useState(false);
@@ -32,7 +36,13 @@ export function MediaField({
       <div className="flex items-center gap-3">
         {value ? (
           <span className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-border bg-muted">
-            <Image src={value} alt="" fill className="object-cover" sizes="64px" unoptimized />
+            {isVideoPath(value) ? (
+              <span className="grid h-full w-full place-items-center text-muted-foreground">
+                <FileVideo className="h-5 w-5" />
+              </span>
+            ) : (
+              <Image src={value} alt="" fill className="object-cover" sizes="64px" unoptimized />
+            )}
           </span>
         ) : (
           <span className="grid h-16 w-16 shrink-0 place-items-center rounded-lg border border-dashed border-border bg-muted text-muted-foreground">
@@ -61,7 +71,7 @@ export function MediaField({
         </div>
       </div>
 
-      <p className="text-xs text-muted-foreground">{imageSizeHint(uploadDir)}</p>
+      {accept !== "video" && <p className="text-xs text-muted-foreground">{imageSizeHint(uploadDir)}</p>}
 
       <MediaPicker
         open={open}
@@ -69,6 +79,7 @@ export function MediaField({
         onSelect={(path) => setValue(path)}
         scope={scope}
         uploadDir={uploadDir}
+        accept={accept}
       />
     </div>
   );

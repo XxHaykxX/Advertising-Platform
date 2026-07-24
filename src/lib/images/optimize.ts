@@ -9,7 +9,7 @@ import sharp from "sharp";
  *   - avatar / logo → 512×512 (1:1), fit "contain" on a transparent canvas so a
  *     logo is never clipped.
  *   - cast / crew    → 800×800 (1:1), center-cropped.
- *   - everything else → 16:10, capped at 1600×1000 (never upscaled past the
+ *   - everything else → 16:9, capped at 1600×900 (never upscaled past the
  *     source width — smaller is fine), center-cropped.
  *
  *  Output is always WebP: visually ~equal to high-quality JPEG/PNG but much
@@ -53,10 +53,10 @@ export async function optimizeImage(input: Buffer, kind: ImageKind): Promise<Opt
     return { buffer, ext: "webp" };
   }
 
-  // wide: 16:10, width ≤ 1600 but never larger than the source (smaller OK).
+  // wide: 16:9, width ≤ 1600 but never larger than the source (smaller OK).
   const meta = await sharp(input).metadata();
   const w = Math.min(meta.width ?? WIDE_MAX_W, WIDE_MAX_W);
-  const h = Math.round((w * 10) / 16);
+  const h = Math.round((w * 9) / 16);
   const buffer = await base()
     .resize(w, h, { fit: "cover", position: "centre" })
     .webp(WEBP)

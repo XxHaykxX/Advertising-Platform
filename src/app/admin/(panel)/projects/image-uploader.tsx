@@ -3,6 +3,23 @@
 import { forwardRef, useImperativeHandle, useState } from "react";
 import Image from "next/image";
 import { ImageIcon, Trash2 } from "lucide-react";
+import {
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import { restrictToParentElement } from "@dnd-kit/modifiers";
+import {
+  SortableContext,
+  rectSortingStrategy,
+  sortableKeyboardCoordinates,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { MediaPicker, type MediaPickerScope } from "@/components/media-picker";
 import { imageSizeHint } from "@/lib/images/size-hint";
 
@@ -43,6 +60,14 @@ export const ImageUploader = forwardRef<ImageUploaderHandle, {
     initial ? initial.split("\n").map((s) => s.trim()).filter(Boolean) : [],
   );
 
+  // Small activation distance keeps a plain click on a thumbnail's remove
+  // button from being swallowed as a drag start — same pattern as
+  // reorder-list.tsx.
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
   function commit(next: string[]) {
     setPaths(next);
     onChange?.(next);
@@ -52,6 +77,18 @@ export const ImageUploader = forwardRef<ImageUploaderHandle, {
     commit(paths.filter((_, idx) => idx !== i));
   }
 
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const from = paths.indexOf(active.id as string);
+    const to = paths.indexOf(over.id as string);
+    if (from === -1 || to === -1) return;
+    const next = [...paths];
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    commit(next);
+  }
+
   useImperativeHandle(ref, () => ({
     addPath(path: string) {
       commit(multiple ? [...paths, path] : [path]);
@@ -59,6 +96,9 @@ export const ImageUploader = forwardRef<ImageUploaderHandle, {
   }));
 
   const hiddenValue = multiple ? paths.join("\n") : paths[0] ?? "";
+  // The poster instance only ever holds one image, so reordering is
+  // meaningless there — only the multi-image gallery instance gets drag.
+  const sortable = multiple && paths.length > 1;
 
   return (
     <div className="space-y-3">
@@ -86,25 +126,93 @@ export const ImageUploader = forwardRef<ImageUploaderHandle, {
       />
 
       {paths.length > 0 && (
-        <div className="flex flex-wrap gap-3">
-          {paths.map((p, i) => (
-            <div
-              key={p}
-              className="group relative h-24 w-24 overflow-hidden rounded-lg border border-border bg-muted"
-            >
-              <Image src={p} alt="" fill className="object-cover" sizes="96px" unoptimized />
-              <button
-                type="button"
-                onClick={() => removeAt(i)}
-                aria-label={removeLabel}
-                className="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-md bg-background/80 text-muted-foreground opacity-0 transition-opacity hover:text-primary group-hover:opacity-100"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
-            </div>
-          ))}
-        </div>
+        sortable ? (
+          <DndContext
+            id="gallery-images"
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            modifiers={[restrictToParentElement]}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext items={paths} strategy={rectSortingStrategy}>
+              <div className="flex flex-wrap gap-3">
+                {paths.map((p, i) => (
+                  <SortableThumbnail key={p} id={p} src={p} onRemove={() => removeAt(i)} removeLabel={removeLabel} />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
+        ) : (
+          <div className="flex flex-wrap gap-3">
+            {paths.map((p, i) => (
+              <Thumbnail key={p} src={p} onRemove={() => removeAt(i)} removeLabel={removeLabel} />
+            ))}
+          </div>
+        )
       )}
     </div>
   );
 });
+
+/** Plain (non-draggable) thumbnail — used for the single-poster instance and
+ *  for a gallery with only one image (nothing to reorder yet). */
+function Thumbnail({ src, onRemove, removeLabel }: { src: string; onRemove: () => void; removeLabel: string }) {
+  return (
+    <div className="group relative h-24 w-24 overflow-hidden rounded-lg border border-border bg-muted">
+      <Image src={src} alt="" fill className="object-cover" sizes="96px" unoptimized />
+      <button
+        type="button"
+        onClick={onRemove}
+        aria-label={removeLabel}
+        className="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-md bg-background/80 text-muted-foreground opacity-0 transition-opacity hover:text-primary group-hover:opacity-100"
+      >
+        <Trash2 className="h-3.5 w-3.5" />
+      </button>
+    </div>
+  );
+}
+
+/** Draggable gallery thumbnail — the whole tile is the grab target (no room
+ *  for a separate handle at 96px), transform+transition mirror the
+ *  reorder-list.tsx table-row treatment so the tile lifts and glides into
+ *  its new slot while the rest of the grid animates around it. */
+function SortableThumbnail({
+  id,
+  src,
+  onRemove,
+  removeLabel,
+}: {
+  id: string;
+  src: string;
+  onRemove: () => void;
+  removeLabel: string;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 10 : undefined,
+    boxShadow: isDragging ? "0 8px 24px -8px rgb(0 0 0 / 0.35)" : undefined,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className="group relative h-24 w-24 cursor-grab touch-none overflow-hidden rounded-lg border border-border bg-muted active:cursor-grabbing"
+    >
+      <Image src={src} alt="" fill className="object-cover" sizes="96px" unoptimized />
+      <button
+        type="button"
+        onClick={onRemove}
+        aria-label={removeLabel}
+        className="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-md bg-background/80 text-muted-foreground opacity-0 transition-opacity hover:text-primary group-hover:opacity-100"
+      >
+        <Trash2 className="h-3.5 w-3.5" />
+      </button>
+    </div>
+  );
+}

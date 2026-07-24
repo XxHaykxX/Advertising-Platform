@@ -8,6 +8,7 @@ import { loadCurrentUser } from "@/lib/auth/require";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ReportHero } from "@/components/report/report-hero";
+import { ReportVideo } from "@/components/report/report-video";
 import { KeyFacts } from "@/components/report/key-facts";
 import { Cast } from "@/components/report/cast";
 import { RoiSnapshot } from "@/components/report/roi-snapshot";
@@ -48,6 +49,12 @@ export default async function ReportPage({
       <ReportTabs hasCast={project.actors.length > 0} locale={locale} />
       <div id="overview">
         <ReportHero project={project} locale={locale} />
+        <ReportVideo
+          embedUrl={project.videoEmbedUrl}
+          file={project.videoFile}
+          title={project.title}
+          locale={locale}
+        />
         <KeyFacts project={project} locale={locale} user={user} />
       </div>
       <Cast project={project} locale={locale} />

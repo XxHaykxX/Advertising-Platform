@@ -204,6 +204,7 @@ export const UI: Record<string, Dict> = {
   "poster.customText": { ru: "Текст на постере (необязательно)", en: "Text on poster (optional)", hy: "Տեքստ պաստառի վրա (ոչ պարտադիր)" },
   "poster.customTextPlaceholder": { ru: "Оставьте пустым — без текста", en: "Leave empty for no text", hy: "Թողեք դատարկ՝ առանց տեքստի" },
   "poster.fromImage": { ru: "Из своего изображения", en: "From my image", hy: "Իմ նկարից" },
+  "poster.fromLibrary": { ru: "Из библиотеки", en: "From library", hy: "Գրադարանից" },
   "poster.error": { ru: "Не удалось сгенерировать постер", en: "Poster generation failed", hy: "Չհաջողվեց ստեղծել պաստառը" },
 
   // ── footer ──────────────────────────────────
@@ -708,6 +709,7 @@ export const UI: Record<string, Dict> = {
   // ── report: hero / key facts / cast ────────────
   "report.backToCatalog": { ru: "Назад к каталогу", en: "Back to Catalog", hy: "Վերադառնալ կատալոգ" },
   "report.back": { ru: "Назад", en: "Back", hy: "Հետ" },
+  "report.video": { ru: "Видео", en: "Video", hy: "Տեսանյութ" },
   "report.catalogLabel": { ru: "Каталог", en: "Catalog", hy: "Կատալոգ" },
   "report.share": { ru: "Поделиться", en: "Share", hy: "Կիսվել" },
   // IA-12: window.print() opens the print dialog, not a download — label says
@@ -1137,12 +1139,52 @@ export const UI: Record<string, Dict> = {
   },
   "projectForm.restoreDraft": { ru: "Восстановить черновик", en: "Restore draft", hy: "Վերականգնել սևագիրը" },
   "projectForm.discardDraft": { ru: "Отклонить", en: "Discard", hy: "Մերժել" },
+  // Sticky Save bar's dirty-state dot (admin redesign, phase 2).
+  "projectForm.unsavedChanges": {
+    ru: "Есть несохранённые изменения",
+    en: "Unsaved changes",
+    hy: "Կան չպահպանված փոփոխություններ",
+  },
+  "projectForm.saved": { ru: "Сохранено", en: "Saved", hy: "Պահպանված է" },
   "projectForm.section.general": { ru: "Общее", en: "General", hy: "Ընդհանուր" },
   "projectForm.section.translations": {
     ru: "Переводы (hy / ru / en)",
     en: "Translations (hy / ru / en)",
     hy: "Թարգմանություններ (hy / ru / en)",
   },
+  // ── About block (#11) ──
+  "projectForm.section.about": { ru: "О проекте", en: "About", hy: "Նախագծի մասին" },
+  "projectForm.about.title": { ru: "Название", en: "Title", hy: "Վերնագիր" },
+  "projectForm.about.description": { ru: "Описание", en: "Description", hy: "Նկարագրություն" },
+  "projectForm.about.descriptionPlaceholder": {
+    ru: "Опишите проект…",
+    en: "Describe the project…",
+    hy: "Նկարագրեք նախագիծը…",
+  },
+  "projectForm.about.richHint": {
+    ru: "Разметка: **жирный**, *курсив*, [текст](https://ссылка), переносы строк.",
+    en: "Formatting: **bold**, *italic*, [text](https://link), line breaks.",
+    hy: "Ձևաչափում՝ **թավ**, *շեղ*, [տեքստ](https://հղում), նոր տողեր։",
+  },
+  "projectForm.about.shortDescription": { ru: "Краткое описание", en: "Short description", hy: "Կարճ նկարագրություն" },
+  "projectForm.about.shortDescriptionPlaceholder": {
+    ru: "Слоган в одну строку",
+    en: "One-line logline / slogan",
+    hy: "Մեկ տողանոց կարգախոս",
+  },
+  "projectForm.about.charsLeft": { ru: "символов осталось", en: "characters left", hy: "նիշ մնաց" },
+  // ── Video (#10) ──
+  "projectForm.field.videoEmbed": {
+    ru: "Ссылка на видео (YouTube / Vimeo)",
+    en: "Video link (YouTube / Vimeo)",
+    hy: "Վիդեոյի հղում (YouTube / Vimeo)",
+  },
+  "projectForm.videoEmbedPlaceholder": {
+    ru: "https://youtube.com/watch?v=… / https://vimeo.com/…",
+    en: "https://youtube.com/watch?v=… / https://vimeo.com/…",
+    hy: "https://youtube.com/watch?v=… / https://vimeo.com/…",
+  },
+  "projectForm.field.videoFile": { ru: "Видеофайл (MP4)", en: "Video file (MP4)", hy: "Վիդեոֆայլ (MP4)" },
   "projectForm.section.statusRelease": { ru: "Статус и релиз", en: "Status & release", hy: "Կարգավիճակ և թողարկում" },
   "projectForm.section.placement": { ru: "Размещение", en: "Placement", hy: "Տեղադրում" },
   "projectForm.section.audienceValue": { ru: "Аудитория и ценность", en: "Audience & value", hy: "Լսարան և արժեք" },

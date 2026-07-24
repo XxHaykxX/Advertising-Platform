@@ -24,7 +24,7 @@ function safeSegment(input: string): string {
 /** Writes an AI-generated image buffer under uploads/{dir}/… and returns the
  *  public "/uploads/…" path (never a giant data URL — Project.poster is a
  *  plain VARCHAR column). The buffer is resized + recompressed to the dir's
- *  target (posters → 16:10) exactly like a manual upload. `mimeType` is kept
+ *  target (posters → 16:9) exactly like a manual upload. `mimeType` is kept
  *  for signature compatibility but the output format is decided by the
  *  optimizer. */
 export async function saveGeneratedImage(buffer: Buffer, _mimeType: string, dir: string): Promise<string> {

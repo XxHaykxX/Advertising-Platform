@@ -44,9 +44,7 @@ export function ReportHero({
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-sm">
             <BackButton label={t("report.back")} />
-            <span className="text-muted-foreground">
-              {t("report.catalogLabel")} | {project.code}
-            </span>
+            <span className="text-muted-foreground">{t("report.catalogLabel")}</span>
           </div>
           <div className="flex items-center gap-3">
             <ShareButton
@@ -64,7 +62,6 @@ export function ReportHero({
           <h1 className="text-3xl font-extrabold tracking-tight text-foreground md:text-4xl">
             {project.title}
           </h1>
-          <code className="mt-1 block text-sm text-muted-foreground">{project.code}</code>
           {project.tagline ? (
             <p className="mt-3 max-w-3xl text-lg font-medium italic text-foreground/90 md:text-xl">
               {project.tagline}
@@ -74,7 +71,7 @@ export function ReportHero({
 
         <Reveal delay={0.05}>
           <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1.3fr_1fr]">
-            <div className="relative aspect-[16/10] overflow-hidden rounded-2xl border border-border bg-muted">
+            <div className="relative aspect-video overflow-hidden rounded-2xl border border-border bg-muted">
               <PosterSlider
                 images={sliderImages}
                 alt={project.title}
