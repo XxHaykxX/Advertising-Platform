@@ -22,7 +22,6 @@ export default async function ProjectsAdminPage() {
     id: p.id,
     poster: p.poster,
     title: p.title,
-    status: p.status,
     isActive: p.isActive,
     ownerName: p.owner.name,
   }));

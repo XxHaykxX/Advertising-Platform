@@ -27,7 +27,6 @@ export type ProjectRow = {
   id: number;
   poster: string | null;
   title: string;
-  status: string;
   isActive: boolean;
   ownerName: string;
 };
@@ -333,8 +332,8 @@ function SortableRow({
   );
 }
 
-// PUBLISHER view: same list (filter bar, status pills, density) without the
-// reorder column — catalog order is a single global sequence, superadmin-only.
+// PUBLISHER view: same list (filter bar, density) without the reorder column
+// — catalog order is a single global sequence, superadmin-only.
 export function PlainProjectsTable({ projects }: { projects: ProjectRow[] }) {
   const [filters, setFilters] = useState(NO_FILTERS);
   const visible = useMemo(() => applyFilters(projects, filters), [projects, filters]);
