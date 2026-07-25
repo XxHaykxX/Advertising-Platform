@@ -169,9 +169,13 @@ export function ActorsSection({
       {value.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("projectForm.cast.empty")}</p>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-border bg-card">
-          {/* Header labels (desktop only — mobile rows are self-evident). */}
-          <div className="hidden grid-cols-[24px_40px_1fr_1fr_110px_32px] items-center gap-2 border-b border-border bg-muted px-3 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground sm:grid">
+        <div className="rounded-xl border border-border bg-card">
+          {/* No `overflow-hidden` on this wrapper: the Role MultiSelect and the
+              Name autocomplete are absolutely-positioned dropdowns that must
+              float OUT of the table (over the rows / next section). Clipping
+              them cut the Role list and hid the name suggestions. Rounding is
+              handled per-edge (header top) instead of by clipping. */}
+          <div className="hidden grid-cols-[24px_40px_1fr_1fr_110px_32px] items-center gap-2 rounded-t-xl border-b border-border bg-muted px-3 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground sm:grid">
             <span />
             <span>{t("projectForm.cast.photo")}</span>
             <span>{t("projectForm.cast.name")}</span>
