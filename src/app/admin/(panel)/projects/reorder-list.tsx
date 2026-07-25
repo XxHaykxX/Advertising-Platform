@@ -32,23 +32,16 @@ export type ProjectRow = {
   ownerName: string;
 };
 
-const STATUS_LABEL: Record<string, string> = {
-  PRE_PRODUCTION: "Pre-production",
-  FILMING: "Filming",
-  POST_PRODUCTION: "Post-production",
-  RELEASED: "Released",
-};
-
-
 // --- Client-side filtering (redesign §3.4) -------------------------------
-// Filters the already-loaded rows; no server round-trip.
+// Filters the already-loaded rows; no server round-trip. Status filter was
+// removed per user request (2026-07-25) — search + visibility only.
 
-type Filters = { query: string; status: string; active: string };
+type Filters = { query: string; active: string };
 
-const NO_FILTERS: Filters = { query: "", status: "ALL", active: "ALL" };
+const NO_FILTERS: Filters = { query: "", active: "ALL" };
 
 function isFiltering(f: Filters) {
-  return f.query.trim() !== "" || f.status !== "ALL" || f.active !== "ALL";
+  return f.query.trim() !== "" || f.active !== "ALL";
 }
 
 function applyFilters(rows: ProjectRow[], f: Filters) {
@@ -56,7 +49,6 @@ function applyFilters(rows: ProjectRow[], f: Filters) {
   return rows.filter(
     (p) =>
       (!q || p.title.toLowerCase().includes(q)) &&
-      (f.status === "ALL" || p.status === f.status) &&
       (f.active === "ALL" || (f.active === "ACTIVE") === p.isActive),
   );
 }
@@ -86,19 +78,6 @@ function FilterBar({
           className="w-56 rounded-lg border border-border bg-card py-1.5 pl-8 pr-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:border-primary"
         />
       </div>
-      <select
-        value={filters.status}
-        onChange={(e) => onChange({ ...filters, status: e.target.value })}
-        className={selectCls}
-        aria-label="Filter by status"
-      >
-        <option value="ALL">All statuses</option>
-        {Object.entries(STATUS_LABEL).map(([value, label]) => (
-          <option key={value} value={value}>
-            {label}
-          </option>
-        ))}
-      </select>
       <select
         value={filters.active}
         onChange={(e) => onChange({ ...filters, active: e.target.value })}
