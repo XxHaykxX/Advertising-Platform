@@ -65,3 +65,6 @@ placement/dev-3001.log
 # root-level screenshot/test artifacts
 /*.png
 i18n-export.csv
+# i18n round-trip artifacts (regenerated; keys live in src/lib/i18n.ts)
+i18n-new-keys.csv
+i18n-sheet-merged.csv
