@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import Image from "next/image";
 import {
   DndContext,
@@ -21,7 +21,11 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Plus, Trash2, User, X } from "lucide-react";
 import { MediaPicker, type MediaPickerScope } from "@/components/media-picker";
+import { MultiSelect } from "@/components/ui/multi-select";
+import { ROLE_VALUES } from "./form-shared";
 import type { PersonSuggestion } from "@/lib/data/actors";
+import { matchesNameQuery } from "@/lib/translit";
+import { cn } from "@/lib/utils";
 import type { makeUI } from "@/lib/i18n";
 
 // Controlled cast/crew section (#20²). Rows are owned by the parent ProjectForm —
@@ -34,9 +38,14 @@ import type { makeUI } from "@/lib/i18n";
 // is a 36px avatar chip that opens the MediaPicker directly; rows drag-reorder via
 // @dnd-kit (mirrors cast-manager.tsx / reorder-list.tsx). The ActorRow[]/onChange
 // data contract and the ActorsSection export are unchanged.
-export type ActorRow = { name: string; role: string; kind: string; photo: string };
+//
+// Ф3: `role` (single free-text string) became `roles` (string[] against the
+// fixed ROLE_VALUES list, one person can hold several) and a new `personId`
+// links the row to the global Person directory (null until a name is picked
+// from — or newly created via — that directory on save).
+export type ActorRow = { name: string; roles: string[]; kind: string; photo: string; personId: number | null };
 
-export const EMPTY_ACTOR: ActorRow = { name: "", role: "", kind: "CAST", photo: "" };
+export const EMPTY_ACTOR: ActorRow = { name: "", roles: [], kind: "CAST", photo: "", personId: null };
 
 // Borderless-until-focus cell input — reads as a table, edits like a form.
 const cellCls =
@@ -52,10 +61,11 @@ export function ActorsSection({
   value: ActorRow[];
   onChange: (rows: ActorRow[]) => void;
   scope?: MediaPickerScope;
-  /** People previously entered on any project (#11) — backs a <datalist>
-   *  autocomplete on the Name field. Picking (or exactly retyping) a known
-   *  name autofills role/kind/photo for that row; the fields stay editable
-   *  afterwards. */
+  /** The Person directory (Ф3) — backs a searchable dropdown on the Name
+   *  field. Picking a person fills name/photo/personId for that row (and, if
+   *  the row has no roles yet, prefills their default role); typing a
+   *  brand-new name leaves personId null so a new Person is created on
+   *  save. */
   knownPeople?: PersonSuggestion[];
   /** ProjectForm's own locale-aware translator (#15) — "en" in admin mode,
    *  the creator's locale in mode="creator". Passed down rather than called
@@ -96,17 +106,21 @@ export function ActorsSection({
     onChange(value.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
   }
 
-  // Name changed → if it's an exact (case-insensitive) match for a known
-  // person, autofill their last-known role/kind/photo alongside it. A
-  // not-yet-known name (still being typed, or genuinely new) just updates
-  // the name as normal.
+  // Name typed by hand — always a plain edit, and always disassociates the
+  // row from whatever Person it may have been linked to (picking one from the
+  // dropdown below is the only way personId gets (re)set).
   function updateName(i: number, name: string) {
-    const match = knownPeople.find((p) => p.name.toLowerCase() === name.trim().toLowerCase());
-    if (match) {
-      update(i, { name, role: match.role, kind: match.kind, photo: match.photo });
-    } else {
-      update(i, { name });
+    update(i, { name, personId: null });
+  }
+
+  // Name PICKED from the Person directory dropdown — fills name/photo/personId,
+  // and (only if this row has no roles yet) prefills their default role.
+  function selectPerson(i: number, p: PersonSuggestion) {
+    const patch: Partial<ActorRow> = { name: p.name, photo: p.photo, personId: p.id ?? null };
+    if (value[i].roles.length === 0 && (ROLE_VALUES as readonly string[]).includes(p.role)) {
+      patch.roles = [p.role];
     }
+    update(i, patch);
   }
 
   function addRow() {
@@ -152,17 +166,6 @@ export function ActorsSection({
         </button>
       </div>
 
-      {/* Shared across every row — same option set, so one <datalist> does. */}
-      {knownPeople.length > 0 && (
-        <datalist id="known-people-list">
-          {knownPeople.map((p) => (
-            <option key={p.name} value={p.name}>
-              {p.role}
-            </option>
-          ))}
-        </datalist>
-      )}
-
       {value.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("projectForm.cast.empty")}</p>
       ) : (
@@ -191,9 +194,10 @@ export function ActorsSection({
                     id={ids[i]}
                     row={r}
                     t={t}
-                    hasDatalist={knownPeople.length > 0}
+                    knownPeople={knownPeople}
                     onName={(name) => updateName(i, name)}
-                    onRole={(role) => update(i, { role })}
+                    onSelectPerson={(p) => selectPerson(i, p)}
+                    onRoles={(roles) => update(i, { roles })}
                     onKind={(kind) => update(i, { kind })}
                     onClearPhoto={() => update(i, { photo: "" })}
                     onOpenPhoto={() => setPickerFor(ids[i])}
@@ -224,13 +228,134 @@ export function ActorsSection({
   );
 }
 
+/** Searchable Person-directory dropdown for the Name cell — replaces the old
+ *  native <datalist> (which can't cross-language match). Filters knownPeople
+ *  with matchesNameQuery (name OR its Armenian->Latin romanization) as the
+ *  user types; picking one calls onSelectPerson, typing anything else calls
+ *  onChangeName as a plain edit. */
+function PersonNameField({
+  value,
+  knownPeople,
+  onChangeName,
+  onSelectPerson,
+  placeholder,
+  inputRef,
+}: {
+  value: string;
+  knownPeople: PersonSuggestion[];
+  onChangeName: (name: string) => void;
+  onSelectPerson: (p: PersonSuggestion) => void;
+  placeholder: string;
+  inputRef: (el: HTMLInputElement | null) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  const filtered = useMemo(
+    () => knownPeople.filter((p) => matchesNameQuery(p.name, value)).slice(0, 20),
+    [knownPeople, value],
+  );
+
+  useEffect(() => setActiveIndex(0), [value, open]);
+
+  // Close on outside click — same pattern as MultiSelect/CurrencySwitcher.
+  useEffect(() => {
+    if (!open) return;
+    function onPointer(e: MouseEvent) {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onPointer);
+    return () => document.removeEventListener("mousedown", onPointer);
+  }, [open]);
+
+  function pick(p: PersonSuggestion) {
+    onSelectPerson(p);
+    setOpen(false);
+  }
+
+  function onKeyDown(e: KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setOpen(true);
+      setActiveIndex((i) => Math.min(i + 1, filtered.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveIndex((i) => Math.max(i - 1, 0));
+    } else if (e.key === "Enter") {
+      const active = filtered[activeIndex];
+      if (open && active) {
+        e.preventDefault();
+        pick(active);
+      }
+    } else if (e.key === "Escape") {
+      setOpen(false);
+    }
+  }
+
+  return (
+    <div ref={rootRef} className="relative">
+      <input
+        ref={inputRef}
+        value={value}
+        onChange={(e) => {
+          onChangeName(e.target.value);
+          setOpen(true);
+        }}
+        onFocus={() => setOpen(true)}
+        onKeyDown={onKeyDown}
+        placeholder={placeholder}
+        role="combobox"
+        aria-expanded={open}
+        aria-autocomplete="list"
+        className={cellCls}
+      />
+      {open && filtered.length > 0 && (
+        <ul
+          role="listbox"
+          className="absolute z-50 mt-1 max-h-64 w-64 max-w-[80vw] overflow-auto rounded-lg border border-border bg-card py-1 shadow-lg shadow-black/10"
+        >
+          {filtered.map((p, i) => (
+            <li key={p.id ?? p.name}>
+              <button
+                type="button"
+                role="option"
+                aria-selected={i === activeIndex}
+                onClick={() => pick(p)}
+                onMouseEnter={() => setActiveIndex(i)}
+                className={cn(
+                  "flex w-full items-center gap-2 px-2.5 py-1.5 text-left text-sm",
+                  i === activeIndex && "bg-muted",
+                )}
+              >
+                <span className="relative h-6 w-6 shrink-0 overflow-hidden rounded-full border border-border bg-muted">
+                  {p.photo ? (
+                    <Image src={p.photo} alt="" fill className="object-cover" sizes="24px" unoptimized />
+                  ) : (
+                    <span className="grid h-full w-full place-items-center text-muted-foreground">
+                      <User className="h-3.5 w-3.5" />
+                    </span>
+                  )}
+                </span>
+                <span className="min-w-0 flex-1 truncate text-foreground">{p.name}</span>
+                {p.role && <span className="shrink-0 truncate text-xs text-muted-foreground">{p.role}</span>}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 function ActorTableRow({
   id,
   row: r,
   t,
-  hasDatalist,
+  knownPeople,
   onName,
-  onRole,
+  onSelectPerson,
+  onRoles,
   onKind,
   onClearPhoto,
   onOpenPhoto,
@@ -240,9 +365,10 @@ function ActorTableRow({
   id: number;
   row: ActorRow;
   t: ReturnType<typeof makeUI>;
-  hasDatalist: boolean;
+  knownPeople: PersonSuggestion[];
   onName: (name: string) => void;
-  onRole: (role: string) => void;
+  onSelectPerson: (p: PersonSuggestion) => void;
+  onRoles: (roles: string[]) => void;
   onKind: (kind: string) => void;
   onClearPhoto: () => void;
   onOpenPhoto: () => void;
@@ -309,20 +435,24 @@ function ActorTableRow({
         )}
       </div>
 
-      <input
-        ref={nameInputRef}
-        value={r.name}
-        onChange={(e) => onName(e.target.value)}
-        list={hasDatalist ? "known-people-list" : undefined}
-        placeholder={t("projectForm.cast.name")}
-        className={`${cellCls} col-start-3 row-start-1`}
-      />
-      <input
-        value={r.role}
-        onChange={(e) => onRole(e.target.value)}
-        placeholder={t("projectForm.cast.role")}
-        className={`${cellCls} col-start-3 row-start-2 sm:col-start-4 sm:row-start-1`}
-      />
+      <div className="col-start-3 row-start-1">
+        <PersonNameField
+          value={r.name}
+          knownPeople={knownPeople}
+          onChangeName={onName}
+          onSelectPerson={onSelectPerson}
+          placeholder={t("projectForm.cast.name")}
+          inputRef={nameInputRef}
+        />
+      </div>
+      <div className="col-start-3 row-start-2 sm:col-start-4 sm:row-start-1">
+        <MultiSelect
+          options={ROLE_VALUES as unknown as string[]}
+          value={r.roles}
+          onChange={onRoles}
+          placeholder={t("projectForm.cast.role")}
+        />
+      </div>
       <select
         value={r.kind}
         onChange={(e) => onKind(e.target.value)}

@@ -170,6 +170,7 @@ model Project {
   cpmMaxAmd      Int?
   priceMinAmd    Int?
   priceMaxAmd    Int?
+  boxOfficeAmd   Int? // box-office gross (кассовый сбор) — informational only, optional; replaces budgetMin/Max in admin
   isActive       Boolean       @default(true)
   sortOrder      Int           @default(0)
   createdAt      DateTime      @default(now())
@@ -180,12 +181,15 @@ model Project {
   kind             ProjectKind      @default(FILM)
   episodes         Int? // episode count, for SERIAL
   episodeMinutes   Int? // per-episode runtime, for SERIAL
+  durationMinutes  Int? // total runtime for a Single (FILM); Series uses episodes × episodeMinutes
   genres           String?          @db.Text // JSON string[] multi-genre; nullable, same pattern as platforms/cinemas — `genre` above stays as the primary display value
   formatCategory   String           @default("") // marketing format bucket (FEATURE|SERIES|SITCOM|…), separate from `kind`; drives the catalog Format filter
   language         String           @default("") // primary language (Armenian|Russian|English|…); drives the catalog Language filter
 
   applicationDeadline DateTime?
   releaseDate         DateTime?
+  expectedReleaseDate DateTime? // planned release when not yet released (CSV "Expected Release Date")
+  streamingSource     String?   @db.Text // JSON/CSV multi (Kinodaran|YouTube|TV|Cinema) — Production Info
   platforms           String?   @db.Text // JSON string[]; nullable — MySQL forbids literal defaults on TEXT columns
   placementType       String? // "In-Frame" | "Story Integration" | "Mention"
   priceNote           String?
@@ -206,31 +210,67 @@ model Project {
   owner         User                   @relation(fields: [ownerId], references: [id])
   actors        Actor[]
   tiers         SponsorshipTier[]
+  milestones    ProductionMilestone[]
   interests     Interest[]
   favorites     Favorite[]
 
   @@index([ownerId])
 }
 
-/// A person attached to a project (cast or crew), shown in the pitch materials
-model Actor {
-  id        Int    @id @default(autoincrement())
+/// A single node on the per-project production timeline ("Փրոդուկցիայի ընթաց",
+/// Kinodaran-style), edited inline in the admin project form and rendered as a
+/// horizontal timeline on the report page. Free-text Armenian labels (no
+/// per-locale columns — user decision 2026-07-25); exactly one row per project
+/// should carry isActive=true (the current stage, highlighted). Order on the
+/// timeline is sortOrder asc.
+model ProductionMilestone {
+  id        Int       @id @default(autoincrement())
   projectId Int
-  name      String
-  role      String
-  kind      String @default("CAST") // CAST | CREW — press-kits often list crew, not cast
-  photo     String? // uploaded headshot path ("/uploads/…"); null -> initials avatar
-  sortOrder Int    @default(0)
+  label     String // stage name, e.g. "Պրեպրոդակշն"
+  date      DateTime? // optional stage date (picker)
+  note      String    @default("") // one free-text line, e.g. "Съёмки в Ереване"
+  isActive  Boolean   @default(false) // the current stage — highlighted on the timeline
+  sortOrder Int       @default(0)
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
 }
 
+/// A person attached to a project (cast or crew), shown in the pitch materials
+model Actor {
+  id        Int    @id @default(autoincrement())
+  projectId Int
+  personId  Int? // link to the global Person directory (Ф3); null for legacy rows until backfilled
+  name      String
+  role      String // legacy single role — kept as fallback; new code reads `roles`
+  roles     String? @db.Text // JSON string[] of roles (Ф3 multi-role): one person can be Actor+Producer+…
+  kind      String @default("CAST") // CAST | CREW — press-kits often list crew, not cast
+  photo     String? // uploaded headshot path ("/uploads/…"); null -> initials avatar
+  sortOrder Int    @default(0)
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  person  Person? @relation(fields: [personId], references: [id], onDelete: SetNull)
+
+  @@index([projectId])
+  @@index([personId])
+}
+
 // Global, reusable cast & crew directory (#9). Managed from a dedicated admin
 // section (/admin/cast); powers the per-project Cast & Crew autocomplete. The
 // per-project Actor rows above keep their own name/role/photo snapshot, so
 // editing/deleting a Person never mutates already-attached project cast.
+// Global, editable dictionary of streaming-source options (Production Info field).
+// Admin adds custom values in the project form; they persist here so every future
+// project offers them, and deleting one removes it from the pool for all projects
+// (user request 2026-07-25). Distinct from the free-text CSV stored per project on
+// Project.streamingSource — this is only the reusable option list.
+model StreamingSource {
+  id        Int    @id @default(autoincrement())
+  name      String @unique
+  sortOrder Int    @default(0)
+}
+
 model Person {
   id        Int      @id @default(autoincrement())
   name      String
@@ -239,6 +279,8 @@ model Person {
   photo     String? // "/uploads/…" headshot; null -> initials avatar
   sortOrder Int      @default(0)
   createdAt DateTime @default(now())
+
+  actors Actor[] // per-project credits linked to this person (Ф3)
 }
 
 /// A sponsorship package/tier for a project (the core monetization offer):
@@ -250,6 +292,9 @@ model SponsorshipTier {
   name      String // "Official Sponsor" | "General Sponsor" (+ per-locale later)
   priceAmd  Int // 20000000 / 30000000 / 40000000
   benefits  String  @db.Text // JSON string[] — the included-benefits bullet list
+  isExclusive Boolean @default(false) // shared (non-competing brands only) vs exclusive placement (CSV "Is Exclusive")
+  totalSlots     Int? // total capacity of this placement (the "Y" in "3 of 10" on catalog cards)
+  availableSlots Int? // still-open slots (CSV "Available Slots"); the "X" in "3 of 10"; null -> unspecified
   sortOrder Int     @default(0)
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)

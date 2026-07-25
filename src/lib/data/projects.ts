@@ -6,7 +6,7 @@ import type { Locale } from "@/lib/i18n";
 import { formatMoney, formatMoneyRange } from "@/lib/currency";
 import { getRates } from "@/lib/currency/rates";
 import type { CurrencyCode } from "@/lib/currency";
-import { deriveFormatCategory } from "@/app/admin/(panel)/projects/form-shared";
+import { deriveFormatCategory, parseRolesInput } from "@/app/admin/(panel)/projects/form-shared";
 
 /** locale → en → base fallback chain for a per-locale content field. Returns
    the first non-empty candidate in that order. */
@@ -129,6 +129,7 @@ const getProjectsCached = unstable_cache(
     const rows = await prisma.project.findMany({
     where: activeOnly ? { isActive: true, moderationStatus: "APPROVED" } : undefined,
     orderBy: { sortOrder: "asc" },
+    include: { tiers: { select: { availableSlots: true, totalSlots: true } } },
   });
   const rates = await getRates();
   return rows.map((p) => ({
@@ -160,6 +161,8 @@ const getProjectsCached = unstable_cache(
       p.priceMinAmd != null && p.priceMaxAmd != null
         ? formatMoneyRange(p.priceMinAmd, p.priceMaxAmd, currency, rates, locale)
         : null,
+    slotsAvailable: p.tiers.reduce((sum, tier) => sum + (tier.availableSlots ?? 0), 0),
+    slotsTotal: p.tiers.reduce((sum, tier) => sum + (tier.totalSlots ?? 0), 0),
   }));
   },
   ["projects-list"],
@@ -186,6 +189,7 @@ const getProjectCached = unstable_cache(
     include: {
       actors: { orderBy: { sortOrder: "asc" } },
       tiers: { orderBy: { sortOrder: "asc" } },
+      milestones: { orderBy: { sortOrder: "asc" } },
     },
   });
   if (!p) return null;
@@ -222,7 +226,14 @@ const getProjectCached = unstable_cache(
       p.priceMinAmd != null && p.priceMaxAmd != null
         ? formatMoneyRange(p.priceMinAmd, p.priceMaxAmd, currency, rates, locale)
         : null,
-    actors: p.actors.map((a) => ({ id: a.id, name: a.name, role: a.role, kind: a.kind, photo: a.photo ?? "" })),
+    actors: p.actors.map((a) => ({
+      id: a.id,
+      name: a.name,
+      role: a.role,
+      roles: parseRolesInput(a.roles, a.role),
+      kind: a.kind,
+      photo: a.photo ?? "",
+    })),
     tagline: pickLocale(locale, { hy: p.taglineHy, ru: p.taglineRu, en: p.taglineEn }, p.tagline ?? ""),
     subgenre: p.subgenre ?? "",
     references: splitCommaList(p.references),
@@ -232,6 +243,18 @@ const getProjectCached = unstable_cache(
       name: tier.name,
       priceDisplay: formatMoney(tier.priceAmd, currency, rates, locale),
       benefits: parseJsonList(tier.benefits),
+      isExclusive: tier.isExclusive,
+      availableSlots: tier.availableSlots,
+      totalSlots: tier.totalSlots,
+    })),
+    slotsAvailable: p.tiers.reduce((sum, tier) => sum + (tier.availableSlots ?? 0), 0),
+    slotsTotal: p.tiers.reduce((sum, tier) => sum + (tier.totalSlots ?? 0), 0),
+    milestones: p.milestones.map((m) => ({
+      id: m.id,
+      label: m.label,
+      date: m.date?.toISOString() ?? null,
+      note: m.note,
+      isActive: m.isActive,
     })),
     videoEmbedUrl: p.videoEmbedUrl ?? "",
     videoFile: p.videoFile ?? "",

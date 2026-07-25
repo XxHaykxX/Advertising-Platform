@@ -5,16 +5,22 @@ import Link from "next/link";
 import { Languages, Loader2, RotateCcw, Sparkles, X } from "lucide-react";
 import {
   AGE_RATING_VALUES,
-  FORMAT_CATEGORY_VALUES,
   KIND_VALUES,
   LANGUAGE_VALUES,
   PLACEMENT_TYPE_VALUES,
   parseCsvInput,
+  parseReferencesInput,
+  parseMilestonesInput,
+  type ReferenceRow,
+  type MilestoneRow,
 } from "./form-shared";
+import { deleteStreamingSource } from "@/lib/actions/streaming-sources";
 import { ImageUploader, type ImageUploaderHandle } from "./image-uploader";
 import { ActorsSection, type ActorRow } from "./actors-editor";
 import type { PersonSuggestion } from "@/lib/data/actors";
 import { TiersSection, type TierRow } from "./tiers-editor";
+import { ReferencesSection } from "./references-editor";
+import { MilestonesSection } from "./milestones-editor";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { MediaField } from "@/components/media-field";
 import { PosterGenerator, type PosterGenerateInput, type PosterGenerateResult } from "@/components/poster-generator";
@@ -41,9 +47,13 @@ const CONTROLLED_NAMES = new Set([
   "countries",
   "platforms",
   "cinemas",
+  "language",
   "kind",
+  "streamingSource",
   "actorsRows",
   "tiersRows",
+  "references",
+  "milestonesRows",
   "poster",
   "gallery",
   // videoFile mirrors through MediaField's own hidden input + React state, so
@@ -74,6 +84,7 @@ const EMPTY: ProjectFormInitial = {
   kind: "FILM",
   episodes: null,
   episodeMinutes: null,
+  durationMinutes: null,
   status: "PRE_PRODUCTION",
   releaseLabel: "",
   countries: "",
@@ -87,11 +98,14 @@ const EMPTY: ProjectFormInitial = {
   cpmMaxAmd: null,
   priceMinAmd: null,
   priceMaxAmd: null,
+  boxOfficeAmd: null,
   isActive: true,
   sortOrder: 0,
   applicationDeadline: "",
   releaseDate: "",
+  expectedReleaseDate: "",
   platforms: "",
+  streamingSource: "",
   placementType: "",
   priceNote: "",
   tagline: "",
@@ -108,8 +122,6 @@ const EMPTY: ProjectFormInitial = {
 // Labels come from t("projectForm.status.*") at render time (admin's t is
 // pinned to "en", matching the strings this list used to hardcode).
 const STATUS_OPTIONS = ["PRE_PRODUCTION", "FILMING", "POST_PRODUCTION", "RELEASED"] as const;
-
-const GENDER_OPTIONS = ["All", "Male", "Female"] as const;
 
 // #11 About block: the three locale tabs.
 const ABOUT_LANGS = ["hy", "ru", "en"] as const;
@@ -149,8 +161,10 @@ export function ProjectForm({
   initial,
   initialActors = [],
   initialTiers = [],
+  initialMilestones = [],
   submitLabel,
   studios = [],
+  streamingSources = [],
   knownPeople = [],
   projectId,
   ownerHasAvatar = false,
@@ -166,10 +180,17 @@ export function ProjectForm({
   initialActors?: ActorRow[];
   /** Sponsorship tier rows (#20²) — same story as initialActors. */
   initialTiers?: TierRow[];
+  /** Production-timeline milestone rows (Ф4/#27) — admin-only section; same
+   *  hidden-JSON-mirror pattern. Empty on create. */
+  initialMilestones?: MilestoneRow[];
   submitLabel: string;
   /** Distinct studio names already used elsewhere — powers a <datalist>
    *  autocomplete on the Studio field. */
   studios?: string[];
+  /** Global Streaming Source dictionary (Ф2/#25) — powers the Streaming
+   *  Source MultiSelect's option list; custom additions persist here for
+   *  future projects (see addStreamingSources in actions.ts). */
+  streamingSources?: string[];
   /** People previously entered as cast/crew on any project (#11) — powers
    *  the Cast & Crew name autocomplete/autofill. */
   knownPeople?: PersonSuggestion[];
@@ -264,9 +285,21 @@ export function ProjectForm({
   const [countries, setCountries] = useState<string[]>(() => parseCsvInput(data.countries));
   const [platforms, setPlatforms] = useState<string[]>(() => parseCsvInput(data.platforms));
   const [cinemas, setCinemas] = useState<string[]>(() => parseCsvInput(data.cinemas));
+  const [languages, setLanguages] = useState<string[]>(() => parseCsvInput(data.language));
+  const [streamingSource, setStreamingSource] = useState<string[]>(() => parseCsvInput(data.streamingSource));
+  // Global Streaming Source dictionary (Ф2/#25) — seeded from the server, then
+  // kept in sync client-side as options are deleted via the dropdown's "×".
+  const [streamOptions, setStreamOptions] = useState<string[]>(() => streamingSources);
+  const [, startStreamOptionTransition] = useTransition();
   // ── Cast/crew + sponsorship tiers, inline (#20²) ──
   const [actors, setActors] = useState<ActorRow[]>(() => initialActors);
   const [tiers, setTiers] = useState<TierRow[]>(() => initialTiers);
+  // ── Reference Projects (Ф2): repeatable {name,url} rows, same "ride along
+  // as a hidden JSON input" pattern as actors/tiers above. ──
+  const [references, setReferences] = useState<ReferenceRow[]>(() => parseReferencesInput(data.references));
+  // ── Production Timeline (Ф4/#27): admin-only repeatable milestones, seeded
+  // from the server (create = empty). Same hidden-JSON-mirror pattern. ──
+  const [milestones, setMilestones] = useState<MilestoneRow[]>(() => initialMilestones);
   // Poster generator open state is lifted so its panel can render full-width
   // below the grid while the trigger stays compact in the Poster field.
   const [posterOpen, setPosterOpen] = useState(false);
@@ -387,7 +420,7 @@ export function ProjectForm({
     if (isEdit) return;
     scheduleSaveDraft();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [genres, kind, countries, platforms, cinemas, actors, tiers]);
+  }, [genres, kind, countries, platforms, cinemas, languages, streamingSource, actors, tiers, references, milestones]);
 
   // After a restore bumps restoreNonce, the form has re-rendered with the new
   // controlled state (and any conditional SERIAL fields now exist), so replay
@@ -434,8 +467,12 @@ export function ProjectForm({
     setCountries(parseArr(obj.countries));
     setPlatforms(parseArr(obj.platforms));
     setCinemas(parseArr(obj.cinemas));
+    setLanguages(parseArr(obj.language));
+    setStreamingSource(parseArr(obj.streamingSource));
     setActors(parseArr(obj.actorsRows) as unknown as ActorRow[]);
     setTiers(parseArr(obj.tiersRows) as unknown as TierRow[]);
+    setReferences(parseArr(obj.references) as unknown as ReferenceRow[]);
+    setMilestones(parseArr(obj.milestonesRows) as unknown as MilestoneRow[]);
     // Image uploaders remount with the restored paths.
     setPosterInitial(obj.poster ?? "");
     setGalleryInitial(obj.gallery ?? "");
@@ -522,6 +559,36 @@ export function ProjectForm({
           the main form and parsed by create/updateProject (#20²). */}
       <input type="hidden" name="actorsRows" value={JSON.stringify(actors)} />
       <input type="hidden" name="tiersRows" value={JSON.stringify(tiers)} />
+      {/* Reference Projects (Ф2): a repeatable {name,url} list, same "hidden
+          JSON mirror" pattern as actorsRows/tiersRows above. */}
+      <input type="hidden" name="references" value={JSON.stringify(references)} />
+      {/* Production Timeline (Ф4/#27) — admin-only, so only mirrored in admin
+          mode; the creator action never reads/writes milestones. */}
+      {mode !== "creator" && (
+        <input type="hidden" name="milestonesRows" value={JSON.stringify(milestones)} />
+      )}
+
+      {/* Admin redesign phase 1: these fields were dropped from the UI but the
+          server action still reads them via formData.get() on every save — an
+          absent field would silently blank out existing data on edit. Carried
+          as hidden inputs so a save round-trips whatever value the row already
+          has instead of clearing it. formatCategory is still derived
+          server-side (deriveFormatCategory, used by the public catalog Format
+          filter) even though its own dropdown is gone. budgetMinAmd/
+          budgetMaxAmd/cpmMinAmd/cpmMaxAmd (Ф2) were also missing from this
+          list — the catalog's Budget filter/sort and the report page's CPM
+          display both read them, so every edit-save was silently zeroing
+          them out; carried here the same way instead. */}
+      <input type="hidden" name="formatCategory" defaultValue={data.formatCategory} />
+      <input type="hidden" name="priceMinAmd" defaultValue={numOrEmpty(data.priceMinAmd)} />
+      <input type="hidden" name="priceMaxAmd" defaultValue={numOrEmpty(data.priceMaxAmd)} />
+      <input type="hidden" name="priceNote" defaultValue={data.priceNote} />
+      <input type="hidden" name="audienceGender" defaultValue={data.audienceGender} />
+      <input type="hidden" name="audienceAge" defaultValue={data.audienceAge} />
+      <input type="hidden" name="budgetMinAmd" defaultValue={numOrEmpty(data.budgetMinAmd)} />
+      <input type="hidden" name="budgetMaxAmd" defaultValue={numOrEmpty(data.budgetMaxAmd)} />
+      <input type="hidden" name="cpmMinAmd" defaultValue={numOrEmpty(data.cpmMinAmd)} />
+      <input type="hidden" name="cpmMaxAmd" defaultValue={numOrEmpty(data.cpmMaxAmd)} />
 
       {/* ── Sticky Save bar ── pinned so Submit/dirty-state is reachable
           without scrolling to the bottom of a long form. Duplicates the
@@ -585,11 +652,10 @@ export function ProjectForm({
         </div>
       )}
 
-      {/* ── Two-column layout ── ONE <form> wraps both columns; pure CSS grid.
-          Main column = content (About, media, cast & crew, tiers); the narrow
-          right sidebar = meta (classification, status, placement, audience,
-          visibility). Below lg the sidebar stacks under the main column.
-          (The section rail was removed — redundant per user, 2026-07-24.) */}
+      {/* ── Two-column layout ── content column + a 320px meta sidebar,
+          sections split: main column carries About → Design → Cast & crew →
+          Placement(s) → Reference Projects; sidebar carries General →
+          Production Info → Visibility. */}
       <div className="items-start gap-4 space-y-4 lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:space-y-0">
         {/* ══ Main column ══ */}
         <div className="min-w-0 space-y-4">
@@ -685,10 +751,10 @@ export function ProjectForm({
             })}
           </section>
 
-          {/* ── Press-kit: poster, gallery & video ── the project's media all
-              lives here in the main column. Tagline / logline moved into the
-              About block above (per-locale hy/ru/en); cinemas moved to the
-              Placement card in the meta sidebar. */}
+          {/* ── Design (was "Press-kit"): poster, gallery & video ── the
+              project's media all lives here. Tagline / logline is in the About
+              block above (per-locale hy/ru/en); Comparable titles moved to its
+              own Reference Projects section at the end of the form. */}
           <section id="sec-media" className="scroll-mt-24 space-y-3 rounded-xl border border-border bg-card p-4">
             <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">
               {t("projectForm.section.pressKit")}
@@ -771,14 +837,6 @@ export function ProjectForm({
                 scope={uploaderScope}
               />
             </Field>
-            <Field label={t("projectForm.field.references")}>
-              <input
-                name="references"
-                defaultValue={data.references}
-                placeholder={t("projectForm.referencesPlaceholder")}
-                className={inputCls}
-              />
-            </Field>
           </section>
 
           {/* ── Cast & crew (inline, #20²) ── */}
@@ -787,19 +845,36 @@ export function ProjectForm({
             <ActorsSection value={actors} onChange={setActors} knownPeople={knownPeople} t={t} scope={uploaderScope} />
           </section>
 
-          {/* ── Sponsorship tiers (inline, #20²) ── */}
+          {/* ── Placement(s) (was "Sponsorship tiers") ── */}
           <section id="sec-tiers" className="scroll-mt-24 space-y-3 rounded-xl border border-border bg-card p-4">
             <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">{t("projectForm.section.sponsorshipTiers")}</h2>
             <TiersSection value={tiers} onChange={setTiers} t={t} />
           </section>
-        </div>
 
-        {/* ══ Meta sidebar ══ narrow column of "settings-ish" fields; fields
-            stack single-column (320px wide on lg+). Deliberately NOT sticky:
-            it is taller than a viewport, and clipping it into its own scroll
-            area would cut off the MultiSelect dropdowns inside. */}
+          {/* ── Reference Projects (was the "Comparable titles" field inside
+              Design) ── a repeatable {name, url} list (Ф2), mirrored into the
+              hidden `references` input at the top of the form. */}
+          <section id="sec-references" className="scroll-mt-24 space-y-3 rounded-xl border border-border bg-card p-4">
+            <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">{t("projectForm.section.references")}</h2>
+            <ReferencesSection value={references} onChange={setReferences} t={t} />
+          </section>
+
+          {/* ── Production Timeline (Ф4/#27) ── admin-only: a repeatable list of
+              production stages rendered as a horizontal timeline on the report
+              page. Hidden for the creator form (mode="creator"). */}
+          {mode !== "creator" && (
+            <section id="sec-milestones" className="scroll-mt-24 space-y-3 rounded-xl border border-border bg-card p-4">
+              <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">{t("projectForm.section.milestones")}</h2>
+              <MilestonesSection value={milestones} onChange={setMilestones} t={t} />
+            </section>
+          )}
+        </div>
+        {/* ══ Meta sidebar ══ */}
         <div className="min-w-0 space-y-4">
-          {/* ── General ── classification meta (code, kind, genre, format…). */}
+          {/* ── General ── classification meta: Format (was "Kind"), the
+              episodes/episode-length block (Series only, right after Format),
+              Genre, Language, Studio, Countries and Age rating — the latter two
+              folded in here from the old Status&release / Audience&value cards. */}
           <section id="sec-general" className="scroll-mt-24 space-y-3 rounded-xl border border-border bg-card p-4">
             <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">{t("projectForm.section.general")}</h2>
             {/* Project code is auto-generated and intentionally never shown (#2 —
@@ -824,37 +899,6 @@ export function ProjectForm({
                 ))}
               </div>
             </Field>
-            <Field label={t("projectForm.field.genre")}>
-              <MultiSelect
-                options={GENRES}
-                value={genres}
-                onChange={setGenres}
-                name="genres"
-                placeholder={t("projectForm.genresPlaceholder")}
-                addLabel={t("ui.addOption")}
-                removeLabel={t("ui.remove")}
-              />
-            </Field>
-            <Field label={t("projectForm.field.formatCategory")}>
-              <select name="formatCategory" defaultValue={data.formatCategory} className={inputCls}>
-                <option value="">—</option>
-                {FORMAT_CATEGORY_VALUES.map((v) => (
-                  <option key={v} value={v}>
-                    {t(`formatCategory.${v}`)}
-                  </option>
-                ))}
-              </select>
-            </Field>
-            <Field label={t("projectForm.field.language")}>
-              <select name="language" defaultValue={data.language} className={inputCls}>
-                <option value="">—</option>
-                {LANGUAGE_VALUES.map((v) => (
-                  <option key={v} value={v}>
-                    {t(`language.${v}`)}
-                  </option>
-                ))}
-              </select>
-            </Field>
             {kind === "SERIAL" ? (
               <div className="grid grid-cols-2 gap-3">
                 <Field label={t("projectForm.field.episodes")}>
@@ -878,7 +922,40 @@ export function ProjectForm({
                   />
                 </Field>
               </div>
-            ) : null}
+            ) : (
+              <Field label={t("projectForm.field.durationMinutes")}>
+                <input
+                  name="durationMinutes"
+                  type="number"
+                  min={0}
+                  defaultValue={numOrEmpty(data.durationMinutes)}
+                  placeholder="95"
+                  className={inputCls}
+                />
+              </Field>
+            )}
+            <Field label={t("projectForm.field.genre")}>
+              <MultiSelect
+                options={GENRES}
+                value={genres}
+                onChange={setGenres}
+                name="genres"
+                placeholder={t("projectForm.genresPlaceholder")}
+                addLabel={t("ui.addOption")}
+                removeLabel={t("ui.remove")}
+              />
+            </Field>
+            <Field label={t("projectForm.field.language")}>
+              <MultiSelect
+                options={LANGUAGE_VALUES.map((v) => ({ value: v, label: t(`language.${v}`) }))}
+                value={languages}
+                onChange={setLanguages}
+                name="language"
+                placeholder={t("projectForm.languagePlaceholder")}
+                addLabel={t("ui.addOption")}
+                removeLabel={t("ui.remove")}
+              />
+            </Field>
             <Field label={t("projectForm.field.studio")}>
               <input name="studio" defaultValue={data.studio} list="studio-list" placeholder={t("projectForm.studioPlaceholder")} className={inputCls} />
               <datalist id="studio-list">
@@ -887,19 +964,14 @@ export function ProjectForm({
                 ))}
               </datalist>
             </Field>
-          </section>
-
-          {/* ── Status & release ── */}
-          <section id="sec-status" className="scroll-mt-24 space-y-3 rounded-xl border border-border bg-card p-4">
-            <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">{t("projectForm.section.statusRelease")}</h2>
-            <Field label={t("projectForm.field.status")}>
-              <select name="status" defaultValue={data.status} className={inputCls}>
-                {STATUS_OPTIONS.map((o) => (
-                  <option key={o} value={o}>
-                    {t(`projectForm.status.${o}`)}
-                  </option>
-                ))}
-              </select>
+            <Field label={t("projectForm.field.boxOffice")}>
+              <input
+                name="boxOfficeAmd"
+                type="number"
+                min={0}
+                defaultValue={numOrEmpty(data.boxOfficeAmd)}
+                className={inputCls}
+              />
             </Field>
             <Field label={t("projectForm.field.countries")}>
               <MultiSelect
@@ -913,11 +985,45 @@ export function ProjectForm({
                 removeLabel={t("ui.remove")}
               />
             </Field>
+            <Field label={t("projectForm.field.ageRating")}>
+              <select name="ageRating" defaultValue={data.ageRating} className={inputCls}>
+                {AGE_RATING_VALUES.map((r) => (
+                  <option key={r} value={r}>
+                    {r || "—"}
+                  </option>
+                ))}
+              </select>
+            </Field>
           </section>
 
-          {/* ── Placement ── */}
-          <section id="sec-placement" className="scroll-mt-24 space-y-3 rounded-xl border border-border bg-card p-4">
-            <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">{t("projectForm.section.placement")}</h2>
+          {/* ── Production Info ── project status/timeline + where it plays:
+              Status, Release date, Application deadline, Platforms, Cinemas,
+              Placement type. Price note/min/max and audience gender/age used to
+              live here (or in Audience & value) — they're hidden inputs now
+              (see the top of the form) so a save keeps whatever value the row
+              already has instead of blanking it. */}
+          <section id="sec-production" className="scroll-mt-24 space-y-3 rounded-xl border border-border bg-card p-4">
+            <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">{t("projectForm.section.production")}</h2>
+            <Field label={t("projectForm.field.status")}>
+              <select name="status" defaultValue={data.status} className={inputCls}>
+                {STATUS_OPTIONS.map((o) => (
+                  <option key={o} value={o}>
+                    {t(`projectForm.status.${o}`)}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label={t("projectForm.field.releaseDate")}>
+              <input name="releaseDate" type="date" defaultValue={data.releaseDate} className={inputCls} />
+            </Field>
+            <Field label={t("projectForm.field.expectedReleaseDate")}>
+              <input
+                name="expectedReleaseDate"
+                type="date"
+                defaultValue={data.expectedReleaseDate}
+                className={inputCls}
+              />
+            </Field>
             <Field label={t("projectForm.field.applicationDeadline")}>
               <input
                 name="applicationDeadline"
@@ -925,9 +1031,6 @@ export function ProjectForm({
                 defaultValue={data.applicationDeadline}
                 className={inputCls}
               />
-            </Field>
-            <Field label={t("projectForm.field.releaseDate")}>
-              <input name="releaseDate" type="date" defaultValue={data.releaseDate} className={inputCls} />
             </Field>
             <Field label={t("projectForm.field.platforms")}>
               <MultiSelect
@@ -941,15 +1044,31 @@ export function ProjectForm({
                 removeLabel={t("ui.remove")}
               />
             </Field>
-            <Field label={t("projectForm.field.placementType")}>
-              <select name="placementType" defaultValue={data.placementType} className={inputCls}>
-                <option value="">—</option>
-                {PLACEMENT_TYPE_VALUES.map((pt) => (
-                  <option key={pt} value={pt}>
-                    {t(`placement.${pt}`)}
-                  </option>
-                ))}
-              </select>
+            <Field label={t("projectForm.field.streamingSource")}>
+              <MultiSelect
+                options={streamOptions}
+                value={streamingSource}
+                onChange={setStreamingSource}
+                name="streamingSource"
+                allowCustom
+                placeholder={t("projectForm.streamingSourcePlaceholder")}
+                addLabel={t("ui.addOption")}
+                removeLabel={t("ui.remove")}
+                // Deleting a dictionary value is global (every project loses it
+                // as an option) and staff-only — never offered in creator mode.
+                onDeleteOption={
+                  mode === "creator"
+                    ? undefined
+                    : (v) => {
+                        if (!window.confirm(`Delete “${v}” from Streaming Source for all projects?`)) return;
+                        startStreamOptionTransition(async () => {
+                          await deleteStreamingSource(v);
+                          setStreamOptions((opts) => opts.filter((x) => x !== v));
+                          setStreamingSource((sel) => sel.filter((x) => x !== v));
+                        });
+                      }
+                }
+              />
             </Field>
             <Field label={t("projectForm.field.cinemas")}>
               <MultiSelect
@@ -963,59 +1082,12 @@ export function ProjectForm({
                 removeLabel={t("ui.remove")}
               />
             </Field>
-            <Field label={t("projectForm.field.priceNote")}>
-              <input
-                name="priceNote"
-                defaultValue={data.priceNote}
-                placeholder={t("projectForm.priceNotePlaceholder")}
-                className={inputCls}
-              />
-            </Field>
-            <div className="grid grid-cols-2 gap-3">
-              <Field label={t("projectForm.field.priceMin")}>
-                <input
-                  name="priceMinAmd"
-                  type="number"
-                  min={0}
-                  defaultValue={numOrEmpty(data.priceMinAmd)}
-                  placeholder="500000"
-                  className={inputCls}
-                />
-              </Field>
-              <Field label={t("projectForm.field.priceMax")}>
-                <input
-                  name="priceMaxAmd"
-                  type="number"
-                  min={0}
-                  defaultValue={numOrEmpty(data.priceMaxAmd)}
-                  placeholder="2000000"
-                  className={inputCls}
-                />
-              </Field>
-            </div>
-            <p className="text-xs text-muted-foreground">{t("projectForm.priceHint")}</p>
-          </section>
-
-          {/* ── Audience & value ── */}
-          <section id="sec-audience" className="scroll-mt-24 space-y-3 rounded-xl border border-border bg-card p-4">
-            <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">{t("projectForm.section.audienceValue")}</h2>
-            <Field label={t("projectForm.field.audienceGender")}>
-              <select name="audienceGender" defaultValue={data.audienceGender} className={inputCls}>
-                {GENDER_OPTIONS.map((g) => (
-                  <option key={g} value={g}>
-                    {t(`gender.${g}`)}
-                  </option>
-                ))}
-              </select>
-            </Field>
-            <Field label={t("projectForm.field.audienceAge")}>
-              <input name="audienceAge" defaultValue={data.audienceAge} placeholder={t("projectForm.audienceAgePlaceholder")} className={inputCls} />
-            </Field>
-            <Field label={t("projectForm.field.ageRating")}>
-              <select name="ageRating" defaultValue={data.ageRating} className={inputCls}>
-                {AGE_RATING_VALUES.map((r) => (
-                  <option key={r} value={r}>
-                    {r || "—"}
+            <Field label={t("projectForm.field.placementType")}>
+              <select name="placementType" defaultValue={data.placementType} className={inputCls}>
+                <option value="">—</option>
+                {PLACEMENT_TYPE_VALUES.map((pt) => (
+                  <option key={pt} value={pt}>
+                    {t(`placement.${pt}`)}
                   </option>
                 ))}
               </select>

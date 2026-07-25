@@ -2,6 +2,7 @@ import { DollarSign, Wallet, Eye } from "lucide-react";
 import { Reveal } from "@/components/ui/reveal";
 import { BackButton, PrintButton, ShareButton } from "@/components/report/report-actions";
 import { PosterSlider } from "@/components/report/poster-slider";
+import { toEmbedUrl } from "@/components/report/report-video";
 import { StoryboardMarquee } from "@/components/report/storyboard-marquee";
 import { SynopsisDisclosure } from "@/components/report/synopsis-disclosure";
 import { formatCompactNumber, parseStringArray, splitCountries } from "@/lib/data/format";
@@ -24,6 +25,12 @@ export function ReportHero({
   const sliderImages = Array.from(
     new Set([project.poster, ...parseStringArray(project.gallery)].filter(Boolean)),
   );
+  // Video (uploaded file or YouTube/Vimeo link) leads the slider when present —
+  // shown as the FIRST slide, before the poster (user request 2026-07-25). Embed
+  // wins over the uploaded file, same priority as the old standalone video block.
+  const videoEmbed = project.videoEmbedUrl ? toEmbedUrl(project.videoEmbedUrl) : null;
+  const videoSource =
+    videoEmbed || project.videoFile ? { embed: videoEmbed, file: project.videoFile || null } : undefined;
 
   const audience = [localizeValue(locale, "gender", project.audienceGender), project.audienceAge]
     .filter(Boolean)
@@ -77,6 +84,7 @@ export function ReportHero({
                 alt={project.title}
                 prevLabel={t("report.prev")}
                 nextLabel={t("report.next")}
+                video={videoSource}
               />
               <span className="absolute bottom-3 left-3 inline-flex items-center rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground shadow-sm">
                 {statusLabel}

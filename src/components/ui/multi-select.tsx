@@ -23,6 +23,11 @@ interface MultiSelectProps {
    *  (localized by callers via `t("ui.addOption")`/`t("ui.remove")`). */
   addLabel?: string;
   removeLabel?: string;
+  /** When set, renders a small "×" button next to each option in the dropdown
+   *  list (not the selected chips) that deletes it from the caller's backing
+   *  store (e.g. a global dictionary) instead of merely selecting it. Absent
+   *  by default, which keeps every other MultiSelect unchanged. */
+  onDeleteOption?: (value: string) => void;
 }
 
 function normalizeOptions(options: string[] | MultiSelectOption[]): MultiSelectOption[] {
@@ -42,6 +47,7 @@ export function MultiSelect({
   className,
   addLabel = "Add",
   removeLabel = "Remove",
+  onDeleteOption,
 }: MultiSelectProps) {
   const normalized = useMemo(() => normalizeOptions(options), [options]);
   const [open, setOpen] = useState(false);
@@ -188,7 +194,7 @@ export function MultiSelect({
           {filtered.map((o, i) => {
             const selected = value.includes(o.value);
             return (
-              <li key={o.value}>
+              <li key={o.value} className="flex items-center">
                 <button
                   type="button"
                   role="option"
@@ -200,7 +206,7 @@ export function MultiSelect({
                   }}
                   onMouseEnter={() => setActiveIndex(i)}
                   className={cn(
-                    "flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm transition-colors",
+                    "flex flex-1 items-center justify-between gap-3 px-3 py-2 text-left text-sm transition-colors",
                     i === activeIndex && "bg-muted",
                     selected ? "font-semibold text-primary" : "text-foreground"
                   )}
@@ -208,6 +214,19 @@ export function MultiSelect({
                   {o.label}
                   {selected && <Check className="h-4 w-4 shrink-0" />}
                 </button>
+                {onDeleteOption && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteOption(o.value);
+                    }}
+                    aria-label={`${removeLabel} ${o.label}`}
+                    className="mr-2 shrink-0 rounded-full p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-primary"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
               </li>
             );
           })}

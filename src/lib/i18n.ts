@@ -381,6 +381,7 @@ export const UI: Record<string, Dict> = {
   "card.projectedViews": { ru: "прогноз. просмотров", en: "projected views", hy: "կանխատեսվող դիտում" },
   "card.release": { ru: "Выход", en: "Release", hy: "Թողարկում" },
   "card.applicationsUntil": { ru: "Заявки до", en: "Applications until", hy: "Հայտեր՝ մինչև" },
+  "card.slotsAvailable": { ru: "мест доступно", en: "placements available", hy: "հասանելի տեղ" },
 
   // ── forms (shared) ──────────────────────────
   "form.name": { ru: "Имя", en: "Name", hy: "Անուն" },
@@ -733,6 +734,8 @@ export const UI: Record<string, Dict> = {
     en: "Choose a sponsorship level for the project",
     hy: "Ընտրեք նախագծի հովանավորության մակարդակ",
   },
+  "report.slotsAvailable": { ru: "мест доступно", en: "slots available", hy: "հասանելի տեղ" },
+  "report.exclusive": { ru: "Эксклюзив", en: "Exclusive", hy: "Բացառիկ" },
   "report.budgetRange": { ru: "Диапазон бюджета", en: "Budget Range", hy: "Բյուջեի միջակայք" },
   "report.status.PRE_PRODUCTION": { ru: "Пре-продакшен", en: "Pre-Production", hy: "Նախապատրաստական փուլ" },
   "report.status.FILMING": { ru: "Съёмки", en: "Filming", hy: "Նկարահանում" },
@@ -1188,10 +1191,20 @@ export const UI: Record<string, Dict> = {
   "projectForm.section.statusRelease": { ru: "Статус и релиз", en: "Status & release", hy: "Կարգավիճակ և թողարկում" },
   "projectForm.section.placement": { ru: "Размещение", en: "Placement", hy: "Տեղադրում" },
   "projectForm.section.audienceValue": { ru: "Аудитория и ценность", en: "Audience & value", hy: "Լսարան և արժեք" },
-  "projectForm.section.pressKit": { ru: "Пресс-кит", en: "Press-kit details", hy: "Մամուլի կիտի մանրամասներ" },
+  // Admin redesign phase 1: renamed from "Press-kit details" — this section
+  // is now just poster/gallery/video (Comparable titles moved out to its own
+  // "Reference Projects" section).
+  "projectForm.section.pressKit": { ru: "Дизайн", en: "Design", hy: "Դիզայն" },
   "projectForm.section.castCrew": { ru: "Актёры и съёмочная группа", en: "Cast & crew", hy: "Դերասաններ և թիմ" },
-  "projectForm.section.sponsorshipTiers": { ru: "Уровни спонсорства", en: "Sponsorship tiers", hy: "Հովանավորության մակարդակներ" },
+  // Renamed from "Sponsorship tiers" — same editor, new label (phase 1).
+  "projectForm.section.sponsorshipTiers": { ru: "Размещение(я)", en: "Placement(s)", hy: "Տեղադրում(ներ)" },
   "projectForm.section.visibility": { ru: "Видимость", en: "Visibility", hy: "Տեսանելիություն" },
+  // New sections (admin redesign phase 1): Production Info holds
+  // status/timeline/where-it-plays fields moved out of the old Status&release
+  // and Placement cards; Reference Projects is the "Comparable titles" field,
+  // pulled out of Design into its own section.
+  "projectForm.section.production": { ru: "Производство", en: "Production Info", hy: "Արտադրություն" },
+  "projectForm.section.references": { ru: "Похожие проекты", en: "Reference Projects", hy: "Նմանատիպ նախագծեր" },
   "projectForm.field.code": { ru: "Код", en: "Code", hy: "Կոդ" },
   "projectForm.generatedAutomatically": { ru: "Генерируется автоматически", en: "Generated automatically", hy: "Ստեղծվում է ինքնաշխատ" },
   "projectForm.field.genre": { ru: "Жанр *", en: "Genre *", hy: "Ժանր *" },
@@ -1205,13 +1218,23 @@ export const UI: Record<string, Dict> = {
     hy: "Պատկերասրահ (կադրեր, ցուցադրվում է մինչև 5-ը)",
   },
   "projectForm.uploadGalleryImages": { ru: "Загрузить изображения галереи", en: "Upload gallery images", hy: "Վերբեռնել պատկերասրահի նկարները" },
-  "projectForm.field.kind": { ru: "Тип", en: "Kind", hy: "Տեսակ" },
+  // Renamed from "Kind" (admin redesign phase 1) — the Format Category
+  // dropdown that used to own this label was removed, so "Format" is free.
+  "projectForm.field.kind": { ru: "Формат", en: "Format", hy: "Ձևաչափ" },
   "projectForm.field.formatCategory": { ru: "Формат", en: "Format", hy: "Ձևաչափ" },
   "projectForm.field.language": { ru: "Язык", en: "Language", hy: "Լեզու" },
-  "projectForm.kindFilm": { ru: "Фильм", en: "Film", hy: "Ֆիլմ" },
-  "projectForm.kindSerial": { ru: "Сериал", en: "Serial", hy: "Սերիալ" },
+  "projectForm.languagePlaceholder": { ru: "Выберите языки…", en: "Select languages…", hy: "Ընտրեք լեզուները…" },
+  "projectForm.kindFilm": { ru: "Одиночный", en: "Single", hy: "Առանձին" },
+  "projectForm.kindSerial": { ru: "Сериал", en: "Series", hy: "Շարք" },
   "projectForm.field.episodes": { ru: "Кол-во серий", en: "Episodes", hy: "Սերիաների քանակ" },
   "projectForm.field.episodeMinutes": { ru: "Хронометраж серии (мин)", en: "Minutes per episode", hy: "Սերիայի տևողությունը (րոպե)" },
+  // Ф2: FILM-only counterpart of episodes/episodeMinutes — same slot, Single only.
+  "projectForm.field.durationMinutes": { ru: "Длительность (мин)", en: "Duration (min)", hy: "Տևողություն (րոպե)" },
+  "projectForm.field.boxOffice": {
+    ru: "Бюджет (кассовый сбор, драм)",
+    en: "Budget (box office, AMD)",
+    hy: "Բյուջե (գանձարկղ, դրամ)",
+  },
   "projectForm.field.studio": { ru: "Студия", en: "Studio", hy: "Ստուդիա" },
   "projectForm.studioPlaceholder": {
     ru: "Арменфильм, Sharm Holding…",
@@ -1233,8 +1256,19 @@ export const UI: Record<string, Dict> = {
   "projectForm.countriesPlaceholder": { ru: "США, Великобритания, …", en: "US, UK, …", hy: "ԱՄՆ, Մեծ Բրիտանիա, …" },
   "projectForm.field.applicationDeadline": { ru: "Срок подачи заявок", en: "Application deadline", hy: "Հայտերի ընդունման վերջնաժամկետ" },
   "projectForm.field.releaseDate": { ru: "Дата релиза", en: "Release date", hy: "Թողարկման ամսաթիվ" },
+  "projectForm.field.expectedReleaseDate": {
+    ru: "Ожидаемая дата выхода",
+    en: "Expected release date",
+    hy: "Սպասվող թողարկման ամսաթիվ",
+  },
   "projectForm.field.platforms": { ru: "Платформы", en: "Platforms", hy: "Հարթակներ" },
   "projectForm.platformsPlaceholder": { ru: "YouTube, Kinodaran, TV", en: "YouTube, Kinodaran, TV", hy: "YouTube, Kinodaran, TV" },
+  "projectForm.field.streamingSource": { ru: "Источник показа", en: "Streaming source", hy: "Հեռարձակման աղբյուր" },
+  "projectForm.streamingSourcePlaceholder": {
+    ru: "Выберите источники…",
+    en: "Select sources…",
+    hy: "Ընտրեք աղբյուրները…",
+  },
   "projectForm.field.placementType": { ru: "Тип размещения", en: "Placement type", hy: "Տեղադրման տեսակ" },
   "projectForm.field.priceNote": { ru: "Примечание к цене (необязательно)", en: "Price note (optional caption)", hy: "Գնի նշում (ոչ պարտադիր)" },
   "projectForm.priceNotePlaceholder": { ru: "/ сцена", en: "/ scene", hy: "/ տեսարան" },
@@ -1268,6 +1302,37 @@ export const UI: Record<string, Dict> = {
     en: "Bohemian Rhapsody, Ray, Michael",
     hy: "Bohemian Rhapsody, Ray, Michael",
   },
+  // Ф2: repeatable Reference Projects editor (replaces the single
+  // comma-separated input above, which is now unused).
+  "projectForm.field.referenceName": { ru: "Название", en: "Title", hy: "Վերնագիր" },
+  "projectForm.field.referenceUrl": { ru: "Ссылка / URL изображения", en: "Link/image URL", hy: "Հղում / նկարի URL" },
+  "projectForm.addReference": { ru: "Добавить проект", en: "Add reference", hy: "Ավելացնել նախագիծ" },
+  "projectForm.referencesEmpty": {
+    ru: "Пока нет похожих проектов.",
+    en: "No reference projects yet.",
+    hy: "Դեռ նմանատիպ նախագծեր չկան։",
+  },
+  // Ф4/#27: repeatable Production Timeline editor (per-project horizontal
+  // timeline on the report page). Labels are free-text Armenian.
+  "projectForm.section.milestones": { ru: "Ход производства", en: "Production Timeline", hy: "Փրոդուկցիայի ընթաց" },
+  "projectForm.milestones.stage": { ru: "этап", en: "stage", hy: "փուլ" },
+  "projectForm.milestones.stages": { ru: "этап(ов)", en: "stages", hy: "փուլ" },
+  "projectForm.milestones.addStage": { ru: "Добавить этап", en: "Add stage", hy: "Ավելացնել փուլ" },
+  "projectForm.milestones.empty": {
+    ru: "Пока нет этапов производства.",
+    en: "No production stages yet.",
+    hy: "Դեռ փուլեր չկան։",
+  },
+  "projectForm.milestones.label": { ru: "Этап", en: "Stage", hy: "Փուլ" },
+  "projectForm.milestones.labelPlaceholder": { ru: "Препродакшн", en: "Pre-production", hy: "Պրեպրոդակշն" },
+  "projectForm.milestones.date": { ru: "Дата", en: "Date", hy: "Ամսաթիվ" },
+  "projectForm.milestones.note": { ru: "Заметка", en: "Note", hy: "Նշում" },
+  "projectForm.milestones.notePlaceholder": { ru: "Съёмки в Ереване", en: "Filming in Yerevan", hy: "Նկարահանումներ Երևանում" },
+  "projectForm.milestones.current": { ru: "Текущий", en: "Current", hy: "Ընթացիկ" },
+  "report.milestones.title": { ru: "Ход производства", en: "Production Timeline", hy: "Փրոդուկցիայի ընթաց" },
+  "report.milestones.done": { ru: "Завершено", en: "Done", hy: "Ավարտված" },
+  "report.milestones.currentStage": { ru: "Текущий этап", en: "Current stage", hy: "Ընթացիկ փուլ" },
+  "report.milestones.upcoming": { ru: "Впереди", en: "Upcoming", hy: "Առջևում" },
   "projectForm.field.cinemas": { ru: "Кинотеатры / площадки показа", en: "Cinemas / exhibition venues", hy: "Կինոթատրոններ / ցուցադրման վայրեր" },
   "projectForm.cinemasPlaceholder": {
     ru: "Cinema Star, Moscow Cinema, Kino Park",
@@ -1292,11 +1357,14 @@ export const UI: Record<string, Dict> = {
   "projectForm.cast.uploadPhoto": { ru: "Загрузить фото", en: "Upload photo", hy: "Վերբեռնել լուսանկարը" },
   "projectForm.tiers.tier": { ru: "уровень", en: "tier", hy: "մակարդակ" },
   "projectForm.tiers.tiers": { ru: "уровня", en: "tiers", hy: "մակարդակ" },
-  "projectForm.tiers.addTier": { ru: "Добавить уровень", en: "Add tier", hy: "Ավելացնել մակարդակ" },
+  "projectForm.tiers.addTier": { ru: "Добавить плейсмент", en: "Add Placement", hy: "Ավելացնել փլեյսմենթ" },
   "projectForm.tiers.empty": { ru: "Пока нет уровней спонсорства.", en: "No sponsorship tiers.", hy: "Դեռ հովանավորության մակարդակներ չկան։" },
   "projectForm.tiers.name": { ru: "Название уровня", en: "Tier name", hy: "Մակարդակի անվանում" },
   "projectForm.tiers.namePlaceholder": { ru: "Официальный спонсор", en: "Official Sponsor", hy: "Պաշտոնական հովանավոր" },
   "projectForm.tiers.price": { ru: "Цена (AMD)", en: "Price (AMD)", hy: "Գին (AMD)" },
+  "projectForm.tiers.slots": { ru: "Доступно", en: "Available", hy: "Հասանելի" },
+  "projectForm.tiers.totalSlots": { ru: "Всего", en: "Total", hy: "Ընդամենը" },
+  "projectForm.tiers.exclusive": { ru: "Эксклюзив", en: "Exclusive", hy: "Բացառիկ" },
   "projectForm.tiers.benefits": { ru: "Преимущества (по одному в строке)", en: "Benefits (one per line)", hy: "Առավելություններ (մեկը՝ մեկ տողում)" },
   "projectForm.tiers.benefitsPlaceholder": {
     ru: "Логотип на выбранных промо-материалах\nПродвижение в соцсетях\nБлагодарность в титрах\nПриглашения на премьеру",

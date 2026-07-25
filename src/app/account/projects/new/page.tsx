@@ -5,7 +5,8 @@ import { Reveal } from "@/components/ui/reveal";
 import { requireMember } from "@/lib/auth/require";
 import { prisma } from "@/lib/prisma";
 import { getLocale } from "@/lib/data/locale";
-import { getKnownPeople } from "@/lib/data/actors";
+import { getPersonDirectory } from "@/lib/data/actors";
+import { getStreamingSources } from "@/lib/data/streaming-sources";
 import { makeUI } from "@/lib/i18n";
 import { ProjectForm } from "@/app/admin/(panel)/projects/project-form";
 import { createCreatorProject } from "../actions";
@@ -34,9 +35,14 @@ export default async function NewProjectPage() {
   });
   const studios = rows.map((r) => r.studio).sort();
 
-  // People previously entered as cast/crew on any project (#11), for the
-  // Cast & Crew name autocomplete — same helper as the admin new/page.tsx.
-  const knownPeople = await getKnownPeople();
+  // Person directory (Ф3), for the Cast & Crew name picker — same helper as
+  // the admin new/page.tsx.
+  const knownPeople = await getPersonDirectory();
+
+  // Global Streaming Source dictionary (Ф2/#25), for the MultiSelect options
+  // — same helper as the admin new/page.tsx. The delete-"×" itself stays
+  // staff-only (ProjectForm hides it in creator mode).
+  const streamingSources = await getStreamingSources();
 
   // Gates the "logo" checkbox in the poster generator panel (#26).
   const me = await prisma.user.findUnique({ where: { id: user.id }, select: { avatar: true } });
@@ -66,6 +72,7 @@ export default async function NewProjectPage() {
           posterAction={generateCreatorPosterAction}
           submitLabel={t("account.form.submit")}
           studios={studios}
+          streamingSources={streamingSources}
           knownPeople={knownPeople}
           ownerHasAvatar={!!me?.avatar}
         />

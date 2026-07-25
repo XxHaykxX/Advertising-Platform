@@ -7,7 +7,8 @@ import type { ProjectStatus, ProjectKind } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireContentEditor, requireSuperadmin } from "@/lib/auth/require";
 import { deleteUpload } from "@/lib/actions/uploads";
-import { PLACEMENT_TYPE_VALUES, KIND_VALUES } from "./form-shared";
+import { addStreamingSources } from "@/lib/actions/streaming-sources";
+import { PLACEMENT_TYPE_VALUES, KIND_VALUES, ROLE_VALUES, parseCsvInput } from "./form-shared";
 
 const STATUS_VALUES = ["PRE_PRODUCTION", "FILMING", "POST_PRODUCTION", "RELEASED"] as const;
 const GENDER_VALUES = ["All", "Male", "Female"] as const;
@@ -36,6 +37,7 @@ export type ProjectFormValues = {
   kind: ProjectKind;
   episodes: number | null; // SERIAL only
   episodeMinutes: number | null; // SERIAL only
+  durationMinutes: number | null; // FILM only — total runtime, minutes
   status: ProjectStatus;
   releaseLabel: string;
   countries: string;
@@ -52,12 +54,15 @@ export type ProjectFormValues = {
   cpmMaxAmd: number | null;
   priceMinAmd: number | null;
   priceMaxAmd: number | null;
+  boxOfficeAmd: number | null; // box-office gross ("Budget"), informational, optional
   isActive: boolean;
   sortOrder: number;
   // ── Placement parity fields ──
   applicationDeadline: string; // <input type=date> value, "" when unset
   releaseDate: string; // <input type=date> value, "" when unset
+  expectedReleaseDate: string; // <input type=date> value, "" when unset
   platforms: string; // comma-separated in the form; JSON string[] at rest
+  streamingSource: string; // comma-separated in the form; JSON/CSV at rest (Kinodaran|YouTube|TV|Cinema)
   placementType: string; // "" | one of PLACEMENT_TYPE_VALUES
   priceNote: string;
   // ── Press-kit fields (Aram, 2026-07-09) ──
@@ -186,11 +191,14 @@ function buildData(fd: FormData): ProjectFormValues {
     gallery: str(fd, "gallery"),
     format: str(fd, "format", VARCHAR_MAX),
     formatCategory: str(fd, "formatCategory", VARCHAR_MAX),
-    language: str(fd, "language", VARCHAR_MAX),
+    // Language is now a MultiSelect (admin redesign phase 1) — same CSV
+    // storage convention as genres/countries/platforms/cinemas.
+    language: jsonArray<string>(fd, "language").join(", ").slice(0, VARCHAR_MAX),
     studio: str(fd, "studio", VARCHAR_MAX),
     kind,
     episodes: kind === "SERIAL" ? intOrNull(fd, "episodes") : null,
     episodeMinutes: kind === "SERIAL" ? intOrNull(fd, "episodeMinutes") : null,
+    durationMinutes: kind === "FILM" ? intOrNull(fd, "durationMinutes") : null,
     status: enumVal(fd, "status", STATUS_VALUES, "PRE_PRODUCTION"),
     releaseLabel: str(fd, "releaseLabel", VARCHAR_MAX),
     countries: jsonArray<string>(fd, "countries").join(", ").slice(0, VARCHAR_MAX),
@@ -204,11 +212,14 @@ function buildData(fd: FormData): ProjectFormValues {
     cpmMaxAmd: intOrNull(fd, "cpmMaxAmd"),
     priceMinAmd: intOrNull(fd, "priceMinAmd"),
     priceMaxAmd: intOrNull(fd, "priceMaxAmd"),
+    boxOfficeAmd: intOrNull(fd, "boxOfficeAmd"),
     isActive: bool(fd, "isActive"),
     sortOrder: int(fd, "sortOrder"),
     applicationDeadline: str(fd, "applicationDeadline"),
     releaseDate: str(fd, "releaseDate"),
+    expectedReleaseDate: str(fd, "expectedReleaseDate"),
     platforms: jsonArray<string>(fd, "platforms").join(", ").slice(0, VARCHAR_MAX),
+    streamingSource: jsonArray<string>(fd, "streamingSource").join(", ").slice(0, VARCHAR_MAX),
     placementType: enumVal(fd, "placementType", [...PLACEMENT_TYPE_VALUES, ""] as const, ""),
     priceNote: str(fd, "priceNote", VARCHAR_MAX),
     tagline: taglineRu || taglineHy || taglineEn, // base/fallback, mirrors synopsis
@@ -238,8 +249,16 @@ function validate(data: ProjectFormValues): string | null {
 // one submit, on create and edit alike. Authz is the parent action's
 // (requireContentEditor + ownership), so no separate re-check is needed.
 const ACTOR_KIND_VALUES = ["CAST", "CREW"] as const;
-type ActorInput = { name?: string; role?: string; kind?: string; photo?: string };
-type TierInput = { name?: string; priceAmd?: number; benefits?: string };
+type ActorInput = { name?: string; roles?: string[]; kind?: string; photo?: string; personId?: number | null };
+type TierInput = {
+  name?: string;
+  priceAmd?: number;
+  benefits?: string;
+  isExclusive?: boolean;
+  availableSlots?: number | null;
+  totalSlots?: number | null;
+};
+type MilestoneInput = { label?: string; date?: string; note?: string; active?: boolean };
 
 /** "line 1\nline 2" -> JSON string[] (trimmed, blanks dropped) for the
    benefits @db.Text column. */
@@ -251,18 +270,74 @@ function benefitsToJson(input: string): string {
   return JSON.stringify(arr);
 }
 
-/** Rows for prisma.actor.createMany (projectId added by the caller). Blank-name
-   rows are dropped; kind falls back to CAST. */
+/** Rows for prisma.actor.createMany (projectId added by the caller, personId
+   resolved separately by resolveActorPersonIds — see below). Blank-name rows
+   are dropped; kind falls back to CAST; roles are filtered down to the fixed
+   ROLE_VALUES list (defense in depth — the client MultiSelect is already
+   strict); `role` (legacy single column) mirrors roles[0] so old readers of
+   that column keep working. */
 function parseActorRows(fd: FormData) {
   return jsonArray<ActorInput>(fd, "actorsRows")
     .filter((r) => (r.name || "").trim())
-    .map((r, i) => ({
-      name: (r.name || "").trim(),
-      role: (r.role || "").trim(),
-      kind: (ACTOR_KIND_VALUES as readonly string[]).includes(r.kind ?? "") ? r.kind! : "CAST",
-      photo: (r.photo || "").trim() || null,
-      sortOrder: i,
-    }));
+    .map((r, i) => {
+      // Preserve every role the row carries. The strict dropdown is the input
+      // gate for NEW picks; a hard ROLE_VALUES filter here would silently drop
+      // legacy free-text roles (pre-Ф3, often hy/ru like "Ռեժիսոր") echoed as
+      // chips — wiping existing cast roles on the first edit-save.
+      const roles = (Array.isArray(r.roles) ? r.roles : []).filter(
+        (v): v is string => typeof v === "string" && v.trim().length > 0,
+      );
+      return {
+        name: (r.name || "").trim(),
+        role: roles[0] ?? "",
+        roles: JSON.stringify(roles),
+        kind: (ACTOR_KIND_VALUES as readonly string[]).includes(r.kind ?? "") ? r.kind! : "CAST",
+        photo: (r.photo || "").trim() || null,
+        sortOrder: i,
+        personId: typeof r.personId === "number" ? r.personId : null,
+      };
+    });
+}
+
+/** For every actor row with no personId (a brand-new name, or one typed by
+   hand rather than picked from the directory), create a Person and fill in
+   its id — rows that already carry a personId (picked from the dropdown) are
+   left untouched, and their linked Person is NOT mutated from here (a
+   project's cast row is a point-in-time snapshot, independent of the
+   directory afterwards). Two new rows sharing the same (trimmed,
+   case-insensitive) name within one submit reuse a single new Person rather
+   than creating a duplicate. Must run inside the same transaction as the
+   createMany that follows, since new rows need a real id first. */
+async function resolveActorPersonIds(
+  tx: Prisma.TransactionClient,
+  rows: ReturnType<typeof parseActorRows>,
+): Promise<(ReturnType<typeof parseActorRows>[number] & { personId: number })[]> {
+  const newByName = new Map<string, number>();
+  const resolved: (ReturnType<typeof parseActorRows>[number] & { personId: number })[] = [];
+  for (const r of rows) {
+    if (r.personId != null) {
+      resolved.push({ ...r, personId: r.personId });
+      continue;
+    }
+    const key = r.name.toLowerCase();
+    let personId = newByName.get(key);
+    if (personId == null) {
+      // Reuse an existing directory Person with the same name (case-insensitive
+      // via the column collation) before creating one — a name typed by hand
+      // that matches the directory must not spawn a duplicate Person.
+      const existing = await tx.person.findFirst({ where: { name: r.name } });
+      personId =
+        existing?.id ??
+        (
+          await tx.person.create({
+            data: { name: r.name, role: r.role, kind: r.kind, photo: r.photo },
+          })
+        ).id;
+      newByName.set(key, personId);
+    }
+    resolved.push({ ...r, personId });
+  }
+  return resolved;
 }
 
 /** Rows for prisma.sponsorshipTier.createMany (projectId added by the caller). */
@@ -273,8 +348,32 @@ function parseTierRows(fd: FormData) {
       name: (r.name || "").trim().slice(0, VARCHAR_MAX),
       priceAmd: Math.max(0, Number(r.priceAmd) || 0),
       benefits: benefitsToJson(r.benefits || ""),
+      isExclusive: !!r.isExclusive,
+      availableSlots: r.availableSlots == null ? null : Math.max(0, Number(r.availableSlots) || 0),
+      totalSlots: r.totalSlots == null ? null : Math.max(0, Number(r.totalSlots) || 0),
       sortOrder: i,
     }));
+}
+
+/** Rows for prisma.productionMilestone.createMany (projectId added by the
+   caller). Blank-label rows are dropped; array order → sortOrder. `active` is
+   single-select in the UI, but defend here too: keep only the FIRST active row
+   marked (the report highlights exactly one current stage). */
+function parseMilestoneRows(fd: FormData) {
+  let activeSeen = false;
+  return jsonArray<MilestoneInput>(fd, "milestonesRows")
+    .filter((r) => (r.label || "").trim())
+    .map((r, i) => {
+      const active = !!r.active && !activeSeen;
+      if (active) activeSeen = true;
+      return {
+        label: (r.label || "").trim().slice(0, VARCHAR_MAX),
+        date: dateOrNull((r.date || "").trim()),
+        note: (r.note || "").trim().slice(0, VARCHAR_MAX),
+        isActive: active,
+        sortOrder: i,
+      };
+    });
 }
 
 // ── Auto Code generation (#PP-YYYY-NNNN) ───────────────────────────────────
@@ -324,6 +423,14 @@ export async function createProject(
   const error = validate(data);
   if (error) return { error, values: data };
 
+  // Persist any custom Streaming Source values into the global dictionary
+  // (Ф2/#25) so future projects offer them too — never blocks the save.
+  try {
+    await addStreamingSources(parseCsvInput(data.streamingSource));
+  } catch {
+    /* ignore */
+  }
+
   // #17: Code is generated, not typed — the form no longer submits one on
   // create (data.code === ""). Retry a handful of times on a P2002 race
   // (two publishers saving in the same instant) by regenerating; a manually
@@ -332,6 +439,7 @@ export async function createProject(
   const maxAttempts = autoCode ? 5 : 1;
   const actorRows = parseActorRows(fd);
   const tierRows = parseTierRows(fd);
+  const milestoneRows = parseMilestoneRows(fd);
 
   // Project columns shared across code-retry attempts (code is added per-attempt).
   const projectData = {
@@ -344,7 +452,9 @@ export async function createProject(
     gallery: galleryToJson(data.gallery),
     applicationDeadline: dateOrNull(data.applicationDeadline),
     releaseDate: dateOrNull(data.releaseDate),
+    expectedReleaseDate: dateOrNull(data.expectedReleaseDate),
     platforms: platformsToJson(data.platforms),
+    streamingSource: platformsToJson(data.streamingSource),
     placementType: data.placementType || null,
     priceNote: data.priceNote || null,
     tagline: data.tagline || null,
@@ -375,8 +485,9 @@ export async function createProject(
       await prisma.$transaction(async (tx) => {
         const created = await tx.project.create({ data: { ...projectData, code } });
         if (actorRows.length) {
+          const resolvedActors = await resolveActorPersonIds(tx, actorRows);
           await tx.actor.createMany({
-            data: actorRows.map((r) => ({ ...r, projectId: created.id })),
+            data: resolvedActors.map((r) => ({ ...r, projectId: created.id })),
           });
         }
         if (tierRows.length) {
@@ -384,7 +495,12 @@ export async function createProject(
             data: tierRows.map((r) => ({ ...r, projectId: created.id })),
           });
         }
-      });
+        if (milestoneRows.length) {
+          await tx.productionMilestone.createMany({
+            data: milestoneRows.map((r) => ({ ...r, projectId: created.id })),
+          });
+        }
+      }, { timeout: 15000 });
       revalidateProjectPaths();
       return { ok: true, redirect: "/admin/projects" };
     } catch (e) {
@@ -419,15 +535,27 @@ export async function updateProject(
   const error = validate(data);
   if (error) return { error, values: data };
 
+  // Persist any custom Streaming Source values into the global dictionary
+  // (Ф2/#25) so future projects offer them too — never blocks the save.
+  try {
+    await addStreamingSources(parseCsvInput(data.streamingSource));
+  } catch {
+    /* ignore */
+  }
+
   const actorRows = parseActorRows(fd);
   const tierRows = parseTierRows(fd);
+  const milestoneRows = parseMilestoneRows(fd);
 
   try {
     // #20²: update the project and fully replace its cast/crew + tiers in one
     // transaction (delete-all then re-insert mirrors the old saveActors/saveTiers
-    // semantics, now folded into the single main-form submit).
-    const ops: Prisma.PrismaPromise<unknown>[] = [
-      prisma.project.update({
+    // semantics, now folded into the single main-form submit). Interactive
+    // (async callback) form rather than the plain array-of-ops batch, since
+    // resolveActorPersonIds (Ф3) needs to create Persons and read their ids
+    // back before the actor createMany below can run.
+    await prisma.$transaction(async (tx) => {
+      await tx.project.update({
         where: { id },
         data: {
           ...data,
@@ -439,7 +567,9 @@ export async function updateProject(
           gallery: galleryToJson(data.gallery),
           applicationDeadline: dateOrNull(data.applicationDeadline),
           releaseDate: dateOrNull(data.releaseDate),
+          expectedReleaseDate: dateOrNull(data.expectedReleaseDate),
           platforms: platformsToJson(data.platforms),
+          streamingSource: platformsToJson(data.streamingSource),
           placementType: data.placementType || null,
           priceNote: data.priceNote || null,
           tagline: data.tagline || null,
@@ -452,19 +582,21 @@ export async function updateProject(
           videoEmbedUrl: data.videoEmbedUrl || null,
           videoFile: data.videoFile || null,
         },
-      }),
-      prisma.actor.deleteMany({ where: { projectId: id } }),
-    ];
-    if (actorRows.length) {
-      ops.push(prisma.actor.createMany({ data: actorRows.map((r) => ({ ...r, projectId: id })) }));
-    }
-    ops.push(prisma.sponsorshipTier.deleteMany({ where: { projectId: id } }));
-    if (tierRows.length) {
-      ops.push(
-        prisma.sponsorshipTier.createMany({ data: tierRows.map((r) => ({ ...r, projectId: id })) }),
-      );
-    }
-    await prisma.$transaction(ops);
+      });
+      await tx.actor.deleteMany({ where: { projectId: id } });
+      if (actorRows.length) {
+        const resolvedActors = await resolveActorPersonIds(tx, actorRows);
+        await tx.actor.createMany({ data: resolvedActors.map((r) => ({ ...r, projectId: id })) });
+      }
+      await tx.sponsorshipTier.deleteMany({ where: { projectId: id } });
+      if (tierRows.length) {
+        await tx.sponsorshipTier.createMany({ data: tierRows.map((r) => ({ ...r, projectId: id })) });
+      }
+      await tx.productionMilestone.deleteMany({ where: { projectId: id } });
+      if (milestoneRows.length) {
+        await tx.productionMilestone.createMany({ data: milestoneRows.map((r) => ({ ...r, projectId: id })) });
+      }
+    }, { timeout: 15000 });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
       return { error: `Code "${data.code}" is already in use.`, values: data };
@@ -581,6 +713,7 @@ export async function duplicateProject(
     include: {
       actors: { orderBy: { sortOrder: "asc" } },
       tiers: { orderBy: { sortOrder: "asc" } },
+      milestones: { orderBy: { sortOrder: "asc" } },
     },
   });
   if (!src) return { error: "Project not found." };
@@ -595,6 +728,7 @@ export async function duplicateProject(
     createdAt: _createdAt,
     actors,
     tiers,
+    milestones,
     ...scalars
   } = src;
 
@@ -618,9 +752,13 @@ export async function duplicateProject(
               projectId: proj.id,
               name: a.name,
               role: a.role,
+              roles: a.roles,
               kind: a.kind,
               photo: a.photo,
               sortOrder: i,
+              // Copied verbatim (not re-resolved) — the clone credits the
+              // same real Person, same as picking them from the directory.
+              personId: a.personId,
             })),
           });
         }
@@ -631,12 +769,27 @@ export async function duplicateProject(
               name: tier.name,
               priceAmd: tier.priceAmd,
               benefits: tier.benefits,
+              isExclusive: tier.isExclusive,
+              availableSlots: tier.availableSlots,
+              totalSlots: tier.totalSlots,
+              sortOrder: i,
+            })),
+          });
+        }
+        if (milestones.length) {
+          await tx.productionMilestone.createMany({
+            data: milestones.map((m, i) => ({
+              projectId: proj.id,
+              label: m.label,
+              date: m.date,
+              note: m.note,
+              isActive: m.isActive,
               sortOrder: i,
             })),
           });
         }
         return proj;
-      });
+      }, { timeout: 15000 });
       revalidateProjectPaths();
       return { ok: true, redirect: `/admin/projects/${created.id}/edit` };
     } catch (e) {

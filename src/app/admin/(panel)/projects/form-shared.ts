@@ -51,6 +51,31 @@ export function deriveFormatCategory(
 
 export const AGE_RATING_VALUES = ["", "0+", "6+", "12+", "16+", "18+"] as const;
 
+// Cast & crew ROLES (Ф3) — a fixed, searchable multi-select replacing the old
+// free-text Role field. One person can hold several (e.g. Director + Writer).
+// English only (localizeValue(locale, "role", v) still handles report-page
+// translation, same as the legacy free-text values).
+export const ROLE_VALUES = [
+  "Actor",
+  "Director",
+  "Writer",
+  "Producer",
+  "Music",
+  "Show Host",
+  "Showrunner",
+  "General Producer",
+  "Executive Producer",
+  "Voice Actor",
+  "Singer",
+  "Performer",
+  "Stand-up Comedian",
+  "Animator",
+  "Line Producer",
+  "Creative Producer",
+  "Host",
+  "Guest",
+] as const;
+
 /** Date | null -> "YYYY-MM-DD" for prefilling an <input type=date>. */
 export function formatDateInput(d: Date | null): string {
   return d ? d.toISOString().slice(0, 10) : "";
@@ -98,6 +123,55 @@ export function parseCsvInput(csv: string): string[] {
     .filter(Boolean);
 }
 
+/** One node of the per-project production timeline (Ф4/#27). Free-text label +
+   an optional date (YYYY-MM-DD picker value) + one free-text note; `active`
+   marks the current stage (highlighted). Ordering is array order. Mirrored into
+   a hidden `milestonesRows` JSON input, same pattern as actorsRows/tiersRows. */
+export type MilestoneRow = { label: string; date: string; note: string; active: boolean };
+
+export const EMPTY_MILESTONE: MilestoneRow = { label: "", date: "", note: "", active: false };
+
+/** JSON string (or null) -> MilestoneRow[] for the repeatable Production
+   Timeline editor. Non-array / malformed input -> []. */
+export function parseMilestonesInput(raw: string | null): MilestoneRow[] {
+  if (!raw) return [];
+  try {
+    const arr = JSON.parse(raw);
+    if (Array.isArray(arr)) {
+      return arr
+        .filter((r) => r && typeof r === "object")
+        .map((r) => ({
+          label: String(r.label || ""),
+          date: String(r.date || ""),
+          note: String(r.note || ""),
+          active: !!r.active,
+        }));
+    }
+  } catch {
+    // not JSON — nothing to prefill
+  }
+  return [];
+}
+
+export type ReferenceRow = { name: string; url: string };
+
+/** JSON string (or legacy CSV) -> ReferenceRow[] for the repeatable Reference
+   Projects editor. New saves store JSON [{name,url}]; rows saved before this
+   editor existed are a plain comma-separated string ("Ray, Bohemian
+   Rhapsody") — those fall back to one row per title with an empty url. */
+export function parseReferencesInput(raw: string): ReferenceRow[] {
+  if (!raw) return [];
+  try {
+    const arr = JSON.parse(raw);
+    if (Array.isArray(arr) && arr.every((r) => r && typeof r === "object")) {
+      return arr.map((r) => ({ name: String(r.name || ""), url: String(r.url || "") }));
+    }
+  } catch {
+    // not JSON — legacy comma-separated string, fall through
+  }
+  return parseCsvInput(raw).map((name) => ({ name, url: "" }));
+}
+
 /** Multi-genre JSON string[] (or null) -> string[], falling back to the
    legacy single `genre` column when `genres` was never set (pre-migration
    rows). Used to prefill the Genre MultiSelect on edit. */
@@ -111,4 +185,19 @@ export function parseGenresInput(json: string | null, legacyGenre: string): stri
     }
   }
   return legacyGenre ? [legacyGenre] : [];
+}
+
+/** Actor.roles multi-role JSON string[] (or null) -> string[], falling back to
+   the legacy single `role` column when `roles` was never set (pre-Ф3 rows).
+   Same "JSON-first, legacy-fallback" shape as parseGenresInput above. */
+export function parseRolesInput(json: string | null, legacyRole: string): string[] {
+  if (json) {
+    try {
+      const arr = JSON.parse(json);
+      if (Array.isArray(arr) && arr.length) return arr;
+    } catch {
+      // fall through to legacy
+    }
+  }
+  return legacyRole ? [legacyRole] : [];
 }

@@ -8,9 +8,10 @@ import { loadCurrentUser } from "@/lib/auth/require";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ReportHero } from "@/components/report/report-hero";
-import { ReportVideo } from "@/components/report/report-video";
 import { KeyFacts } from "@/components/report/key-facts";
 import { Cast } from "@/components/report/cast";
+import { Placements } from "@/components/report/placements";
+import { ProductionTimeline } from "@/components/report/production-timeline";
 import { RoiSnapshot } from "@/components/report/roi-snapshot";
 import { ReportInterestProvider } from "@/components/report/report-interest-context";
 import { ReportTabs } from "./report-tabs";
@@ -49,15 +50,14 @@ export default async function ReportPage({
       <ReportTabs hasCast={project.actors.length > 0} locale={locale} />
       <div id="overview">
         <ReportHero project={project} locale={locale} />
-        <ReportVideo
-          embedUrl={project.videoEmbedUrl}
-          file={project.videoFile}
-          title={project.title}
-          locale={locale}
-        />
+        {/* The video now leads the hero slider (first slide) — see ReportHero /
+            PosterSlider. The standalone ReportVideo section was removed so it
+            isn't shown twice (user request 2026-07-25). */}
         <KeyFacts project={project} locale={locale} user={user} />
       </div>
+      <ProductionTimeline project={project} locale={locale} />
       <Cast project={project} locale={locale} />
+      <Placements project={project} locale={locale} />
       <RoiSnapshot project={project} locale={locale} user={user} />
       <Footer locale={locale} currency={currency} />
     </ReportInterestProvider>

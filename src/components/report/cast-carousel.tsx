@@ -30,7 +30,11 @@ function ActorCard({ actor, locale }: { actor: ActorDTO; locale: Locale }) {
       )}
       <div className="min-w-0">
         <p className="truncate font-semibold text-foreground">{actor.name}</p>
-        <p className="truncate text-xs text-muted-foreground">{localizeValue(locale, "role", actor.role)}</p>
+        <p className="truncate text-xs text-muted-foreground">
+          {(actor.roles.length ? actor.roles : actor.role ? [actor.role] : [])
+            .map((r) => localizeValue(locale, "role", r))
+            .join(" · ")}
+        </p>
       </div>
     </div>
   );

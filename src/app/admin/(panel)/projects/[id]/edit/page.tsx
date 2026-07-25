@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth/require";
-import { getKnownPeople } from "@/lib/data/actors";
+import { getPersonDirectory } from "@/lib/data/actors";
+import { getStreamingSources } from "@/lib/data/streaming-sources";
 import { updateProject } from "../../actions";
 import {
   formatDateInput,
@@ -11,6 +12,7 @@ import {
   parseGalleryInput,
   parseBenefitsInput,
   parseGenresInput,
+  parseRolesInput,
 } from "../../form-shared";
 import { ProjectForm, type ProjectFormInitial } from "../../project-form";
 
@@ -30,6 +32,7 @@ export default async function EditProjectPage({
     include: {
       actors: { orderBy: { sortOrder: "asc" } },
       tiers: { orderBy: { sortOrder: "asc" } },
+      milestones: { orderBy: { sortOrder: "asc" } },
       owner: { select: { avatar: true } },
     },
   });
@@ -46,9 +49,11 @@ export default async function EditProjectPage({
   });
   const studios = studioRows.map((r) => r.studio).sort();
 
-  // People previously entered as cast/crew on any project (#11), for the
-  // Cast & Crew name autocomplete.
-  const knownPeople = await getKnownPeople();
+  // Person directory (Ф3), for the Cast & Crew name picker.
+  const knownPeople = await getPersonDirectory();
+
+  // Global Streaming Source dictionary (Ф2/#25), for the MultiSelect options.
+  const streamingSources = await getStreamingSources();
 
   const initial: ProjectFormInitial = {
     title: p.title,
@@ -71,6 +76,7 @@ export default async function EditProjectPage({
     kind: p.kind,
     episodes: p.episodes,
     episodeMinutes: p.episodeMinutes,
+    durationMinutes: p.durationMinutes,
     status: p.status,
     releaseLabel: p.releaseLabel,
     countries: p.countries,
@@ -84,11 +90,16 @@ export default async function EditProjectPage({
     cpmMaxAmd: p.cpmMaxAmd,
     priceMinAmd: p.priceMinAmd,
     priceMaxAmd: p.priceMaxAmd,
+    boxOfficeAmd: p.boxOfficeAmd,
     isActive: p.isActive,
     sortOrder: p.sortOrder,
     applicationDeadline: formatDateInput(p.applicationDeadline),
     releaseDate: formatDateInput(p.releaseDate),
+    expectedReleaseDate: formatDateInput(p.expectedReleaseDate),
     platforms: parsePlatformsInput(p.platforms),
+    // streamingSource is stored the same way as platforms (JSON string[]) —
+    // parsePlatformsInput doubles as its JSON->CSV loader.
+    streamingSource: parsePlatformsInput(p.streamingSource),
     placementType: p.placementType ?? "",
     priceNote: p.priceNote ?? "",
     tagline: p.tagline ?? "",
@@ -120,17 +131,28 @@ export default async function EditProjectPage({
         initial={initial}
         initialActors={p.actors.map((a) => ({
           name: a.name,
-          role: a.role,
+          roles: parseRolesInput(a.roles, a.role),
           kind: a.kind,
           photo: a.photo ?? "",
+          personId: a.personId,
         }))}
         initialTiers={p.tiers.map((tier) => ({
           name: tier.name,
           priceAmd: tier.priceAmd,
           benefits: parseBenefitsInput(tier.benefits),
+          isExclusive: tier.isExclusive,
+          availableSlots: tier.availableSlots,
+          totalSlots: tier.totalSlots,
+        }))}
+        initialMilestones={p.milestones.map((m) => ({
+          label: m.label,
+          date: formatDateInput(m.date),
+          note: m.note,
+          active: m.isActive,
         }))}
         submitLabel="Save"
         studios={studios}
+        streamingSources={streamingSources}
         knownPeople={knownPeople}
         projectId={pid}
         ownerHasAvatar={!!p.owner.avatar}

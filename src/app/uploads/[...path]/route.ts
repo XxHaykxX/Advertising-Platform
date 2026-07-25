@@ -19,6 +19,8 @@ const CONTENT_TYPE: Record<string, string> = {
   ".webp": "image/webp",
   ".gif": "image/gif",
   ".avif": "image/avif",
+  ".mp4": "video/mp4",
+  ".webm": "video/webm",
 };
 
 export async function GET(_req: Request, ctx: { params: Promise<{ path: string[] }> }) {

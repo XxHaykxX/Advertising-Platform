@@ -158,8 +158,8 @@ export const ImageUploader = forwardRef<ImageUploaderHandle, {
  *  for a gallery with only one image (nothing to reorder yet). */
 function Thumbnail({ src, onRemove, removeLabel }: { src: string; onRemove: () => void; removeLabel: string }) {
   return (
-    <div className="group relative h-24 w-24 overflow-hidden rounded-lg border border-border bg-muted">
-      <Image src={src} alt="" fill className="object-cover" sizes="96px" unoptimized />
+    <div className="group relative aspect-video w-40 overflow-hidden rounded-lg border border-border bg-muted">
+      <Image src={src} alt="" fill className="object-cover" sizes="160px" unoptimized />
       <button
         type="button"
         onClick={onRemove}
@@ -202,9 +202,9 @@ function SortableThumbnail({
       style={style}
       {...attributes}
       {...listeners}
-      className="group relative h-24 w-24 cursor-grab touch-none overflow-hidden rounded-lg border border-border bg-muted active:cursor-grabbing"
+      className="group relative aspect-video w-40 cursor-grab touch-none overflow-hidden rounded-lg border border-border bg-muted active:cursor-grabbing"
     >
-      <Image src={src} alt="" fill className="object-cover" sizes="96px" unoptimized />
+      <Image src={src} alt="" fill className="object-cover" sizes="160px" unoptimized />
       <button
         type="button"
         onClick={onRemove}

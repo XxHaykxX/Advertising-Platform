@@ -8,7 +8,8 @@ import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
 import { notifyNewProjectForModeration } from "@/lib/mail";
 import { notifyRoles } from "@/lib/data/notifications";
-import { PLACEMENT_TYPE_VALUES, KIND_VALUES } from "@/app/admin/(panel)/projects/form-shared";
+import { addStreamingSources } from "@/lib/actions/streaming-sources";
+import { PLACEMENT_TYPE_VALUES, KIND_VALUES, ROLE_VALUES, parseCsvInput } from "@/app/admin/(panel)/projects/form-shared";
 import type { ProjectFormValues, ProjectFormState } from "@/app/admin/(panel)/projects/actions";
 
 /* #16 (expanded 2026-07-16): the Creator self-serve submission form
@@ -116,11 +117,14 @@ function buildData(fd: FormData): ProjectFormValues {
     gallery: str(fd, "gallery"),
     format: str(fd, "format", VARCHAR_MAX),
     formatCategory: str(fd, "formatCategory", VARCHAR_MAX),
-    language: str(fd, "language", VARCHAR_MAX),
+    // Language is now a MultiSelect (admin redesign phase 1) — same CSV
+    // storage convention as genres/countries/platforms/cinemas.
+    language: jsonArray<string>(fd, "language").join(", ").slice(0, VARCHAR_MAX),
     studio: str(fd, "studio", VARCHAR_MAX),
     kind,
     episodes: kind === "SERIAL" ? intOrNull(fd, "episodes") : null,
     episodeMinutes: kind === "SERIAL" ? intOrNull(fd, "episodeMinutes") : null,
+    durationMinutes: kind === "FILM" ? intOrNull(fd, "durationMinutes") : null,
     status: enumVal(fd, "status", STATUS_VALUES, "PRE_PRODUCTION"),
     releaseLabel: str(fd, "releaseLabel", VARCHAR_MAX),
     countries: jsonArray<string>(fd, "countries").join(", ").slice(0, VARCHAR_MAX),
@@ -134,13 +138,16 @@ function buildData(fd: FormData): ProjectFormValues {
     cpmMaxAmd: intOrNull(fd, "cpmMaxAmd"),
     priceMinAmd: intOrNull(fd, "priceMinAmd"),
     priceMaxAmd: intOrNull(fd, "priceMaxAmd"),
+    boxOfficeAmd: intOrNull(fd, "boxOfficeAmd"),
     // Never trusted from the form for a Creator submission — forced to false
     // below regardless of what buildData parses here.
     isActive: bool(fd, "isActive"),
     sortOrder: int(fd, "sortOrder"),
     applicationDeadline: str(fd, "applicationDeadline"),
     releaseDate: str(fd, "releaseDate"),
+    expectedReleaseDate: str(fd, "expectedReleaseDate"),
     platforms: jsonArray<string>(fd, "platforms").join(", ").slice(0, VARCHAR_MAX),
+    streamingSource: jsonArray<string>(fd, "streamingSource").join(", ").slice(0, VARCHAR_MAX),
     placementType: enumVal(fd, "placementType", [...PLACEMENT_TYPE_VALUES, ""] as const, ""),
     priceNote: str(fd, "priceNote", VARCHAR_MAX),
     tagline: taglineRu || taglineHy || taglineEn,
@@ -164,8 +171,15 @@ function validate(data: ProjectFormValues, t: ReturnType<typeof makeUI>): string
 
 // ── Inline cast/crew + sponsorship tiers (#20², carried over from admin) ──
 const ACTOR_KIND_VALUES = ["CAST", "CREW"] as const;
-type ActorInput = { name?: string; role?: string; kind?: string; photo?: string };
-type TierInput = { name?: string; priceAmd?: number; benefits?: string };
+type ActorInput = { name?: string; roles?: string[]; kind?: string; photo?: string; personId?: number | null };
+type TierInput = {
+  name?: string;
+  priceAmd?: number;
+  benefits?: string;
+  isExclusive?: boolean;
+  availableSlots?: number | null;
+  totalSlots?: number | null;
+};
 
 /** "line 1\nline 2" -> JSON string[] (trimmed, blanks dropped) for the
    benefits @db.Text column. */
@@ -177,18 +191,62 @@ function benefitsToJson(input: string): string {
   return JSON.stringify(arr);
 }
 
-/** Rows for prisma.actor.createMany (projectId added by the caller). Blank-name
-   rows are dropped; kind falls back to CAST. */
+/** Rows for prisma.actor.createMany (projectId added by the caller, personId
+   resolved separately by resolveActorPersonIds — see below). Same shape as
+   the admin action's parseActorRows (Ф3: role -> roles[]). */
 function parseActorRows(fd: FormData) {
   return jsonArray<ActorInput>(fd, "actorsRows")
     .filter((r) => (r.name || "").trim())
-    .map((r, i) => ({
-      name: (r.name || "").trim(),
-      role: (r.role || "").trim(),
-      kind: (ACTOR_KIND_VALUES as readonly string[]).includes(r.kind ?? "") ? r.kind! : "CAST",
-      photo: (r.photo || "").trim() || null,
-      sortOrder: i,
-    }));
+    .map((r, i) => {
+      // See admin parseActorRows: keep every role the row carries (legacy
+      // free-text incl. hy/ru) — a hard ROLE_VALUES filter would wipe them.
+      const roles = (Array.isArray(r.roles) ? r.roles : []).filter(
+        (v): v is string => typeof v === "string" && v.trim().length > 0,
+      );
+      return {
+        name: (r.name || "").trim(),
+        role: roles[0] ?? "",
+        roles: JSON.stringify(roles),
+        kind: (ACTOR_KIND_VALUES as readonly string[]).includes(r.kind ?? "") ? r.kind! : "CAST",
+        photo: (r.photo || "").trim() || null,
+        sortOrder: i,
+        personId: typeof r.personId === "number" ? r.personId : null,
+      };
+    });
+}
+
+/** Same Person-upsert-on-save as the admin action's resolveActorPersonIds —
+   see that copy's comment for the full rationale. Duplicated rather than
+   imported (same "different zone/trust level" reasoning as the auto-code
+   generator below). */
+async function resolveActorPersonIds(
+  tx: Prisma.TransactionClient,
+  rows: ReturnType<typeof parseActorRows>,
+): Promise<(ReturnType<typeof parseActorRows>[number] & { personId: number })[]> {
+  const newByName = new Map<string, number>();
+  const resolved: (ReturnType<typeof parseActorRows>[number] & { personId: number })[] = [];
+  for (const r of rows) {
+    if (r.personId != null) {
+      resolved.push({ ...r, personId: r.personId });
+      continue;
+    }
+    const key = r.name.toLowerCase();
+    let personId = newByName.get(key);
+    if (personId == null) {
+      // Reuse an existing same-name directory Person before creating one.
+      const existing = await tx.person.findFirst({ where: { name: r.name } });
+      personId =
+        existing?.id ??
+        (
+          await tx.person.create({
+            data: { name: r.name, role: r.role, kind: r.kind, photo: r.photo },
+          })
+        ).id;
+      newByName.set(key, personId);
+    }
+    resolved.push({ ...r, personId });
+  }
+  return resolved;
 }
 
 /** Rows for prisma.sponsorshipTier.createMany (projectId added by the caller). */
@@ -199,6 +257,9 @@ function parseTierRows(fd: FormData) {
       name: (r.name || "").trim().slice(0, VARCHAR_MAX),
       priceAmd: Math.max(0, Number(r.priceAmd) || 0),
       benefits: benefitsToJson(r.benefits || ""),
+      isExclusive: !!r.isExclusive,
+      availableSlots: r.availableSlots == null ? null : Math.max(0, Number(r.availableSlots) || 0),
+      totalSlots: r.totalSlots == null ? null : Math.max(0, Number(r.totalSlots) || 0),
       sortOrder: i,
     }));
 }
@@ -247,6 +308,14 @@ export async function createCreatorProject(
   const error = validate(data, t);
   if (error) return { error, values: data };
 
+  // Persist any custom Streaming Source values into the global dictionary
+  // (Ф2/#25) so future projects offer them too — never blocks the save.
+  try {
+    await addStreamingSources(parseCsvInput(data.streamingSource));
+  } catch {
+    /* ignore */
+  }
+
   // Same auto-code retry loop as admin createProject — the form never
   // submits a code (readonly/hidden in create mode), so this always runs.
   const autoCode = !data.code;
@@ -264,7 +333,9 @@ export async function createCreatorProject(
     gallery: galleryToJson(data.gallery),
     applicationDeadline: dateOrNull(data.applicationDeadline),
     releaseDate: dateOrNull(data.releaseDate),
+    expectedReleaseDate: dateOrNull(data.expectedReleaseDate),
     platforms: platformsToJson(data.platforms),
+    streamingSource: platformsToJson(data.streamingSource),
     placementType: data.placementType || null,
     priceNote: data.priceNote || null,
     tagline: data.tagline || null,
@@ -293,8 +364,9 @@ export async function createCreatorProject(
       const created = await prisma.$transaction(async (tx) => {
         const project = await tx.project.create({ data: { ...projectData, code } });
         if (actorRows.length) {
+          const resolvedActors = await resolveActorPersonIds(tx, actorRows);
           await tx.actor.createMany({
-            data: actorRows.map((r) => ({ ...r, projectId: project.id })),
+            data: resolvedActors.map((r) => ({ ...r, projectId: project.id })),
           });
         }
         if (tierRows.length) {
@@ -303,7 +375,7 @@ export async function createCreatorProject(
           });
         }
         return project;
-      });
+      }, { timeout: 15000 });
 
       // #22: notify the moderation team by email. Fire-and-forget / non-blocking
       // so a mail outage never breaks a creator's submission.

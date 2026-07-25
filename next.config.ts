@@ -12,11 +12,13 @@ const nextConfig: NextConfig = {
     unoptimized: true,
   },
   experimental: {
-    // Server Actions cap request bodies at 1 MB by default; image uploads
-    // (uploadImage) need headroom. Matches the 8 MB per-file cap enforced in
-    // src/lib/actions/uploads.ts.
+    // Server Actions cap request bodies at 1 MB by default; uploads (uploadImage)
+    // need headroom. Must clear the LARGEST per-file cap in uploads.ts —
+    // MAX_BYTES_VIDEO = 50 MB (trailer .mp4/.webm). At 8mb every video >8 MB was
+    // silently rejected by the framework before uploadImage even ran (that was
+    // the "mp4 upload doesn't work" bug). 52mb leaves margin for multipart overhead.
     serverActions: {
-      bodySizeLimit: "8mb",
+      bodySizeLimit: "52mb",
     },
   },
 };

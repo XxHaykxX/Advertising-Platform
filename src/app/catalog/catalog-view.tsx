@@ -415,7 +415,13 @@ export function CatalogView({
       if (selectedGenres.length > 0 && !selectedGenres.includes(p.genre)) return false;
       if (selectedStatuses.length > 0 && !selectedStatuses.includes(p.status)) return false;
       if (selectedFormats.length > 0 && !selectedFormats.includes(p.formatCategory)) return false;
-      if (selectedLanguages.length > 0 && !selectedLanguages.includes(p.language)) return false;
+      if (selectedLanguages.length > 0) {
+        // Language is now a CSV of one or more values (admin redesign phase 1,
+        // was a single select) — match if ANY of the project's languages is
+        // in the selected filter set.
+        const langs = splitCountries(p.language);
+        if (!selectedLanguages.some((s) => langs.includes(s))) return false;
+      }
       // A project targeting "All" audiences matches both Male and Female filters.
       if (gender !== "All" && p.audienceGender !== "All" && p.audienceGender !== gender) return false;
 

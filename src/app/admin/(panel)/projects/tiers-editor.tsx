@@ -32,9 +32,23 @@ import type { makeUI } from "@/lib/i18n";
 // The benefits cell is a single-line summary that expands to a textarea on
 // focus; rows drag-reorder via @dnd-kit. TierRow[]/onChange/TiersSection export
 // are unchanged.
-export type TierRow = { name: string; priceAmd: number; benefits: string };
+export type TierRow = {
+  name: string;
+  priceAmd: number;
+  benefits: string;
+  isExclusive: boolean;
+  availableSlots: number | null;
+  totalSlots: number | null;
+};
 
-export const EMPTY_TIER: TierRow = { name: "", priceAmd: 0, benefits: "" };
+export const EMPTY_TIER: TierRow = {
+  name: "",
+  priceAmd: 0,
+  benefits: "",
+  isExclusive: false,
+  availableSlots: null,
+  totalSlots: null,
+};
 
 const cellCls =
   "w-full rounded-lg border border-transparent bg-transparent px-2 py-1.5 text-sm text-foreground outline-none transition-colors focus:border-primary focus:bg-card";
@@ -114,10 +128,13 @@ export function TiersSection({
         <p className="text-sm text-muted-foreground">{t("projectForm.tiers.empty")}</p>
       ) : (
         <div className="overflow-hidden rounded-xl border border-border bg-card">
-          <div className="hidden grid-cols-[24px_1fr_130px_2fr_32px] items-center gap-2 border-b border-border bg-muted px-3 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground sm:grid">
+          <div className="hidden grid-cols-[24px_1fr_90px_70px_70px_90px_2fr_32px] items-center gap-2 border-b border-border bg-muted px-3 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground sm:grid">
             <span />
             <span>{t("projectForm.tiers.name")}</span>
             <span>{t("projectForm.tiers.price")}</span>
+            <span>{t("projectForm.tiers.slots")}</span>
+            <span>{t("projectForm.tiers.totalSlots")}</span>
+            <span>{t("projectForm.tiers.exclusive")}</span>
             <span>{t("projectForm.tiers.benefits")}</span>
             <span />
           </div>
@@ -138,6 +155,9 @@ export function TiersSection({
                     t={t}
                     onName={(name) => update(i, { name })}
                     onPrice={(priceAmd) => update(i, { priceAmd })}
+                    onSlots={(availableSlots) => update(i, { availableSlots })}
+                    onTotalSlots={(totalSlots) => update(i, { totalSlots })}
+                    onExclusive={(isExclusive) => update(i, { isExclusive })}
                     onBenefits={(benefits) => update(i, { benefits })}
                     onDelete={() => removeRow(i)}
                   />
@@ -157,6 +177,9 @@ function TierTableRow({
   t,
   onName,
   onPrice,
+  onSlots,
+  onTotalSlots,
+  onExclusive,
   onBenefits,
   onDelete,
 }: {
@@ -165,6 +188,9 @@ function TierTableRow({
   t: ReturnType<typeof makeUI>;
   onName: (name: string) => void;
   onPrice: (price: number) => void;
+  onSlots: (slots: number | null) => void;
+  onTotalSlots: (slots: number | null) => void;
+  onExclusive: (exclusive: boolean) => void;
   onBenefits: (benefits: string) => void;
   onDelete: () => void;
 }) {
@@ -189,13 +215,13 @@ function TierTableRow({
     boxShadow: isDragging ? "0 8px 24px -8px rgb(0 0 0 / 0.35)" : undefined,
   };
 
-  // Desktop: one 5-column grid row. Mobile (<sm): name / price / benefits stack
-  // to three lines beside the handle, delete pinned top-right.
+  // Desktop: one 8-column grid row. Mobile (<sm): name / price / slots+exclusive
+  // / benefits stack to four lines beside the handle, delete pinned top-right.
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`grid grid-cols-[24px_1fr_32px] items-start gap-x-2 gap-y-1 px-3 py-1.5 sm:grid-cols-[24px_1fr_130px_2fr_32px] sm:items-start ${
+      className={`grid grid-cols-[24px_1fr_32px] items-start gap-x-2 gap-y-1 px-3 py-1.5 sm:grid-cols-[24px_1fr_90px_70px_70px_90px_2fr_32px] sm:items-start ${
         isDragging ? "" : "hover:bg-muted/50"
       }`}
     >
@@ -203,7 +229,7 @@ function TierTableRow({
         type="button"
         {...attributes}
         {...listeners}
-        className="col-start-1 row-span-3 mt-1.5 cursor-grab touch-none self-start text-muted-foreground active:cursor-grabbing sm:row-span-1 sm:mt-1.5"
+        className="col-start-1 row-span-4 mt-1.5 cursor-grab touch-none self-start text-muted-foreground active:cursor-grabbing sm:row-span-1 sm:mt-1.5"
         aria-label={`${t("projectForm.remove")} — drag ${r.name || ""}`.trim()}
       >
         <GripVertical className="h-4 w-4" />
@@ -223,6 +249,36 @@ function TierTableRow({
         placeholder={t("projectForm.tiers.price")}
         className={`${cellCls} col-start-2 row-start-2 sm:col-start-3 sm:row-start-1`}
       />
+      {/* Available + Total + Exclusive share a row on mobile (a plain flex
+          row); at sm+ the wrapper switches to `display: contents` so all
+          children drop straight into the parent grid as their own columns. */}
+      <div className="col-start-2 row-start-3 flex items-center gap-3 sm:contents">
+        <input
+          type="number"
+          min={0}
+          value={r.availableSlots ?? ""}
+          onChange={(e) => onSlots(e.target.value === "" ? null : Number(e.target.value))}
+          placeholder={t("projectForm.tiers.slots")}
+          className={`${cellCls} flex-1 sm:col-start-4 sm:row-start-1`}
+        />
+        <input
+          type="number"
+          min={0}
+          value={r.totalSlots ?? ""}
+          onChange={(e) => onTotalSlots(e.target.value === "" ? null : Number(e.target.value))}
+          placeholder={t("projectForm.tiers.totalSlots")}
+          className={`${cellCls} flex-1 sm:col-start-5 sm:row-start-1`}
+        />
+        <label className="flex shrink-0 items-center gap-1.5 text-xs text-foreground sm:col-start-6 sm:row-start-1">
+          <input
+            type="checkbox"
+            checked={r.isExclusive}
+            onChange={(e) => onExclusive(e.target.checked)}
+            className="h-4 w-4 accent-primary"
+          />
+          {t("projectForm.tiers.exclusive")}
+        </label>
+      </div>
       {/* Auto-height (ref + effect above): show every benefit line at rest,
           including soft-wrapped ones — no collapse-until-focus that hid all but
           the first line. */}
@@ -232,13 +288,13 @@ function TierTableRow({
         onChange={(e) => onBenefits(e.target.value)}
         rows={2}
         placeholder={t("projectForm.tiers.benefitsPlaceholder")}
-        className={`${cellCls} col-span-2 col-start-2 row-start-3 resize-none overflow-hidden sm:col-span-1 sm:col-start-4 sm:row-start-1`}
+        className={`${cellCls} col-span-2 col-start-2 row-start-4 resize-none overflow-hidden sm:col-span-1 sm:col-start-7 sm:row-start-1`}
       />
 
       <button
         type="button"
         onClick={onDelete}
-        className="col-start-3 row-start-1 mt-1 grid h-8 w-8 place-items-center justify-self-end self-start rounded-lg text-muted-foreground hover:bg-muted hover:text-primary sm:col-start-5 sm:justify-self-auto"
+        className="col-start-3 row-start-1 mt-1 grid h-8 w-8 place-items-center justify-self-end self-start rounded-lg text-muted-foreground hover:bg-muted hover:text-primary sm:col-start-8 sm:justify-self-auto"
         aria-label={t("projectForm.remove")}
       >
         <Trash2 className="h-4 w-4" />

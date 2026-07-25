@@ -30,6 +30,11 @@ export interface ProjectListDTO {
   // Preformatted placement price — null means "no price set", i.e. render
   // the "on request" label. priceNote is a separate optional caption.
   priceDisplay: string | null;
+  // Sums across the project's sponsorship tiers (null slots count as 0) —
+  // powers the "X / Y placements available" indicator on the catalog card.
+  // slotsTotal === 0 means no tier has a total set, i.e. hide the indicator.
+  slotsAvailable: number;
+  slotsTotal: number;
 }
 
 export interface ProjectDetailDTO extends ProjectListDTO {
@@ -44,6 +49,7 @@ export interface ProjectDetailDTO extends ProjectListDTO {
   references: string[]; // comparable titles, parsed from the comma list
   cinemas: string[]; // exhibition venues, parsed from the comma list
   tiers: TierDTO[]; // sponsorship packages (the productised offer)
+  milestones: MilestoneDTO[]; // Ф4/#27 production-timeline nodes (sortOrder asc)
   // ── Video (#10) — rendered near the top of the report page ──
   videoEmbedUrl: string; // YouTube/Vimeo URL; "" when unset
   videoFile: string; // uploaded MP4 path; "" when unset
@@ -52,7 +58,8 @@ export interface ProjectDetailDTO extends ProjectListDTO {
 export interface ActorDTO {
   id: number;
   name: string;
-  role: string;
+  role: string; // legacy single role — kept as a fallback for old readers
+  roles: string[]; // Ф3 multi-role (one person can be Actor+Producer+…)
   kind: string; // "CAST" | "CREW"
   photo: string; // uploaded headshot path, "" when none
 }
@@ -62,6 +69,17 @@ export interface TierDTO {
   name: string;
   priceDisplay: string; // preformatted in the visitor's currency
   benefits: string[]; // parsed from the JSON benefits column
+  isExclusive: boolean;
+  availableSlots: number | null; // null -> unspecified, don't render a count
+  totalSlots: number | null;
+}
+
+export interface MilestoneDTO {
+  id: number;
+  label: string; // free-text stage name
+  date: string | null; // ISO date, null when unset
+  note: string; // one free-text line, "" when unset
+  isActive: boolean; // the current stage — highlighted on the timeline
 }
 
 export interface PortfolioDTO {

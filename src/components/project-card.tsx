@@ -85,6 +85,11 @@ export function ProjectCard({
           {project.placementType ? (
             <AccentBadge>{localizeValue(locale, "placement", project.placementType)}</AccentBadge>
           ) : null}
+          {project.slotsTotal > 0 ? (
+            <GenreBadge>
+              {project.slotsAvailable} / {project.slotsTotal} {t("card.slotsAvailable")}
+            </GenreBadge>
+          ) : null}
         </div>
         <div className="mt-4 flex flex-col gap-2 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">

@@ -46,7 +46,9 @@ export async function uploadMemberImage(fd: FormData): Promise<{ path?: string; 
 
   if (kind === "video") {
     if (file.size > MAX_BYTES_VIDEO) return { error: "File too large (max 50 MB)." };
-    const ext = EXT_BY_TYPE_VIDEO[file.type];
+    // See uploads.ts: fall back to the filename extension when the browser sends
+    // a blank/non-standard MIME for an otherwise valid mp4/webm.
+    const ext = EXT_BY_TYPE_VIDEO[file.type] || file.name.toLowerCase().match(/\.(mp4|webm)$/)?.[1];
     if (!ext) return { error: "Unsupported type — use MP4 or WebM." };
 
     const name = `${Date.now()}-${randomUUID().slice(0, 8)}.${ext}`;

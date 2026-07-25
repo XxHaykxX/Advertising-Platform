@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Image from "next/image";
 import {
   DndContext,
@@ -19,10 +19,11 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Loader2, Plus, Trash2, User, X } from "lucide-react";
+import { GripVertical, Loader2, Plus, Search, Trash2, User, X } from "lucide-react";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { MediaPicker } from "@/components/media-picker";
 import type { PersonRow } from "@/lib/data/persons";
+import { matchesNameQuery } from "@/lib/translit";
 import { createPerson, deletePerson, reorderPersons, updatePerson } from "./person-actions";
 
 type PersonPatch = Partial<Pick<PersonRow, "name" | "role" | "kind" | "photo">>;
@@ -35,6 +36,7 @@ const inputCls =
 // reorder uses the same @dnd-kit sortable setup as reorder-list.tsx.
 export function CastManager({ persons }: { persons: PersonRow[] }) {
   const [rows, setRows] = useState(persons);
+  const [search, setSearch] = useState("");
   const [pending, startTransition] = useTransition();
   const [showSaved, setShowSaved] = useState(false);
   const savedTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -149,6 +151,13 @@ export function CastManager({ persons }: { persons: PersonRow[] }) {
     });
   }
 
+  // Cross-language substring filter (matchesNameQuery matches latin "raf"
+  // against "Ռաֆայել" too) — client-side over the already-loaded rows, same
+  // reasoning as the media-manager filename search. `from`/`to` in move()
+  // still index into the full `rows` array via id lookup, so dragging within
+  // a filtered view reorders correctly.
+  const shown = useMemo(() => rows.filter((r) => matchesNameQuery(r.name, search)), [rows, search]);
+
   return (
     <div>
       <div className="mb-3 flex h-8 items-center justify-between gap-2">
@@ -160,18 +169,36 @@ export function CastManager({ persons }: { persons: PersonRow[] }) {
           )}
           {showSaved && !pending && <span className="font-medium text-success">Saved</span>}
         </div>
-        <button
-          type="button"
-          onClick={addPerson}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs text-foreground hover:border-primary/40"
-        >
-          <Plus className="h-3.5 w-3.5" /> Add person
-        </button>
+        <div className="flex items-center gap-2">
+          {rows.length > 0 && (
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search by name…"
+                className="w-48 rounded-lg border border-border bg-card py-1.5 pl-8 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none sm:w-64"
+              />
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={addPerson}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs text-foreground hover:border-primary/40"
+          >
+            <Plus className="h-3.5 w-3.5" /> Add person
+          </button>
+        </div>
       </div>
 
       {rows.length === 0 ? (
         <p className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
           No one yet — click “Add person” to start the directory.
+        </p>
+      ) : shown.length === 0 ? (
+        <p className="rounded-2xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+          No one matches “{search}”.
         </p>
       ) : (
         <div className="overflow-hidden rounded-2xl border border-border bg-card">
@@ -190,9 +217,9 @@ export function CastManager({ persons }: { persons: PersonRow[] }) {
             modifiers={[restrictToVerticalAxis, restrictToParentElement]}
             onDragEnd={handleDragEnd}
           >
-            <SortableContext items={rows.map((r) => r.id)} strategy={verticalListSortingStrategy}>
+            <SortableContext items={shown.map((r) => r.id)} strategy={verticalListSortingStrategy}>
               <div className="divide-y divide-border">
-                {rows.map((r) => (
+                {shown.map((r) => (
                   <SortableRow
                     key={r.id}
                     person={r}
