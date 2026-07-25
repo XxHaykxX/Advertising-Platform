@@ -88,8 +88,21 @@ User decision 2026-07-25 (build after next compact; do NOT deploy until told):
 ## Part E — Remove Status column from /admin/projects list (DONE)
 reorder-list.tsx: dropped the `<th>Status</th>` header + the `<StatusPill>` cell in
 BOTH tables (SUPERADMIN + PUBLISHER views), removed the now-dead `StatusPill`
-component + `STATUS_PILL` map, adjusted empty-state colSpans (7→6, 5→4). Status
-filter dropdown kept (`STATUS_LABEL` still used). Cosmetic, no DB.
+component + `STATUS_PILL` map, adjusted empty-state colSpans (7→6, 5→4).
+
+**Update 2026-07-25 (prod 1bf56a2):** the Status **filter dropdown** was ALSO
+removed at the user's request ("И фильтр с statusami") — FilterBar now offers
+Search title + Visibility only. `STATUS_LABEL`, `status` on `Filters` /
+`ProjectRow`, and the `applyFilters` status clause are gone; page.tsx no longer
+maps `status`. Cosmetic, no DB.
+
+**Deploy gotcha (root cause of a "column still there" report):** the Hostinger
+git build of the first commit (0bc603e) FAILED silently (fast fail, empty logs)
+so prod kept serving the previous build with the column visible — even though
+`git push` succeeded and prod returned 200. Always verify
+`hosting_listNodeJSBuildsV1` shows the latest build `completed` (not
+`failed`/`running`) after a push; re-push to re-trigger the git deploy on
+failure. Local `next build` was green — the failure was transient on their side.
 
 ## Parts D/E status
 DONE + DEPLOYED 2026-07-25. Additive code only (video columns videoEmbedUrl/
