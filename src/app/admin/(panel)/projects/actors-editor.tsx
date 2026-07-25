@@ -244,6 +244,8 @@ function PersonNameField({
   onSelectPerson,
   placeholder,
   inputRef,
+  unlinked = false,
+  unlinkedHint,
 }: {
   value: string;
   knownPeople: PersonSuggestion[];
@@ -251,6 +253,10 @@ function PersonNameField({
   onSelectPerson: (p: PersonSuggestion) => void;
   placeholder: string;
   inputRef: (el: HTMLInputElement | null) => void;
+  /** Name is filled but not linked to a directory Person — the row won't be
+   *  saved (cast is pick-only). Show a hint so it isn't a silent drop. */
+  unlinked?: boolean;
+  unlinkedHint: string;
 }) {
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -312,8 +318,11 @@ function PersonNameField({
         role="combobox"
         aria-expanded={open}
         aria-autocomplete="list"
-        className={cellCls}
+        className={cn(cellCls, unlinked && "border-danger/60 focus:border-danger")}
       />
+      {unlinked && !open && (
+        <p className="mt-0.5 px-2 text-[11px] leading-tight text-danger">{unlinkedHint}</p>
+      )}
       {open && filtered.length > 0 && (
         <ul
           role="listbox"
@@ -447,6 +456,8 @@ function ActorTableRow({
           onSelectPerson={onSelectPerson}
           placeholder={t("projectForm.cast.name")}
           inputRef={nameInputRef}
+          unlinked={!!r.name.trim() && r.personId == null}
+          unlinkedHint={t("projectForm.cast.notInDirectory")}
         />
       </div>
       <div className="col-start-3 row-start-2 sm:col-start-4 sm:row-start-1">

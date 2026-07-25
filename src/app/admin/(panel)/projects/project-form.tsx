@@ -49,7 +49,6 @@ const CONTROLLED_NAMES = new Set([
   "cinemas",
   "language",
   "kind",
-  "streamingSource",
   "actorsRows",
   "tiersRows",
   "references",
@@ -86,18 +85,8 @@ const EMPTY: ProjectFormInitial = {
   episodeMinutes: null,
   durationMinutes: null,
   status: "PRE_PRODUCTION",
-  releaseLabel: "",
   countries: "",
-  audienceGender: "All",
-  audienceAge: "",
   ageRating: "",
-  projViews: "",
-  budgetMinAmd: null,
-  budgetMaxAmd: null,
-  cpmMinAmd: null,
-  cpmMaxAmd: null,
-  priceMinAmd: null,
-  priceMaxAmd: null,
   boxOfficeAmd: null,
   isActive: true,
   sortOrder: 0,
@@ -107,12 +96,10 @@ const EMPTY: ProjectFormInitial = {
   platforms: "",
   streamingSource: "",
   placementType: "",
-  priceNote: "",
   tagline: "",
   taglineHy: "",
   taglineRu: "",
   taglineEn: "",
-  subgenre: "",
   references: "",
   cinemas: "",
   videoEmbedUrl: "",
@@ -147,11 +134,22 @@ function numOrEmpty(n: number | null): number | string {
 // labelable control inside: the file picker pops open, or a MultiSelect chip's
 // remove button fires. Using a <div> (with a caption <span>) severs that
 // implicit association and kills that whole class of mis-click bug.
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({
+  label,
+  hint,
+  children,
+}: {
+  label: string;
+  /** Optional helper text, rendered under the field — for fields whose
+   *  purpose/format isn't obvious from the label alone. */
+  hint?: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="block">
       <span className={labelCls}>{label}</span>
       {children}
+      {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
     </div>
   );
 }
@@ -286,9 +284,9 @@ export function ProjectForm({
   const [platforms, setPlatforms] = useState<string[]>(() => parseCsvInput(data.platforms));
   const [cinemas, setCinemas] = useState<string[]>(() => parseCsvInput(data.cinemas));
   const [languages, setLanguages] = useState<string[]>(() => parseCsvInput(data.language));
-  const [streamingSource, setStreamingSource] = useState<string[]>(() => parseCsvInput(data.streamingSource));
   // Global Streaming Source dictionary (Ф2/#25) — seeded from the server, then
   // kept in sync client-side as options are deleted via the dropdown's "×".
+  // Now powers the merged "Available on" field (Platforms + Streaming source).
   const [streamOptions, setStreamOptions] = useState<string[]>(() => streamingSources);
   const [, startStreamOptionTransition] = useTransition();
   // ── Cast/crew + sponsorship tiers, inline (#20²) ──
@@ -420,7 +418,7 @@ export function ProjectForm({
     if (isEdit) return;
     scheduleSaveDraft();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [genres, kind, countries, platforms, cinemas, languages, streamingSource, actors, tiers, references, milestones]);
+  }, [genres, kind, countries, platforms, cinemas, languages, actors, tiers, references, milestones]);
 
   // After a restore bumps restoreNonce, the form has re-rendered with the new
   // controlled state (and any conditional SERIAL fields now exist), so replay
@@ -468,7 +466,6 @@ export function ProjectForm({
     setPlatforms(parseArr(obj.platforms));
     setCinemas(parseArr(obj.cinemas));
     setLanguages(parseArr(obj.language));
-    setStreamingSource(parseArr(obj.streamingSource));
     setActors(parseArr(obj.actorsRows) as unknown as ActorRow[]);
     setTiers(parseArr(obj.tiersRows) as unknown as TierRow[]);
     setReferences(parseArr(obj.references) as unknown as ReferenceRow[]);
@@ -568,27 +565,16 @@ export function ProjectForm({
         <input type="hidden" name="milestonesRows" value={JSON.stringify(milestones)} />
       )}
 
-      {/* Admin redesign phase 1: these fields were dropped from the UI but the
-          server action still reads them via formData.get() on every save — an
+      {/* Admin redesign phase 1: formatCategory was dropped from the UI but the
+          server action still reads it via formData.get() on every save — an
           absent field would silently blank out existing data on edit. Carried
-          as hidden inputs so a save round-trips whatever value the row already
-          has instead of clearing it. formatCategory is still derived
-          server-side (deriveFormatCategory, used by the public catalog Format
-          filter) even though its own dropdown is gone. budgetMinAmd/
-          budgetMaxAmd/cpmMinAmd/cpmMaxAmd (Ф2) were also missing from this
-          list — the catalog's Budget filter/sort and the report page's CPM
-          display both read them, so every edit-save was silently zeroing
-          them out; carried here the same way instead. */}
+          as a hidden input so a save round-trips whatever value the row
+          already has instead of clearing it. It's still derived server-side
+          (deriveFormatCategory, used by the public catalog Format filter)
+          even though its own dropdown is gone. (Views/Budget/CPM/Audience/
+          Price/Subgenre/Release label were dropped from the schema entirely
+          in Ф2/#30 — no longer round-tripped here.) */}
       <input type="hidden" name="formatCategory" defaultValue={data.formatCategory} />
-      <input type="hidden" name="priceMinAmd" defaultValue={numOrEmpty(data.priceMinAmd)} />
-      <input type="hidden" name="priceMaxAmd" defaultValue={numOrEmpty(data.priceMaxAmd)} />
-      <input type="hidden" name="priceNote" defaultValue={data.priceNote} />
-      <input type="hidden" name="audienceGender" defaultValue={data.audienceGender} />
-      <input type="hidden" name="audienceAge" defaultValue={data.audienceAge} />
-      <input type="hidden" name="budgetMinAmd" defaultValue={numOrEmpty(data.budgetMinAmd)} />
-      <input type="hidden" name="budgetMaxAmd" defaultValue={numOrEmpty(data.budgetMaxAmd)} />
-      <input type="hidden" name="cpmMinAmd" defaultValue={numOrEmpty(data.cpmMinAmd)} />
-      <input type="hidden" name="cpmMaxAmd" defaultValue={numOrEmpty(data.cpmMaxAmd)} />
 
       {/* ── Sticky Save bar ── pinned so Submit/dirty-state is reachable
           without scrolling to the bottom of a long form. Duplicates the
@@ -997,14 +983,12 @@ export function ProjectForm({
           </section>
 
           {/* ── Production Info ── project status/timeline + where it plays:
-              Status, Release date, Application deadline, Platforms, Cinemas,
-              Placement type. Price note/min/max and audience gender/age used to
-              live here (or in Audience & value) — they're hidden inputs now
-              (see the top of the form) so a save keeps whatever value the row
-              already has instead of blanking it. */}
+              Status, Release date, Application deadline, Available on
+              (Platforms + Streaming source merged, #29), Cinemas, Placement
+              type. The ambiguous ones carry a helper hint under the field. */}
           <section id="sec-production" className="scroll-mt-24 space-y-3 rounded-xl border border-border bg-card p-4">
             <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">{t("projectForm.section.production")}</h2>
-            <Field label={t("projectForm.field.status")}>
+            <Field label={t("projectForm.field.status")} hint={t("projectForm.help.status")}>
               <select name="status" defaultValue={data.status} className={inputCls}>
                 {STATUS_OPTIONS.map((o) => (
                   <option key={o} value={o}>
@@ -1016,15 +1000,7 @@ export function ProjectForm({
             <Field label={t("projectForm.field.releaseDate")}>
               <input name="releaseDate" type="date" defaultValue={data.releaseDate} className={inputCls} />
             </Field>
-            <Field label={t("projectForm.field.expectedReleaseDate")}>
-              <input
-                name="expectedReleaseDate"
-                type="date"
-                defaultValue={data.expectedReleaseDate}
-                className={inputCls}
-              />
-            </Field>
-            <Field label={t("projectForm.field.applicationDeadline")}>
+            <Field label={t("projectForm.field.applicationDeadline")} hint={t("projectForm.help.placementDeadline")}>
               <input
                 name="applicationDeadline"
                 type="date"
@@ -1032,26 +1008,19 @@ export function ProjectForm({
                 className={inputCls}
               />
             </Field>
-            <Field label={t("projectForm.field.platforms")}>
+            {/* "Available on" (#29) — Platforms + Streaming source merged into
+                one field. Still submits name="platforms" (the public catalog
+                Platforms filter reads that column), but now carries the global
+                streaming-source dictionary UX (allowCustom + staff-only delete)
+                the old Streaming Source field had. */}
+            <Field label={t("projectForm.field.availableOn")} hint={t("projectForm.help.availableOn")}>
               <MultiSelect
-                options={[]}
+                options={streamOptions}
                 value={platforms}
                 onChange={setPlatforms}
                 name="platforms"
                 allowCustom
-                placeholder={t("projectForm.platformsPlaceholder")}
-                addLabel={t("ui.addOption")}
-                removeLabel={t("ui.remove")}
-              />
-            </Field>
-            <Field label={t("projectForm.field.streamingSource")}>
-              <MultiSelect
-                options={streamOptions}
-                value={streamingSource}
-                onChange={setStreamingSource}
-                name="streamingSource"
-                allowCustom
-                placeholder={t("projectForm.streamingSourcePlaceholder")}
+                placeholder={t("projectForm.availableOnPlaceholder")}
                 addLabel={t("ui.addOption")}
                 removeLabel={t("ui.remove")}
                 // Deleting a dictionary value is global (every project loses it
@@ -1064,7 +1033,7 @@ export function ProjectForm({
                         startStreamOptionTransition(async () => {
                           await deleteStreamingSource(v);
                           setStreamOptions((opts) => opts.filter((x) => x !== v));
-                          setStreamingSource((sel) => sel.filter((x) => x !== v));
+                          setPlatforms((sel) => sel.filter((x) => x !== v));
                         });
                       }
                 }
@@ -1082,7 +1051,7 @@ export function ProjectForm({
                 removeLabel={t("ui.remove")}
               />
             </Field>
-            <Field label={t("projectForm.field.placementType")}>
+            <Field label={t("projectForm.field.placementType")} hint={t("projectForm.help.placementType")}>
               <select name="placementType" defaultValue={data.placementType} className={inputCls}>
                 <option value="">—</option>
                 {PLACEMENT_TYPE_VALUES.map((pt) => (

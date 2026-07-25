@@ -66,18 +66,10 @@ function BrowseCard({
             <MapPin className="h-3.5 w-3.5 shrink-0" />
             <span>{countries.slice(0, 3).join(", ")}</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <Users className="h-3.5 w-3.5 shrink-0" />
-            <span>
-              {[localizeValue(locale, "gender", project.audienceGender), project.audienceAge]
-                .filter(Boolean)
-                .join(", ")}
-            </span>
-          </div>
         </div>
 
-        {project.budgetDisplay ? (
-          <p className="mt-3 text-sm font-semibold text-foreground">{project.budgetDisplay}</p>
+        {project.boxOfficeDisplay ? (
+          <p className="mt-3 text-sm font-semibold text-foreground">{project.boxOfficeDisplay}</p>
         ) : null}
 
         <div className="mt-auto pt-5">

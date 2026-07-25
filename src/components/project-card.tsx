@@ -4,16 +4,14 @@ import {
   Calendar,
   Clapperboard,
   Clock,
-  Eye,
   Film,
   MapPin,
-  Users,
   Wallet,
 } from "lucide-react";
 import { AccentBadge, GenreBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FavoriteHeart } from "@/components/favorite-heart";
-import { daysUntil, formatCompactNumber, formatFullDate, formatMonthYear, parseStringArray, splitCountries } from "@/lib/data/format";
+import { daysUntil, formatFullDate, formatMonthYear, parseStringArray, splitCountries } from "@/lib/data/format";
 import { cn } from "@/lib/utils";
 import { DEFAULT_LOCALE, intlLocale, localizeValue, makeUI, type Locale } from "@/lib/i18n";
 import type { SiteHeaderUser } from "@/components/header";
@@ -103,24 +101,10 @@ export function ProjectCard({
               {extraCountries > 0 ? ` +${extraCountries}` : ""}
             </span>
           </div>
-          <div className="flex items-center gap-2">
-            <Users className="h-3.5 w-3.5 shrink-0" />
-            <span>
-              {[localizeValue(locale, "gender", project.audienceGender), project.audienceAge]
-                .filter(Boolean)
-                .join(", ")}
-            </span>
-          </div>
-          {project.budgetDisplay ? (
+          {project.boxOfficeDisplay ? (
             <div className="flex items-center gap-2">
               <Wallet className="h-3.5 w-3.5 shrink-0" />
-              <span>{project.budgetDisplay}</span>
-            </div>
-          ) : null}
-          {project.projViews ? (
-            <div className="flex items-center gap-2">
-              <Eye className="h-3.5 w-3.5 shrink-0" />
-              <span>{formatCompactNumber(project.projViews, locale)} {t("card.projectedViews")}</span>
+              <span>{t("card.boxOffice")}: {project.boxOfficeDisplay}</span>
             </div>
           ) : null}
           {releaseLabel ? (
@@ -149,11 +133,6 @@ export function ProjectCard({
             ))}
           </div>
         ) : null}
-
-        <p className="mt-3 text-xs text-muted-foreground">
-          {project.priceDisplay ?? t("keyFacts.onRequest")}
-          {project.priceNote ? <span className="ml-1">({project.priceNote})</span> : null}
-        </p>
 
         {/* The interest action moved to the heart (favorite) + the report page's
             Apply popup, so the card keeps a single "View report" CTA. */}

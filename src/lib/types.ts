@@ -10,26 +10,15 @@ export interface ProjectListDTO {
   language: string; // primary language (Armenian|Russian|…); "" when unset
   studio: string;
   countries: string;
-  audienceGender: string;
-  audienceAge: string;
   ageRating: string; // content rating badge ("16+", "18+"); "" when unset
-  projViews: string;
-  // Budget is preformatted (converted + symbol) by the data layer — a single
-  // formatting point so display components never touch currency math.
-  budgetDisplay: string; // "" when both bounds are unset
-  // Raw AMD bounds, alongside budgetDisplay, for numeric filtering/sorting
-  // (catalog budget filter) — always AMD regardless of the chosen currency.
-  budgetMinAmd: number | null;
-  budgetMaxAmd: number | null;
+  // Preformatted (converted + symbol) by the data layer — a single formatting
+  // point so display components never touch currency math. "" when unset.
+  boxOfficeDisplay: string;
   status: string;
   applicationDeadline: string | null;
   releaseDate: string | null;
   platforms: string; // JSON string[]; parse with parseStringArray
   placementType: string | null;
-  priceNote: string | null;
-  // Preformatted placement price — null means "no price set", i.e. render
-  // the "on request" label. priceNote is a separate optional caption.
-  priceDisplay: string | null;
   // Sums across the project's sponsorship tiers (null slots count as 0) —
   // powers the "X / Y placements available" indicator on the catalog card.
   // slotsTotal === 0 means no tier has a total set, i.e. hide the indicator.
@@ -40,12 +29,9 @@ export interface ProjectListDTO {
 export interface ProjectDetailDTO extends ProjectListDTO {
   gallery: string;
   status: string;
-  releaseLabel: string;
-  cpmDisplay: string; // "" when both bounds are unset
   actors: ActorDTO[];
   // ── Press-kit fields (Aram) ──
   tagline: string; // "" when unset
-  subgenre: string; // "" when unset
   references: string[]; // comparable titles, parsed from the comma list
   cinemas: string[]; // exhibition venues, parsed from the comma list
   tiers: TierDTO[]; // sponsorship packages (the productised offer)

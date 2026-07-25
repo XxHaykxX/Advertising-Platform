@@ -25,7 +25,6 @@ export type DashboardProjectDTO = {
   title: string;
   genre: string;
   poster: string;
-  releaseLabel: string;
 };
 
 // Duplicated from parseGenresInput in admin/projects/form-shared.ts — same
@@ -92,7 +91,6 @@ export async function getRecommendedProjects(
     title: pickTitle(locale, p),
     genre: p.genre,
     poster: p.poster ?? "",
-    releaseLabel: p.releaseLabel,
   }));
 }
 
@@ -110,6 +108,5 @@ export async function getRecentProjects(locale: Locale, limit = 4): Promise<Dash
     title: pickTitle(locale, p),
     genre: p.genre,
     poster: p.poster ?? "",
-    releaseLabel: p.releaseLabel,
   }));
 }

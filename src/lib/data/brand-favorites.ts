@@ -17,7 +17,6 @@ export type BrandFavoriteDTO = {
     genre: string;
     poster: string;
     format: string;
-    releaseLabel: string;
   };
 };
 
@@ -50,7 +49,6 @@ export async function getBrandFavorites(brandId: number, locale: Locale): Promis
       genre: r.project.genre,
       poster: r.project.poster ?? "",
       format: r.project.format,
-      releaseLabel: r.project.releaseLabel,
     },
   }));
 }

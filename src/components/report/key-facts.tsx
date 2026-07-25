@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarClock, CalendarDays, DollarSign } from "lucide-react";
+import { CalendarClock, CalendarDays } from "lucide-react";
 import { AccentBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/ui/reveal";
@@ -60,12 +60,6 @@ export function KeyFacts({
                   value={deadline}
                 />
               ) : null}
-
-              <Fact
-                icon={<DollarSign className="h-3.5 w-3.5" />}
-                label={t("keyFacts.price")}
-                value={project.priceDisplay ?? t("keyFacts.onRequest")}
-              />
 
               {platforms.length > 0 ? (
                 <div className="sm:col-span-2">

@@ -295,9 +295,9 @@ export const UI: Record<string, Dict> = {
   "genre.Reality Show": { ru: "Реалити-шоу", en: "Reality Show", hy: "Ռեալիթի-շոու" },
   "genre.Western": { ru: "Вестерн", en: "Western", hy: "Վեսթեռն" },
   "genre.Interview": { ru: "Интервью", en: "Interview", hy: "Հարցազրույց" },
-  "placement.In-Frame": { ru: "В кадре", en: "In-Frame", hy: "Կադրում" },
-  "placement.Story Integration": { ru: "Интеграция в сюжет", en: "Story Integration", hy: "Սյուժեի ինտեգրում" },
-  "placement.Mention": { ru: "Упоминание", en: "Mention", hy: "Հիշատակում" },
+  "placement.In-Frame": { ru: "На экране (в кадре)", en: "On-screen (In-frame)", hy: "Էկրանին (կադրում)" },
+  "placement.Story Integration": { ru: "Интеграция в сюжет", en: "Story integration", hy: "Սյուժեի ինտեգրում" },
+  "placement.Mention": { ru: "Устное упоминание", en: "Verbal mention", hy: "Բանավոր հիշատակում" },
   // Cast & crew ROLES (IA-23) — localized via localizeValue(locale, "role", value).
   // Roles are free text entered per actor, so this is best-effort: standard
   // crew/cast roles map here (keyed by both the Armenian source, as stored, and
@@ -753,7 +753,10 @@ export const UI: Record<string, Dict> = {
   "keyFacts.applicationDeadline": { ru: "Срок подачи заявок", en: "Application Deadline", hy: "Հայտերի ընդունման վերջնաժամկետ" },
   "keyFacts.price": { ru: "Цена", en: "Price", hy: "Գին" },
   "keyFacts.onRequest": { ru: "По запросу", en: "On request", hy: "Ըստ պահանջի" },
-  "keyFacts.platforms": { ru: "Площадки", en: "Platforms", hy: "Հարթակներ" },
+  "keyFacts.platforms": { ru: "Где смотреть", en: "Available on", hy: "Հասանելի է" },
+  "keyFacts.boxOffice": { ru: "Кассовый сбор", en: "Box office", hy: "Դրամարկղ" },
+  "card.boxOffice": { ru: "Кассовый сбор", en: "Box office", hy: "Դրամարկղ" },
+  "report.boxOffice": { ru: "Кассовый сбор", en: "Box office", hy: "Դրամարկղ" },
 
   // ── report: ROI / express interest banner ──────
   "roi.title": { ru: "Прогноз ROI", en: "Estimated ROI Snapshot", hy: "Կանխատեսվող ROI-ի պատկեր" },
@@ -1247,14 +1250,36 @@ export const UI: Record<string, Dict> = {
   "projectForm.field.synopsisHy": { ru: "Синопсис (HY)", en: "Synopsis (HY)", hy: "Սինոպսիս (HY)" },
   "projectForm.field.synopsisRu": { ru: "Синопсис (RU)", en: "Synopsis (RU)", hy: "Սինոպսիս (RU)" },
   "projectForm.field.synopsisEn": { ru: "Синопсис (EN)", en: "Synopsis (EN)", hy: "Սինոպսիս (EN)" },
-  "projectForm.field.status": { ru: "Статус", en: "Status", hy: "Կարգավիճակ" },
+  "projectForm.field.status": { ru: "Стадия производства", en: "Production stage", hy: "Արտադրության փուլ" },
+  "projectForm.help.status": {
+    ru: "На каком этапе фильм. Используется фильтром каталога; бренд может присоединиться, пока идёт пре-продакшен / съёмки.",
+    en: "Where the film is in its lifecycle. Powers the catalog filter; a brand can only join while in pre-production / filming.",
+    hy: "Ֆիլմի փուլը։ Օգտագործվում է կատալոգի զտիչում. բրենդը կարող է միանալ միայն նախապատրաստման / նկարահանման ընթացքում։",
+  },
+  "projectForm.help.placementDeadline": {
+    ru: "Последняя дата, когда бренд может подать заявку на размещение — после неё монтаж закрыт.",
+    en: "Last date a brand can apply for a placement — after this the shoot / edit is locked.",
+    hy: "Վերջին ամսաթիվը, երբ բրենդը կարող է դիմել տեղադրման համար — դրանից հետո մոնտաժը փակ է։",
+  },
+  "projectForm.help.availableOn": {
+    ru: "Стриминги / онлайн-площадки, где идёт фильм. Показывается брендам и работает в фильтре каталога.",
+    en: "Streaming / online platforms where the film is watchable. Shown to brands and used by the catalog filter.",
+    hy: "Սթրիմինգ / առցանց հարթակներ, որտեղ ֆիլմը հասանելի է։ Ցուցադրվում է բրենդներին և օգտագործվում կատալոգի զտիչում։",
+  },
+  "projectForm.help.placementType": {
+    ru: "Как продукт бренда появляется на экране.",
+    en: "How the brand's product appears on screen.",
+    hy: "Ինչպես է բրենդի արտադրանքը հայտնվում էկրանին։",
+  },
+  "projectForm.field.availableOn": { ru: "Где смотреть", en: "Available on", hy: "Հասանելի է" },
+  "projectForm.availableOnPlaceholder": { ru: "Kinodaran, YouTube, TV…", en: "Kinodaran, YouTube, TV…", hy: "Kinodaran, YouTube, TV…" },
   "projectForm.status.PRE_PRODUCTION": { ru: "Пре-продакшен", en: "Pre-production", hy: "Նախապատրաստական փուլ" },
   "projectForm.status.FILMING": { ru: "Съёмки", en: "Filming", hy: "Նկարահանումներ" },
   "projectForm.status.POST_PRODUCTION": { ru: "Пост-продакшен", en: "Post-production", hy: "Հետնկարահանման փուլ" },
   "projectForm.status.RELEASED": { ru: "Вышел", en: "Released", hy: "Թողարկված" },
   "projectForm.field.countries": { ru: "Страны", en: "Countries", hy: "Երկրներ" },
   "projectForm.countriesPlaceholder": { ru: "США, Великобритания, …", en: "US, UK, …", hy: "ԱՄՆ, Մեծ Բրիտանիա, …" },
-  "projectForm.field.applicationDeadline": { ru: "Срок подачи заявок", en: "Application deadline", hy: "Հայտերի ընդունման վերջնաժամկետ" },
+  "projectForm.field.applicationDeadline": { ru: "Дедлайн размещения", en: "Placement deadline", hy: "Տեղադրման վերջնաժամկետ" },
   "projectForm.field.releaseDate": { ru: "Дата релиза", en: "Release date", hy: "Թողարկման ամսաթիվ" },
   "projectForm.field.expectedReleaseDate": {
     ru: "Ожидаемая дата выхода",
@@ -1333,7 +1358,7 @@ export const UI: Record<string, Dict> = {
   "report.milestones.done": { ru: "Завершено", en: "Done", hy: "Ավարտված" },
   "report.milestones.currentStage": { ru: "Текущий этап", en: "Current stage", hy: "Ընթացիկ փուլ" },
   "report.milestones.upcoming": { ru: "Впереди", en: "Upcoming", hy: "Առջևում" },
-  "projectForm.field.cinemas": { ru: "Кинотеатры / площадки показа", en: "Cinemas / exhibition venues", hy: "Կինոթատրոններ / ցուցադրման վայրեր" },
+  "projectForm.field.cinemas": { ru: "Показ в кинотеатрах", en: "Cinema release", hy: "Կինոթատրոնային ցուցադրում" },
   "projectForm.cinemasPlaceholder": {
     ru: "Cinema Star, Moscow Cinema, Kino Park",
     en: "Cinema Star, Moscow Cinema, Kino Park",
@@ -1346,6 +1371,11 @@ export const UI: Record<string, Dict> = {
   "projectForm.cast.members": { ru: "участника", en: "members", hy: "անդամ" },
   "projectForm.cast.addMember": { ru: "Добавить участника", en: "Add member", hy: "Ավելացնել անդամ" },
   "projectForm.cast.empty": { ru: "Пока нет актёров / съёмочной группы.", en: "No cast / crew yet.", hy: "Դեռ դերասաններ / թիմ չկան։" },
+  "projectForm.cast.notInDirectory": {
+    ru: "Нет в справочнике — выберите из списка, иначе не сохранится.",
+    en: "Not in the directory — pick from the list or it won't be saved.",
+    hy: "Չկա տեղեկատուում — ընտրեք ցանկից, այլապես չի պահպանվի։",
+  },
   "projectForm.cast.name": { ru: "Имя", en: "Name", hy: "Անուն" },
   "projectForm.cast.namePlaceholder": { ru: "Найдите или введите новое имя…", en: "Search or type a new name…", hy: "Փնտրեք կամ մուտքագրեք նոր անուն…" },
   "projectForm.cast.role": { ru: "Роль", en: "Role", hy: "Դեր" },

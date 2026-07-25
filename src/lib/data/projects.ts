@@ -3,7 +3,7 @@ import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import type { ProjectListDTO, ProjectDetailDTO } from "@/lib/types";
 import type { Locale } from "@/lib/i18n";
-import { formatMoney, formatMoneyRange } from "@/lib/currency";
+import { formatMoney } from "@/lib/currency";
 import { getRates } from "@/lib/currency/rates";
 import type { CurrencyCode } from "@/lib/currency";
 import { deriveFormatCategory, parseRolesInput } from "@/app/admin/(panel)/projects/form-shared";
@@ -144,23 +144,13 @@ const getProjectsCached = unstable_cache(
     language: p.language,
     studio: p.studio,
     countries: localizeCountries(locale, p.countries),
-    audienceGender: p.audienceGender,
-    audienceAge: p.audienceAge,
     ageRating: p.ageRating,
-    projViews: p.projViews,
-    budgetDisplay: formatMoneyRange(p.budgetMinAmd, p.budgetMaxAmd, currency, rates, locale),
-    budgetMinAmd: p.budgetMinAmd,
-    budgetMaxAmd: p.budgetMaxAmd,
+    boxOfficeDisplay: p.boxOfficeAmd != null ? formatMoney(p.boxOfficeAmd, currency, rates, locale) : "",
     status: p.status,
     applicationDeadline: p.applicationDeadline?.toISOString() ?? null,
     releaseDate: p.releaseDate?.toISOString() ?? null,
     platforms: p.platforms ?? "[]",
     placementType: p.placementType,
-    priceNote: p.priceNote,
-    priceDisplay:
-      p.priceMinAmd != null && p.priceMaxAmd != null
-        ? formatMoneyRange(p.priceMinAmd, p.priceMaxAmd, currency, rates, locale)
-        : null,
     slotsAvailable: p.tiers.reduce((sum, tier) => sum + (tier.availableSlots ?? 0), 0),
     slotsTotal: p.tiers.reduce((sum, tier) => sum + (tier.totalSlots ?? 0), 0),
   }));
@@ -207,25 +197,13 @@ const getProjectCached = unstable_cache(
     language: p.language,
     studio: p.studio,
     status: p.status,
-    releaseLabel: p.releaseLabel,
     countries: localizeCountries(locale, p.countries),
-    audienceGender: p.audienceGender,
-    audienceAge: p.audienceAge,
     ageRating: p.ageRating,
-    projViews: p.projViews,
-    cpmDisplay: formatMoneyRange(p.cpmMinAmd, p.cpmMaxAmd, currency, rates, locale, { decimals: 2 }),
-    budgetDisplay: formatMoneyRange(p.budgetMinAmd, p.budgetMaxAmd, currency, rates, locale),
-    budgetMinAmd: p.budgetMinAmd,
-    budgetMaxAmd: p.budgetMaxAmd,
+    boxOfficeDisplay: p.boxOfficeAmd != null ? formatMoney(p.boxOfficeAmd, currency, rates, locale) : "",
     applicationDeadline: p.applicationDeadline?.toISOString() ?? null,
     releaseDate: p.releaseDate?.toISOString() ?? null,
     platforms: p.platforms ?? "[]",
     placementType: p.placementType,
-    priceNote: p.priceNote,
-    priceDisplay:
-      p.priceMinAmd != null && p.priceMaxAmd != null
-        ? formatMoneyRange(p.priceMinAmd, p.priceMaxAmd, currency, rates, locale)
-        : null,
     actors: p.actors.map((a) => ({
       id: a.id,
       name: a.name,
@@ -235,7 +213,6 @@ const getProjectCached = unstable_cache(
       photo: a.photo ?? "",
     })),
     tagline: pickLocale(locale, { hy: p.taglineHy, ru: p.taglineRu, en: p.taglineEn }, p.tagline ?? ""),
-    subgenre: p.subgenre ?? "",
     references: splitCommaList(p.references),
     cinemas: splitCommaList(p.cinemas),
     tiers: p.tiers.map((tier) => ({

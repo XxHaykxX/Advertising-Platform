@@ -1,8 +1,7 @@
 import Link from "next/link";
-import { Info, Lock, TrendingUp } from "lucide-react";
+import { Lock, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/ui/reveal";
-import { formatCompactNumber } from "@/lib/data/format";
 import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
 import { ReportInterestButton } from "@/components/report/report-interest-button";
 import type { SiteHeaderUser } from "@/components/header";
@@ -44,17 +43,6 @@ export function ExpressInterestBanner({
   );
 }
 
-function MetricLabel({ children, tooltip }: { children: string; tooltip: string }) {
-  return (
-    <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-      <span>{children}</span>
-      <span title={tooltip} className="inline-flex cursor-help">
-        <Info className="h-3.5 w-3.5 shrink-0" />
-      </span>
-    </div>
-  );
-}
-
 export function RoiSnapshot({
   project,
   locale = DEFAULT_LOCALE,
@@ -75,27 +63,6 @@ export function RoiSnapshot({
               <TrendingUp className="h-4 w-4" />
               {t("roi.title")}
             </div>
-
-            {project.projViews || project.cpmDisplay ? (
-              <div className="mt-6 grid grid-cols-1 gap-6 min-[420px]:grid-cols-2">
-                {project.projViews ? (
-                  <div>
-                    <div className="text-2xl font-extrabold text-foreground">{formatCompactNumber(project.projViews, locale)}</div>
-                    <MetricLabel tooltip={t("roi.projectedViewersTooltip")}>
-                      {t("roi.projectedViewers")}
-                    </MetricLabel>
-                  </div>
-                ) : null}
-                {project.cpmDisplay ? (
-                  <div>
-                    <div className="text-2xl font-extrabold text-foreground">{project.cpmDisplay}</div>
-                    <MetricLabel tooltip={t("roi.cpmTooltip")}>
-                      {t("roi.cpm")}
-                    </MetricLabel>
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
 
             <p className="mt-6 text-xs text-muted-foreground">
               {t("roi.poweredBy")}

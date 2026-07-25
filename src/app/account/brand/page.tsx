@@ -57,7 +57,6 @@ function RecentCard({ project, locale }: { project: DashboardProjectDTO; locale:
       <div className="p-4">
         <code className="text-xs font-semibold text-foreground">{project.code}</code>
         <p className="mt-1 text-sm text-muted-foreground">{localizeValue(locale, "genre", project.genre)}</p>
-        {project.releaseLabel ? <p className="text-xs text-muted-foreground">{project.releaseLabel}</p> : null}
       </div>
     </Link>
   );
@@ -118,7 +117,6 @@ export default async function BrandDashboardPage() {
                     title: interest.project.title,
                     genre: interest.project.genre,
                     poster: interest.project.poster,
-                    releaseLabel: interest.project.releaseLabel,
                   }}
                   genreLabel={localizeValue(locale, "genre", interest.project.genre)}
                 />

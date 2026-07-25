@@ -1,11 +1,11 @@
-import { DollarSign, Wallet, Eye } from "lucide-react";
+import { Wallet } from "lucide-react";
 import { Reveal } from "@/components/ui/reveal";
 import { BackButton, PrintButton, ShareButton } from "@/components/report/report-actions";
 import { PosterSlider } from "@/components/report/poster-slider";
 import { toEmbedUrl } from "@/components/report/report-video";
 import { StoryboardMarquee } from "@/components/report/storyboard-marquee";
 import { SynopsisDisclosure } from "@/components/report/synopsis-disclosure";
-import { formatCompactNumber, parseStringArray, splitCountries } from "@/lib/data/format";
+import { parseStringArray, splitCountries } from "@/lib/data/format";
 import { DEFAULT_LOCALE, localizeValue, makeUI, type Locale } from "@/lib/i18n";
 import type { ProjectDetailDTO } from "@/lib/types";
 
@@ -32,17 +32,11 @@ export function ReportHero({
   const videoSource =
     videoEmbed || project.videoFile ? { embed: videoEmbed, file: project.videoFile || null } : undefined;
 
-  const audience = [localizeValue(locale, "gender", project.audienceGender), project.audienceAge]
-    .filter(Boolean)
-    .join(" ");
   const metaItems = [
     localizeValue(locale, "genre", project.genre),
-    project.subgenre,
     project.format,
     project.studio,
     countries,
-    audience,
-    project.releaseLabel,
   ].filter(Boolean);
 
   return (
@@ -97,25 +91,11 @@ export function ReportHero({
             </div>
 
             <div className="grid grid-cols-2 gap-2 sm:gap-3">
-              {project.projViews ? (
-                <div className="rounded-xl border border-border bg-card p-3 sm:p-4">
-                  <Eye className="h-4 w-4 text-primary" />
-                  <div className="mt-2 break-words text-base font-bold text-foreground sm:text-lg">{formatCompactNumber(project.projViews, locale)}</div>
-                  <div className="text-xs text-muted-foreground">{t("report.projectedViews")}</div>
-                </div>
-              ) : null}
-              {project.cpmDisplay ? (
-                <div className="rounded-xl border border-border bg-card p-3 sm:p-4">
-                  <DollarSign className="h-4 w-4 text-primary" />
-                  <div className="mt-2 break-words text-base font-bold text-foreground sm:text-lg">{project.cpmDisplay}</div>
-                  <div className="text-xs text-muted-foreground">{t("report.cpm")}</div>
-                </div>
-              ) : null}
-              {project.budgetDisplay ? (
+              {project.boxOfficeDisplay ? (
                 <div className="rounded-xl border border-border bg-card p-3 sm:p-4">
                   <Wallet className="h-4 w-4 text-primary" />
-                  <div className="mt-2 break-words text-base font-bold text-foreground sm:text-lg">{project.budgetDisplay}</div>
-                  <div className="text-xs text-muted-foreground">{t("report.budgetRange")}</div>
+                  <div className="mt-2 break-words text-base font-bold text-foreground sm:text-lg">{project.boxOfficeDisplay}</div>
+                  <div className="text-xs text-muted-foreground">{t("report.boxOffice")}</div>
                 </div>
               ) : null}
             </div>

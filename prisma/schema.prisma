@@ -154,23 +154,11 @@ model Project {
   format         String        @default("") // "50 ep × 1m 15s"
   studio         String        @default("")
   status         ProjectStatus @default(PRE_PRODUCTION)
-  releaseLabel   String        @default("") // "Q1 2027"
   countries      String        @default("") // "US, UK, …"
-  audienceGender String        @default("All") // All | Male | Female
-  audienceAge    String        @default("") // "16-30"
   ageRating      String        @default("") // content rating badge on the poster: "16+", "18+", "12+", …
-  projViews      String        @default("") // "2.4M"
   // Money — admin enters AMD only; the public site converts + formats for
-  // display in the visitor's chosen currency (see src/lib/currency). All
-  // nullable: budget/CPM are context, placement price is optional (null ->
-  // "on request").
-  budgetMinAmd   Int?
-  budgetMaxAmd   Int?
-  cpmMinAmd      Int?
-  cpmMaxAmd      Int?
-  priceMinAmd    Int?
-  priceMaxAmd    Int?
-  boxOfficeAmd   Int? // box-office gross (кассовый сбор) — informational only, optional; replaces budgetMin/Max in admin
+  // display in the visitor's chosen currency (see src/lib/currency).
+  boxOfficeAmd   Int? // box-office gross (кассовый сбор) — informational only, optional
   isActive       Boolean       @default(true)
   sortOrder      Int           @default(0)
   createdAt      DateTime      @default(now())
@@ -192,14 +180,12 @@ model Project {
   streamingSource     String?   @db.Text // JSON/CSV multi (Kinodaran|YouTube|TV|Cinema) — Production Info
   platforms           String?   @db.Text // JSON string[]; nullable — MySQL forbids literal defaults on TEXT columns
   placementType       String? // "In-Frame" | "Story Integration" | "Mention"
-  priceNote           String?
 
   // ── Real press-kit fields (added for the Aram title, 2026-07-09) ──
   tagline   String? // one-line logline, shown in the report hero (base/fallback, mirrors `synopsis`)
   taglineHy String? @db.Text // per-locale logline (IA-23 press-kit localization)
   taglineRu String? @db.Text
   taglineEn String? @db.Text
-  subgenre  String? // e.g. "Musical" — narrower than `genre`
   references String? @db.Text // comparable titles ("Bohemian Rhapsody, Ray"), comma/JSON list
   cinemas    String? @db.Text // exhibition venues ("Cinema Star, Kino Park"), comma/JSON list
 

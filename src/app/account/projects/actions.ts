@@ -25,7 +25,6 @@ import type { ProjectFormValues, ProjectFormState } from "@/app/admin/(panel)/pr
    ownerId are forced below and must never be reachable from the form. */
 
 const STATUS_VALUES = ["PRE_PRODUCTION", "FILMING", "POST_PRODUCTION", "RELEASED"] as const;
-const GENDER_VALUES = ["All", "Male", "Female"] as const;
 
 // MySQL caps a plain (non-@db.Text) Prisma String column at VarChar(191) —
 // same boundary as the admin form's buildData().
@@ -126,18 +125,8 @@ function buildData(fd: FormData): ProjectFormValues {
     episodeMinutes: kind === "SERIAL" ? intOrNull(fd, "episodeMinutes") : null,
     durationMinutes: kind === "FILM" ? intOrNull(fd, "durationMinutes") : null,
     status: enumVal(fd, "status", STATUS_VALUES, "PRE_PRODUCTION"),
-    releaseLabel: str(fd, "releaseLabel", VARCHAR_MAX),
     countries: jsonArray<string>(fd, "countries").join(", ").slice(0, VARCHAR_MAX),
-    audienceGender: enumVal(fd, "audienceGender", GENDER_VALUES, "All"),
-    audienceAge: str(fd, "audienceAge", VARCHAR_MAX),
     ageRating: str(fd, "ageRating", VARCHAR_MAX),
-    projViews: str(fd, "projViews", VARCHAR_MAX),
-    budgetMinAmd: intOrNull(fd, "budgetMinAmd"),
-    budgetMaxAmd: intOrNull(fd, "budgetMaxAmd"),
-    cpmMinAmd: intOrNull(fd, "cpmMinAmd"),
-    cpmMaxAmd: intOrNull(fd, "cpmMaxAmd"),
-    priceMinAmd: intOrNull(fd, "priceMinAmd"),
-    priceMaxAmd: intOrNull(fd, "priceMaxAmd"),
     boxOfficeAmd: intOrNull(fd, "boxOfficeAmd"),
     // Never trusted from the form for a Creator submission — forced to false
     // below regardless of what buildData parses here.
@@ -149,12 +138,10 @@ function buildData(fd: FormData): ProjectFormValues {
     platforms: jsonArray<string>(fd, "platforms").join(", ").slice(0, VARCHAR_MAX),
     streamingSource: jsonArray<string>(fd, "streamingSource").join(", ").slice(0, VARCHAR_MAX),
     placementType: enumVal(fd, "placementType", [...PLACEMENT_TYPE_VALUES, ""] as const, ""),
-    priceNote: str(fd, "priceNote", VARCHAR_MAX),
     tagline: taglineRu || taglineHy || taglineEn,
     taglineHy,
     taglineRu,
     taglineEn,
-    subgenre: str(fd, "subgenre", VARCHAR_MAX),
     references: str(fd, "references"),
     cinemas: jsonArray<string>(fd, "cinemas").join(", "),
     videoEmbedUrl: str(fd, "videoEmbedUrl", VARCHAR_MAX),
@@ -215,36 +202,25 @@ function parseActorRows(fd: FormData) {
     });
 }
 
-/** Same Person-upsert-on-save as the admin action's resolveActorPersonIds —
-   see that copy's comment for the full rationale. Duplicated rather than
-   imported (same "different zone/trust level" reasoning as the auto-code
+/** FIND-ONLY resolve — see the admin action's resolveActorPersonIds for the
+   full rationale. Never creates a Person: rows with a personId pass through,
+   typed-only names match an existing directory Person by name, and unmatched
+   rows are DROPPED (no auto-create, user request 2026-07-25). Duplicated rather
+   than imported (same "different zone/trust level" reasoning as the auto-code
    generator below). */
 async function resolveActorPersonIds(
   tx: Prisma.TransactionClient,
   rows: ReturnType<typeof parseActorRows>,
 ): Promise<(ReturnType<typeof parseActorRows>[number] & { personId: number })[]> {
-  const newByName = new Map<string, number>();
   const resolved: (ReturnType<typeof parseActorRows>[number] & { personId: number })[] = [];
   for (const r of rows) {
     if (r.personId != null) {
       resolved.push({ ...r, personId: r.personId });
       continue;
     }
-    const key = r.name.toLowerCase();
-    let personId = newByName.get(key);
-    if (personId == null) {
-      // Reuse an existing same-name directory Person before creating one.
-      const existing = await tx.person.findFirst({ where: { name: r.name } });
-      personId =
-        existing?.id ??
-        (
-          await tx.person.create({
-            data: { name: r.name, role: r.role, kind: r.kind, photo: r.photo },
-          })
-        ).id;
-      newByName.set(key, personId);
-    }
-    resolved.push({ ...r, personId });
+    const existing = await tx.person.findFirst({ where: { name: r.name } });
+    if (existing) resolved.push({ ...r, personId: existing.id });
+    // else: no directory match -> drop the row (no auto-create).
   }
   return resolved;
 }
@@ -308,10 +284,12 @@ export async function createCreatorProject(
   const error = validate(data, t);
   if (error) return { error, values: data };
 
-  // Persist any custom Streaming Source values into the global dictionary
-  // (Ф2/#25) so future projects offer them too — never blocks the save.
+  // Persist any custom Available-on values into the global Streaming Source
+  // dictionary (Ф2/#25) so future projects offer them too — never blocks the
+  // save. The dictionary used to seed from `streamingSource`; #29 merged that
+  // field into `platforms`, so it's the source now.
   try {
-    await addStreamingSources(parseCsvInput(data.streamingSource));
+    await addStreamingSources(parseCsvInput(data.platforms));
   } catch {
     /* ignore */
   }
@@ -335,14 +313,14 @@ export async function createCreatorProject(
     releaseDate: dateOrNull(data.releaseDate),
     expectedReleaseDate: dateOrNull(data.expectedReleaseDate),
     platforms: platformsToJson(data.platforms),
-    streamingSource: platformsToJson(data.streamingSource),
+    // #29: no longer written from the form (merged into `platforms` above) —
+    // the column stays for now, just always cleared on save.
+    streamingSource: null,
     placementType: data.placementType || null,
-    priceNote: data.priceNote || null,
     tagline: data.tagline || null,
     taglineHy: data.taglineHy || null,
     taglineRu: data.taglineRu || null,
     taglineEn: data.taglineEn || null,
-    subgenre: data.subgenre || null,
     references: data.references || null,
     cinemas: data.cinemas || null,
     videoEmbedUrl: data.videoEmbedUrl || null,
