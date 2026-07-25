@@ -301,6 +301,10 @@ export function ProjectForm({
   // Poster generator open state is lifted so its panel can render full-width
   // below the grid while the trigger stays compact in the Poster field.
   const [posterOpen, setPosterOpen] = useState(false);
+  // ── Video source tab (#35) ── a project has exactly ONE video source, so
+  // only the active tab's field renders; the inactive one unmounts and drops
+  // out of the submitted FormData, letting the server null that column.
+  const [videoTab, setVideoTab] = useState<"embed" | "upload">(() => (data.videoFile ? "upload" : "embed"));
 
   // ── Translate (#21): hy/ru/en refs are plain uncontrolled fields
   // (defaultValue), so the "Translate" button fills the other two languages
@@ -802,27 +806,46 @@ export function ProjectForm({
                 removeLabel={t("ui.remove")}
               />
             </Field>
-            {/* ── Video (#10) ── a YouTube/Vimeo link OR an uploaded MP4; the embed
-                link wins on the report page when both are set. */}
-            <Field label={t("projectForm.field.videoEmbed")}>
-              <input
-                name="videoEmbedUrl"
-                defaultValue={data.videoEmbedUrl}
-                placeholder={t("projectForm.videoEmbedPlaceholder")}
-                className={inputCls}
-              />
-            </Field>
-            <Field label={t("projectForm.field.videoFile")}>
-              <MediaField
-                key={`video-${restoreNonce}`}
-                name="videoFile"
-                initial={videoFileInitial}
-                label={t("btn.browse")}
-                uploadDir="videos"
-                accept="video"
-                scope={uploaderScope}
-              />
-            </Field>
+            {/* ── Video (#10/#35) ── a YouTube/Vimeo link OR an uploaded MP4,
+                never both — a tab picks the one active source; the inactive
+                field unmounts, so it's absent from the submit and the server
+                nulls that column. */}
+            <div className="flex gap-1 rounded-xl border border-border bg-background p-1">
+              {(["embed", "upload"] as const).map((tab) => (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => setVideoTab(tab)}
+                  className={`flex-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                    videoTab === tab ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {tab === "embed" ? t("projectForm.video.tabEmbed") : t("projectForm.video.tabUpload")}
+                </button>
+              ))}
+            </div>
+            {videoTab === "embed" ? (
+              <Field label={t("projectForm.field.videoEmbed")}>
+                <input
+                  name="videoEmbedUrl"
+                  defaultValue={data.videoEmbedUrl}
+                  placeholder={t("projectForm.videoEmbedPlaceholder")}
+                  className={inputCls}
+                />
+              </Field>
+            ) : (
+              <Field label={t("projectForm.field.videoFile")}>
+                <MediaField
+                  key={`video-${restoreNonce}`}
+                  name="videoFile"
+                  initial={videoFileInitial}
+                  label={t("btn.browse")}
+                  uploadDir="videos"
+                  accept="video"
+                  scope={uploaderScope}
+                />
+              </Field>
+            )}
           </section>
 
           {/* ── Cast & crew (inline, #20²) ── */}

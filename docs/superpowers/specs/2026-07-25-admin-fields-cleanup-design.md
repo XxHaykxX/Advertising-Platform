@@ -59,4 +59,44 @@ Exact per-group scope confirmed with the user before implementation.
 
 ## Part C — Production Timeline milestone fields
 Simplify the milestone row per user: name + date + one free custom-text input
-(exact shape confirmed with user).
+(exact shape confirmed with user). DONE + deployed (2026-07-25).
+
+## Status of Parts A/B/C
+DONE + DEPLOYED 2026-07-25 (prod HEAD 2860140, then 2c076bb). Cast pick-only,
+prod Person seed, cast dropdown un-clip, orphan-column drops (12 cols on prod),
+Production Info merge/wording all live.
+
+## Part D — Video: variant A (self-hosted MP4 player) + one-source rule (DONE, not yet deployed at spec-write; shipped in this batch)
+User decision 2026-07-25 (build after next compact; do NOT deploy until told):
+- A project has exactly ONE video source: either an embed link OR an uploaded
+  MP4 — never both.
+- Admin (Design section): a TAB switcher "Video link (embed) | Upload MP4".
+  Render only the active tab's field; the inactive field is absent from the
+  form so the server nulls that column on save (enforces one source). Default
+  tab on edit: upload if videoFile set, else embed.
+- Report player: new client `<VideoPlayer>` for the MP4 source — custom controls
+  (center + bottom-bar play/pause, seek progress, current/duration time,
+  mute/volume, fullscreen), site-themed, auto-hide while playing, space toggles,
+  respects prefers-reduced-motion, NO branding. poster-slider.tsx uses it for
+  the file source; the embed source stays an iframe (chrome already stripped via
+  toEmbedUrl → youtube-nocookie + controls=0/rel=0/modestbranding, shipped
+  2c076bb). YouTube logo can't be fully removed on an embed — MP4 is the only
+  brand-free path.
+- i18n keys to add: projectForm.video.tabEmbed, projectForm.video.tabUpload.
+- No DB migration (videoEmbedUrl / videoFile columns already exist).
+
+## Part E — Remove Status column from /admin/projects list (DONE)
+reorder-list.tsx: dropped the `<th>Status</th>` header + the `<StatusPill>` cell in
+BOTH tables (SUPERADMIN + PUBLISHER views), removed the now-dead `StatusPill`
+component + `STATUS_PILL` map, adjusted empty-state colSpans (7→6, 5→4). Status
+filter dropdown kept (`STATUS_LABEL` still used). Cosmetic, no DB.
+
+## Parts D/E status
+DONE + DEPLOYED 2026-07-25. Additive code only (video columns videoEmbedUrl/
+videoFile already existed; Status removal is UI-only) — no DB migration. tsc 0,
+vitest 62/62, prod build green. New file `src/components/report/video-player.tsx`
+(custom HTML5 MP4 player: center + bottom-bar play/pause, seek drag+click,
+time, mute, fullscreen, auto-hide 2.5s while playing, keyboard space/k/f/m/±5s,
+prefers-reduced-motion). poster-slider.tsx uses it for the file source; the embed
+source stays a chrome-stripped iframe. project-form.tsx tab switcher renders
+exactly one source field (the inactive one unmounts → server nulls that column).

@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, Film } from "lucide-react";
+import { VideoPlayer } from "./video-player";
 
 /** Optional leading video slide (#10 / user 2026-07-25): the report hero slider
  *  shows the video FIRST when present, then the poster + gallery images. Either
@@ -38,7 +39,7 @@ export function PosterSlider({
         loading="lazy"
       />
     ) : (
-      <video controls preload="metadata" src={video!.file!} className="absolute inset-0 h-full w-full" />
+      <VideoPlayer src={video!.file!} className="absolute inset-0 h-full w-full" />
     );
   }
 

@@ -1191,6 +1191,8 @@ export const UI: Record<string, Dict> = {
     hy: "https://youtube.com/watch?v=… / https://vimeo.com/…",
   },
   "projectForm.field.videoFile": { ru: "Видеофайл (MP4)", en: "Video file (MP4)", hy: "Վիդեոֆայլ (MP4)" },
+  "projectForm.video.tabEmbed": { ru: "Ссылка (Embed)", en: "Video link", hy: "Հղում (Embed)" },
+  "projectForm.video.tabUpload": { ru: "Загрузить MP4", en: "Upload MP4", hy: "Վերբեռնել MP4" },
   "projectForm.section.statusRelease": { ru: "Статус и релиз", en: "Status & release", hy: "Կարգավիճակ և թողարկում" },
   "projectForm.section.placement": { ru: "Размещение", en: "Placement", hy: "Տեղադրում" },
   "projectForm.section.audienceValue": { ru: "Аудитория и ценность", en: "Audience & value", hy: "Լսարան և արժեք" },

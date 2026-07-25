@@ -39,25 +39,6 @@ const STATUS_LABEL: Record<string, string> = {
   RELEASED: "Released",
 };
 
-// Redesign §3.4: color-coded status pills, same badge idiom as users/page.tsx.
-const STATUS_PILL: Record<string, string> = {
-  PRE_PRODUCTION: "border-border bg-muted text-muted-foreground",
-  FILMING: "border-warn/25 bg-warn/10 text-warn",
-  POST_PRODUCTION: "border-primary/30 bg-primary/10 text-primary",
-  RELEASED: "border-success/30 bg-success/10 text-success",
-};
-
-function StatusPill({ status }: { status: string }) {
-  return (
-    <span
-      className={`inline-block whitespace-nowrap rounded-full border px-2.5 py-0.5 text-xs font-medium ${
-        STATUS_PILL[status] ?? "border-border bg-muted text-muted-foreground"
-      }`}
-    >
-      {STATUS_LABEL[status] ?? status}
-    </span>
-  );
-}
 
 // --- Client-side filtering (redesign §3.4) -------------------------------
 // Filters the already-loaded rows; no server round-trip.
@@ -241,7 +222,6 @@ export function ReorderableProjectsTable({ projects }: { projects: ProjectRow[] 
                 <th className="w-10 px-2 py-2.5"></th>
                 <th className="px-4 py-2.5 font-medium">Poster</th>
                 <th className="px-4 py-2.5 font-medium">Title</th>
-                <th className="px-4 py-2.5 font-medium">Status</th>
                 <th className="px-4 py-2.5 font-medium">Active</th>
                 <th className="px-4 py-2.5 font-medium">Owner</th>
                 <th className="px-4 py-2.5 font-medium"></th>
@@ -251,7 +231,7 @@ export function ReorderableProjectsTable({ projects }: { projects: ProjectRow[] 
               <tbody>
                 {visible.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-10 text-center text-muted-foreground">
+                    <td colSpan={6} className="px-4 py-10 text-center text-muted-foreground">
                       No projects match the filters.
                     </td>
                   </tr>
@@ -364,9 +344,6 @@ function SortableRow({
         </Link>
       </td>
       <td className="px-4 py-2 align-middle">
-        <StatusPill status={p.status} />
-      </td>
-      <td className="px-4 py-2 align-middle">
         <ActiveToggle id={p.id} active={p.isActive} />
       </td>
       <td className="px-4 py-2 align-middle text-muted-foreground">{p.ownerName}</td>
@@ -397,7 +374,6 @@ export function PlainProjectsTable({ projects }: { projects: ProjectRow[] }) {
             <tr className={HEADER_ROW_CLS}>
               <th className="px-4 py-2.5 font-medium">Poster</th>
               <th className="px-4 py-2.5 font-medium">Title</th>
-              <th className="px-4 py-2.5 font-medium">Status</th>
               <th className="px-4 py-2.5 font-medium">Active</th>
               <th className="px-4 py-2.5 font-medium"></th>
             </tr>
@@ -405,7 +381,7 @@ export function PlainProjectsTable({ projects }: { projects: ProjectRow[] }) {
           <tbody>
             {visible.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-10 text-center text-muted-foreground">
+                <td colSpan={4} className="px-4 py-10 text-center text-muted-foreground">
                   No projects match the filters.
                 </td>
               </tr>
@@ -427,9 +403,6 @@ export function PlainProjectsTable({ projects }: { projects: ProjectRow[] }) {
                     >
                       {p.title}
                     </Link>
-                  </td>
-                  <td className="px-4 py-2">
-                    <StatusPill status={p.status} />
                   </td>
                   <td className="px-4 py-2">
                     <ActiveToggle id={p.id} active={p.isActive} />
