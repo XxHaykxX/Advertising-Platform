@@ -26,12 +26,15 @@ export type SiteHeaderUser = {
   avatar: string | null;
 };
 
-const STAFF_ROLES: Role[] = ["SUPERADMIN", "PUBLISHER", "MODERATOR"];
+const STAFF_ROLES: Role[] = ["SUPERADMIN", "PUBLISHER", "MODERATOR", "TRANSLATOR"];
 
 /** Cabinet path for a signed-in user's role — staff (SUPERADMIN/PUBLISHER/
- *  MODERATOR) land in `/admin`, members (BRAND/CREATOR) in `/account`. Shared
- *  by UserMenu and the Wordmark so both routes stay in sync. */
+ *  MODERATOR) land in `/admin`, members (BRAND/CREATOR) in `/account`. A
+ *  TRANSLATOR's only admin page is the dictionary editor, so send them there
+ *  directly (the dashboard redirects anyway). Shared by UserMenu and the
+ *  Wordmark so both routes stay in sync. */
 function cabinetHrefFor(role: Role): string {
+  if (role === "TRANSLATOR") return "/admin/i18n";
   return STAFF_ROLES.includes(role) ? "/admin" : "/account";
 }
 

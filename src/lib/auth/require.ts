@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { notFound } from "next/navigation";
 import { SESSION_COOKIE, verifySessionToken } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
-import { canEditContent, canModerate } from "@/lib/auth/permissions";
+import { canEditContent, canEditTranslations, canModerate } from "@/lib/auth/permissions";
 import type { Role } from "@prisma/client";
 
 export type AuthedUser = {
@@ -60,9 +60,14 @@ async function loadCurrentMember(): Promise<AuthedUser | null> {
 }
 
 /** True for any staff role that may sign in at /admin (SUPERADMIN, PUBLISHER,
-   MODERATOR). Members (BRAND / CREATOR) are not staff. */
+   MODERATOR, TRANSLATOR). Members (BRAND / CREATOR) are not staff. */
 function isStaffRole(role: Role): boolean {
-  return role === "SUPERADMIN" || role === "PUBLISHER" || role === "MODERATOR";
+  return (
+    role === "SUPERADMIN" ||
+    role === "PUBLISHER" ||
+    role === "MODERATOR" ||
+    role === "TRANSLATOR"
+  );
 }
 
 /** Require a logged-in, active staff user (SUPERADMIN, PUBLISHER or
@@ -109,6 +114,16 @@ export async function requireContentEditor(): Promise<AuthedUser> {
 export async function requireModerator(): Promise<AuthedUser> {
   const user = await requireUser();
   if (!canModerate(user.role)) notFound();
+  return user;
+}
+
+/** Require a logged-in, active staff user who may edit the UI dictionary
+   (SUPERADMIN or TRANSLATOR — see permissions.ts). 404s otherwise, same
+   disguise-as-not-found pattern as the guards above. Guards /admin/i18n and
+   every translation action. */
+export async function requireTranslator(): Promise<AuthedUser> {
+  const user = await requireUser();
+  if (!canEditTranslations(user.role)) notFound();
   return user;
 }
 

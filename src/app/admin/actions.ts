@@ -89,7 +89,8 @@ export async function login(
   if (
     result.user.role !== "SUPERADMIN" &&
     result.user.role !== "PUBLISHER" &&
-    result.user.role !== "MODERATOR"
+    result.user.role !== "MODERATOR" &&
+    result.user.role !== "TRANSLATOR"
   ) {
     recordFailure(ip);
     return { error: t("login.errInvalid"), email };
@@ -125,12 +126,22 @@ export async function login(
   }
 
   const from = String(formData.get("from") || "");
+  const target = from && from.startsWith("/admin") ? from : "/admin";
   // Don't redirect() here: this cookie was just set in a useActionState action,
   // and Next 16 would render the destination from the root in the same
   // action response, before the cookie is visible to the auth gate — a
   // nested redirect there crashes the flight tree into global-error. Instead
   // report success and let the client navigate with a fresh full request.
-  return { ok: true, redirect: from && from.startsWith("/admin") ? from : "/admin" };
+  //
+  // TRANSLATOR has no reach beyond /admin/i18n (see admin-nav/dashboard), so
+  // anything else — including a dead-end /admin — becomes the editor. A ?from
+  // that already points inside the editor is kept, query string included: it
+  // carries deep links like /admin/i18n?key=nav.catalog.
+  const translatorTarget = target.startsWith("/admin/i18n") ? target : "/admin/i18n";
+  return {
+    ok: true,
+    redirect: user.role === "TRANSLATOR" ? translatorTarget : target,
+  };
 }
 
 /** Doesn't redirect() itself — on Hostinger/Passenger a redirect() inside a

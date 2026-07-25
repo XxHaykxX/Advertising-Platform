@@ -1,11 +1,20 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Film, Users } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth/require";
+import { isTranslatorOnly } from "@/lib/auth/permissions";
 import { Button } from "@/components/ui/button";
 
 export default async function AdminDashboard() {
   const user = await requireUser();
+
+  // TRANSLATOR has no use for this dashboard (no projects/user counts to
+  // show) — send it straight to its only section, before any DB reads.
+  if (isTranslatorOnly(user.role)) {
+    redirect("/admin/i18n");
+  }
+
   const isSuperadmin = user.role === "SUPERADMIN";
 
   // Publishers only ever see their own projects; a super-admin gets the

@@ -1,17 +1,16 @@
-/* Public CSV feed of the UI dictionary (src/lib/i18n.ts), for the content
-   writer's Google Sheet: a service-only sheet tab pulls this live via
-   =IMPORTDATA("https://igovazd.am/api/i18n/export.csv") so newly added keys
-   show up without anyone re-running `npm run i18n:export` and re-uploading
-   by hand. See docs/i18n-sheets.md.
+/* Public CSV feed of the UI dictionary (src/lib/i18n.ts). The editing cycle
+   now runs entirely through /admin/i18n (role TRANSLATOR) — this route is
+   just a backup/overview snapshot, no longer wired into the edit flow. See
+   docs/i18n-editor.md.
 
    Byte-for-byte the same output as `npm run i18n:export` writes to
    i18n-export.csv (UTF-8 BOM, CRLF line endings, same header/column order) —
    both go through the shared helpers in src/lib/i18n-csv.ts.
 
    The route segment folder is literally named "export.csv" so the URL ends
-   in .csv — Google's IMPORTDATA() is picky about that. No auth: the sheet
-   fetches this anonymously, and the site is already noindex/robots-disallow
-   (see src/proxy.ts — /api/* is excluded from the staff/member guards). */
+   in .csv, kept for anyone still linking to it directly. No auth: fetched
+   anonymously, and the site is already noindex/robots-disallow (see
+   src/proxy.ts — /api/* is excluded from the staff/member guards). */
 
 import { UI } from "@/lib/i18n";
 import { CSV_HEADER, contextLabel, csvLine } from "@/lib/i18n-csv";

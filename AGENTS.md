@@ -12,13 +12,23 @@ Deploy target: Hostinger shared Node.js (git auto-deploy on push to `main`), pro
 
 # Auth & roles (added 2026-07-14)
 
-Two staff roles (`SUPERADMIN`, `PUBLISHER` — sign in at `/admin/login`) and two self-serve member roles (`BRAND`, `CREATOR` — sign in at `/login`). Members self-register at `/register` and are **auto-approved** (`AccountStatus=APPROVED`) and signed in immediately — moderation happens at the *project* level, not the account level (decision #12, 2026-07-15). The admin `/admin/registrations` page + pending-count badge exist for the manual approve/reject/block workflow but self-registrations never enter `PENDING`, so that queue stays empty unless an account is created/blocked another way. Only `APPROVED` members can sign in. On login, `CREATOR` lands in `/account` (submit / my-projects), `BRAND` is redirected to `/account/brand` (browse / interests / profile — the buyer cabinet). `requireUser()` = staff-only (guards `/admin` + `src/proxy.ts`), `requireMember()` = approved member (guards `/account`); both re-check the DB per request. Auth code lives in `src/lib/auth/` (`members.ts`, `require.ts`, `password.ts`, `session.ts`, `google.ts`).
+Four staff roles (sign in at `/admin/login`): `SUPERADMIN` (everything), `PUBLISHER` (content editor), `MODERATOR` (project moderation only), `TRANSLATOR` (UI dictionary editor). Two self-serve member roles (`BRAND`, `CREATOR` — sign in at `/login`). Members self-register at `/register` and are **auto-approved** (`AccountStatus=APPROVED`) and signed in immediately — moderation happens at the *project* level, not the account level (decision #12, 2026-07-15). The admin `/admin/registrations` page + pending-count badge exist for the manual approve/reject/block workflow but self-registrations never enter `PENDING`, so that queue stays empty unless an account is created/blocked another way. Only `APPROVED` members can sign in. On login, `CREATOR` lands in `/account` (submit / my-projects), `BRAND` is redirected to `/account/brand` (browse / interests / profile — the buyer cabinet). `requireUser()` = staff-only (guards `/admin` + `src/proxy.ts`), `requireMember()` = approved member (guards `/account`); both re-check the DB per request. Auth code lives in `src/lib/auth/` (`members.ts`, `require.ts`, `password.ts`, `session.ts`, `google.ts`).
 
 **Naming:** the non-brand side is **Создатели / Creators / CREATOR** — never "режиссёр"/"filmmaker".
 
 **Google/Gmail sign-up** is scaffolded but inert until `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` are set in env (Web OAuth client, redirect `…/api/auth/google/callback`). Empty creds hide the button.
 
 Full details: `docs/archive/Session-Progress-2026-07-14.md`.
+
+# i18n editor & TRANSLATOR role (added 2026-07-25)
+
+A third staff role, `TRANSLATOR` (content writer), signs in at `/admin/login` and lands
+straight on `/admin/i18n` — the only section it can reach. It edits the UI dictionary
+(`src/lib/i18n.ts`) there; "Save & publish" validates the edits and commits the file to
+`main` via the GitHub Contents API (`src/lib/github/contents.ts`), which triggers the usual
+Hostinger auto-deploy. The Google Sheet that used to hold these translations is now archived
+— see `docs/i18n-editor.md`. Requires prod migration `docs/prod-migrations/2026-07-25-i18n-editor.sql`
+applied **before** push (per `docs/DEPLOY-PLAYBOOK.md`).
 
 # Документация
 

@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { SESSION_COOKIE, verifySessionToken } from "@/lib/auth/session";
 
-const STAFF_ROLES = ["SUPERADMIN", "PUBLISHER", "MODERATOR"];
+const STAFF_ROLES = ["SUPERADMIN", "PUBLISHER", "MODERATOR", "TRANSLATOR"];
 
 /* Two guards, both driven off the (signature + expiry only) session token — the
    authoritative isActive/role/status checks live server-side in
@@ -28,7 +28,9 @@ export async function proxy(req: NextRequest) {
     }
     if (isStaff && isLogin) {
       const url = req.nextUrl.clone();
-      url.pathname = "/admin";
+      // A TRANSLATOR can only reach the dictionary editor — every other admin
+      // page 404s for that role, so land them there instead of the dashboard.
+      url.pathname = session!.role === "TRANSLATOR" ? "/admin/i18n" : "/admin";
       url.search = "";
       return NextResponse.redirect(url);
     }

@@ -12,6 +12,7 @@ enum Role {
   SUPERADMIN
   PUBLISHER
   MODERATOR
+  TRANSLATOR
   BRAND
   CREATOR
 }
@@ -65,6 +66,8 @@ model User {
   passwordResetTokens PasswordResetToken[]
   notifications Notification[]
   pushSubscriptions PushSubscription[]
+  uiDrafts      UiDraft[] // dictionary rows this staff user last edited (TRANSLATOR)
+  i18nPublishes I18nPublish[] // publish clicks this staff user made
 }
 
 /// In-app notification (#25 / V9). Text is NOT stored translated — only a
@@ -359,4 +362,55 @@ model Favorite {
 
   @@unique([brandId, projectId])
   @@index([projectId])
+}
+
+/// Colour a translator can stamp on a dictionary row — the direct replacement
+/// for the row highlighting she used to do in the Google Sheet (CSV never
+/// carried colours). Meanings are shown in the editor's legend:
+///   GREEN — checked, final;  RED — problem / needs a decision;
+///   BLUE  — in progress, come back to it;  NONE — untouched.
+enum UiDraftMark {
+  NONE
+  GREEN
+  RED
+  BLUE
+}
+
+/// Working copy of one UI-dictionary entry, edited in /admin/i18n.
+///
+/// Rows exist ONLY for keys a translator has touched; the committed values in
+/// src/lib/i18n.ts stay the source of truth. On "publish" the drafts are
+/// written into that file via a GitHub commit, which triggers the Hostinger
+/// rebuild — so a published draft still differs from the *running* build for
+/// a few minutes. That is why rows survive publishing (`publishedAt` marks
+/// them) and are pruned only once the deployed dictionary has caught up
+/// (see pruneSettledDrafts in the i18n admin page).
+model UiDraft {
+  key         String      @id @db.VarChar(191) // dictionary key, e.g. "nav.catalog"
+  hy          String      @db.Text
+  ru          String      @db.Text
+  en          String      @db.Text
+  mark        UiDraftMark @default(NONE) // colour highlight, see UiDraftMark
+  note        String?     @db.Text // translator's own remark, replaces sheet cell comments
+  updatedAt   DateTime      @updatedAt
+  updatedById Int? // last editor; null if that staff account was deleted
+  publishedAt DateTime? // set when this exact value was committed to git
+
+  updatedBy User? @relation(fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@index([publishedAt])
+}
+
+/// One "publish" click: the commit that carried N dictionary keys into git.
+/// Rendered in the editor header so the translator can see whether her last
+/// save actually landed (and open the commit / build if it did not).
+model I18nPublish {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  userId    Int? // who clicked; null if that account was deleted
+  keyCount  Int // dictionary keys carried by this commit
+  commitSha String   @db.VarChar(64)
+  commitUrl String   @db.Text
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 }

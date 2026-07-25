@@ -20,8 +20,9 @@ function str(fd: FormData, key: string) {
 }
 
 // Staff roles a super-admin can create from the Users page. Publisher is
-// intentionally NOT offered here anymore — only Super-admin and Moderator.
-const CREATABLE_ROLES = ["SUPERADMIN", "MODERATOR"] as const;
+// intentionally NOT offered here anymore — only Super-admin, Moderator and
+// Translator (the content writer's dictionary-only login).
+const CREATABLE_ROLES = ["SUPERADMIN", "MODERATOR", "TRANSLATOR"] as const;
 type CreatableRole = (typeof CREATABLE_ROLES)[number];
 
 /** Create a new staff account (email + name + password + role). Super-admin

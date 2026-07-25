@@ -14,14 +14,22 @@ import {
   ShieldCheck,
   Bell,
   Send,
+  Languages,
 } from "lucide-react";
 import type { Role } from "@prisma/client";
-import { canEditContent, canManageUsers, canModerate } from "@/lib/auth/permissions";
+import {
+  canEditContent,
+  canEditTranslations,
+  canManageUsers,
+  canModerate,
+  isTranslatorOnly,
+} from "@/lib/auth/permissions";
 import { getPendingModerationCount } from "./moderation/actions";
 import { getUnreadNotificationCount } from "@/lib/actions/notifications";
 
-// Per-role nav visibility. Dashboard is universal; everything else is gated
-// by what that role is actually allowed to do:
+// Per-role nav visibility. Dashboard is universal (except for TRANSLATOR,
+// see below); everything else is gated by what that role is actually
+// allowed to do:
 //  - SUPERADMIN sees everything.
 //  - PUBLISHER (content editor) sees Projects/Media, not the super-admin-only
 //    platform-wide views (Interests, Portfolio, Partners, Users — Portfolio/
@@ -29,6 +37,8 @@ import { getUnreadNotificationCount } from "@/lib/actions/notifications";
 //    the Members/registrations tab).
 //  - MODERATOR (project moderation only) sees Dashboard + Moderation — no
 //    content-edit tools, no user/settings management.
+//  - TRANSLATOR (content writer) sees only "Translations" (/admin/i18n) — no
+//    Dashboard, no other section.
 //
 // Items are split into labelled groups (redesign §3.3): Dashboard stays
 // top-level, then Content / Platform / Comms. A group whose every item is
@@ -44,7 +54,14 @@ const NAV_GROUPS: {
 }[] = [
   {
     label: null,
-    items: [{ href: "/admin", label: "Dashboard", icon: LayoutDashboard, show: () => true }],
+    items: [
+      {
+        href: "/admin",
+        label: "Dashboard",
+        icon: LayoutDashboard,
+        show: (role) => !isTranslatorOnly(role),
+      },
+    ],
   },
   {
     label: "Content",
@@ -61,6 +78,7 @@ const NAV_GROUPS: {
       { href: "/admin/portfolio", label: "Portfolio", icon: Images, show: canManageUsers },
       { href: "/admin/partners", label: "Partners", icon: Handshake, show: canManageUsers },
       { href: "/admin/users", label: "Users", icon: Users, show: canManageUsers },
+      { href: "/admin/i18n", label: "Translations", icon: Languages, show: canEditTranslations },
     ],
   },
   {

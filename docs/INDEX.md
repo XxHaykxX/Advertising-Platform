@@ -33,8 +33,8 @@
 | `docs/DEPLOY-PLAYBOOK.md` | Чеклист деплоя на Hostinger — перед push / после push, все известные грабли. |
 | `docs/RELEASE-NOTES-FORMAT.md` | Формат релиз-ноутов (шаблон на армянском для пользователя). |
 | `docs/release-notes-v1.8.md` / `-en.md` | Последний выпущенный релиз (v1.8, 2026-07-24). |
-| `docs/i18n-sheets.md` | Цикл работы i18n ↔ Google Sheets (775 ключей, hy/ru/en). |
-| `docs/i18n-writer-guide.md` | Гайд для контент-райтера по Google-таблице переводов. |
+| `docs/i18n-editor.md` | Цикл работы редактора переводов `/admin/i18n` (роль TRANSLATOR, 855 ключей, hy/ru/en). |
+| `docs/i18n-writer-guide.md` | Нетехническая инструкция для контент-райтера по странице Translations (на английском). |
 
 ## Архив
 

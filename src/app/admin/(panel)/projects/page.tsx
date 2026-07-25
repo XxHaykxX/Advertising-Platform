@@ -1,11 +1,14 @@
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { requireUser } from "@/lib/auth/require";
+import { requireContentEditor } from "@/lib/auth/require";
 import { PlainProjectsTable, ReorderableProjectsTable, type ProjectRow } from "./reorder-list";
 
 export default async function ProjectsAdminPage() {
-  const user = await requireUser();
+  // Content-editor gate (not requireUser): MODERATOR and TRANSLATOR have no
+  // business here, and requireUser() used to render them the panel shell with
+  // an empty list instead of the 404 every other section gives them.
+  const user = await requireContentEditor();
   const isSuperadmin = user.role === "SUPERADMIN";
 
   const projects = await prisma.project.findMany({

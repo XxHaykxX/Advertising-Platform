@@ -13,10 +13,13 @@ function formatDate(d: Date) {
   return new Intl.DateTimeFormat("en-US", { year: "numeric", month: "short", day: "numeric" }).format(d);
 }
 
-const STAFF_ROLE_LABEL: Record<"SUPERADMIN" | "PUBLISHER" | "MODERATOR", string> = {
+type StaffRole = "SUPERADMIN" | "PUBLISHER" | "MODERATOR" | "TRANSLATOR";
+
+const STAFF_ROLE_LABEL: Record<StaffRole, string> = {
   SUPERADMIN: "Super-admin",
   PUBLISHER: "Publisher",
   MODERATOR: "Moderator",
+  TRANSLATOR: "Translator",
 };
 
 const STATUS_PILL: Record<AccountStatus, string> = {
@@ -33,7 +36,7 @@ export default async function UsersAdminPage() {
 
   const [staff, members] = await Promise.all([
     prisma.user.findMany({
-      where: { role: { in: ["SUPERADMIN", "PUBLISHER", "MODERATOR"] } },
+      where: { role: { in: ["SUPERADMIN", "PUBLISHER", "MODERATOR", "TRANSLATOR"] } },
       orderBy: { createdAt: "asc" },
       include: { _count: { select: { projects: true } } },
     }),
@@ -97,7 +100,7 @@ export default async function UsersAdminPage() {
                         : "border-border bg-muted text-muted-foreground"
                     }`}
                   >
-                    {STAFF_ROLE_LABEL[u.role as "SUPERADMIN" | "PUBLISHER" | "MODERATOR"]}
+                    {STAFF_ROLE_LABEL[u.role as StaffRole]}
                   </span>
                 </td>
                 <td className="px-4 py-3">

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { requireUser } from "@/lib/auth/require";
+import { requireContentEditor } from "@/lib/auth/require";
 import { getPersonDirectory } from "@/lib/data/actors";
 import { getStreamingSources } from "@/lib/data/streaming-sources";
 import { updateProject } from "../../actions";
@@ -21,7 +21,7 @@ export default async function EditProjectPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const user = await requireUser();
+  const user = await requireContentEditor();
   const isSuperadmin = user.role === "SUPERADMIN";
 
   const { id } = await params;

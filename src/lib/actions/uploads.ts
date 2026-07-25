@@ -3,7 +3,12 @@
 import { randomUUID } from "node:crypto";
 import { mkdir, writeFile, unlink, readdir, stat } from "node:fs/promises";
 import path from "node:path";
-import { requireUser } from "@/lib/auth/require";
+// Content-editor gate, not plain requireUser(): every caller of these actions
+// is an admin content tool (media manager, MediaPicker in the project/portfolio
+// forms), and staff roles that never edit content — MODERATOR, TRANSLATOR —
+// must not be able to reach the media library by POSTing the action directly.
+// Members have their own scoped path in src/lib/actions/member-uploads.ts.
+import { requireContentEditor } from "@/lib/auth/require";
 import { UPLOADS_DIR } from "@/lib/uploads-dir";
 import { findUploadUsage } from "@/lib/uploads-usage";
 import { optimizeImage, kindForDir } from "@/lib/images/optimize";
@@ -47,7 +52,7 @@ function resolveInsideUploads(publicPath: string): string | null {
 }
 
 export async function uploadImage(fd: FormData): Promise<UploadResult> {
-  await requireUser();
+  await requireContentEditor();
 
   const file = fd.get("file");
   if (!(file instanceof File) || file.size === 0) return { error: "No file provided." };
@@ -94,7 +99,7 @@ export async function uploadImage(fd: FormData): Promise<UploadResult> {
 export async function deleteUpload(
   publicPath: string,
 ): Promise<{ ok?: boolean; error?: string; usedBy?: string[] }> {
-  await requireUser();
+  await requireContentEditor();
   const abs = resolveInsideUploads(publicPath);
   if (!abs) return { error: "Invalid path." };
 
@@ -117,7 +122,7 @@ export type MediaFile = { path: string; size: number; mtime: number };
 
 /** Recursively list every uploaded file for the media manager. */
 export async function listUploads(): Promise<MediaFile[]> {
-  await requireUser();
+  await requireContentEditor();
   const out: MediaFile[] = [];
   async function walk(abs: string, rel: string) {
     let entries;

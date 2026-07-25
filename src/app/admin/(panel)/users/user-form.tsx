@@ -30,6 +30,7 @@ export function UserForm({
           <select name="role" defaultValue="SUPERADMIN" className={inputCls}>
             <option value="SUPERADMIN">Super-admin</option>
             <option value="MODERATOR">Moderator</option>
+            <option value="TRANSLATOR">Translator (переводы)</option>
           </select>
         </label>
         <label className="block">

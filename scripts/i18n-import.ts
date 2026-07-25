@@ -17,8 +17,10 @@
    gate after an import. */
 
 import { readFileSync, writeFileSync } from "node:fs";
-import { UI, LOCALES, type Locale } from "../src/lib/i18n";
-import { CSV_HEADER, CYRILLIC, parseCsv, placeholders } from "./i18n-lib";
+import { UI, type Locale } from "../src/lib/i18n";
+import { CSV_HEADER, parseCsv } from "./i18n-lib";
+import { validateBatch } from "../src/lib/i18n-validate";
+import { rewriteDictionarySource } from "../src/lib/i18n-rewrite";
 
 const I18N_PATH = new URL("../src/lib/i18n.ts", import.meta.url);
 
@@ -101,80 +103,34 @@ for (const key of sheet.keys()) {
   if (!dictKeys.has(key)) errors.push(`unknown key in sheet: "${key}" (typo in the key column?)`);
 }
 
-for (const [key, vals] of sheet) {
-  if (!dictKeys.has(key)) continue;
-  for (const loc of LOCALES) {
-    if (vals[loc].trim() === "") errors.push(`"${key}": empty ${loc} cell`);
-  }
-  const hit = vals.hy.match(CYRILLIC);
-  if (hit) {
-    errors.push(
-      `"${key}": Cyrillic character «${hit[0]}» inside the Armenian text (copy-paste homoglyph)`,
-    );
-  }
-  // {token} placeholders must survive translation in every language.
-  const expected = placeholders(UI[key].en).join(",");
-  for (const loc of LOCALES) {
-    const got = placeholders(vals[loc]).join(",");
-    if (got !== expected) {
-      errors.push(
-        `"${key}" (${loc}): placeholders {${got || "—"}} don't match the original {${expected || "—"}}`,
-      );
-    }
-  }
+// Per-value rules (empty cells, Cyrillic homoglyphs in hy, {placeholders})
+// live in src/lib/i18n-validate.ts — the same module the in-admin translation
+// editor uses, so both writers of the dictionary enforce one rule set.
+const known = new Map([...sheet].filter(([key]) => dictKeys.has(key)));
+for (const issue of validateBatch(known, UI)) {
+  errors.push(`"${issue.key}"${issue.locale ? ` (${issue.locale})` : ""}: ${issue.message}`);
 }
 
 if (errors.length) fail(errors);
 
 /* ── rewrite only changed entries in i18n.ts ──────────────────────────── */
 
-const ser = (s: string) => JSON.stringify(s);
-
-/** Entry in the file's existing style: single-line while it fits, otherwise
- *  the multi-line form already used for long entries. `ru:` must come first —
- *  the guard test's duplicate-key regex anchors on `"key": { ru:`. */
-function renderEntry(key: string, v: Record<Locale, string>): string {
-  const single = `  ${ser(key)}: { ru: ${ser(v.ru)}, en: ${ser(v.en)}, hy: ${ser(v.hy)} },`;
-  if (single.length <= 120 && !/[\r\n]/.test(v.ru + v.en + v.hy)) return single;
-  return [
-    `  ${ser(key)}: {`,
-    `    ru: ${ser(v.ru)},`,
-    `    en: ${ser(v.en)},`,
-    `    hy: ${ser(v.hy)},`,
-    `  },`,
-  ].join("\n");
+// The surgical line-splice rewriter is shared with the in-admin editor —
+// src/lib/i18n-rewrite.ts.
+let result: { source: string; changed: string[]; perLocale: Record<Locale, number> };
+try {
+  result = rewriteDictionarySource(readFileSync(I18N_PATH, "utf8"), known, UI);
+} catch (e) {
+  fail([`internal: ${e instanceof Error ? e.message : String(e)}`]);
 }
-
-const src = readFileSync(I18N_PATH, "utf8");
-const lines = src.split("\n");
-const changed: string[] = [];
-const perLocale: Record<Locale, number> = { ru: 0, en: 0, hy: 0 };
-
-for (const [key, vals] of sheet) {
-  const cur = UI[key];
-  if (cur.ru === vals.ru && cur.en === vals.en && cur.hy === vals.hy) continue;
-  changed.push(key);
-  for (const loc of LOCALES) if (cur[loc] !== vals[loc]) perLocale[loc]++;
-
-  // Locate the entry: a line starting `  "key": {`; single-line entries end
-  // with `},` on that same line, multi-line ones run until an exact `  },`.
-  const startRe = new RegExp(`^  ${JSON.stringify(key).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}: \\{`);
-  const start = lines.findIndex((l) => startRe.test(l));
-  if (start === -1) fail([`internal: entry for "${key}" not found in i18n.ts source`]);
-  let end = start;
-  if (!/\},\s*$/.test(lines[start])) {
-    while (end < lines.length - 1 && lines[end].trimEnd() !== "  },") end++;
-    if (lines[end].trimEnd() !== "  },") fail([`internal: unterminated entry for "${key}"`]);
-  }
-  lines.splice(start, end - start + 1, ...renderEntry(key, vals).split("\n"));
-}
+const { changed, perLocale } = result;
 
 if (!changed.length) {
   console.log(`no changes — sheet matches i18n.ts (${sheet.size} keys checked)`);
   process.exit(0);
 }
 
-writeFileSync(I18N_PATH, lines.join("\n"), "utf8");
+writeFileSync(I18N_PATH, result.source, "utf8");
 console.log(
   `i18n.ts updated: ${changed.length} of ${sheet.size} keys changed ` +
     `(hy ${perLocale.hy}, ru ${perLocale.ru}, en ${perLocale.en})`,

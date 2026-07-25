@@ -37,6 +37,8 @@ read-only ревью без последующей реализации — см
 `FP-Placement-Spec.md`, `DEPLOY-indexing-disabled.md` (индексация всё ещё выключена — это
 действующий статус, не история), `RELEASE-NOTES-FORMAT.md`, `release-notes-v1.8.md`/`-en.md`
 (последний релиз), `3d-upgrade-manual-and-prompt.md`, `hero-scene-quickstart.md`,
-`i18n-sheets.md`, `i18n-writer-guide.md`, `docs/superpowers/**` (спеки/планы — отдельная
+`i18n-editor.md` (заменил `i18n-sheets.md` — Google-таблица ушла в архив 2026-07-25,
+редактором стал `/admin/i18n`), `i18n-writer-guide.md` (переписан под новый процесс),
+`docs/superpowers/**` (спеки/планы — отдельная
 конвенция, не трогалась), `docs/prod-migrations/**` (SQL, требуются как есть для истории
 миграций прод-БД).
