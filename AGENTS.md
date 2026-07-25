@@ -18,4 +18,9 @@ Two staff roles (`SUPERADMIN`, `PUBLISHER` — sign in at `/admin/login`) and tw
 
 **Google/Gmail sign-up** is scaffolded but inert until `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` are set in env (Web OAuth client, redirect `…/api/auth/google/callback`). Empty creds hide the button.
 
-Full details: `docs/Session-Progress-2026-07-14.md`.
+Full details: `docs/archive/Session-Progress-2026-07-14.md`.
+
+# Документация
+
+Карта всех доков проекта (живые/справочные/архив) — `docs/INDEX.md`. Чеклист деплоя на
+Hostinger (перед push / после push, известные грабли) — `docs/DEPLOY-PLAYBOOK.md`.

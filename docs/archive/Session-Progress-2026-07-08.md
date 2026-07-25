@@ -11,11 +11,11 @@ Snapshot for continuation after /compact.
 3. **Copy**: `btn.viewReport` → "Подробнее/Learn More/Մանրамасն"; `btn.requestDetails` → "Связаться/Contact us/Կապվել".
 4. **Remember-me** on `/admin/login` (30d cookie + email prefill).
 5. **Gallery field** added to admin project form (per-locale-agnostic, storyboard).
-6. **Admin QA** — full CRUD verified; docs/Admin-QA-Report-2026-07-08.md.
+6. **Admin QA** — full CRUD verified; docs/archive/Admin-QA-Report-2026-07-08.md.
 7. **Bug fixed**: `projects/actions.ts` exported non-async from "use server" → whole /admin 500'd. Fix: `projects/form-shared.ts`.
 8. **Bug fixed**: `next/image` remote URLs 500'd/hung report page → `next.config.ts` `images: { unoptimized: true }`.
 9. **Responsive**: admin sidebar → drawer on mobile (`admin-shell.tsx`); header moved md→lg breakpoint + contact icons xl-only (Armenian overflow). Verified 375/768/1024/1440.
-10. **Logic/Structure review** (4 agents) → docs/Logic-Structure-Review-2026-07-08.md (anonymity-fake, mixed-lang content, decorative slots, dup lead paths, etc.).
+10. **Logic/Structure review** (4 agents) → docs/archive/Logic-Structure-Review-2026-07-08.md (anonymity-fake, mixed-lang content, decorative slots, dup lead paths, etc.).
 11. **Brand-safety FULLY REMOVED** — UI + admin + DB (prisma db push --accept-data-loss dropped safetyScore/safety/SafetyCategory/opportunity.safety). Marketing copy also removed (trust stat, faq.q2, investment.item2, hero/how-it-works/meta/terms/json-ld phrases).
 12. **Hero bottom white gradient overlay** removed (`hero.tsx`).
 13. **Content i18n — Level A (labels)**: `localizeValue(locale,prefix,value)` helper + dict keys `genre.*`/`placement.*`/`gender.*`/`category.*`. Applied in project-card, catalog-view (rows + genre & category filters), report-hero, key-facts. Price "Price on request" → localized `keyFacts.onRequest`.

@@ -79,7 +79,7 @@ Don't-break list (proposal §4): single `<form>` element wraps everything; keep 
 - edit-Save: остаётся на странице + зелёный «Saved»(3с)/красный «Unsaved» (create по-прежнему редиректит).
 - Cancel-кнопка справа рядом с Save (верхний Back to projects = левая навигация).
 
-**QA всей платформы (headed browse, брейкпоинты 375–1600):** 7 багов найдено+исправлено (B1–B7, детали docs/qa-findings-2026-07-24.md + матрица T1–T16). Публичка/кабинеты/админка чисто.
+**QA всей платформы (headed browse, брейкпоинты 375–1600):** 7 багов найдено+исправлено (B1–B7, детали docs/archive/qa-findings-2026-07-24.md + матрица T1–T16). Публичка/кабинеты/админка чисто.
 
 **НЕ реализовано vs xlsx-схема** (список для друга): Film Duration, Placement Is-Exclusive/Available-Slots/Position(значения не совпад.), Reference Projects как rich-список(name+link/image), Director отдельным полем. Нужны новые поля БД.
 

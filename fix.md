@@ -1,5 +1,8 @@
 # FIX / TODO — пакетный список (фиксим и тестим одним махом)
 
+> Живой рабочий файл, бэклог актуален на 2026-07-18 (блок «⭐ АКТУАЛЬНЫЙ СТАТУС» ниже — источник
+> правды, всё после него — исторический лог). Карта всей документации проекта — `docs/INDEX.md`.
+
 Живой список. Пользователь диктует пункты — сюда добавляем. Ничего не делаем по отдельности;
 собираем всё, потом реализуем + тестируем за один заход, потом деплой.
 
@@ -362,7 +365,7 @@
 
 **Что деплоить:** весь батч fix.md (#10–#26) + /about + хедер −3 иконки.
 
-**Процесс (см. память prod-deploy-migration + docs/Prod-Deploy-2026-07-15.md):**
+**Процесс (см. память prod-deploy-migration + docs/archive/Prod-Deploy-2026-07-15.md):**
 1. Deploy-цепочка Hostinger (git push→main) делает только `npm install`+`next build` — **НЕ мигрирует БД и НЕ несёт .env**.
 2. **Прод-БД мигрировать ВРУЧНУЮ ПЕРЕД push:** remote `prisma db push` (host srv2026.hstgr.io, порт 3306, доступ открыт). Новые поля/модели: Project.moderationStatus/kind/episodes/episodeMinutes/genres, Role+=MODERATOR, User.avatar/website/brandCategories/budgetRange, модель Interest. Сначала `prisma migrate diff` (превью), потом push.
 3. **Новые env в hPanel (Node.js app config) ДО рестарта** (значения — в памяти external-secrets, не в git):

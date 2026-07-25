@@ -72,5 +72,5 @@
 ## Связано
 
 - Данные-источник: пресс-кит Aram (memory `reference-aram-film-data`).
-- Гап-анализ модели: `docs/Aram-Fields-Design-2026-07-09.md`, memory `project-admin-gaps-aram`.
+- Гап-анализ модели: `docs/archive/Aram-Fields-Design-2026-07-09.md`, memory `project-admin-gaps-aram`.
 - Индексация прода: OFF (`docs/DEPLOY-indexing-disabled.md`).

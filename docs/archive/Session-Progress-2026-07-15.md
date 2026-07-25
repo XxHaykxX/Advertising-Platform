@@ -6,7 +6,7 @@
 
 ### Деплой на прод (готово)
 - Задеплоена auth-фича + правки report/homepage (коммиты `17e68f0` + `8dec862`, потом `16bb2b5`).
-- **Прод-БД мигрирована** через remote `prisma db push` (deploy-цепочка Hostinger НЕ мигрирует БД — только `npm install`+`next build`). Детали: `docs/Prod-Deploy-2026-07-15.md`.
+- **Прод-БД мигрирована** через remote `prisma db push` (deploy-цепочка Hostinger НЕ мигрирует БД — только `npm install`+`next build`). Детали: `docs/archive/Prod-Deploy-2026-07-15.md`.
 - **Инцидент решён:** после миграции прод падал 500 (`Authentication failed`) — пароль в hPanel `DATABASE_URL` не совпадал. Сбросил пароль БД на `Igovazd2026DbAx7q2mZ` (хранится в памяти `prod-deploy-migration`, НЕ в git), обновил env, рестарт. Прод работает.
 - E2E на проде (playwright MCP, прод за Cloudflare-челленджем ~6с): зарегистрировал CREATOR `demo.creator.2026@example.com` / `DemoPass2026` (id=2) → PENDING → одобрил как superadmin → APPROVED → вход → кабинет `/account`. Работает.
 

@@ -1,5 +1,7 @@
 # tasks.md — Админка продукта: рефактор формы под CSV-схему
 
+> Живой рабочий файл. Актуален на 2026-07-25. Карта всей документации проекта — `docs/INDEX.md`.
+
 ## ⭐ СТАТУС 2026-07-25 (source of truth)
 
 **Сделано локально + проверено (tsc 0, vitest 62/62):**
@@ -17,9 +19,9 @@
 - Следствие фикса#1: server больше не форсит строгий 18-список (UI — гейт). Старые проекты держат легаси-роли пока вручную не перевыберут. Возможна будущая задача: маппинг арм/рус ролей→англ enum.
 
 **НЕЗАКРЫТО:**
-- ⏳ #22 mp4 upload — код готов (bodySizeLimit 52mb + mime + fallback), ЖДЁТ живой тест юзера >8MB.
-- ⛔ ДЕПЛОЙ на HOLD (юзер: «не делай пока не скажу»). Прод-SQL готов: `docs/prod-migrations/2026-07-25-{phase2-fields, streaming-source-dict, phase3-cast-person}.sql` — применить прод-БД ДО push.
-- 🗺 #27 ROADMAP (ПЛАНИРОВАНИЕ, не строить пока не скажет): красивый визуальный roadmap (таймлайн как слайд Kinodaran — тёмный/фиолетовый/glow) — какие данные/фичи админки в какой точке; + вывод какие пункты админки станут не нужны. Скиллы UI/UX Pro Max + Artifact. Юзер сначала компакт+обновление доков.
+- ⏳ #22 mp4 upload — код готов+задеплоен (bodySizeLimit 52mb + mime + fallback), ЖДЁТ живой тест юзера >8MB.
+- ✅ ДЕПЛОЙ ВЫПОЛНЕН (2026-07-25, prod HEAD 93bd4d2, прод-БД мигрирована). tsc 0 / vitest 62/62 зелёные на 2026-07-25. Прод-SQL применён: `docs/prod-migrations/2026-07-25-{phase2-fields, streaming-source-dict, phase3-cast-person}.sql`.
+- ⚠️ УРОК: билд 0bc603e молча УПАЛ на Hostinger → прод держал старое → «Status ещё виден». После push проверять `hosting_listNodeJSBuildsV1`=completed, не полагаться на push=live.
 
 ---
 
@@ -87,36 +89,36 @@ Actor, Director, Writer, Producer, Music, Show Host, Showrunner, General Produce
 
 ## Задачи по фазам
 
-### Фаза 1 — структура/подписи/UI (минимум миграций)
-- [ ] **T1.** Секция «Press-kit» → **«Design»**, разместить ПОСЛЕ General (порядок секций как в CSV).
-- [ ] **T2.** Kind → подпись «Format», варианты **Single / Series** (i18n hy/ru/en; enum БД `FILM|SERIAL` внутренне).
-- [ ] **T3.** Удалить дропдаун **Format Category** из формы.
-- [ ] **T4.** **Country** → в General.
-- [ ] **T5.** **Age Rating** → в General (из Audience&Value).
-- [ ] **T6.** Блок длительности (Duration/Episodes) — сразу после Format.
-- [ ] **T7.** **Language** → MultiSelect (CSV в `language`); проверить каталог-фильтр.
-- [ ] **T8.** Превью картинок 16:9 в админке — немного крупнее.
-- [ ] **T9.** Общий порядок секций формы = About → General → Design → Cast&Crew → Placement(s) → Production Info → Reference Projects.
-- [ ] **T9b.** Убрать из формы: `priceMinAmd/priceMaxAmd/priceNote`, `audienceGender/audienceAge`, `budgetMinAmd/budgetMaxAmd`. Секцию «Audience & Value» распустить. Перед удалением — grep потребителей.
-- [ ] **T9c.** Оставленные вне-CSV поля разместить: `applicationDeadline`+`platforms`+`cinemas` → Production Info; `placementType` → General/«Дополнительно».
+### Фаза 1 — структура/подписи/UI (минимум миграций) — ✅ ЗАДЕПЛОЕНО (prod HEAD 93bd4d2)
+- [x] **T1.** Секция «Press-kit» → **«Design»**, разместить ПОСЛЕ General (порядок секций как в CSV).
+- [x] **T2.** Kind → подпись «Format», варианты **Single / Series** (i18n hy/ru/en; enum БД `FILM|SERIAL` внутренне).
+- [x] **T3.** Удалить дропдаун **Format Category** из формы.
+- [x] **T4.** **Country** → в General.
+- [x] **T5.** **Age Rating** → в General (из Audience&Value).
+- [x] **T6.** Блок длительности (Duration/Episodes) — сразу после Format.
+- [x] **T7.** **Language** → MultiSelect (CSV в `language`); проверить каталог-фильтр.
+- [x] **T8.** Превью картинок 16:9 в админке — немного крупнее.
+- [x] **T9.** Общий порядок секций формы = About → General → Design → Cast&Crew → Placement(s) → Production Info → Reference Projects.
+- [x] **T9b.** Убрать из формы: `priceMinAmd/priceMaxAmd/priceNote`, `audienceGender/audienceAge`, `budgetMinAmd/budgetMaxAmd`. Секцию «Audience & Value» распустить. Перед удалением — grep потребителей.
+- [x] **T9c.** Оставленные вне-CSV поля разместить: `applicationDeadline`+`platforms`+`cinemas` → Production Info; `placementType` → General/«Дополнительно».
 
-### Фаза 2 — миграция БД + новые поля
-- [ ] **T10.** Миграция (одна): `+ durationMinutes Int?`, `+ boxOfficeAmd Int?`, tier `+ isExclusive Boolean`, `+ availableSlots Int?`, project `+ streamingSource`, `+ expectedReleaseDate DateTime?`, Reference Projects (структура).
-- [ ] **T11.** Duration Single (durationMinutes) + Budget (boxOfficeAmd) в General; убрать budgetMin/Max из админки.
-- [ ] **T12.** «Tiers» → «Placement(s)»: + Is Exclusive (toggle), + Available Slots.
-- [ ] **T13.** Production Info: + Streaming Source, + Expected Release Date.
-- [ ] **T14.** Reference Projects: `references` текст → повторяемый список (name + ссылка/фото).
-- [ ] **T14b.** Available slots «X из Y» (= Σavailable из Σtotal). Схема: tier +totalSlots +availableSlots. Показ в ДВУХ местах: (1) карточка каталога `project-card.tsx` — сумма по проекту; (2) детальная/отчёт страница — у КАЖДОГО Placement «X из Y» + Exclusive-бейдж. Данные через getProjects (`projects.ts`). Делать после phase2.
+### Фаза 2 — миграция БД + новые поля — ✅ ЗАДЕПЛОЕНО (prod-БД мигрирована)
+- [x] **T10.** Миграция (одна): `+ durationMinutes Int?`, `+ boxOfficeAmd Int?`, tier `+ isExclusive Boolean`, `+ availableSlots Int?`, project `+ streamingSource`, `+ expectedReleaseDate DateTime?`, Reference Projects (структура).
+- [x] **T11.** Duration Single (durationMinutes) + Budget (boxOfficeAmd) в General; убрать budgetMin/Max из админки.
+- [x] **T12.** «Tiers» → «Placement(s)»: + Is Exclusive (toggle), + Available Slots.
+- [x] **T13.** Production Info: + Streaming Source, + Expected Release Date.
+- [x] **T14.** Reference Projects: `references` текст → повторяемый список (name + ссылка/фото).
+- [x] **T14b.** Available slots «X из Y» (= Σavailable из Σtotal). Схема: tier +totalSlots +availableSlots. Показ в ДВУХ местах: (1) карточка каталога `project-card.tsx` — сумма по проекту; (2) детальная/отчёт страница — у КАЖДОГО Placement «X из Y» + Exclusive-бейдж. Данные через getProjects (`projects.ts`). Делать после phase2.
 
-### Фаза 3 — Cast & Crew рефактор (Person)
-- [ ] **T15.** Мигрировать: связать `Actor.personId → Person`; сид `Person` из уникальных `Actor` (имя/фото).
-- [ ] **T16.** Роли: `role String` → **мультивыбор** ролей на проект (строгий список 18, searchable, без своего варианта). Хранение roles (CSV/JSON или таблица связей — решить в плане).
-- [ ] **T17.** Форма проекта: выбор человека из справочника Person (автокомплит из Person, не из Actor).
-- [ ] **T18.** `/admin/cast` — рабочий справочник (наполнен, редактируется).
-- [ ] **T19.** Фикс кросс-язычного поиска имени: `Ռաֆայել Թադևոսյան` находить по латинскому `raf` (транслит/нормализация).
+### Фаза 3 — Cast & Crew рефактор (Person) — ✅ ЗАДЕПЛОЕНО + architect-ревью починено
+- [x] **T15.** Мигрировать: связать `Actor.personId → Person`; сид `Person` из уникальных `Actor` (имя/фото).
+- [x] **T16.** Роли: `role String` → **мультивыбор** ролей на проект (строгий список 18, searchable, без своего варианта). Хранение roles (CSV/JSON или таблица связей — решить в плане).
+- [x] **T17.** Форма проекта: выбор человека из справочника Person (автокомплит из Person, не из Actor).
+- [x] **T18.** `/admin/cast` — рабочий справочник (наполнен, редактируется).
+- [x] **T19.** Фикс кросс-язычного поиска имени: `Ռաֆայել Թадևոսյան` находить по латинскому `raf` (транслит/нормализация).
 
 ### Фаза 4 — баг
-- [ ] **T20.** **mp4 upload не работает** — расследовать (`media-field.tsx`, `videos`-роут, `UPLOADS_DIR`) + починить.
+- [~] **T20.** **mp4 upload** — код готов+задеплоен (bodySizeLimit 52mb + mime + fallback, свой MP4-плеер #35, таб «один источник»). ⏳ ЖДЁТ живой тест юзера >8MB на проде (#22).
 
 ---
 
