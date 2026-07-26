@@ -1017,7 +1017,11 @@ export function ProjectForm({
               type. The ambiguous ones carry a helper hint under the field. */}
           <section id="sec-production" className="scroll-mt-24 space-y-3 rounded-xl border border-border bg-card p-4">
             <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">{t("projectForm.section.production")}</h2>
-            <Field label={t("projectForm.field.status")} hint={t("projectForm.help.status")}>
+            {/* No hint here: the "powers the catalog filter / brand can only
+                join while in pre-production" explanation was noise for staff who
+                already know the pipeline (user request 2026-07-26). The
+                projectForm.help.status key stays in the dictionary. */}
+            <Field label={t("projectForm.field.status")}>
               <select name="status" defaultValue={data.status} className={inputCls}>
                 {STATUS_OPTIONS.map((o) => (
                   <option key={o} value={o}>
