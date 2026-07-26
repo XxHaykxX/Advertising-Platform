@@ -6,7 +6,7 @@ import { getSiteHeaderUser } from "@/lib/data/site-header-user";
 import { getBrandInterestStatus } from "@/lib/data/brand-interests";
 import { prisma } from "@/lib/prisma";
 import { loadCurrentUser } from "@/lib/auth/require";
-import { canEditContent, canModerate } from "@/lib/auth/permissions";
+import { isStaff } from "@/lib/auth/permissions";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ReportHero } from "@/components/report/report-hero";
@@ -45,8 +45,17 @@ export default async function ReportPage({
   // exactly the PENDING/REJECTED/DRAFT projects that queue exists for.
   // Bypass the gate for staff who can moderate or edit content; everyone
   // else keeps the public "approved only" behavior.
-  const canPreviewUnapproved =
-    authed != null && (canModerate(authed.role) || canEditContent(authed.role));
+  // Any staff account may preview an unapproved project — a moderator to
+  // judge it, a publisher to fix it, a translator to read the copy where it
+  // actually sits. The creator who submitted it may see their own in any
+  // status: they wrote it, and after a rejection they need to look at what
+  // they sent in order to fix it. Everyone else — other members and guests —
+  // keeps the public "approved only" behaviour and gets a 404.
+  const ownsThis =
+    authed != null &&
+    (await prisma.project.findFirst({ where: { id: pid, ownerId: authed.id }, select: { id: true } })) !=
+      null;
+  const canPreviewUnapproved = authed != null && (isStaff(authed.role) || ownsThis);
   const project = await getProject(pid, locale, currency, !canPreviewUnapproved);
   if (!project) notFound();
 

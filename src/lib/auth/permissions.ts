@@ -38,3 +38,12 @@ export function canEditTranslations(role: Role): boolean {
 export function isTranslatorOnly(role: Role): boolean {
   return role === "TRANSLATOR";
 }
+
+/** True for anyone on the staff side, whatever their section. Members
+ *  (BRAND/CREATOR) are not staff. Used where the question is simply "does
+ *  this account belong to the platform's own team" — e.g. previewing a
+ *  project that hasn't been approved yet: a translator needs to read the
+ *  copy in place just as much as a moderator needs to judge it. */
+export function isStaff(role: Role): boolean {
+  return role === "SUPERADMIN" || role === "PUBLISHER" || role === "MODERATOR" || role === "TRANSLATOR";
+}

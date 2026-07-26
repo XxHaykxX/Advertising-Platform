@@ -63,10 +63,11 @@ export default async function MyProjectsPage() {
       ) : (
         <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {projects.map((p, i) => {
-            // F4: only APPROVED projects are public (isActive) — let the creator
-            // open their live listing. Pending/rejected/draft aren't viewable yet,
-            // so those cards stay non-clickable (the status pill explains why).
-            const viewable = p.moderationStatus === "APPROVED" && p.isActive;
+            // The creator can open their own project whatever its status
+            // (owner decision 2026-07-26): the page 404s for everyone else
+            // until it is approved, but its author needs to see what they
+            // submitted — especially after a rejection, to know what to fix.
+            const viewable = true;
             // The clickable "open live listing" area (poster + title + code).
             // Kept out of the outer wrapper (which is a plain <div>, not an
             // <a>) so the Edit link below can sit alongside it instead of
