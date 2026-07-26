@@ -1768,6 +1768,11 @@ export const UI: Record<string, Dict> = {
     en: "Something went wrong — please try again.",
     hy: "Ինչ-որ բան այն չէ․ փորձեք կրկին։",
   },
+  "account.brand.applyNotAvailable": {
+    ru: "Этот проект сейчас недоступен для заявок.",
+    en: "This project is not open for applications right now.",
+    hy: "Այս նախագիծը այս պահին հայտեր չի ընդունում։",
+  },
   "account.brand.applyPhoneRequired": {
     ru: "Укажите телефон с кодом страны, например +374 XX XXX XXX.",
     en: "Enter a phone number with its country code, for example +374 XX XXX XXX.",

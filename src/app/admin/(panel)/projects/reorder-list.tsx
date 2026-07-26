@@ -332,8 +332,22 @@ function SortableRow({
         </div>
       </td>
       <td className="px-4 py-2 align-middle">
-        <Link href={`/admin/projects/${p.id}/edit`} className="font-medium text-foreground hover:text-primary">
+        {/* Title opens the project as visitors see it; editing is its own
+            deliberate click. Same rule as the moderation queue and the
+            applications inbox — a name is not a request to edit. */}
+        <Link
+          href={`/reports/${p.id}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-medium text-foreground hover:text-primary"
+        >
           {p.title}
+        </Link>
+        <Link
+          href={`/admin/projects/${p.id}/edit`}
+          className="mt-0.5 block text-xs text-muted-foreground hover:text-primary"
+        >
+          Edit
         </Link>
       </td>
       <td className="px-4 py-2 align-middle">
@@ -390,11 +404,20 @@ export function PlainProjectsTable({ projects }: { projects: ProjectRow[] }) {
                     </div>
                   </td>
                   <td className="px-4 py-2">
+                    {/* Same split as the reorderable table above. */}
                     <Link
-                      href={`/admin/projects/${p.id}/edit`}
+                      href={`/reports/${p.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="font-medium text-foreground hover:text-primary"
                     >
                       {p.title}
+                    </Link>
+                    <Link
+                      href={`/admin/projects/${p.id}/edit`}
+                      className="mt-0.5 block text-xs text-muted-foreground hover:text-primary"
+                    >
+                      Edit
                     </Link>
                   </td>
                   <td className="px-4 py-2">

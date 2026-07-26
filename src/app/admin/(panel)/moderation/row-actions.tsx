@@ -1,13 +1,19 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Loader2 } from "lucide-react";
+import Link from "next/link";
+import { Loader2, Eye, Check, X } from "lucide-react";
 import { approveProject, rejectProject } from "./actions";
 
-const btnCls =
-  "inline-flex items-center gap-1.5 rounded-lg border border-border bg-muted px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50";
+const baseCls =
+  "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50";
+// Approve carries the primary colour, Reject the danger red — the two answers
+// shouldn't look alike when one of them is irreversible.
+const approveCls = `${baseCls} bg-primary text-primary-foreground hover:opacity-90`;
+const rejectCls = `${baseCls} bg-danger text-white hover:opacity-90`;
+const viewCls = `${baseCls} border border-border bg-muted text-muted-foreground hover:border-primary/40 hover:text-primary`;
 
-/** Approve/Reject buttons for a single moderation-queue row. Mirrors the
+/** View/Approve/Reject buttons for a single moderation-queue row. Mirrors the
    registrations/row-actions.tsx pattern: a plain client component driving a
    bound Server Action via useTransition, no form/redirect involved. */
 export function RowActions({ projectId }: { projectId: number }) {
@@ -19,41 +25,51 @@ export function RowActions({ projectId }: { projectId: number }) {
 
   return (
     <div className="flex flex-col gap-2">
-    <div className="flex flex-wrap gap-2">
-      <button
-        type="button"
-        disabled={pending}
-        onClick={() =>
-          start(async () => {
-            setError("");
-            const result = await approveProject(projectId);
-            if ("error" in result) setError(result.error);
-          })
-        }
-        className={btnCls}
-      >
-        {pending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-        Approve
-      </button>
-      <button
-        type="button"
-        disabled={pending}
-        onClick={() => {
-          // The reason reaches the creator now (email + cabinet + in-app
-          // notification), so it is no longer "optional" in the throwaway
-          // sense it used to be.
-          const reason = window.prompt("Rejection reason — the creator will see this:") ?? "";
-          start(async () => {
-            setError("");
-            await rejectProject(projectId, reason || undefined);
-          });
-        }}
-        className={btnCls}
-      >
-        {pending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-        Reject
-      </button>
-    </div>
+      <div className="flex flex-wrap gap-2">
+        {/* Read the submission before judging it — the same page a visitor
+            would land on, opened in its own tab so the queue stays put. */}
+        <Link href={`/reports/${projectId}`} target="_blank" rel="noopener noreferrer" className={viewCls}>
+          <Eye className="h-3.5 w-3.5" />
+          View
+        </Link>
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() =>
+            start(async () => {
+              setError("");
+              const result = await approveProject(projectId);
+              if ("error" in result) setError(result.error);
+            })
+          }
+          className={approveCls}
+        >
+          {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+          Approve
+        </button>
+        <button
+          type="button"
+          disabled={pending}
+          onClick={() => {
+            // The reason reaches the creator now (email + cabinet + in-app
+            // notification), so it is no longer "optional" in the throwaway
+            // sense it used to be.
+            const reason = window.prompt("Rejection reason — the creator will see this:");
+            // Cancel means cancel. `?? ""` used to reject the project anyway,
+            // and a rejection emails the creator and pulls the project out of
+            // the catalog — an accidental click could not be taken back.
+            if (reason === null) return;
+            start(async () => {
+              setError("");
+              await rejectProject(projectId, reason || undefined);
+            });
+          }}
+          className={rejectCls}
+        >
+          {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <X className="h-3.5 w-3.5" />}
+          Reject
+        </button>
+      </div>
       {error ? (
         <p className="max-w-md rounded-lg border border-danger/30 bg-danger/5 px-3 py-2 text-xs leading-relaxed text-danger">
           {error}

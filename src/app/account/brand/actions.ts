@@ -108,6 +108,19 @@ export async function submitApplication(
 
   if (!Number.isInteger(projectId)) return { ok: false, error: t("account.brand.expressInterestError") };
 
+  // Only a published listing can be applied for. Nothing checked this before:
+  // the popup is reachable only from a page a brand can open, but a crafted
+  // POST could aim at a project still waiting for moderation, at a rejected
+  // one, or at one taken off the catalog — and the creator would get a lead
+  // on something not actually on sale.
+  const listing = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: { isActive: true, moderationStatus: true },
+  });
+  if (!listing || !listing.isActive || listing.moderationStatus !== "APPROVED") {
+    return { ok: false, error: t("account.brand.applyNotAvailable") };
+  }
+
   const trimmedMessage = message.trim().slice(0, 2000) || null;
   const trimmedContact = contact.trim().slice(0, 191) || null;
   // Message is required (the popup enforces it client-side too) — reject an

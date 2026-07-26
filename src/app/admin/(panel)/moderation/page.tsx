@@ -130,14 +130,27 @@ export default async function ModerationAdminPage({
                     </div>
                   </td>
                   <td className="px-4 py-3">
+                    {/* The title opens the project as it will be seen, not the
+                        edit form: this queue is for judging a submission, and
+                        landing straight in a form invites rewriting someone
+                        else's project instead of approving or rejecting it.
+                        Editing is a separate, deliberate click below. */}
                     <Link
-                      href={canEdit ? `/admin/projects/${p.id}/edit` : `/reports/${p.id}`}
-                      target={canEdit ? undefined : "_blank"}
-                      rel={canEdit ? undefined : "noopener noreferrer"}
+                      href={`/reports/${p.id}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="font-medium text-foreground hover:text-primary"
                     >
                       {p.title}
                     </Link>
+                    {canEdit ? (
+                      <Link
+                        href={`/admin/projects/${p.id}/edit`}
+                        className="mt-0.5 block text-xs text-muted-foreground hover:text-primary"
+                      >
+                        Edit
+                      </Link>
+                    ) : null}
                     {/* The #PP-… code is internal bookkeeping and is not shown
                         anywhere in the UI (owner decision, repeated). */}
                   </td>
