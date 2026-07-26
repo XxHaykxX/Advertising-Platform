@@ -23,7 +23,7 @@ type Dict = Record<Locale, string>;
 
 export const UI: Record<string, Dict> = {
   // ── header nav ──────────────────────────────
-  "nav.catalog": { ru: "Каталог", en: "Catalog", hy: "Կատալոգ" },
+  "nav.catalog": { ru: "Каталог", en: "Catalog", hy: "ԿատալոգԳԳ" },
   "nav.how": { ru: "Как это работает", en: "How It Works", hy: "Ինչպես է աշխատում" },
   "nav.portfolio": { ru: "Портфолио", en: "Portfolio", hy: "Պորտֆոլիո" },
   "nav.partners": { ru: "Партнёры", en: "Partners", hy: "Գործընկերներ" },
