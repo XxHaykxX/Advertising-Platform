@@ -102,8 +102,15 @@ export default async function AdminDashboard() {
       </div>
 
       <div className="mt-8 flex flex-wrap gap-3">
+        {/* A MODERATOR 404s on /admin/projects (content-editor only), so the
+            primary action points at the queue they actually work in — same
+            reasoning as the moderation-queue card above (audit 7 / 3.2). */}
         <Button asChild>
-          <Link href="/admin/projects">Manage projects</Link>
+          {isModerator ? (
+            <Link href="/admin/moderation">{t("admin.dashboard.moderationQueue")}</Link>
+          ) : (
+            <Link href="/admin/projects">Manage projects</Link>
+          )}
         </Button>
         {isSuperadmin && (
           <Button asChild variant="secondary">
