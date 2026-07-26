@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import {
   DndContext,
@@ -122,6 +122,21 @@ const HEADER_ROW_CLS =
 export function ReorderableProjectsTable({ projects }: { projects: ProjectRow[] }) {
   const [rows, setRows] = useState(projects);
   const [filters, setFilters] = useState(NO_FILTERS);
+
+  // `rows` is a local, reorderable copy — but useState only reads its initial
+  // value once, so anything the server changed underneath it (a delete, a
+  // duplicate, a visibility toggle, another admin's edit) arrived in the
+  // `projects` prop after revalidatePath and was ignored: a deleted project
+  // stayed on screen until a full page reload. Re-seed whenever the server's
+  // list actually differs. The signature (not the array identity) is the
+  // dependency, so a re-render with identical data doesn't clobber an
+  // in-flight drag; PlainProjectsTable below never had this problem because
+  // it renders the prop directly.
+  const serverSignature = projects.map((p) => `${p.id}:${p.isActive}:${p.title}`).join("|");
+  useEffect(() => {
+    setRows(projects);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serverSignature]);
   const [pending, startTransition] = useTransition();
   // Transient "Saved" confirmation, same pattern as profile-form.tsx (IA-28).
   const [showSaved, setShowSaved] = useState(false);
