@@ -6,9 +6,21 @@ import { getAllInterests } from "@/lib/data/interests";
 import { formatFullDate } from "@/lib/data/format";
 import { formatMoney } from "@/lib/currency";
 import { intlLocale, makeUI } from "@/lib/i18n";
+import { BUDGET_RANGES } from "@/lib/brand-categories";
 import { cn } from "@/lib/utils";
 import type { InterestStatus } from "@prisma/client";
 import { RowActions } from "./row-actions";
+
+/** "5-20M" → "5,000,000 – 20,000,000 AMD" (admin panel stays English-only). */
+function budgetLabel(value: string): string {
+  return BUDGET_RANGES.find((b) => b.value === value)?.label ?? value;
+}
+
+const DEAL_LABEL: Record<string, string> = {
+  CASH: "Cash",
+  BARTER: "Barter",
+  BOTH: "Cash and barter",
+};
 
 /* Wave 2 of the audit (2.1) — the admin half of the applications inbox that
    was deleted in cd7fb5a, which is what made a brand's Interest write-only:
@@ -92,6 +104,20 @@ export default async function InterestsAdminPage() {
                   {interest.brand.company ? (
                     <p className="text-xs text-muted-foreground">{interest.brand.company}</p>
                   ) : null}
+                  {/* Budget bracket + categories from the brand's own profile —
+                      filled in at registration and, until now, read by nobody
+                      (same addition as the creator's inbox). */}
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    Budget:{" "}
+                    <span className="font-medium text-foreground">
+                      {budgetLabel(interest.brand.budgetRange) || "not specified"}
+                    </span>
+                  </p>
+                  {interest.brand.categories.length > 0 ? (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Categories: <span className="text-foreground">{interest.brand.categories.join(", ")}</span>
+                    </p>
+                  ) : null}
                 </div>
                 <div>
                   <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -149,6 +175,34 @@ export default async function InterestsAdminPage() {
                   )}
                 </div>
               </div>
+
+              {/* The brief (2026-07-26) — admin panel stays English-only. */}
+              {interest.productInfo || interest.desiredTiming || interest.dealType ? (
+                <div className="mt-4 grid grid-cols-1 gap-4 rounded-xl border border-border/60 bg-muted/30 p-4 sm:grid-cols-3">
+                  {interest.productInfo ? (
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        What is being placed
+                      </p>
+                      <p className="mt-1 whitespace-pre-wrap text-sm text-foreground">{interest.productInfo}</p>
+                    </div>
+                  ) : null}
+                  {interest.desiredTiming ? (
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        Preferred timing
+                      </p>
+                      <p className="mt-1 text-sm text-foreground">{interest.desiredTiming}</p>
+                    </div>
+                  ) : null}
+                  {interest.dealType ? (
+                    <div>
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Deal type</p>
+                      <p className="mt-1 text-sm text-foreground">{DEAL_LABEL[interest.dealType] ?? interest.dealType}</p>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
 
               {interest.message ? (
                 <div className="mt-4">

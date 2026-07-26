@@ -255,13 +255,33 @@ type InterestMailInput = {
   message?: string;
   contact?: string;
   note?: string;
+  // The brief (2026-07-26): carried into the email so the creator can size up
+  // the lead from the notification itself instead of having to open the
+  // cabinet to find out what is even being offered.
+  productInfo?: string;
+  desiredTiming?: string;
+  dealType?: string;
+  /** Budget bracket + categories from the brand's profile, already formatted
+   *  by the caller — the email is tri-lingual and has no locale of its own. */
+  brandBudget?: string;
 };
 
 export function newInterestTemplate(input: InterestMailInput, base: string = siteUrl()) {
   const url = `${base}/account/interests`;
   const subject = `Նոր հայտ / Новая заявка: «${input.projectTitle}» — ${input.brandName}`;
+  // Deal type is a fixed code, so it can be labelled in all three languages at
+  // once without knowing the reader's locale.
+  const DEAL_LABEL: Record<string, string> = {
+    CASH: "Վճարում / Оплата / Cash",
+    BARTER: "Բարտեր / Бартер / Barter",
+    BOTH: "Վճարում + բարտեր / Оплата + бартер / Cash + barter",
+  };
   const details = [
     input.tierName ? `<br/><strong>${escapeHtml(input.tierName)}</strong>` : "",
+    input.productInfo ? `<br/>${escapeHtml(input.productInfo)}` : "",
+    input.desiredTiming ? `<br/>${escapeHtml(input.desiredTiming)}` : "",
+    input.dealType && DEAL_LABEL[input.dealType] ? `<br/>${DEAL_LABEL[input.dealType]}` : "",
+    input.brandBudget ? `<br/>${escapeHtml(input.brandBudget)}` : "",
     input.message ? `<br/>${escapeHtml(input.message)}` : "",
     input.contact ? `<br/>${escapeHtml(input.contact)}` : "",
   ].join("");

@@ -7,10 +7,26 @@ import { getLocale } from "@/lib/data/locale";
 import { getInterestsForOwner } from "@/lib/data/interests";
 import { formatFullDate } from "@/lib/data/format";
 import { formatMoney } from "@/lib/currency";
-import { intlLocale, makeUI } from "@/lib/i18n";
+import { intlLocale, localizeValue, makeUI } from "@/lib/i18n";
+import { BUDGET_RANGES } from "@/lib/brand-categories";
 import { cn } from "@/lib/utils";
 import type { InterestStatus } from "@prisma/client";
 import { RowActions } from "./row-actions";
+
+/** "5-20M" → "5,000,000 – 20,000,000 AMD". The raw value is what the profile
+ *  stores; showing it as-is would be a code, not a number. */
+function budgetLabel(value: string): string {
+  return BUDGET_RANGES.find((b) => b.value === value)?.label ?? value;
+}
+
+/** CASH | BARTER | BOTH → the localized label. Anything else (an old row, a
+ *  value added later) falls back to the raw code rather than an empty cell. */
+function dealLabel(t: ReturnType<typeof makeUI>, value: string): string {
+  if (value === "CASH" || value === "BARTER" || value === "BOTH") {
+    return t(`interests.deal${value}` as Parameters<typeof t>[0]);
+  }
+  return value;
+}
 
 /* Wave 2 of the audit (2.1) — the creator's own applications inbox. Before
    this page a CREATOR got an "brand X is interested" notification with no
@@ -99,6 +115,27 @@ export default async function AccountInterestsPage() {
                     {interest.brand.company ? (
                       <p className="text-xs text-muted-foreground">{interest.brand.company}</p>
                     ) : null}
+                    {/* The brand filled these in when it registered, and until
+                        now nobody read them: the seller was asked to accept or
+                        decline a package worth millions knowing only a name.
+                        Its budget bracket and the categories it advertises in
+                        are the two facts that actually decide the answer. */}
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      {t("interests.brandBudget")}:{" "}
+                      <span className="font-medium text-foreground">
+                        {budgetLabel(interest.brand.budgetRange) || t("interests.brandBudgetUnset")}
+                      </span>
+                    </p>
+                    {interest.brand.categories.length > 0 ? (
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {t("interests.brandCategories")}:{" "}
+                        <span className="text-foreground">
+                          {interest.brand.categories
+                            .map((c) => localizeValue(locale, "category", c) || c)
+                            .join(", ")}
+                        </span>
+                      </p>
+                    ) : null}
                   </div>
                   <div>
                     <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
@@ -153,6 +190,38 @@ export default async function AccountInterestsPage() {
                     )}
                   </div>
                 </div>
+
+                {/* The brief (2026-07-26). Shown above the free-text message
+                    because these three answer the seller's first questions —
+                    what, when, and paid how — while the message is context. */}
+                {interest.productInfo || interest.desiredTiming || interest.dealType ? (
+                  <div className="mt-4 grid grid-cols-1 gap-4 rounded-xl border border-border/60 bg-muted/30 p-4 sm:grid-cols-3">
+                    {interest.productInfo ? (
+                      <div>
+                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                          {t("interests.product")}
+                        </p>
+                        <p className="mt-1 whitespace-pre-wrap text-sm text-foreground">{interest.productInfo}</p>
+                      </div>
+                    ) : null}
+                    {interest.desiredTiming ? (
+                      <div>
+                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                          {t("interests.timing")}
+                        </p>
+                        <p className="mt-1 text-sm text-foreground">{interest.desiredTiming}</p>
+                      </div>
+                    ) : null}
+                    {interest.dealType ? (
+                      <div>
+                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                          {t("interests.deal")}
+                        </p>
+                        <p className="mt-1 text-sm text-foreground">{dealLabel(t, interest.dealType)}</p>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
 
                 {interest.message ? (
                   <div className="mt-4">

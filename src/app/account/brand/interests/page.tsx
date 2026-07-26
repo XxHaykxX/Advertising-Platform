@@ -95,6 +95,28 @@ export default async function BrandInterestsPage() {
                   })}
                   {interest.tierName ? ` · ${interest.tierName}` : ""}
                 </p>
+                {/* What this brand itself sent (2026-07-26). Without it the
+                    cabinet showed a status pill over a project title and no
+                    trace of the request — so a brand with several applications
+                    could not tell which terms it had offered where. */}
+                {interest.productInfo || interest.desiredTiming || interest.dealType ? (
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {[
+                      interest.productInfo,
+                      interest.desiredTiming,
+                      interest.dealType === "CASH" || interest.dealType === "BARTER" || interest.dealType === "BOTH"
+                        ? t(`interests.deal${interest.dealType}` as Parameters<typeof t>[0])
+                        : "",
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </p>
+                ) : null}
+                {interest.message ? (
+                  <p className="mt-2 whitespace-pre-wrap rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-xs leading-relaxed text-foreground">
+                    {interest.message}
+                  </p>
+                ) : null}
                 {/* The seller's answer. Nothing could set MUTUAL/DECLINED
                     before wave 2, so this block never had anything to show. */}
                 {interest.respondedAt ? (

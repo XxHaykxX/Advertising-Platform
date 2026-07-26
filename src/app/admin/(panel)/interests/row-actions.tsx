@@ -35,7 +35,12 @@ export function RowActions({
     // The note is the creator's own words, reaching the brand via cabinet,
     // notification and email — optional, like the reject-reason prompt in
     // moderation/row-actions.
-    const note = window.prompt(answerPrompt) ?? "";
+    const note = window.prompt(answerPrompt);
+    // Cancel means cancel. `?? ""` used to turn a dismissed prompt into an
+    // empty note and send the answer anyway — an accidental click on Accept
+    // could not be taken back, and the answer is irreversible: it flips the
+    // status, books (or frees) the package slot and emails the brand.
+    if (note === null) return;
     start(async () => {
       setError("");
       const result = await respondToInterest(interestId, accept, note);

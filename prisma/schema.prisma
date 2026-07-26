@@ -369,6 +369,18 @@ model Interest {
   respondedAt  DateTime? // when the creator accepted/declined
   responseNote String?   @db.Text // what the creator wrote back
 
+  // ── The brief itself (2026-07-26) ──
+  // The application used to be one free-text box, so the three facts a seller
+  // actually needs to answer — what is being placed, when, and whether money
+  // or barter is on the table — arrived only if the brand happened to type
+  // them. Industry guides on placement briefs list exactly these as the
+  // minimum a brand must state up front. All optional: applications sent
+  // before this existed carry none, and a brand that says it all in prose
+  // still gets through.
+  productInfo   String? @db.Text // what is being placed (product / service)
+  desiredTiming String? // when the brand wants the placement, free text
+  dealType      String? // CASH | BARTER | BOTH — how the brand intends to pay
+
   brand    User              @relation(fields: [brandId], references: [id], onDelete: Cascade)
   project  Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
   tier     SponsorshipTier?  @relation(fields: [tierId], references: [id], onDelete: SetNull)
@@ -393,6 +405,11 @@ model InterestEvent {
   status     InterestStatus? // the status this event set, for RESPONSE rows
   body       String?         @db.Text // the message / the answer
   contact    String? // contact supplied with an APPLICATION
+  // The brief as it stood in THIS round (see Interest above). Kept per event
+  // so a resend with new terms doesn't rewrite what was originally offered.
+  productInfo   String? @db.Text
+  desiredTiming String?
+  dealType      String?
   authorId   Int? // who wrote it; null if that account was deleted
   createdAt  DateTime        @default(now())
 

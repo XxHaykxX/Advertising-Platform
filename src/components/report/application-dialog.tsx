@@ -21,6 +21,11 @@ export type ApplicationTier = {
   availableSlots: number | null;
 };
 
+/** Shortest application the seller is asked to answer. Enforced server-side
+ *  too (submitApplication) — this constant only drives the hint and the
+ *  disabled submit button. */
+const MIN_MESSAGE = 20;
+
 export function ApplicationDialog({
   projectId,
   tiers = [],
@@ -41,6 +46,13 @@ export function ApplicationDialog({
 }) {
   const [message, setMessage] = useState("");
   const [contact, setContact] = useState("");
+  // The brief (2026-07-26): what is being placed, when, and how the brand
+  // intends to pay. Optional — a brand that writes it all in the message still
+  // gets through — but asked for explicitly, because the seller was otherwise
+  // answering a package worth millions off one paragraph of prose.
+  const [productInfo, setProductInfo] = useState("");
+  const [desiredTiming, setDesiredTiming] = useState("");
+  const [dealType, setDealType] = useState("");
   // Preselect when there is only one package — a single-option dropdown is
   // just a click that can only go one way.
   const [tierId, setTierId] = useState<string>(tiers.length === 1 ? String(tiers[0].id) : "");
@@ -60,7 +72,11 @@ export function ApplicationDialog({
     e.preventDefault();
     setError(null);
     startTransition(async () => {
-      const res = await submitApplication(projectId, message, contact, tierId ? Number(tierId) : null);
+      const res = await submitApplication(projectId, message, contact, tierId ? Number(tierId) : null, {
+        productInfo,
+        desiredTiming,
+        dealType,
+      });
       if (!res.ok) {
         setError(res.error ?? t("apply.error"));
         return;
@@ -126,6 +142,61 @@ export function ApplicationDialog({
             ) : null}
 
             <div>
+              <label
+                htmlFor="apply-product"
+                className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+              >
+                {t("apply.productLabel")}
+              </label>
+              <input
+                id="apply-product"
+                type="text"
+                value={productInfo}
+                onChange={(e) => setProductInfo(e.target.value)}
+                placeholder={t("apply.productPlaceholder")}
+                className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label
+                  htmlFor="apply-timing"
+                  className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                >
+                  {t("apply.timingLabel")}
+                </label>
+                <input
+                  id="apply-timing"
+                  type="text"
+                  value={desiredTiming}
+                  onChange={(e) => setDesiredTiming(e.target.value)}
+                  placeholder={t("apply.timingPlaceholder")}
+                  className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+                />
+              </div>
+              <div>
+                <label
+                  htmlFor="apply-deal"
+                  className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                >
+                  {t("apply.dealLabel")}
+                </label>
+                <select
+                  id="apply-deal"
+                  value={dealType}
+                  onChange={(e) => setDealType(e.target.value)}
+                  className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+                >
+                  <option value="">{t("apply.dealUnset")}</option>
+                  <option value="CASH">{t("apply.dealCash")}</option>
+                  <option value="BARTER">{t("apply.dealBarter")}</option>
+                  <option value="BOTH">{t("apply.dealBoth")}</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
               <label htmlFor="apply-message" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 {t("apply.messageLabel")}
               </label>
@@ -138,6 +209,13 @@ export function ApplicationDialog({
                 placeholder={t("apply.messagePlaceholder")}
                 className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
               />
+              {/* A one-word "hi" used to be a valid application. The seller has
+                  to answer it, so it has to say something. */}
+              {message.trim().length > 0 && message.trim().length < MIN_MESSAGE ? (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {t("apply.messageTooShort").replace("{n}", String(MIN_MESSAGE))}
+                </p>
+              ) : null}
             </div>
 
             <div>
@@ -160,7 +238,12 @@ export function ApplicationDialog({
               <Button type="button" variant="secondary" className="flex-1" onClick={onClose} disabled={pending}>
                 {t("apply.cancel")}
               </Button>
-              <Button type="submit" variant="primary" className="flex-1" disabled={pending || !message.trim()}>
+              <Button
+                type="submit"
+                variant="primary"
+                className="flex-1"
+                disabled={pending || message.trim().length < MIN_MESSAGE}
+              >
                 {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : t("apply.submit")}
               </Button>
             </div>

@@ -32,7 +32,11 @@ export function RowActions({
   if (status !== "SENT") return null;
 
   function respond(accept: boolean) {
-    const note = window.prompt(answerPrompt) ?? "";
+    const note = window.prompt(answerPrompt);
+    // Cancel means cancel — see the admin copy for why `?? ""` was wrong: the
+    // answer is irreversible (status, slot booking, email to the brand), so a
+    // dismissed prompt must not send one.
+    if (note === null) return;
     start(async () => {
       setError("");
       const result = await respondToInterest(interestId, accept, note);

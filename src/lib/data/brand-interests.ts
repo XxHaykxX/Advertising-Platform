@@ -19,6 +19,13 @@ export type BrandInterestDTO = {
   respondedAt: string | null;
   responseNote: string;
   tierName: string; // the package applied for, "" when none was picked
+  // What the brand itself sent (2026-07-26). It used to be write-only in both
+  // directions: the seller couldn't read it, and neither could the brand —
+  // its own cabinet showed a status pill and nothing about what was asked for.
+  message: string;
+  productInfo: string;
+  desiredTiming: string;
+  dealType: string;
   project: {
     id: number;
     title: string;
@@ -54,6 +61,10 @@ export async function getBrandInterests(brandId: number, locale: Locale): Promis
     respondedAt: r.respondedAt?.toISOString() ?? null,
     responseNote: r.responseNote ?? "",
     tierName: r.tier?.name ?? "",
+    message: r.message ?? "",
+    productInfo: r.productInfo ?? "",
+    desiredTiming: r.desiredTiming ?? "",
+    dealType: r.dealType ?? "",
     project: {
       id: r.project.id,
       title: pickTitle(locale, r.project),

@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
+import { parseStringArray } from "@/lib/data/format";
 import type { Locale } from "@/lib/i18n";
 import type { InterestStatus } from "@prisma/client";
 
@@ -32,6 +33,12 @@ export type InterestInboxDTO = {
   responseNote: string;
   message: string;
   contact: string;
+  /** The brief the brand filled in (2026-07-26): what is being placed, when,
+   *  and whether the offer is cash, barter or both. Empty for applications
+   *  sent before the fields existed. */
+  productInfo: string;
+  desiredTiming: string;
+  dealType: string;
   brand: {
     id: number;
     name: string;
@@ -39,6 +46,12 @@ export type InterestInboxDTO = {
     email: string;
     phone: string;
     website: string;
+    /** Budget bracket from the brand's own profile (BUDGET_RANGES value, e.g.
+     *  "5-20M"), and the categories it advertises in. Both were already filled
+     *  in by the brand and read by nobody: the seller had to decide on a
+     *  package worth millions while seeing only a name and an email. */
+    budgetRange: string;
+    categories: string[];
   };
   project: {
     id: number;
@@ -71,7 +84,18 @@ function pickTitle(
 }
 
 const INTEREST_INCLUDE = {
-  brand: { select: { id: true, name: true, company: true, email: true, phone: true, website: true } },
+  brand: {
+    select: {
+      id: true,
+      name: true,
+      company: true,
+      email: true,
+      phone: true,
+      website: true,
+      budgetRange: true,
+      brandCategories: true,
+    },
+  },
   project: {
     select: {
       id: true,
@@ -101,6 +125,9 @@ function toDTO(locale: Locale, r: InterestRow): InterestInboxDTO {
     responseNote: r.responseNote ?? "",
     message: r.message ?? "",
     contact: r.contact ?? "",
+    productInfo: r.productInfo ?? "",
+    desiredTiming: r.desiredTiming ?? "",
+    dealType: r.dealType ?? "",
     brand: {
       id: r.brand.id,
       name: r.brand.name,
@@ -108,6 +135,8 @@ function toDTO(locale: Locale, r: InterestRow): InterestInboxDTO {
       email: r.brand.email,
       phone: r.brand.phone ?? "",
       website: r.brand.website ?? "",
+      budgetRange: r.brand.budgetRange ?? "",
+      categories: parseStringArray(r.brand.brandCategories),
     },
     project: {
       id: r.project.id,

@@ -62,11 +62,27 @@ export async function getInterestCount(): Promise<number> {
  *  resets status back to SENT, since a fresh application is meant to reopen
  *  the conversation. Always notifies (not just on a brand-new row): the
  *  brand may be resubmitting with new details the admin should see. */
+/** The three brief fields the popup asks for on top of the free-text message
+ *  (2026-07-26). All optional; unknown dealType values are dropped rather than
+ *  stored, so a crafted POST can't put arbitrary text where the UI shows a
+ *  fixed label. */
+export type ApplicationBrief = {
+  productInfo?: string;
+  desiredTiming?: string;
+  dealType?: string;
+};
+
+const DEAL_TYPES = ["CASH", "BARTER", "BOTH"];
+/** Shortest application accepted. Mirrors MIN_MESSAGE in application-dialog —
+ *  the popup disables submit below this, and this rejects a direct POST. */
+const MIN_MESSAGE = 20;
+
 export async function submitApplication(
   projectId: number,
   message: string,
   contact: string,
   tierId?: number | null,
+  brief?: ApplicationBrief,
 ): Promise<ExpressInterestResult> {
   const user = await requireMember();
   const locale = await getLocale();
@@ -78,8 +94,17 @@ export async function submitApplication(
   const trimmedMessage = message.trim().slice(0, 2000) || null;
   const trimmedContact = contact.trim().slice(0, 191) || null;
   // Message is required (the popup enforces it client-side too) — reject an
-  // empty application submitted via a direct POST.
-  if (!trimmedMessage) return { ok: false, error: t("account.brand.expressInterestError") };
+  // empty application submitted via a direct POST. Since 2026-07-26 it must
+  // also actually say something: a one-word "hi" is not an application the
+  // seller can answer.
+  if (!trimmedMessage || trimmedMessage.length < MIN_MESSAGE) {
+    return { ok: false, error: t("account.brand.applyTooShort") };
+  }
+
+  const productInfo = (brief?.productInfo ?? "").trim().slice(0, 2000) || null;
+  const desiredTiming = (brief?.desiredTiming ?? "").trim().slice(0, 191) || null;
+  const dealTypeRaw = (brief?.dealType ?? "").trim();
+  const dealType = DEAL_TYPES.includes(dealTypeRaw) ? dealTypeRaw : null;
 
   // The package the brand is applying for (audit 2.3 — an application used to
   // say nothing about which placement or price it was about). Verified to
@@ -113,6 +138,9 @@ export async function submitApplication(
         message: trimmedMessage,
         contact: trimmedContact,
         tierId: resolvedTierId,
+        productInfo,
+        desiredTiming,
+        dealType,
       },
       // A resend reopens the conversation: back to SENT, new message, and any
       // slot the previous answer had taken is released below.
@@ -121,6 +149,9 @@ export async function submitApplication(
         message: trimmedMessage,
         contact: trimmedContact,
         tierId: resolvedTierId,
+        productInfo,
+        desiredTiming,
+        dealType,
         respondedAt: null,
         responseNote: null,
       },
@@ -137,6 +168,11 @@ export async function submitApplication(
         status: "SENT",
         body: trimmedMessage,
         contact: trimmedContact,
+        // Snapshot the brief with the round it was sent in, so resending with
+        // new terms doesn't rewrite what was originally offered.
+        productInfo,
+        desiredTiming,
+        dealType,
         authorId: user.id,
       },
     });
@@ -188,6 +224,16 @@ export async function submitApplication(
       const tierName = resolvedTierId
         ? (await prisma.sponsorshipTier.findUnique({ where: { id: resolvedTierId }, select: { name: true } }))?.name
         : undefined;
+      // The brand's own budget bracket, resolved to its label here: the email
+      // is tri-lingual and has no locale to localize with. Read from the DB —
+      // AuthedUser carries only id/email/role/name/isActive.
+      const brandRow = await prisma.user.findUnique({
+        where: { id: user.id },
+        select: { budgetRange: true },
+      });
+      const budgetLabel = brandRow?.budgetRange
+        ? (BUDGET_RANGES.find((b) => b.value === brandRow.budgetRange)?.label ?? brandRow.budgetRange)
+        : undefined;
       await notifyNewInterest(
         {
           projectId,
@@ -196,6 +242,10 @@ export async function submitApplication(
           tierName,
           message: trimmedMessage ?? undefined,
           contact: trimmedContact ?? user.email,
+          productInfo: productInfo ?? undefined,
+          desiredTiming: desiredTiming ?? undefined,
+          dealType: dealType ?? undefined,
+          brandBudget: budgetLabel,
         },
         project.owner.email,
       );
