@@ -104,7 +104,35 @@ export function PushSubscribe({ locale, vapidPublicKey }: { locale: Locale; vapi
     }
   }
 
-  if (status !== "prompt" || dismissed) return null;
+  if (dismissed) return null;
+
+  // Browser-level block. Nothing here can undo it — only the site settings
+  // can — but staying silent is worse: the account simply never hears about
+  // a new offer and has no idea why. Push is meant to reach every kind of
+  // account (staff, brands, creators), so say what's wrong.
+  if (status === "denied") {
+    return (
+      <div className="fixed bottom-4 right-4 z-50 flex max-w-[calc(100vw-2rem)] items-start gap-3 rounded-2xl border border-warn/40 bg-card p-3 pr-2 shadow-lg shadow-black/10">
+        <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-warn/10 text-warn">
+          <BellRing className="h-5 w-5" />
+        </span>
+        <div className="min-w-0 max-w-xs">
+          <p className="text-sm font-semibold text-foreground">{t("push.blockedTitle")}</p>
+          <p className="text-xs leading-relaxed text-muted-foreground">{t("push.blockedBody")}</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setDismissed(true)}
+          aria-label={t("ui.close")}
+          className="shrink-0 rounded-lg p-2 text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+    );
+  }
+
+  if (status !== "prompt") return null;
 
   return (
     <div className="fixed bottom-4 right-4 z-50 flex max-w-[calc(100vw-2rem)] items-center gap-3 rounded-2xl border border-border bg-card p-3 pr-2 shadow-lg shadow-black/10">

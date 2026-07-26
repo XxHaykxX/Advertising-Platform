@@ -1721,6 +1721,12 @@ export const UI: Record<string, Dict> = {
     hy: "Ստացեք push նույնիսկ փակ կայքի դեպքում",
   },
   "push.enable": { ru: "Включить", en: "Enable", hy: "Միացնել" },
+  "push.blockedTitle": { ru: "Уведомления заблокированы", en: "Notifications are blocked", hy: "Ծանուցումներն արգելափակված են" },
+  "push.blockedBody": {
+    ru: "Разрешите уведомления для сайта в настройках браузера — иначе вы не узнаете о новых предложениях.",
+    en: "Allow notifications for this site in your browser settings — otherwise you won't hear about new offers.",
+    hy: "Թույլատրեք ծանուցումները այս կայքի համար բրաուզերի կարգավորումներում, այլապես չեք իմանա նոր առաջարկների մասին։",
+  },
 
   // ── dashboard ──
   "account.brand.welcomeBack": { ru: "С возвращением, {name}", en: "Welcome back, {name}", hy: "Բարի վերադարձ, {name}" },
