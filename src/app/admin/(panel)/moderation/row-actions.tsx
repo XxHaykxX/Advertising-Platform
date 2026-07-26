@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { Loader2, Eye, Check, X } from "lucide-react";
 import { approveProject, rejectProject } from "./actions";
+import { NoteDialog } from "@/components/note-dialog";
 
 const baseCls =
   "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50";
@@ -22,6 +23,7 @@ export function RowActions({ projectId }: { projectId: number }) {
   // something required for publication (audit 2.8) — surface that instead of
   // letting the click look like it worked.
   const [error, setError] = useState("");
+  const [rejecting, setRejecting] = useState(false);
 
   return (
     <div className="flex flex-col gap-2">
@@ -47,29 +49,38 @@ export function RowActions({ projectId }: { projectId: number }) {
           {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
           Approve
         </button>
-        <button
-          type="button"
-          disabled={pending}
-          onClick={() => {
-            // The reason reaches the creator now (email + cabinet + in-app
-            // notification), so it is no longer "optional" in the throwaway
-            // sense it used to be.
-            const reason = window.prompt("Rejection reason — the creator will see this:");
-            // Cancel means cancel. `?? ""` used to reject the project anyway,
-            // and a rejection emails the creator and pulls the project out of
-            // the catalog — an accidental click could not be taken back.
-            if (reason === null) return;
-            start(async () => {
-              setError("");
-              await rejectProject(projectId, reason || undefined);
-            });
-          }}
-          className={rejectCls}
-        >
+        <button type="button" disabled={pending} onClick={() => setRejecting(true)} className={rejectCls}>
           {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <X className="h-3.5 w-3.5" />}
           Reject
         </button>
       </div>
+
+      {/* The reason reaches the creator (email + cabinet + in-app
+          notification), so it is asked for in a real dialog with room to
+          write, not in the browser's grey prompt box. */}
+      {rejecting ? (
+        <NoteDialog
+          accept={false}
+          pending={pending}
+          labels={{
+            titleAccept: "",
+            titleDecline: "Reject this project?",
+            noteLabel: "Rejection reason",
+            notePlaceholder: "The creator will see this and needs it to know what to fix",
+            confirmAccept: "",
+            confirmDecline: "Reject",
+            cancel: "Cancel",
+          }}
+          onConfirm={(reason) => {
+            start(async () => {
+              setError("");
+              await rejectProject(projectId, reason || undefined);
+              setRejecting(false);
+            });
+          }}
+          onClose={() => setRejecting(false)}
+        />
+      ) : null}
       {error ? (
         <p className="max-w-md rounded-lg border border-danger/30 bg-danger/5 px-3 py-2 text-xs leading-relaxed text-danger">
           {error}

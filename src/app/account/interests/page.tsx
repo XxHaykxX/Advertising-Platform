@@ -269,6 +269,12 @@ export default async function AccountInterestsPage() {
                     acceptLabel={t("interests.accept")}
                     declineLabel={t("interests.decline")}
                     answerPrompt={t("interests.answerPrompt")}
+                    dialogLabels={{
+                      titleAccept: t("interests.confirmAccept"),
+                      titleDecline: t("interests.confirmDecline"),
+                      notePlaceholder: t("interests.notePlaceholder"),
+                      cancel: t("interests.cancel"),
+                    }}
                   />
                 </div>
               </div>

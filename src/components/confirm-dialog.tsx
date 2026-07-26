@@ -51,7 +51,7 @@ export function ConfirmDialog({
         <div className="flex items-start gap-3">
           <span
             className={`grid h-10 w-10 shrink-0 place-items-center rounded-full ${
-              danger ? "bg-primary/10 text-primary" : "bg-muted text-foreground"
+              danger ? "bg-danger/10 text-danger" : "bg-muted text-foreground"
             }`}
           >
             <AlertTriangle className="h-5 w-5" />
@@ -75,7 +75,12 @@ export function ConfirmDialog({
             type="button"
             onClick={onConfirm}
             disabled={pending}
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:opacity-90 disabled:opacity-60"
+            // A destructive confirm is red. It used to be the primary colour
+            // whatever `danger` said, so "Delete" looked like any other
+            // affirmative button.
+            className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors hover:opacity-90 disabled:opacity-60 ${
+              danger ? "bg-danger text-white" : "bg-primary text-primary-foreground"
+            }`}
           >
             {pending && <Loader2 className="h-4 w-4 animate-spin" />}
             {confirmLabel}

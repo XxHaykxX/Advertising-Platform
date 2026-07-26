@@ -1150,6 +1150,14 @@ export const UI: Record<string, Dict> = {
     hy: "Այս փաթեթում ազատ տեղեր չեն մնացել։",
   },
   "interests.eventApplication": { ru: "Предложение бренда", en: "Brand offer", hy: "Բրենդի առաջարկ" },
+  "interests.confirmAccept": { ru: "Принять предложение?", en: "Accept this offer?", hy: "Ընդունե՞լ առաջարկը" },
+  "interests.confirmDecline": { ru: "Отклонить предложение?", en: "Decline this offer?", hy: "Մերժե՞լ առաջարկը" },
+  "interests.notePlaceholder": {
+    ru: "Бренд увидит это сообщение",
+    en: "The brand will see this message",
+    hy: "Բրենդը կտեսնի այս հաղորդագրությունը",
+  },
+  "interests.cancel": { ru: "Отмена", en: "Cancel", hy: "Չեղարկել" },
   "interests.eventResponse": { ru: "Ответ", en: "Answer", hy: "Պատասխան" },
   "account.brandOnlyNotice": {
     ru: "Подача проектов доступна только для аккаунтов создателей.",

@@ -29,6 +29,7 @@ import { type ProjectFormState, type ProjectFormValues } from "./actions";
 import { translateProjectAction, type TranslateProjectState } from "./translate-action";
 import { generatePosterAction } from "./poster-action";
 import { makeUI, type Locale } from "@/lib/i18n";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
 type TranslateLang = "hy" | "ru" | "en";
 
@@ -372,7 +373,11 @@ export function ProjectForm({
   // kept in sync client-side as options are deleted via the dropdown's "×".
   // Now powers the merged "Available on" field (Platforms + Streaming source).
   const [streamOptions, setStreamOptions] = useState<string[]>(() => streamingSources);
-  const [, startStreamOptionTransition] = useTransition();
+  const [streamOptionPending, startStreamOptionTransition] = useTransition();
+  // Which dictionary value is pending deletion — drives the styled confirm
+  // dialog that replaced window.confirm() here. Deleting is global: every
+  // project loses the option, so it warrants a real warning, not an OS box.
+  const [deletingStreamOption, setDeletingStreamOption] = useState<string | null>(null);
   // ── Cast/crew + sponsorship tiers, inline (#20²) ──
   const [actors, setActors] = useState<ActorRow[]>(() => initialActors);
   const [tiers, setTiers] = useState<TierRow[]>(() => initialTiers);
@@ -1178,16 +1183,7 @@ export function ProjectForm({
                 // Deleting a dictionary value is global (every project loses it
                 // as an option) and staff-only — never offered in creator mode.
                 onDeleteOption={
-                  mode === "creator"
-                    ? undefined
-                    : (v) => {
-                        if (!window.confirm(`Delete “${v}” from Streaming Source for all projects?`)) return;
-                        startStreamOptionTransition(async () => {
-                          await deleteStreamingSource(v);
-                          setStreamOptions((opts) => opts.filter((x) => x !== v));
-                          setPlatforms((sel) => sel.filter((x) => x !== v));
-                        });
-                      }
+                  mode === "creator" ? undefined : (v) => setDeletingStreamOption(v)
                 }
               />
             </Field>
@@ -1307,6 +1303,27 @@ export function ProjectForm({
           </div>
         </div>
       ) : null}
+
+      {/* Removing a Streaming Source value takes it away from every project,
+          so it gets a styled warning instead of the browser's confirm box. */}
+      <ConfirmDialog
+        open={deletingStreamOption !== null}
+        title={`Delete “${deletingStreamOption ?? ""}” from Streaming Source?`}
+        message="It is removed as an option from every project. This cannot be undone."
+        confirmLabel="Delete"
+        pending={streamOptionPending}
+        onCancel={() => setDeletingStreamOption(null)}
+        onConfirm={() => {
+          const value = deletingStreamOption;
+          if (!value) return;
+          startStreamOptionTransition(async () => {
+            await deleteStreamingSource(value);
+            setStreamOptions((opts) => opts.filter((x) => x !== value));
+            setPlatforms((sel) => sel.filter((x) => x !== value));
+            setDeletingStreamOption(null);
+          });
+        }}
+      />
     </form>
   );
 }

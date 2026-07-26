@@ -33,6 +33,7 @@ export function DeleteButton({ id, title }: { id: number; title: string }) {
   const [pending, start] = useTransition();
   const [duplicating, startDuplicate] = useTransition();
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [duplicateError, setDuplicateError] = useState("");
   const router = useRouter();
   return (
     <div className="flex items-center gap-1">
@@ -51,9 +52,12 @@ export function DeleteButton({ id, title }: { id: number; title: string }) {
           // edit page. The action returns { redirect } (never redirect()s
           // itself — the 2026-07-15 black-screen bugfix), so navigate here.
           startDuplicate(async () => {
+            setDuplicateError("");
             const res = await duplicateProject(id);
             if (res?.redirect) router.push(res.redirect);
-            else if (res?.error) alert(res.error);
+            // Shown inline instead of the browser's alert() box, which had
+            // nothing to do with the rest of the design.
+            else if (res?.error) setDuplicateError(res.error);
           });
         }}
         className="grid h-8 w-8 place-items-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -66,11 +70,17 @@ export function DeleteButton({ id, title }: { id: number; title: string }) {
         type="button"
         disabled={pending}
         onClick={() => setConfirmOpen(true)}
-        className="grid h-8 w-8 place-items-center rounded-lg text-muted-foreground hover:bg-muted hover:text-primary"
+        className="grid h-8 w-8 place-items-center rounded-lg text-muted-foreground hover:bg-muted hover:text-danger"
         aria-label="Delete"
       >
         {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
       </button>
+
+      {duplicateError ? (
+        <p className="rounded-lg border border-danger/30 bg-danger/5 px-2 py-1 text-xs text-danger">
+          {duplicateError}
+        </p>
+      ) : null}
 
       <ConfirmDialog
         open={confirmOpen}

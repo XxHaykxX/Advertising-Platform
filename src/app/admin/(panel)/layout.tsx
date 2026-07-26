@@ -1,5 +1,6 @@
 import { requireUser } from "@/lib/auth/require";
 import { AdminShell } from "./admin-shell";
+import { PushSubscribe } from "@/components/notifications/push-subscribe";
 
 export default async function PanelLayout({
   children,
@@ -16,6 +17,11 @@ export default async function PanelLayout({
   return (
     <AdminShell role={user.role} name={user.name} email={user.email}>
       {children}
+      {/* Staff could receive notifications but had no way to turn browser push
+          on: the prompt was mounted only in the member cabinet. So a new offer
+          created an in-app row and then tried to push to an account that could
+          never have had a subscription. English, like the rest of the panel. */}
+      <PushSubscribe locale="en" vapidPublicKey={process.env.VAPID_PUBLIC_KEY ?? ""} />
     </AdminShell>
   );
 }

@@ -127,6 +127,23 @@ export function AdminNav({ role, collapsed = false }: { role: Role; collapsed?: 
         if (alive) setPendingOfferCount(n);
       })
       .catch(() => {});
+    // Refetch when the tab regains focus too. Route changes alone meant a
+    // count could sit stale for as long as the panel stayed on one page,
+    // which is exactly how someone watching the section misses an arrival.
+    function refresh() {
+      if (document.visibilityState !== "visible") return;
+      getPendingModerationCount()
+        .then((n) => alive && setPendingModerationCount(n))
+        .catch(() => {});
+      getPendingOfferCount()
+        .then((n) => alive && setPendingOfferCount(n))
+        .catch(() => {});
+      getUnreadNotificationCount()
+        .then((n) => alive && setUnreadCount(n))
+        .catch(() => {});
+    }
+    document.addEventListener("visibilitychange", refresh);
+    window.addEventListener("focus", refresh);
     getUnreadNotificationCount()
       .then((n) => {
         if (alive) setUnreadCount(n);
@@ -134,6 +151,8 @@ export function AdminNav({ role, collapsed = false }: { role: Role; collapsed?: 
       .catch(() => {});
     return () => {
       alive = false;
+      document.removeEventListener("visibilitychange", refresh);
+      window.removeEventListener("focus", refresh);
     };
   }, [pathname]);
 
