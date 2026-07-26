@@ -1119,6 +1119,16 @@ export const UI: Record<string, Dict> = {
     en: "You don't have permission for this action.",
     hy: "Այս գործողության համար իրավունքները բավարար չեն։",
   },
+  "interests.ownerDecides": {
+    ru: "Ответ на заявку даёт владелец проекта.",
+    en: "The project's owner answers this application.",
+    hy: "Հայտին պատասխանում է նախագծի սեփականատերը։",
+  },
+  "interests.errOwnerOnly": {
+    ru: "Ответить на заявку может только владелец проекта.",
+    en: "Only the project's owner can answer this application.",
+    hy: "Հայտին կարող է պատասխանել միայն նախագծի սեփականատերը։",
+  },
   "interests.errNotFound": { ru: "Заявка не найдена.", en: "Application not found.", hy: "Հայտը չի գտնվել։" },
   "interests.errNoSlots": {
     ru: "В этом пакете не осталось свободных слотов.",

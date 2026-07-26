@@ -25,12 +25,14 @@ import { notifyInterestAnswered } from "@/lib/mail";
 
 export type RespondResult = { ok: true } | { ok: false; error: string };
 
-type Responder = { id: number; role: string; isStaff: boolean };
+type Responder = { id: number; role: string };
 
-/** The signed-in user, whichever cabinet they came from. Members must still be
-   APPROVED and active; staff must hold a content-editing role. Returns null
-   when neither applies — the caller turns that into a generic error rather
-   than leaking which of the two it was. */
+/** The signed-in user, whichever cabinet they came from — a creator answering
+   in their own inbox, or a staff member who owns the project themselves.
+   Members must still be APPROVED and active; staff must hold a content-editing
+   role. Ownership is checked separately by the caller: since 2026-07-26 only
+   the project's owner may answer an application (owner decision — the deal is
+   the seller's to run), so passing this check is necessary but not sufficient. */
 async function loadResponder(): Promise<Responder | null> {
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
   const session = await verifySessionToken(token);
@@ -42,9 +44,9 @@ async function loadResponder(): Promise<Responder | null> {
   if (!user || !user.isActive) return null;
   if (user.role === "CREATOR") {
     if (user.status !== "APPROVED") return null;
-    return { id: user.id, role: user.role, isStaff: false };
+    return { id: user.id, role: user.role };
   }
-  if (canEditContent(user.role)) return { id: user.id, role: user.role, isStaff: true };
+  if (canEditContent(user.role)) return { id: user.id, role: user.role };
   return null;
 }
 
@@ -70,9 +72,12 @@ export async function respondToInterest(
     },
   });
   if (!interest) return { ok: false, error: t("interests.errNotFound") };
-  // A creator may only answer applications aimed at their own projects.
-  if (!responder.isStaff && interest.project.ownerId !== responder.id) {
-    return { ok: false, error: t("interests.errNotAllowed") };
+  // Only the project's owner answers — staff browsing /admin/interests see the
+  // application but can't decide it for the seller (owner decision
+  // 2026-07-26). A staff-owned project is still answerable by that staff user,
+  // because there the owner IS staff.
+  if (interest.project.ownerId !== responder.id) {
+    return { ok: false, error: t("interests.errOwnerOnly") };
   }
 
   const status = accept ? "MUTUAL" : "DECLINED";

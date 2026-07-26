@@ -28,7 +28,7 @@ const STATUS_PILL: Record<InterestStatus, string> = {
 const AMD_ONLY = { AMD: 1, USD: 1, EUR: 1, RUB: 1 };
 
 export default async function InterestsAdminPage() {
-  await requireContentEditor();
+  const staff = await requireContentEditor();
   // The admin panel is English-only (see admin-nav.tsx and the other
   // sections, which hardcode English) — pin the translator, but keep the
   // visitor's locale for date/number formatting.
@@ -187,14 +187,22 @@ export default async function InterestsAdminPage() {
                 </details>
               ) : null}
 
+              {/* Answering is the seller's call (owner decision 2026-07-26):
+                  staff see every application here, but the buttons only appear
+                  on projects they own themselves. For everyone else's projects
+                  this section is read-only and says who decides. */}
               <div className="mt-4">
-                <RowActions
-                  interestId={interest.id}
-                  status={interest.status}
-                  acceptLabel={t("interests.accept")}
-                  declineLabel={t("interests.decline")}
-                  answerPrompt={t("interests.answerPrompt")}
-                />
+                {interest.project.ownerId === staff.id ? (
+                  <RowActions
+                    interestId={interest.id}
+                    status={interest.status}
+                    acceptLabel={t("interests.accept")}
+                    declineLabel={t("interests.decline")}
+                    answerPrompt={t("interests.answerPrompt")}
+                  />
+                ) : interest.status === "SENT" ? (
+                  <p className="text-xs text-muted-foreground">{t("interests.ownerDecides")}</p>
+                ) : null}
               </div>
             </div>
           ))}
