@@ -70,9 +70,18 @@ export type ApplicationBrief = {
   productInfo?: string;
   desiredTiming?: string;
   dealType?: string;
+  /** Required since 2026-07-26 — the seller must be able to call back. */
+  phone?: string;
 };
 
 const DEAL_TYPES = ["CASH", "BARTER", "BOTH"];
+
+/** International number: "+", country code, 7–14 more digits. Separators are
+ *  stripped first. Mirrors isValidPhone in application-dialog — kept as its
+ *  own copy because that module is client-side. */
+function isValidPhone(value: string): boolean {
+  return /^\+[1-9]\d{7,14}$/.test(value.replace(/[\s()-]/g, ""));
+}
 /** Shortest application accepted. Mirrors MIN_MESSAGE in application-dialog —
  *  the popup disables submit below this, and this rejects a direct POST. */
 const MIN_MESSAGE = 20;
@@ -100,6 +109,9 @@ export async function submitApplication(
   if (!trimmedMessage || trimmedMessage.length < MIN_MESSAGE) {
     return { ok: false, error: t("account.brand.applyTooShort") };
   }
+
+  const phone = (brief?.phone ?? "").trim().slice(0, 32);
+  if (!isValidPhone(phone)) return { ok: false, error: t("account.brand.applyPhoneRequired") };
 
   const productInfo = (brief?.productInfo ?? "").trim().slice(0, 2000) || null;
   const desiredTiming = (brief?.desiredTiming ?? "").trim().slice(0, 191) || null;
@@ -158,6 +170,11 @@ export async function submitApplication(
       select: { id: true },
     });
     interestId = saved.id;
+
+    // Keep the profile's phone in step with the last application, so the
+    // seller's "Contact" block shows a number that is actually current — and
+    // a returning buyer gets the field prefilled next time.
+    await prisma.user.update({ where: { id: user.id }, data: { phone } });
 
     // The previous round of this application is not overwritten any more — it
     // stays in the history (audit 2.6).

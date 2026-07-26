@@ -28,6 +28,7 @@ export function ReportInterestProvider({
   initialStatus,
   tiers = [],
   locale = DEFAULT_LOCALE,
+  brandPhone = "",
   children,
 }: {
   projectId: number;
@@ -35,6 +36,9 @@ export function ReportInterestProvider({
   /** Passed straight through to the popup's package picker (audit 2.3). */
   tiers?: ApplicationTier[];
   locale?: Locale;
+  /** The brand's phone from its profile, seeding the popup's required phone
+   *  field so a returning buyer doesn't retype it. */
+  brandPhone?: string;
   children: React.ReactNode;
 }) {
   const [applied, setApplied] = useState(initialStatus !== null);
@@ -56,6 +60,7 @@ export function ReportInterestProvider({
         <ApplicationDialog
           projectId={projectId}
           tiers={tiers}
+          brandPhone={brandPhone}
           t={t}
           onClose={() => setIsOpen(false)}
           onSubmitted={() => setApplied(true)}

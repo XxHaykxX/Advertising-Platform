@@ -1688,6 +1688,9 @@ export const UI: Record<string, Dict> = {
   "apply.dealBarter": { ru: "Бартер", en: "Barter", hy: "Բարտեր" },
   "apply.dealBoth": { ru: "Оплата и бартер", en: "Cash and barter", hy: "Վճարում և բարտեր" },
   "apply.messageTooShort": { ru: "Опишите запрос подробнее — минимум {n} символов", en: "Please describe your request in more detail — at least {n} characters", hy: "Նկարագրեք հարցումն ավելի մանրամասն՝ նվազագույնը {n} նիշ" },
+  "apply.phoneLabel": { ru: "Телефон", en: "Phone", hy: "Հեռախոս" },
+  "apply.phonePlaceholder": { ru: "+374 XX XXX XXX", en: "+374 XX XXX XXX", hy: "+374 XX XXX XXX" },
+  "apply.phoneInvalid": { ru: "Укажите номер с кодом страны, например +374 XX XXX XXX", en: "Enter the number with its country code, for example +374 XX XXX XXX", hy: "Նշեք համարը երկրի կոդով, օրինակ՝ +374 XX XXX XXX" },
   "apply.submit": { ru: "Отправить заявку", en: "Send application", hy: "Ուղարկել հայտը" },
   "apply.cancel": { ru: "Отмена", en: "Cancel", hy: "Չեղարկել" },
   "apply.success": { ru: "Заявка отправлена", en: "Application sent", hy: "Հայտն ուղարկվեց" },
@@ -1764,6 +1767,11 @@ export const UI: Record<string, Dict> = {
     ru: "Что-то пошло не так — попробуйте ещё раз.",
     en: "Something went wrong — please try again.",
     hy: "Ինչ-որ բան այն չէ․ փորձեք կրկին։",
+  },
+  "account.brand.applyPhoneRequired": {
+    ru: "Укажите телефон с кодом страны, например +374 XX XXX XXX.",
+    en: "Enter a phone number with its country code, for example +374 XX XXX XXX.",
+    hy: "Նշեք հեռախոսահամարը երկրի կոդով, օրինակ՝ +374 XX XXX XXX։",
   },
   "account.brand.applyTooShort": {
     ru: "Опишите запрос подробнее — минимум 20 символов.",

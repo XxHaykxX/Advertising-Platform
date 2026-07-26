@@ -26,14 +26,29 @@ export type ApplicationTier = {
  *  disabled submit button. */
 const MIN_MESSAGE = 20;
 
+/** Armenia — the marketplace's home country, so an empty phone field starts
+ *  here. A brand from elsewhere just types its own code over it. */
+const DEFAULT_DIAL_CODE = "+374";
+
+/** Accepts an international number: a "+", a country code, then 7–14 more
+ *  digits, with spaces/dashes/parens allowed anywhere. Mirrored server-side —
+ *  this only drives the disabled button and the hint. */
+export function isValidPhone(value: string): boolean {
+  const cleaned = value.replace(/[\s()-]/g, "");
+  return /^\+[1-9]\d{7,14}$/.test(cleaned);
+}
+
 export function ApplicationDialog({
   projectId,
   tiers = [],
+  brandPhone = "",
   t,
   onClose,
   onSubmitted,
 }: {
   projectId: number;
+  /** Seeds the required phone field from the brand's profile. */
+  brandPhone?: string;
   /** Sponsorship packages of this project — audit 2.3: an application used to
    *  carry no package at all, so nobody knew which placement (or price) it was
    *  about, and two brands could each be told the same exclusive slot was
@@ -45,7 +60,12 @@ export function ApplicationDialog({
   onSubmitted: () => void;
 }) {
   const [message, setMessage] = useState("");
-  const [contact, setContact] = useState("");
+  // Required since 2026-07-26: the seller has to be able to call the buyer
+  // back. If the profile already holds a usable number the popup doesn't ask
+  // again — retyping what the account already knows is busywork. Otherwise the
+  // field starts on Armenia's dial code, so the expected format is obvious.
+  const hasProfilePhone = isValidPhone(brandPhone);
+  const [phone, setPhone] = useState(hasProfilePhone ? brandPhone : DEFAULT_DIAL_CODE);
   // The brief (2026-07-26): what is being placed, when, and how the brand
   // intends to pay. Optional — a brand that writes it all in the message still
   // gets through — but asked for explicitly, because the seller was otherwise
@@ -72,10 +92,11 @@ export function ApplicationDialog({
     e.preventDefault();
     setError(null);
     startTransition(async () => {
-      const res = await submitApplication(projectId, message, contact, tierId ? Number(tierId) : null, {
+      const res = await submitApplication(projectId, message, phone, tierId ? Number(tierId) : null, {
         productInfo,
         desiredTiming,
         dealType,
+        phone,
       });
       if (!res.ok) {
         setError(res.error ?? t("apply.error"));
@@ -218,19 +239,41 @@ export function ApplicationDialog({
               ) : null}
             </div>
 
-            <div>
-              <label htmlFor="apply-contact" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                {t("apply.contactLabel")}
-              </label>
-              <input
-                id="apply-contact"
-                type="text"
-                value={contact}
-                onChange={(e) => setContact(e.target.value)}
-                placeholder={t("apply.contactPlaceholder")}
-                className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
-              />
-            </div>
+            {/* A phone already on file is not asked for again — it is shown as
+                a line the brand can read, not a box it has to refill. The
+                field only appears when the profile has nothing usable. */}
+            {hasProfilePhone ? (
+              <p className="text-xs text-muted-foreground">
+                {t("apply.phoneLabel")}: <span className="text-foreground">{brandPhone}</span>
+              </p>
+            ) : (
+              <div>
+                <label
+                  htmlFor="apply-phone"
+                  className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                >
+                  {t("apply.phoneLabel")}
+                </label>
+                <input
+                  id="apply-phone"
+                  type="tel"
+                  required
+                  inputMode="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder={t("apply.phonePlaceholder")}
+                  className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+                />
+                {phone.trim() !== "" && phone.trim() !== DEFAULT_DIAL_CODE && !isValidPhone(phone) ? (
+                  <p className="mt-1 text-xs text-muted-foreground">{t("apply.phoneInvalid")}</p>
+                ) : null}
+              </div>
+            )}
+
+            {/* The free-text "Contact" box is gone: it existed because there
+                was no phone field, and now it would only ask a second time for
+                what the account already carries (email in the profile, phone
+                above). Interest.contact keeps the phone. */}
 
             {error ? <p className="text-xs text-danger">{error}</p> : null}
 
@@ -242,7 +285,7 @@ export function ApplicationDialog({
                 type="submit"
                 variant="primary"
                 className="flex-1"
-                disabled={pending || message.trim().length < MIN_MESSAGE}
+                disabled={pending || message.trim().length < MIN_MESSAGE || !isValidPhone(phone)}
               >
                 {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : t("apply.submit")}
               </Button>

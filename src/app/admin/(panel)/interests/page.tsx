@@ -78,7 +78,8 @@ export default async function InterestsAdminPage() {
                   >
                     {interest.project.title}
                   </Link>
-                  <p className="text-xs text-muted-foreground">{interest.project.code}</p>
+                  {/* The #PP-… code is internal bookkeeping and is not shown
+                      anywhere in the UI (owner decision, repeated). */}
                 </div>
                 <div className="flex items-center gap-3">
                   <span
@@ -241,12 +242,13 @@ export default async function InterestsAdminPage() {
                 </details>
               ) : null}
 
-              {/* Answering is the seller's call (owner decision 2026-07-26):
-                  staff see every application here, but the buttons only appear
-                  on projects they own themselves. For everyone else's projects
-                  this section is read-only and says who decides. */}
+              {/* Answering is the seller's call, but a superadmin can answer
+                  any application: they own the marketplace, and restricting it
+                  to the exact owner id meant nobody could answer at all once
+                  projects belong to creators. Publishers and moderators still
+                  only see who decides. */}
               <div className="mt-4">
-                {interest.project.ownerId === staff.id ? (
+                {interest.project.ownerId === staff.id || staff.role === "SUPERADMIN" ? (
                   <RowActions
                     interestId={interest.id}
                     status={interest.status}

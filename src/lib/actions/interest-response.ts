@@ -72,11 +72,14 @@ export async function respondToInterest(
     },
   });
   if (!interest) return { ok: false, error: t("interests.errNotFound") };
-  // Only the project's owner answers — staff browsing /admin/interests see the
-  // application but can't decide it for the seller (owner decision
-  // 2026-07-26). A staff-owned project is still answerable by that staff user,
-  // because there the owner IS staff.
-  if (interest.project.ownerId !== responder.id) {
+  // The seller answers their own applications. A superadmin may answer any of
+  // them: they own the marketplace, and without this nobody could answer at
+  // all once projects belong to creators — an application from a brand would
+  // sit unanswered forever if the creator went quiet. Publishers and
+  // moderators still can't decide someone else's deal.
+  const isOwner = interest.project.ownerId === responder.id;
+  const isSuperadmin = responder.role === "SUPERADMIN";
+  if (!isOwner && !isSuperadmin) {
     return { ok: false, error: t("interests.errOwnerOnly") };
   }
 
@@ -106,7 +109,9 @@ export async function respondToInterest(
     await tx.interestEvent.create({
       data: {
         interestId,
-        kind: "RESPONSE",
+        // A superadmin answering for the seller is recorded as such, so the
+        // history says who actually made the call.
+        kind: isOwner ? "RESPONSE" : "RESPONSE_STAFF",
         status,
         body: trimmedNote || null,
         authorId: responder.id,

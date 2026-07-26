@@ -4,6 +4,7 @@ import { getLocale } from "@/lib/data/locale";
 import { getCurrency } from "@/lib/data/currency";
 import { getSiteHeaderUser } from "@/lib/data/site-header-user";
 import { getBrandInterestStatus } from "@/lib/data/brand-interests";
+import { prisma } from "@/lib/prisma";
 import { loadCurrentUser } from "@/lib/auth/require";
 import { canEditContent, canModerate } from "@/lib/auth/permissions";
 import { Header } from "@/components/header";
@@ -51,6 +52,13 @@ export default async function ReportPage({
 
   const interestStatus =
     authed?.role === "BRAND" ? await getBrandInterestStatus(authed.id, pid) : null;
+  // The application now requires a phone number (owner decision 2026-07-26 —
+  // the seller has to be able to call back). Seeded from the brand's profile
+  // so a returning buyer doesn't retype it.
+  const brandPhone =
+    authed?.role === "BRAND"
+      ? ((await prisma.user.findUnique({ where: { id: authed.id }, select: { phone: true } }))?.phone ?? "")
+      : "";
 
   return (
     <ReportInterestProvider
@@ -64,6 +72,7 @@ export default async function ReportPage({
         availableSlots: tier.availableSlots,
       }))}
       locale={locale}
+      brandPhone={brandPhone}
     >
       {/* Counts this visit for the owner's stats — see the component. */}
       <ViewPing projectId={project.id} />

@@ -60,6 +60,9 @@ test.describe("brand — sends an application (V8)", () => {
     await dialog.locator("#apply-product").fill("E2E тестовый продукт");
     await dialog.locator("#apply-timing").fill("осень 2026");
     await dialog.locator("#apply-deal").selectOption("CASH");
+    // A fresh account has no phone on file, so the field is asked for and
+    // starts on the +374 dial code alone — which isn't a number yet.
+    await dialog.locator("#apply-phone").fill("+374 91 234 567");
     // Must clear the 20-character minimum, otherwise submit stays disabled.
     await dialog
       .locator("#apply-message")
@@ -90,7 +93,34 @@ test.describe("brand — sends an application (V8)", () => {
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible({ timeout: 10000 });
 
+    await dialog.locator("#apply-phone").fill("+374 91 234 567");
     await dialog.locator("#apply-message").fill("привет");
     await expect(dialog.getByRole("button", { name: "Ուղարկել հայտը" })).toBeDisabled();
+  });
+
+  test("an application without a real phone number cannot be submitted", async ({ page }) => {
+    await page.goto("/register");
+    await fillCommon(page, "E2E Brand", uniqueEmail("brand"));
+    await page.getByRole("button", { name: "Գրանցվել", exact: true }).click();
+    await page.waitForURL((u) => u.pathname === "/account/brand", { timeout: 20000 });
+
+    await page.goto("/account/brand/browse");
+    const firstReport = page.locator('a[href^="/reports/"]').first();
+    await expect(firstReport).toBeVisible({ timeout: 15000 });
+    await page.goto((await firstReport.getAttribute("href"))!);
+
+    await page.getByRole("button", { name: "Ցուցաբերել հետաքրքրություն" }).first().click();
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible({ timeout: 10000 });
+
+    const submit = dialog.getByRole("button", { name: "Ուղարկել հայտը" });
+    await dialog
+      .locator("#apply-message")
+      .fill("E2E: сообщение достаточной длины, но телефон не дописан.");
+    // The field is seeded with the dial code alone — that must not pass.
+    await expect(submit).toBeDisabled();
+
+    await dialog.locator("#apply-phone").fill("+374 91 234 567");
+    await expect(submit).toBeEnabled();
   });
 });

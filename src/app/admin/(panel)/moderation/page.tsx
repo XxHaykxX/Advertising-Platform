@@ -138,7 +138,8 @@ export default async function ModerationAdminPage({
                     >
                       {p.title}
                     </Link>
-                    <p className="text-xs text-muted-foreground">{p.code}</p>
+                    {/* The #PP-… code is internal bookkeeping and is not shown
+                        anywhere in the UI (owner decision, repeated). */}
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">{p.genre}</td>
                   <td className="px-4 py-3 text-muted-foreground">
