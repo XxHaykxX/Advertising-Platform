@@ -53,6 +53,23 @@ a short hint of where that text appears (e.g. "Каталог → карточк
   sections of the site can be collapsed/expanded to shrink a long list down
   to just the part you're working on.
 
+## Undo and redo
+
+If you changed something by mistake — anywhere in the table, not just the
+cell you're in right now — press **Ctrl+Z** to undo it, step by step. Changed
+your mind and want it back? **Ctrl+Shift+Z** (or **Ctrl+Y**) redoes it. There
+are also "Back" and "Forward" buttons at the top of the page if you'd rather
+click than use the keyboard. This covers text edits, colour marks, notes, the
+"revert to original" action, and undoing a whole CSV upload in one go.
+
+## The list loads as you scroll
+
+You won't see all the rows at once — the page loads them in batches as you
+scroll down, so it stays fast even with hundreds of rows. A line near the top
+tells you how many rows are currently loaded out of the total. If you want to
+search the whole list at once with your browser's own Find (Ctrl+F), click
+**Show all** to load everything first.
+
 ## Working in Excel instead, if you prefer
 
 You don't have to edit in the table on the page — if you'd rather work in a
@@ -68,17 +85,28 @@ spreadsheet, that's still possible:
 
 ## Publishing
 
-Your drafts stay drafts — invisible to site visitors — until you click
-**«Сохранить и опубликовать»** (Save and publish) at the top of the page.
+At the top of the page there are two buttons: **Save** and **Publish**.
 
-When you click it:
+- **Save** just makes sure everything you typed has reached the server right
+  now, instead of waiting for the automatic draft-saving to catch up. It
+  shows a message like "Сохранено: N" (Saved: N) or "Всё уже сохранено"
+  (Everything already saved). This does **not** put anything live — your
+  drafts stay invisible to site visitors either way.
+- **Publish** is the button that actually makes your changes visible on the
+  live site. Click it when you're happy with what you've changed:
 
-1. The system checks every changed row for the problems described below. If
-   anything is wrong, nothing is published — you'll see exactly which rows
-   and what to fix.
-2. If everything passes, your changes go out, and the live site updates
-   itself within a few minutes. You don't need to tell anyone or wait around
-   — it happens on its own.
+  1. The system checks every changed row for the problems described below. If
+     anything is wrong, nothing is published — you'll see exactly which rows
+     and what to fix.
+  2. If everything passes, you'll see "Опубликовано: N" (Published: N), and
+     the live site updates itself within a few minutes. You don't need to
+     tell anyone or wait around — it happens on its own. The message stays on
+     screen until the update is live, so you'll know when it's done.
+
+Both messages stay on screen until you close them (there's an "×" for that) —
+they won't just disappear on their own. A small green tick also appears next
+to each row you've saved; that one does fade after a couple of seconds, it's
+just a quick confirmation.
 
 ## What the warning messages mean
 

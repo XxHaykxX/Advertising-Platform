@@ -2,18 +2,33 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ChevronLeft,
-  ChevronRight,
   CloudUpload,
   ExternalLink,
   Loader2,
+  Redo2,
+  Save,
   Search,
+  Undo2,
+  X,
 } from "lucide-react";
 import type { Locale } from "@/lib/i18n";
 import { isChanged, validateEntry, type ValidationIssue, type Values } from "@/lib/i18n-validate";
 import { MARK_LIST, MARK_META, type Colour, type Mark } from "./mark";
 import { CsvTransfer } from "./csv-transfer";
 import type { ImportChange, TransferRow } from "./csv-io";
+import {
+  EMPTY_HISTORY,
+  label as stepLabel,
+  plural,
+  push as pushStep,
+  redo as redoStep,
+  undo as undoStep,
+  type History,
+  type RowChange,
+  type RowSnapshot,
+  type Step,
+  type StepKind,
+} from "./history";
 import { CardRow, GroupHeader, TableRow, type RowState, type TranslationRow } from "./rows";
 import { EDIT_LOCALES, fieldClass, iconBtnClass, thClass } from "./ui";
 import {
@@ -26,15 +41,17 @@ import {
 } from "./actions";
 
 /* The editor itself: one row per dictionary key (rendered by rows.tsx),
-   autosaved as a UiDraft, with a single "Сохранить и опубликовать" button that
-   commits every changed row.
+   autosaved as a UiDraft. "Сохранить" pushes whatever hasn't reached the DB yet;
+   "Опубликовать" writes every changed row into src/lib/i18n.ts as one commit.
 
    Two views over the same state: a spreadsheet-like table (default — Мариам
    came from a Google Sheet) and the roomier card list. 855 rows is too many to
-   paint at once, so rows are filtered + paginated to PAGE_SIZE and each row is
-   memoized: a keystroke re-renders only its own row. Validation runs locally
-   (the rules in src/lib/i18n-validate.ts are pure) so a red hint appears as you
-   type, before the debounced save round-trips. */
+   paint at once, so the filtered list is rendered PAGE_SIZE rows at a time
+   (more as the sentinel below it scrolls into view) and each row is memoized: a
+   keystroke re-renders only its own row. Validation runs locally (the rules in
+   src/lib/i18n-validate.ts are pure) so a red hint appears as you type, before
+   the debounced save round-trips. Every change also goes into history.ts, which
+   is what "назад"/"вперёд" replay. */
 
 export type LastPublish = {
   at: string; // ISO — formatted client-side, see <When/>
@@ -67,15 +84,30 @@ const CHIP_MARK: Partial<Record<Chip, Mark>> = {
   nomark: "NONE",
 };
 
+/** Rows added to the list per scroll batch (and shown initially). */
 const PAGE_SIZE = 50;
 const SAVE_DEBOUNCE_MS = 700;
+/** How long the green "сохранено" tick stays before the row goes quiet again. */
+const SAVED_BADGE_MS = 1800;
 const ALL_GROUPS = "__all__";
-/** Rows per saveDraftsBulk call during a CSV import (keeps the payload small
- *  and the progress bar moving). */
+/** Rows per saveDraftsBulk call during a CSV import or an undone import
+ *  (keeps the payload small and the progress readout moving). */
 const BULK_BATCH = 20;
+/** Failed keys spelled out in the "не удалось сохранить" message. */
+const FAILED_KEYS_SHOWN = 5;
 
 const chipClass =
   "cursor-pointer rounded-full border px-3 py-1.5 text-xs font-medium transition-colors";
+/** "Сохранить" — same size as the primary button, quieter colours. */
+const secondaryBtnClass =
+  "inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-border bg-muted px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50";
+/** Square icon button of the action bar (назад / вперёд). */
+const stepBtnClass =
+  "inline-flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg border border-border bg-muted text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary disabled:cursor-not-allowed disabled:opacity-40";
+
+/** Result of the "Сохранить" button / an undo step, rendered in the action bar
+ *  until the next action (never auto-dismissed — Мариам needs to read it). */
+type Notice = { tone: "ok" | "info" | "error"; text: string };
 
 function initialState(rows: TranslationRow[]): Record<string, RowState> {
   const out: Record<string, RowState> = {};
@@ -130,13 +162,19 @@ export function TranslationsEditor({
   const [search, setSearch] = useState("");
   const [group, setGroup] = useState(ALL_GROUPS);
   const [chip, setChip] = useState<Chip>("all");
-  const [page, setPage] = useState(1);
+  /** Rows rendered so far — grows on scroll, replaces the old pagination. */
+  const [limit, setLimit] = useState(PAGE_SIZE);
   const [view, setView] = useState<View>("table");
   const [density, setDensity] = useState<Density>("compact");
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
   const [collapsed, setCollapsed] = useState<Set<string>>(() => new Set());
   const [publishing, setPublishing] = useState(false);
+  const [savingAll, setSavingAll] = useState(false);
   const [result, setResult] = useState<PublishResult | null>(null);
+  const [notice, setNotice] = useState<Notice | null>(null);
+  const [history, setHistory] = useState<History>(EMPTY_HISTORY);
+  /** "применяю: 40 / 120" while a multi-row undo/redo is being saved. */
+  const [stepProgress, setStepProgress] = useState<{ done: number; total: number } | null>(null);
 
   /* Where the table header must pin. The action bar above it is itself sticky
      (top-16 on mobile to clear the fixed top bar, top-0 from md up) and its
@@ -176,6 +214,17 @@ export function TranslationsEditor({
   const unsettled = useRef(new Set<string>());
   const [unsettledCount, setUnsettledCount] = useState(0);
 
+  // Timers that take the green "сохранено" tick back off a row. Without them
+  // the tick stayed under the key forever and stopped meaning anything.
+  const savedTimers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
+  useEffect(
+    () => () => {
+      for (const t of savedTimers.current.values()) clearTimeout(t);
+      savedTimers.current.clear();
+    },
+    [],
+  );
+
   const patch = useCallback((key: string, part: Partial<RowState>) => {
     setStates((prev) => (prev[key] ? { ...prev, [key]: { ...prev[key], ...part } } : prev));
   }, []);
@@ -185,10 +234,52 @@ export function TranslationsEditor({
     setUnsettledCount(unsettled.current.size);
   }, []);
 
+  const cancelSavedBadge = useCallback((key: string) => {
+    const running = savedTimers.current.get(key);
+    if (running) {
+      clearTimeout(running);
+      savedTimers.current.delete(key);
+    }
+  }, []);
+
+  /** Flash the tick on some rows, then let them go quiet. */
+  const markSaved = useCallback(
+    (keys: string[]) => {
+      if (keys.length === 0) return;
+      setStates((prev) => {
+        const next = { ...prev };
+        for (const key of keys) {
+          const st = next[key];
+          if (st) next[key] = { ...st, save: "saved", error: null };
+        }
+        return next;
+      });
+      for (const key of keys) {
+        cancelSavedBadge(key);
+        savedTimers.current.set(
+          key,
+          setTimeout(() => {
+            savedTimers.current.delete(key);
+            // Only the tick fades: a row that moved on to "saving" or "error"
+            // in the meantime keeps whatever it says now.
+            setStates((prev) => {
+              const st = prev[key];
+              if (!st || st.save !== "saved") return prev;
+              return { ...prev, [key]: { ...st, save: "idle" } };
+            });
+          }, SAVED_BADGE_MS),
+        );
+      }
+    },
+    [cancelSavedBadge],
+  );
+
+  /** Autosave one row. Returns false when it did not reach the DB. */
   const save = useCallback(
-    async (key: string) => {
+    async (key: string): Promise<boolean> => {
       const st = statesRef.current[key];
-      if (!st) return;
+      if (!st) return true;
+      cancelSavedBadge(key);
       patch(key, { save: "saving", error: null });
       try {
         const res = await saveDraft({
@@ -199,21 +290,27 @@ export function TranslationsEditor({
           mark: st.mark,
           note: st.note,
         });
-        if ("error" in res) patch(key, { save: "error", error: res.error });
-        else patch(key, { save: "saved", error: null });
+        if ("error" in res) {
+          patch(key, { save: "error", error: res.error });
+          return false;
+        }
+        markSaved([key]);
+        return true;
       } catch {
         patch(key, { save: "error", error: "Не удалось сохранить — проверьте соединение" });
+        return false;
       } finally {
         settle(key);
       }
     },
-    [patch, settle],
+    [cancelSavedBadge, markSaved, patch, settle],
   );
 
   const scheduleSave = useCallback(
     (key: string) => {
       const running = timers.current.get(key);
       if (running) clearTimeout(running);
+      cancelSavedBadge(key); // the row was touched again — no stale tick
       unsettled.current.add(key);
       setUnsettledCount(unsettled.current.size);
       timers.current.set(
@@ -224,90 +321,111 @@ export function TranslationsEditor({
         }, SAVE_DEBOUNCE_MS),
       );
     },
-    [save],
+    [cancelSavedBadge, save],
   );
 
-  /** Send every still-debounced row now (before publishing, on Ctrl+S). */
-  const flushPending = useCallback(async () => {
-    const keys = [...timers.current.keys()];
+  /**
+   * Send everything that hasn't reached the DB: rows still on their debounce
+   * plus rows whose last save failed (so "Сохранить" retries them).
+   */
+  const flushPending = useCallback(async (): Promise<{ saved: string[]; failed: string[] }> => {
+    const keys = new Set(timers.current.keys());
     for (const k of keys) {
       clearTimeout(timers.current.get(k)!);
       timers.current.delete(k);
     }
-    await Promise.all(keys.map((k) => save(k)));
+    for (const [key, st] of Object.entries(statesRef.current)) {
+      if (st.save === "error") keys.add(key);
+    }
+    const done = await Promise.all([...keys].map(async (k) => ({ key: k, ok: await save(k) })));
+    return {
+      saved: done.filter((d) => d.ok).map((d) => d.key),
+      failed: done.filter((d) => !d.ok).map((d) => d.key),
+    };
   }, [save]);
+
+  /* ── history: every edit goes through `edit`, so undo stays complete ──── */
+
+  const historyRef = useRef(history);
+  const commitHistory = useCallback((next: History) => {
+    historyRef.current = next;
+    setHistory(next);
+  }, []);
+
+  /**
+   * Apply one change to one row: state, history step, autosave. `mutate` gets
+   * the row as it is now and returns what it should become, or null when there
+   * is nothing to change (then no step is recorded either).
+   */
+  const edit = useCallback(
+    (kind: StepKind, key: string, mutate: (before: RowSnapshot) => RowSnapshot | null) => {
+      const st = statesRef.current[key];
+      if (!st) return;
+      const before: RowSnapshot = { values: st.values, mark: st.mark, note: st.note };
+      const after = mutate(before);
+      if (!after) return;
+      // A text edit invalidates a previous publish (the commit no longer matches
+      // the row); a mark or a note doesn't touch what was committed.
+      const textMoved = isChanged(after.values, before.values);
+      const patchRow = (cur: RowState): RowState => ({
+        ...cur,
+        values: after.values,
+        mark: after.mark,
+        note: after.note,
+        publishedAt: textMoved ? null : cur.publishedAt,
+        save: "idle",
+        error: null,
+      });
+      // Keep the ref in step right away, not only after the next commit: two
+      // edits inside one tick must each see the previous one.
+      statesRef.current = { ...statesRef.current, [key]: patchRow(st) };
+      setStates((prev) => (prev[key] ? { ...prev, [key]: patchRow(prev[key]) } : prev));
+      commitHistory(
+        pushStep(historyRef.current, {
+          kind,
+          changes: [{ key, before, after }],
+          at: Date.now(),
+        }),
+      );
+      scheduleSave(key);
+    },
+    [commitHistory, scheduleSave],
+  );
 
   const onValue = useCallback(
     (key: string, loc: Locale, value: string) => {
-      setStates((prev) => {
-        const st = prev[key];
-        if (!st) return prev;
-        return {
-          ...prev,
-          // A text edit invalidates a previous publish: the commit no longer
-          // matches what's in the row.
-          [key]: {
-            ...st,
-            values: { ...st.values, [loc]: value },
-            publishedAt: null,
-            save: "idle",
-            error: null,
-          },
-        };
-      });
-      scheduleSave(key);
+      edit({ type: "cell", key, loc }, key, (b) =>
+        b.values[loc] === value ? null : { ...b, values: { ...b.values, [loc]: value } },
+      );
     },
-    [scheduleSave],
+    [edit],
   );
 
   /** Colour switcher: clicking the active colour takes the mark off again. */
   const onMark = useCallback(
     (key: string, mark: Colour) => {
-      setStates((prev) => {
-        const st = prev[key];
-        if (!st) return prev;
-        return {
-          ...prev,
-          [key]: { ...st, mark: st.mark === mark ? "NONE" : mark, save: "idle", error: null },
-        };
-      });
-      scheduleSave(key);
+      edit({ type: "mark", key }, key, (b) => ({ ...b, mark: b.mark === mark ? "NONE" : mark }));
     },
-    [scheduleSave],
+    [edit],
   );
 
   const onNote = useCallback(
     (key: string, note: string) => {
-      setStates((prev) => {
-        const st = prev[key];
-        if (!st) return prev;
-        return { ...prev, [key]: { ...st, note, save: "idle" } };
-      });
-      scheduleSave(key);
+      edit({ type: "note", key }, key, (b) => (b.note === note ? null : { ...b, note }));
     },
-    [scheduleSave],
+    [edit],
   );
 
   /** "Скопировать сюда из hy/ru/en" — same text or a starting point. */
   const onCopyFrom = useCallback(
     (key: string, from: Locale, to: Locale) => {
-      setStates((prev) => {
-        const st = prev[key];
-        if (!st || st.values[from] === st.values[to]) return prev;
-        return {
-          ...prev,
-          [key]: {
-            ...st,
-            values: { ...st.values, [to]: st.values[from] },
-            publishedAt: null,
-            save: "idle",
-            error: null,
-          },
-        };
-      });
-      scheduleSave(key);
+      edit({ type: "cell", key, loc: to }, key, (b) =>
+        b.values[from] === b.values[to]
+          ? null
+          : { ...b, values: { ...b.values, [to]: b.values[from] } },
+      );
     },
-    [scheduleSave],
+    [edit],
   );
 
   const codeByKey = useMemo(() => {
@@ -325,29 +443,32 @@ export function TranslationsEditor({
         timers.current.delete(key);
       }
       const code = codeByKey.get(key);
-      if (!code) return;
+      const st = statesRef.current[key];
+      if (!code || !st) return;
+      const before: RowSnapshot = { values: st.values, mark: st.mark, note: st.note };
+      const after: RowSnapshot = { values: { ...code }, mark: "NONE", note: "" };
+      cancelSavedBadge(key);
       setStates((prev) => {
-        const st = prev[key];
-        if (!st) return prev;
+        const cur = prev[key];
+        if (!cur) return prev;
         return {
           ...prev,
-          [key]: {
-            ...st,
-            values: { ...code },
-            note: "",
-            mark: "NONE",
-            publishedAt: null,
-            save: "saving",
-            error: null,
-          },
+          [key]: { ...cur, ...after, publishedAt: null, save: "saving", error: null },
         };
       });
+      commitHistory(
+        pushStep(historyRef.current, {
+          kind: { type: "revert", key },
+          changes: [{ key, before, after }],
+          at: Date.now(),
+        }),
+      );
       unsettled.current.add(key);
       setUnsettledCount(unsettled.current.size);
       void (async () => {
         try {
           await discardDraft(key);
-          patch(key, { save: "saved", error: null });
+          markSaved([key]);
         } catch {
           patch(key, { save: "error", error: "Не удалось отменить правку" });
         } finally {
@@ -355,7 +476,7 @@ export function TranslationsEditor({
         }
       })();
     },
-    [codeByKey, patch, settle],
+    [cancelSavedBadge, codeByKey, commitHistory, markSaved, patch, settle],
   );
 
   /* ── cell keyboard: Enter walks down, Esc undoes the current edit ─────── */
@@ -402,9 +523,43 @@ export function TranslationsEditor({
     });
   }, []);
 
+  /** "Сохранить": push everything that hasn't reached the DB and say what
+   *  happened — the row ticks are easy to miss on a long list. */
+  const onSaveAll = useCallback(async () => {
+    setSavingAll(true);
+    setResult(null);
+    setNotice(null);
+    try {
+      const { saved, failed } = await flushPending();
+      if (failed.length > 0) {
+        const named = failed.slice(0, FAILED_KEYS_SHOWN).join(", ");
+        const rest = failed.length - Math.min(failed.length, FAILED_KEYS_SHOWN);
+        setNotice({
+          tone: "error",
+          text:
+            `Не удалось сохранить: ${failed.length} ${plural(failed.length, "ключ", "ключа", "ключей")}` +
+            ` (${named}${rest > 0 ? ` …и ещё ${rest}` : ""})` +
+            (saved.length > 0 ? `. Сохранено: ${saved.length}` : ""),
+        });
+      } else if (saved.length > 0) {
+        setNotice({
+          tone: "ok",
+          text: `Сохранено: ${saved.length} ${plural(saved.length, "ключ", "ключа", "ключей")}`,
+        });
+      } else {
+        setNotice({ tone: "info", text: "Всё уже сохранено" });
+      }
+    } catch {
+      setNotice({ tone: "error", text: "Не удалось сохранить — проверьте соединение" });
+    } finally {
+      setSavingAll(false);
+    }
+  }, [flushPending]);
+
   const onPublish = useCallback(async () => {
     setPublishing(true);
     setResult(null);
+    setNotice(null);
     try {
       await flushPending();
       const res = await publishTranslations();
@@ -438,17 +593,6 @@ export function TranslationsEditor({
     window.addEventListener("beforeunload", onBeforeUnload);
     return () => window.removeEventListener("beforeunload", onBeforeUnload);
   }, [unsettledCount]);
-
-  // Ctrl+S / ⌘S — save everything still waiting on its debounce.
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (!(e.ctrlKey || e.metaKey) || e.key.toLowerCase() !== "s") return;
-      e.preventDefault();
-      void flushPending();
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [flushPending]);
 
   const groups = useMemo(() => {
     const set = new Set<string>();
@@ -516,15 +660,30 @@ export function TranslationsEditor({
     });
   }, [rows, states, search, group, chip, changedKeys, problemKeys]);
 
-  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const current = Math.min(page, pageCount);
-  const shown = useMemo(
-    () => filtered.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE),
-    [filtered, current],
-  );
+  const shownCount = Math.min(limit, filtered.length);
+  const hasMore = shownCount < filtered.length;
+  const shown = useMemo(() => filtered.slice(0, shownCount), [filtered, shownCount]);
 
-  /* Grouping is a view over the current page (filter → paginate → group), so
-     the page always holds PAGE_SIZE rows no matter how they split up. */
+  /* Grow the list as the sentinel below it comes into view. The observer is
+     rebuilt after each growth on purpose: a fresh observer reports a target that
+     is *already* visible, so a tall screen keeps filling instead of stalling
+     until the next scroll. */
+  const sentinel = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const el = sentinel.current;
+    if (!el || !hasMore) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) setLimit((l) => l + PAGE_SIZE);
+      },
+      { rootMargin: "400px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [hasMore, shownCount]);
+
+  /* Grouping is a view over what's loaded (filter → load → group), so a section
+     shows the rows of it that are on screen. */
   const sections = useMemo(() => {
     if (group !== ALL_GROUPS) return null;
     const byContext = new Map<string, TranslationRow[]>();
@@ -557,9 +716,21 @@ export function TranslationsEditor({
     });
   }, []);
 
+  /* Every section of the FILTERED set, not just the loaded chunk — "свернуть
+     всё" has to cover the groups infinite scroll hasn't reached yet, otherwise
+     scrolling right after it pours expanded groups back in (QA 2026-07-26). */
+  const allContexts = useMemo(() => {
+    const set = new Set<string>();
+    for (const r of filtered) set.add(r.context);
+    return [...set];
+  }, [filtered]);
+
   const collapseAll = useCallback(() => {
-    setCollapsed(new Set((sections ?? []).map((s) => s.context)));
-  }, [sections]);
+    setCollapsed(new Set(allContexts));
+    // Collapsed sections take almost no height, so start the list over instead
+    // of keeping hundreds of hidden rows loaded.
+    setLimit(PAGE_SIZE);
+  }, [allContexts]);
 
   /* ── CSV panel plumbing (stable getters: they read the refs) ──────────── */
 
@@ -588,17 +759,79 @@ export function TranslationsEditor({
     return map;
   }, [rows]);
 
+  /**
+   * Write a set of row snapshots to the DB in batches — used by the CSV import
+   * and by undoing/redoing it. `saveDraftsBulk` drops a row whose snapshot is
+   * back to the committed values with no mark and no note, so an undone import
+   * leaves no leftovers.
+   */
+  const persistSnapshots = useCallback(
+    async (
+      targets: { key: string; snap: RowSnapshot }[],
+      onProgress?: (done: number, total: number) => void,
+    ): Promise<number> => {
+      let failed = 0;
+      for (let i = 0; i < targets.length; i += BULK_BATCH) {
+        const batch = targets.slice(i, i + BULK_BATCH);
+        const inputs: SaveDraftInput[] = batch.map(({ key, snap }) => ({
+          key,
+          hy: snap.values.hy,
+          ru: snap.values.ru,
+          en: snap.values.en,
+          mark: snap.mark,
+          note: snap.note,
+        }));
+        let error: string | null = null;
+        try {
+          const res = await saveDraftsBulk(inputs);
+          if ("error" in res) error = res.error;
+        } catch {
+          error = "Не удалось сохранить — проверьте соединение";
+        }
+        if (error) {
+          failed += batch.length;
+          const message = error;
+          setStates((prev) => {
+            const next = { ...prev };
+            for (const { key } of batch) {
+              const st = next[key];
+              if (st) next[key] = { ...st, save: "error", error: message };
+            }
+            return next;
+          });
+        } else {
+          markSaved(batch.map((b) => b.key));
+        }
+        for (const { key } of batch) unsettled.current.delete(key);
+        setUnsettledCount(unsettled.current.size);
+        onProgress?.(Math.min(i + batch.length, targets.length), targets.length);
+      }
+      return failed;
+    },
+    [markSaved],
+  );
+
   /** Apply an accepted CSV import: state first (so the rows repaint at once),
-   *  then batched saves with progress. */
+   *  then batched saves with progress. The whole import is one undo step. */
   const applyImport = useCallback(
     async (changes: ImportChange[], onProgress: (done: number, total: number) => void) => {
+      const steps: RowChange[] = [];
       for (const c of changes) {
         const running = timers.current.get(c.key);
         if (running) {
           clearTimeout(running);
           timers.current.delete(c.key);
         }
+        cancelSavedBadge(c.key);
         unsettled.current.add(c.key);
+        const st = statesRef.current[c.key];
+        if (st) {
+          steps.push({
+            key: c.key,
+            before: { values: st.values, mark: st.mark, note: st.note },
+            after: { values: c.values, mark: c.mark, note: c.note },
+          });
+        }
       }
       setUnsettledCount(unsettled.current.size);
 
@@ -620,58 +853,176 @@ export function TranslationsEditor({
         }
         return next;
       });
+      commitHistory(
+        pushStep(historyRef.current, {
+          kind: { type: "import", count: steps.length },
+          changes: steps,
+          at: Date.now(),
+        }),
+      );
 
-      let failed = 0;
-      for (let i = 0; i < changes.length; i += BULK_BATCH) {
-        const batch = changes.slice(i, i + BULK_BATCH);
-        const inputs: SaveDraftInput[] = batch.map((c) => ({
-          key: c.key,
-          hy: c.values.hy,
-          ru: c.values.ru,
-          en: c.values.en,
-          mark: c.mark,
-          note: c.note,
-        }));
-        let error: string | null = null;
-        try {
-          const res = await saveDraftsBulk(inputs);
-          if ("error" in res) error = res.error;
-        } catch {
-          error = "Не удалось сохранить — проверьте соединение";
-        }
-        if (error) failed += batch.length;
-        setStates((prev) => {
-          const next = { ...prev };
-          for (const c of batch) {
-            const st = next[c.key];
-            if (!st) continue;
-            next[c.key] = error
-              ? { ...st, save: "error", error }
-              : { ...st, save: "saved", error: null };
-          }
-          return next;
-        });
-        for (const c of batch) unsettled.current.delete(c.key);
-        setUnsettledCount(unsettled.current.size);
-        onProgress(Math.min(i + batch.length, changes.length), changes.length);
-      }
+      const targets = changes.map((c) => ({
+        key: c.key,
+        snap: { values: c.values, mark: c.mark, note: c.note },
+      }));
+      const failed = await persistSnapshots(targets, onProgress);
       return { saved: changes.length - failed, failed };
     },
-    [],
+    [cancelSavedBadge, commitHistory, persistSnapshots],
   );
+
+  /* ── undo / redo ──────────────────────────────────────────────────────── */
+
+  /** Replay one history step, in one direction, all the way into the DB. */
+  const runStep = useCallback(
+    async (step: Step, dir: "undo" | "redo") => {
+      const targets = step.changes.map((c) => ({
+        key: c.key,
+        snap: dir === "undo" ? c.before : c.after,
+      }));
+      if (targets.length === 0) return;
+
+      for (const { key } of targets) {
+        const running = timers.current.get(key);
+        if (running) {
+          clearTimeout(running);
+          timers.current.delete(key);
+        }
+        cancelSavedBadge(key);
+        unsettled.current.add(key);
+      }
+      setUnsettledCount(unsettled.current.size);
+
+      setStates((prev) => {
+        const next = { ...prev };
+        for (const { key, snap } of targets) {
+          const cur = next[key];
+          if (!cur) continue;
+          next[key] = {
+            ...cur,
+            values: snap.values,
+            mark: snap.mark,
+            note: snap.note,
+            publishedAt: isChanged(snap.values, cur.values) ? null : cur.publishedAt,
+            save: "saving",
+            error: null,
+          };
+        }
+        return next;
+      });
+
+      // One row goes through the plain single-row path, which can also drop the
+      // working copy outright when the restored state is what the code has.
+      if (targets.length === 1) {
+        const { key, snap } = targets[0];
+        const code = codeByKey.get(key);
+        const bare =
+          code !== undefined &&
+          !isChanged(snap.values, code) &&
+          snap.note === "" &&
+          snap.mark === "NONE";
+        try {
+          if (bare) {
+            await discardDraft(key);
+          } else {
+            const res = await saveDraft({
+              key,
+              hy: snap.values.hy,
+              ru: snap.values.ru,
+              en: snap.values.en,
+              mark: snap.mark,
+              note: snap.note,
+            });
+            if ("error" in res) throw new Error(res.error);
+          }
+          markSaved([key]);
+        } catch (e) {
+          patch(key, {
+            save: "error",
+            error: e instanceof Error && e.message ? e.message : "Не удалось сохранить",
+          });
+        } finally {
+          settle(key);
+        }
+        return;
+      }
+
+      setStepProgress({ done: 0, total: targets.length });
+      const failed = await persistSnapshots(targets, (done, total) =>
+        setStepProgress({ done, total }),
+      );
+      setStepProgress(null);
+      if (failed > 0) {
+        setNotice({
+          tone: "error",
+          text: `Не удалось сохранить: ${failed} ${plural(failed, "ключ", "ключа", "ключей")} — нажмите «Сохранить»`,
+        });
+      }
+    },
+    [cancelSavedBadge, codeByKey, markSaved, patch, persistSnapshots, settle],
+  );
+
+  const busy = publishing || savingAll || stepProgress !== null;
+
+  const onUndo = useCallback(() => {
+    const res = undoStep(historyRef.current);
+    if (!res) return;
+    commitHistory(res.history);
+    setResult(null);
+    setNotice({ tone: "info", text: `Отменено: ${stepLabel(res.step)}` });
+    void runStep(res.step, "undo");
+  }, [commitHistory, runStep]);
+
+  const onRedo = useCallback(() => {
+    const res = redoStep(historyRef.current);
+    if (!res) return;
+    commitHistory(res.history);
+    setResult(null);
+    setNotice({ tone: "info", text: `Возвращено: ${stepLabel(res.step)}` });
+    void runStep(res.step, "redo");
+  }, [commitHistory, runStep]);
+
+  /* Ctrl+S — save everything pending; Ctrl+Z / Ctrl+Shift+Z / Ctrl+Y — history.
+     Caught on window (even with the caret in a cell) and preventDefault'ed: one
+     predictable "назад" beats mixing ours with the textarea's own undo. */
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (!(e.ctrlKey || e.metaKey)) return;
+      const key = e.key.toLowerCase();
+      if (key === "s") {
+        e.preventDefault();
+        void onSaveAll();
+      } else if (key === "z" && !e.shiftKey) {
+        e.preventDefault();
+        onUndo();
+      } else if ((key === "z" && e.shiftKey) || key === "y") {
+        e.preventDefault();
+        onRedo();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onSaveAll, onUndo, onRedo]);
 
   /** Jump straight to one key (used by the error list under the header). */
   const focusKey = useCallback((key: string) => {
     setSearch(key);
     setGroup(ALL_GROUPS);
     setChip("all");
-    setPage(1);
+    setLimit(PAGE_SIZE);
   }, []);
 
-  const canPublish = configured && pendingCount > 0 && !publishing;
+  const canPublish = configured && pendingCount > 0 && !busy;
+  const publishTitle = !configured
+    ? "Не задан GITHUB_SYNC_TOKEN"
+    : pendingCount === 0
+      ? "Нет неопубликованных изменений"
+      : `Коммит в ${repo}`;
   const publishError = result && "error" in result ? result : null;
   const publishOk = result && "ok" in result ? result : null;
   const dense = density === "compact";
+  const undoNext = history.past[history.past.length - 1];
+  const redoNext = history.future[0];
 
   const rowProps = {
     dense,
@@ -723,40 +1074,136 @@ export function TranslationsEditor({
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={onPublish}
-            disabled={!canPublish}
-            title={configured ? `Коммит в ${repo}` : "Не задан GITHUB_SYNC_TOKEN"}
-            className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {publishing ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <CloudUpload className="h-4 w-4" />
+          <div className="flex flex-wrap items-center gap-2">
+            {stepProgress && (
+              <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                применяю: {stepProgress.done} / {stepProgress.total}
+              </span>
             )}
-            {publishing ? "Публикую…" : "Сохранить и опубликовать"}
-          </button>
+
+            <button
+              type="button"
+              onClick={onUndo}
+              disabled={!undoNext || busy}
+              aria-label="Назад"
+              title={
+                undoNext
+                  ? `Назад: ${stepLabel(undoNext)} · шагов: ${history.past.length} (Ctrl+Z)`
+                  : "Отменять нечего"
+              }
+              className={stepBtnClass}
+            >
+              <Undo2 className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={onRedo}
+              disabled={!redoNext || busy}
+              aria-label="Вперёд"
+              title={
+                redoNext
+                  ? `Вперёд: ${stepLabel(redoNext)} · шагов: ${history.future.length} (Ctrl+Shift+Z)`
+                  : "Возвращать нечего"
+              }
+              className={stepBtnClass}
+            >
+              <Redo2 className="h-4 w-4" />
+            </button>
+
+            <button
+              type="button"
+              onClick={onSaveAll}
+              disabled={busy}
+              title="Досохранить всё, что ещё не ушло на сервер (Ctrl+S)"
+              className={secondaryBtnClass}
+            >
+              {savingAll ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4" />
+              )}
+              {savingAll ? "Сохраняю…" : "Сохранить"}
+            </button>
+
+            <button
+              type="button"
+              onClick={onPublish}
+              disabled={!canPublish}
+              title={publishTitle}
+              className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {publishing ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <CloudUpload className="h-4 w-4" />
+              )}
+              {publishing ? "Публикую…" : "Опубликовать"}
+            </button>
+          </div>
         </div>
 
-        {publishOk && (
-          <p className="mt-3 rounded-lg border border-success/40 bg-success/10 px-3 py-2 text-sm text-success">
-            Опубликовано ключей: {publishOk.keyCount}. Сайт пересобирается — новые тексты появятся
-            через ~5 минут.{" "}
-            <a
-              href={publishOk.commitUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 underline"
+        {notice && (
+          <div
+            className={`mt-3 flex items-start justify-between gap-3 rounded-lg border px-3 py-2 text-sm ${
+              notice.tone === "ok"
+                ? "border-success/40 bg-success/10 text-success"
+                : notice.tone === "error"
+                  ? "border-danger/40 bg-danger/10 text-danger"
+                  : "border-border bg-muted text-muted-foreground"
+            }`}
+          >
+            <p>{notice.text}</p>
+            <button
+              type="button"
+              onClick={() => setNotice(null)}
+              aria-label="Закрыть"
+              className="cursor-pointer opacity-70 transition-opacity hover:opacity-100"
             >
-              коммит
-              <ExternalLink className="h-3 w-3" />
-            </a>
-          </p>
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+        )}
+
+        {publishOk && (
+          <div className="mt-3 flex items-start justify-between gap-3 rounded-lg border border-success/40 bg-success/10 px-3 py-2 text-sm text-success">
+            <p>
+              Опубликовано: {publishOk.keyCount}{" "}
+              {plural(publishOk.keyCount, "ключ", "ключа", "ключей")}. Сайт пересоберётся примерно
+              за 5 минут.{" "}
+              <a
+                href={publishOk.commitUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 underline"
+              >
+                коммит
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            </p>
+            <button
+              type="button"
+              onClick={() => setResult(null)}
+              aria-label="Закрыть"
+              className="cursor-pointer opacity-70 transition-opacity hover:opacity-100"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
         )}
         {publishError && (
           <div className="mt-3 rounded-lg border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger">
-            <p>{publishError.error}</p>
+            <div className="flex items-start justify-between gap-3">
+              <p>{publishError.error}</p>
+              <button
+                type="button"
+                onClick={() => setResult(null)}
+                aria-label="Закрыть"
+                className="cursor-pointer opacity-70 transition-opacity hover:opacity-100"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
             {publishError.issues && publishError.issues.length > 0 && (
               <ul className="mt-2 space-y-1">
                 {publishError.issues.map((issue, i) => (
@@ -787,7 +1234,7 @@ export function TranslationsEditor({
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
-                setPage(1);
+                setLimit(PAGE_SIZE);
               }}
               placeholder="Поиск по ключу или тексту"
               className={`${fieldClass} border-border pl-9`}
@@ -797,7 +1244,7 @@ export function TranslationsEditor({
             value={group}
             onChange={(e) => {
               setGroup(e.target.value);
-              setPage(1);
+              setLimit(PAGE_SIZE);
             }}
             className={`${fieldClass} w-auto max-w-72 border-border`}
           >
@@ -811,7 +1258,10 @@ export function TranslationsEditor({
 
           <Toggle
             value={view}
-            onChange={setView}
+            onChange={(v) => {
+              setView(v);
+              setLimit(PAGE_SIZE);
+            }}
             options={[
               { value: "table", label: "Таблица" },
               { value: "cards", label: "Карточки" },
@@ -846,7 +1296,7 @@ export function TranslationsEditor({
                 type="button"
                 onClick={() => {
                   setChip(c.value);
-                  setPage(1);
+                  setLimit(PAGE_SIZE);
                 }}
                 className={`${chipClass} ${
                   active
@@ -884,11 +1334,7 @@ export function TranslationsEditor({
 
       {/* Rows */}
       <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
-        <p className="text-xs text-muted-foreground">
-          Найдено ключей: {filtered.length}
-          {filtered.length > PAGE_SIZE &&
-            ` — показаны ${(current - 1) * PAGE_SIZE + 1}–${Math.min(current * PAGE_SIZE, filtered.length)}`}
-        </p>
+        <p className="text-xs text-muted-foreground">Найдено ключей: {filtered.length}</p>
         {sections && sections.length > 1 && (
           <div className="flex items-center gap-2">
             <button type="button" onClick={collapseAll} className={iconBtnClass}>
@@ -1008,35 +1454,30 @@ export function TranslationsEditor({
         </div>
       )}
 
-      {pageCount > 1 && (
-        <div className="mt-4 flex items-center justify-center gap-3">
-          <button
-            type="button"
-            disabled={current === 1}
-            onClick={() => setPage(current - 1)}
-            className={`${iconBtnClass} disabled:cursor-not-allowed disabled:opacity-40`}
-          >
-            <ChevronLeft className="h-4 w-4" />
-            Назад
-          </button>
+      {/* Sentinel + counter: the list grows as this comes into view. */}
+      {hasMore && <div ref={sentinel} aria-hidden className="h-8" />}
+      {filtered.length > 0 && (
+        <div className="mt-3 flex flex-wrap items-center justify-center gap-3">
           <span className="text-xs text-muted-foreground">
-            Страница {current} из {pageCount}
+            Показано {shownCount} из {filtered.length}
           </span>
-          <button
-            type="button"
-            disabled={current === pageCount}
-            onClick={() => setPage(current + 1)}
-            className={`${iconBtnClass} disabled:cursor-not-allowed disabled:opacity-40`}
-          >
-            Вперёд
-            <ChevronRight className="h-4 w-4" />
-          </button>
+          {hasMore && (
+            <button
+              type="button"
+              onClick={() => setLimit(filtered.length)}
+              title="Показать все строки сразу — тогда работает поиск браузером (Ctrl+F)"
+              className={iconBtnClass}
+            >
+              Показать все
+            </button>
+          )}
         </div>
       )}
 
       <p className="mt-4 text-xs text-muted-foreground">
         Enter — вниз по колонке, Shift+Enter — перенос строки, Esc — вернуть значение ячейки,
-        Ctrl+S — сохранить всё сразу, двойной клик — раскрыть строку.
+        Ctrl+S — сохранить всё, Ctrl+Z — назад, Ctrl+Shift+Z — вперёд, двойной клик — раскрыть
+        строку.
       </p>
     </div>
   );
