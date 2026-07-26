@@ -12,12 +12,30 @@ export default async function ProjectsAdminPage() {
   const isSuperadmin = user.role === "SUPERADMIN";
 
   const projects = await prisma.project.findMany({
-    // Publisher scoping: a Publisher only ever sees their own projects.
-    // SUPERADMIN sees everything.
-    where: isSuperadmin ? undefined : { ownerId: user.id },
+    where: {
+      // Only what has already been decided on. A creator's submission waiting
+      // for moderation used to sit in this list looking like an ordinary
+      // inactive project — nothing distinguished "waiting for a decision"
+      // from "approved but taken off the catalog", so a pending project read
+      // as one somebody had simply switched off. The queue lives in
+      // /admin/moderation; a project appears here once it is approved.
+      moderationStatus: "APPROVED",
+      // Publisher scoping: a Publisher only ever sees their own projects.
+      // SUPERADMIN sees everything.
+      ...(isSuperadmin ? {} : { ownerId: user.id }),
+    },
     orderBy: { sortOrder: "asc" },
     include: {
       owner: { select: { name: true } },
+    },
+  });
+
+  // Waiting for a decision — surfaced as a line pointing at the queue, so a
+  // submission can't go unnoticed just because this list no longer shows it.
+  const awaitingModeration = await prisma.project.count({
+    where: {
+      moderationStatus: { in: ["PENDING", "REJECTED"] },
+      ...(isSuperadmin ? {} : { ownerId: user.id }),
     },
   });
 
@@ -34,7 +52,21 @@ export default async function ProjectsAdminPage() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Projects</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{projects.length} in catalog</p>
+          {/* "in catalog" used to count every row, including the ones not in
+              the catalog at all. Count what the visitor can actually see. */}
+          <p className="mt-1 text-sm text-muted-foreground">
+            {projects.filter((p) => p.isActive).length} in catalog
+            {projects.length !== projects.filter((p) => p.isActive).length
+              ? ` · ${projects.length - projects.filter((p) => p.isActive).length} unpublished`
+              : ""}
+          </p>
+          {awaitingModeration > 0 ? (
+            <p className="mt-1 text-sm">
+              <Link href="/admin/moderation" className="text-warn hover:underline">
+                {awaitingModeration} awaiting moderation →
+              </Link>
+            </p>
+          ) : null}
         </div>
         <Link
           href="/admin/projects/new"
