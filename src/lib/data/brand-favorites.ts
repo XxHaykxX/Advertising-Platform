@@ -14,7 +14,6 @@ export type BrandFavoriteDTO = {
   createdAt: string;
   project: {
     id: number;
-    code: string;
     title: string;
     genre: string;
     poster: string;
@@ -64,7 +63,6 @@ export async function getBrandFavorites(
       createdAt: r.createdAt.toISOString(),
       project: {
         id: r.project.id,
-        code: r.project.code,
         title: pickTitle(locale, r.project),
         genre: r.project.genre,
         poster: r.project.poster ?? "",

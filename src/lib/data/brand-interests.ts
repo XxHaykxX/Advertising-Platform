@@ -21,7 +21,6 @@ export type BrandInterestDTO = {
   tierName: string; // the package applied for, "" when none was picked
   project: {
     id: number;
-    code: string;
     title: string;
     genre: string;
     poster: string;
@@ -57,7 +56,6 @@ export async function getBrandInterests(brandId: number, locale: Locale): Promis
     tierName: r.tier?.name ?? "",
     project: {
       id: r.project.id,
-      code: r.project.code,
       title: pickTitle(locale, r.project),
       genre: r.project.genre,
       poster: r.project.poster ?? "",

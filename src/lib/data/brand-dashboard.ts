@@ -21,7 +21,6 @@ function pickTitle(locale: Locale, p: { title: string; titleHy: string; titleRu:
 
 export type DashboardProjectDTO = {
   id: number;
-  code: string;
   title: string;
   genre: string;
   poster: string;
@@ -171,7 +170,6 @@ export async function getRecommendedProjects(
   const combined = [...ranked.map(({ p }) => p), ...backfill];
   return combined.map((p) => ({
     id: p.id,
-    code: p.code,
     title: pickTitle(locale, p),
     genre: p.genre,
     poster: p.poster ?? "",
@@ -188,7 +186,6 @@ export async function getRecentProjects(locale: Locale, limit = 4): Promise<Dash
 
   return rows.map((p) => ({
     id: p.id,
-    code: p.code,
     title: pickTitle(locale, p),
     genre: p.genre,
     poster: p.poster ?? "",

@@ -102,7 +102,8 @@ export default async function MyProjectsPage() {
                       {STATUS_LABEL[p.moderationStatus]}
                     </span>
                     <h3 className="mt-2 truncate font-semibold text-foreground">{p.title}</h3>
-                    <p className="text-xs text-muted-foreground">{p.code}</p>
+                    {/* The #PP-… code is a staff-side identifier and is not
+                        shown in member cabinets (owner decision 2026-07-26). */}
                     {/* Views / shortlists / applications — shown once the
                         listing is public, since a pending project can't have
                         collected any of them yet. */}

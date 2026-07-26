@@ -72,7 +72,8 @@ export default async function AccountInterestsPage() {
                     >
                       {interest.project.title}
                     </Link>
-                    <p className="text-xs text-muted-foreground">{interest.project.code}</p>
+                    {/* The #PP-… code is a staff-side identifier and is not
+                        shown in member cabinets (owner decision 2026-07-26). */}
                   </div>
                   <div className="flex items-center gap-3">
                     <span

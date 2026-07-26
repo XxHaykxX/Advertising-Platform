@@ -29,9 +29,11 @@ function MiniProjectRow({ project, genreLabel }: { project: DashboardProjectDTO;
       </div>
       <div className="min-w-0">
         <p className="truncate text-sm font-semibold text-foreground">{project.title}</p>
-        <p className="truncate text-xs text-muted-foreground">
-          {project.code} · {genreLabel}
-        </p>
+        {/* The internal project code (#PP-…) is staff-facing — it stays in the
+            admin panel and is hidden everywhere a member can see it (owner
+            decision, 2026-07-26; the public catalog dropped it under audit
+            5.1). */}
+        <p className="truncate text-xs text-muted-foreground">{genreLabel}</p>
       </div>
     </Link>
   );
@@ -55,7 +57,9 @@ function RecentCard({ project, locale }: { project: DashboardProjectDTO; locale:
         ) : null}
       </div>
       <div className="p-4">
-        <code className="text-xs font-semibold text-foreground">{project.code}</code>
+        {/* Was the project code — a staff-only identifier (see MiniProjectRow).
+            The title is what a buyer actually recognises the project by. */}
+        <p className="truncate text-sm font-semibold text-foreground">{project.title}</p>
         <p className="mt-1 text-sm text-muted-foreground">{localizeValue(locale, "genre", project.genre)}</p>
       </div>
     </Link>
@@ -113,7 +117,6 @@ export default async function BrandDashboardPage() {
                   key={interest.id}
                   project={{
                     id: interest.project.id,
-                    code: interest.project.code,
                     title: interest.project.title,
                     genre: interest.project.genre,
                     poster: interest.project.poster,
