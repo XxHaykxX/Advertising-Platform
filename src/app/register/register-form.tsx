@@ -9,10 +9,21 @@ import { makeUI, type Locale } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import { PasswordInput } from "@/components/ui/password-input";
 
-export function RegisterForm({ locale, googleEnabled }: { locale: Locale; googleEnabled?: boolean }) {
+export function RegisterForm({
+  locale,
+  googleEnabled,
+  initialType = "brand",
+}: {
+  locale: Locale;
+  googleEnabled?: boolean;
+  /** Which side of the marketplace to preselect. The "List your project" CTA
+   *  on the landing page is aimed at creators, so it arrives with
+   *  ?role=creator instead of dropping them on the brand tab (audit 5.9). */
+  initialType?: "brand" | "creator";
+}) {
   const t = makeUI(locale);
   const [state, formAction, pending] = useActionState<RegisterState, FormData>(register, {});
-  const [type, setType] = useState<"brand" | "creator">("brand");
+  const [type, setType] = useState<"brand" | "creator">(initialType);
   // Password isn't echoed back via server state (avoid round-tripping a
   // plaintext password); instead it's kept controlled client-side so React
   // 19's post-action uncontrolled-input reset doesn't wipe it on error.

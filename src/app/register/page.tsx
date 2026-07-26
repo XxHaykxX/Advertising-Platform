@@ -5,7 +5,14 @@ import { makeUI } from "@/lib/i18n";
 import { googleConfigured } from "@/lib/auth/google";
 import { RegisterForm } from "./register-form";
 
-export default async function RegisterPage() {
+export default async function RegisterPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ role?: string }>;
+}) {
+  // ?role=creator comes from the "List your project" CTA — anything else falls
+  // back to the brand tab, which is the default entry point.
+  const { role } = await searchParams;
   const locale = await getLocale();
   const t = makeUI(locale);
   const googleEnabled = googleConfigured();
@@ -26,7 +33,11 @@ export default async function RegisterPage() {
             {t("register.subtitle")}
           </p>
 
-          <RegisterForm locale={locale} googleEnabled={googleEnabled} />
+          <RegisterForm
+            locale={locale}
+            googleEnabled={googleEnabled}
+            initialType={role === "creator" ? "creator" : "brand"}
+          />
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
             {t("register.alreadyHaveAccess")}{" "}
