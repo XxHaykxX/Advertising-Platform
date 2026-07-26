@@ -60,6 +60,17 @@ export async function uploadImage(fd: FormData): Promise<UploadResult> {
   const dir = safeSegment(String(fd.get("dir") || "misc"));
   const kind = String(fd.get("kind") || "image");
 
+  // The Videos folder holds clips, everything else holds stills (user request
+  // 2026-07-26). The client already filters, but a direct call must not be able
+  // to drop a JPEG into /uploads/videos or a clip among the posters.
+  // "references" is the one folder that legitimately takes both: a past project
+  // may be shown as a still OR as a clip.
+  const MIXED_DIRS = new Set(["references"]);
+  if (dir === "videos" && kind !== "video") return { error: "This folder only takes MP4 / WebM." };
+  if (dir !== "videos" && kind === "video" && !MIXED_DIRS.has(dir)) {
+    return { error: "Upload videos to the Videos folder." };
+  }
+
   if (kind === "video") {
     if (file.size > MAX_BYTES_VIDEO) return { error: "File too large (max 50 MB)." };
     // Trust file.type first; some browsers/OSes send a blank or non-standard MIME
@@ -72,6 +83,7 @@ export async function uploadImage(fd: FormData): Promise<UploadResult> {
     const destDir = path.join(UPLOAD_ROOT, dir);
     await mkdir(destDir, { recursive: true });
     await writeFile(path.join(destDir, name), Buffer.from(await file.arrayBuffer()));
+    await writePosterFrame(fd, destDir, name);
 
     return { path: `/uploads/${dir}/${name}` };
   }
@@ -144,4 +156,60 @@ export async function listUploads(): Promise<MediaFile[]> {
   }
   await walk(UPLOAD_ROOT, "");
   return out.sort((a, b) => b.mtime - a.mtime);
+}
+
+/** Store the poster frame the browser grabbed for an uploaded video, as
+ *  "<video-file>.jpg" next to it.
+ *
+ *  Why the client sends it: a <video> tile can only paint a frame after the
+ *  browser has the file's metadata, and for a 40 MB mp4 with its moov atom at
+ *  the end that means downloading the whole thing — so the Videos folder sat
+ *  mostly blank (user report 2026-07-26). Generating the frame server-side
+ *  would need ffmpeg, which shared hosting doesn't have; the browser already
+ *  decoded the file to show a preview, so it hands over a small JPEG instead.
+ *  Best-effort: a missing or broken poster just means the tile falls back to
+ *  the <video> element. */
+async function writePosterFrame(fd: FormData, destDir: string, videoName: string) {
+  const poster = fd.get("poster");
+  if (!(poster instanceof File) || poster.size === 0) return;
+  if (poster.size > 2 * 1024 * 1024) return; // a frame is tens of KB; ignore junk
+  try {
+    await writeFile(path.join(destDir, `${videoName}.jpg`), Buffer.from(await poster.arrayBuffer()));
+  } catch {
+    /* poster is a nicety, never fail the upload over it */
+  }
+}
+
+/** Attach a poster frame to a video that's already stored.
+ *
+ *  Used by the media library's "Generate thumbnails" button for clips uploaded
+ *  before poster capture existed. Deliberately does NOT re-upload the video:
+ *  the stored path is referenced by projects (Project.videoFile, reference
+ *  rows), so replacing the file would break those links. */
+export async function saveVideoPoster(fd: FormData): Promise<{ ok?: boolean; error?: string }> {
+  await requireContentEditor();
+
+  const videoPath = String(fd.get("videoPath") || "");
+  if (!/^\/uploads\/[\w./-]+\.(mp4|webm)$/i.test(videoPath)) return { error: "Invalid path." };
+
+  // Resolve inside the uploads root — no traversal out of it.
+  const rel = videoPath.slice("/uploads/".length);
+  const abs = path.resolve(UPLOAD_ROOT, rel);
+  if (abs !== UPLOAD_ROOT && !abs.startsWith(UPLOAD_ROOT + path.sep)) return { error: "Invalid path." };
+  try {
+    await stat(abs);
+  } catch {
+    return { error: "File not found." };
+  }
+
+  const poster = fd.get("poster");
+  if (!(poster instanceof File) || poster.size === 0) return { error: "No poster provided." };
+  if (poster.size > 2 * 1024 * 1024) return { error: "Poster too large." };
+
+  try {
+    await writeFile(`${abs}.jpg`, Buffer.from(await poster.arrayBuffer()));
+  } catch {
+    return { error: "Could not write the poster." };
+  }
+  return { ok: true };
 }

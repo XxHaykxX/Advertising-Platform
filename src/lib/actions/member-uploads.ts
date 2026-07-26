@@ -49,6 +49,13 @@ export async function uploadMemberImage(fd: FormData): Promise<{ path?: string; 
   const dir = safeSegment(String(fd.get("dir") || "misc"));
   const kind = String(fd.get("kind") || "image");
 
+  // Same folder/type rule as the staff uploader (see uploads.ts): clips belong
+  // in "videos", stills everywhere else, "references" takes both.
+  if (dir === "videos" && kind !== "video") return { error: t("media.errUnsupportedVideo") };
+  if (dir !== "videos" && kind === "video" && dir !== "references") {
+    return { error: t("media.errUnsupportedImage") };
+  }
+
   if (kind === "video") {
     if (file.size > MAX_BYTES_VIDEO) {
       return { error: t("media.errTooLargeServer", { limit: String(MAX_BYTES_VIDEO / (1024 * 1024)) }) };
@@ -62,6 +69,7 @@ export async function uploadMemberImage(fd: FormData): Promise<{ path?: string; 
     const destDir = path.join(MEMBERS_ROOT, String(me.id), dir);
     await mkdir(destDir, { recursive: true });
     await writeFile(path.join(destDir, name), Buffer.from(await file.arrayBuffer()));
+    await writePosterFrame(fd, destDir, name);
 
     return { path: `/uploads/members/${me.id}/${dir}/${name}` };
   }
@@ -140,4 +148,26 @@ export async function deleteMemberUpload(
     // already gone — treat as success
   }
   return { ok: true };
+}
+
+/** Store the poster frame the browser grabbed for an uploaded video, as
+ *  "<video-file>.jpg" next to it.
+ *
+ *  Why the client sends it: a <video> tile can only paint a frame after the
+ *  browser has the file's metadata, and for a 40 MB mp4 with its moov atom at
+ *  the end that means downloading the whole thing — so the Videos folder sat
+ *  mostly blank (user report 2026-07-26). Generating the frame server-side
+ *  would need ffmpeg, which shared hosting doesn't have; the browser already
+ *  decoded the file to show a preview, so it hands over a small JPEG instead.
+ *  Best-effort: a missing or broken poster just means the tile falls back to
+ *  the <video> element. */
+async function writePosterFrame(fd: FormData, destDir: string, videoName: string) {
+  const poster = fd.get("poster");
+  if (!(poster instanceof File) || poster.size === 0) return;
+  if (poster.size > 2 * 1024 * 1024) return; // a frame is tens of KB; ignore junk
+  try {
+    await writeFile(path.join(destDir, `${videoName}.jpg`), Buffer.from(await poster.arrayBuffer()));
+  } catch {
+    /* poster is a nicety, never fail the upload over it */
+  }
 }

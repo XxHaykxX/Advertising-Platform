@@ -2,10 +2,11 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Image from "next/image";
-import { Download, FileVideo, Loader2, Upload, X } from "lucide-react";
+import { Download, Loader2, Upload, X } from "lucide-react";
 import { listUploads, uploadImage, type MediaFile } from "@/lib/actions/uploads";
 import { listMemberUploads, uploadMemberImage } from "@/lib/actions/member-uploads";
 import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
+import { captureVideoPoster, isPosterPath, posterPathFor } from "@/lib/video-poster";
 
 // Reusable image picker modal. Opens a library of existing uploads and lets you
 // either pick one or upload a new file from the computer — the chosen /uploads/…
@@ -86,9 +87,13 @@ export function MediaPicker({
   }, [open, scope]);
 
   // Only show items matching this picker's kind (an "any" picker shows both).
+  // Poster frames live next to their video as "<video>.jpg" — they're part of
+  // the tile, not files in their own right.
+  const posters = useMemo(() => new Set(items.filter((f) => isPosterPath(f.path)).map((f) => f.path)), [items]);
   const typed = useMemo(() => {
-    if (accept === "any") return items;
-    return items.filter((f) => isVideoPath(f.path) === (accept === "video"));
+    const real = items.filter((f) => !isPosterPath(f.path));
+    if (accept === "any") return real;
+    return real.filter((f) => isVideoPath(f.path) === (accept === "video"));
   }, [items, accept]);
 
   // Folder chips (staff only — a member's flat namespace needs no filter).
@@ -128,6 +133,12 @@ export function MediaPicker({
         fd.append("file", file);
         fd.append("dir", uploadDir);
         fd.append("kind", kind);
+        if (kind === "video") {
+          // Grab a frame here, while the file is already in memory — see
+          // lib/video-poster.ts for why the server can't do it.
+          const poster = await captureVideoPoster(file);
+          if (poster) fd.append("poster", poster);
+        }
         // A rejected action (framework 413 when the body exceeds
         // serverActions.bodySizeLimit, a proxy cutting the request, a network
         // drop) used to reject this promise inside startTransition: no message,
@@ -253,10 +264,34 @@ export function MediaPicker({
                     title={f.path}
                   >
                     {isVideoPath(f.path) ? (
-                      <span className="grid h-full w-full place-items-center gap-1 p-2 text-center text-muted-foreground">
-                        <FileVideo className="h-6 w-6" />
-                        <span className="line-clamp-2 text-[10px] leading-tight">{f.path.split("/").pop()}</span>
-                      </span>
+                      // Show the video's own first frame rather than a generic
+                      // icon — a wall of identical icons told you nothing about
+                      // which clip is which (user report 2026-07-26). "#t=0.1"
+                      // seeks a hair in so the frame isn't the opening black.
+                      posters.has(posterPathFor(f.path)) ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={posterPathFor(f.path)} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <video
+                        src={`${f.path}#t=0.1`}
+                        className="h-full w-full object-cover"
+                        muted
+                        playsInline
+                        preload="metadata"
+                        onLoadedMetadata={(e) => {
+                          // The media fragment alone leaves the element blank
+                          // in some browsers; seeking forces a real decode.
+                          const v = e.currentTarget;
+                          if (v.currentTime === 0) {
+                            try {
+                              v.currentTime = Math.min(0.1, (v.duration || 1) / 2);
+                            } catch {
+                              /* seeking unsupported — blank poster, not fatal */
+                            }
+                          }
+                        }}
+                      />
+                      )
                     ) : (
                       <Image src={f.path} alt="" fill className="object-cover" sizes="200px" unoptimized />
                     )}
