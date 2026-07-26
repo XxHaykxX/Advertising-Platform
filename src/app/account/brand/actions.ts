@@ -76,11 +76,19 @@ export type ApplicationBrief = {
 
 const DEAL_TYPES = ["CASH", "BARTER", "BOTH"];
 
-/** International number: "+", country code, 7–14 more digits. Separators are
- *  stripped first. Mirrors isValidPhone in application-dialog — kept as its
- *  own copy because that module is client-side. */
+/** Exact national-number lengths per dial code — Armenia is always 8 digits
+ *  after +374 (+37499105115), so one digit off is a typo, and a typo'd number
+ *  is a lead nobody can call back. Mirrors PHONE_RULES in
+ *  application-dialog; kept as its own copy because that module is
+ *  client-side and this check must hold against a direct POST. */
+const PHONE_RULES: Array<{ code: string; digits: number }> = [{ code: "+374", digits: 8 }];
+
 function isValidPhone(value: string): boolean {
-  return /^\+[1-9]\d{7,14}$/.test(value.replace(/[\s()-]/g, ""));
+  const cleaned = value.replace(/[\s()-]/g, "");
+  if (!/^\+[1-9]\d{6,15}$/.test(cleaned)) return false;
+  const rule = PHONE_RULES.find((r) => cleaned.startsWith(r.code));
+  if (rule) return cleaned.length === rule.code.length + rule.digits;
+  return cleaned.length >= 8 && cleaned.length <= 16;
 }
 /** Shortest application accepted. Mirrors MIN_MESSAGE in application-dialog —
  *  the popup disables submit below this, and this rejects a direct POST. */
