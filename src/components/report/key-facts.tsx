@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { CalendarClock, CalendarDays, Film } from "lucide-react";
-import { isVideoPath } from "@/components/media-picker";
 import { AccentBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/ui/reveal";
@@ -9,6 +8,14 @@ import { DEFAULT_LOCALE, intlLocale, localizeValue, makeUI, type Locale } from "
 import { ReportInterestButton } from "@/components/report/report-interest-button";
 import type { SiteHeaderUser } from "@/components/header";
 import type { ProjectDetailDTO } from "@/lib/types";
+
+/** Deliberately a local copy of media-picker's isVideoPath: that module is
+ *  "use client", and importing a plain function out of it makes this SERVER
+ *  component call into a client module — Next throws "Attempted to call
+ *  isVideoPath() from the server" at render time, which TypeScript can't see. */
+function isVideoFile(path: string): boolean {
+  return /\.(mp4|webm)$/i.test(path);
+}
 
 function Fact({
   icon,
@@ -122,7 +129,7 @@ export function KeyFacts({
                           <>
                             <div className="aspect-video w-full overflow-hidden rounded-lg border border-border bg-muted">
                               {r.media ? (
-                                isVideoPath(r.media) ? (
+                                isVideoFile(r.media) ? (
                                   <video
                                     src={r.media}
                                     className="h-full w-full object-cover"

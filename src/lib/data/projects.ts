@@ -238,7 +238,9 @@ const getProjectCached = unstable_cache(
     })),
     tagline: pickLocale(locale, { hy: p.taglineHy, ru: p.taglineRu, en: p.taglineEn }, p.tagline ?? ""),
     references: parseReferencesInput(p.references ?? "")
-      .filter((r) => r.name)
+      // A row counts as filled in if it has a title OR an uploaded still/clip —
+      // a picture with no caption is still worth showing.
+      .filter((r) => r.name || r.media)
       .map((r) => ({ name: r.name, url: r.url, media: r.media ?? "" })),
     cinemas: splitCommaList(p.cinemas),
     expectedReleaseDate: p.expectedReleaseDate?.toISOString() ?? null,
