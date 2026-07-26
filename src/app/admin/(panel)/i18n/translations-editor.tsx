@@ -138,6 +138,31 @@ export function TranslationsEditor({
   const [publishing, setPublishing] = useState(false);
   const [result, setResult] = useState<PublishResult | null>(null);
 
+  /* Where the table header must pin. The action bar above it is itself sticky
+     (top-16 on mobile to clear the fixed top bar, top-0 from md up) and its
+     height changes when a publish result or a validation-error list appears
+     inside it, so measure both instead of hardcoding a magic offset: resolved
+     sticky `top` + current height = the bar's bottom edge once stuck. Published
+     as a CSS variable consumed by thClass. */
+  const barRef = useRef<HTMLDivElement | null>(null);
+  const [headTop, setHeadTop] = useState(0);
+  useEffect(() => {
+    const bar = barRef.current;
+    if (!bar) return;
+    const measure = () => {
+      const stuckAt = parseFloat(getComputedStyle(bar).top) || 0;
+      setHeadTop(Math.round(stuckAt + bar.offsetHeight));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(bar);
+    window.addEventListener("resize", measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, []);
+
   // Latest state, readable from the debounce timers (which fire outside render)
   // and from the CSV panel's getters (kept stable so it doesn't re-render).
   const statesRef = useRef(states);
@@ -663,9 +688,12 @@ export function TranslationsEditor({
   };
 
   return (
-    <div className="mt-6">
+    <div className="mt-6" style={{ "--i18n-head-top": `${headTop}px` } as React.CSSProperties}>
       {/* Sticky action bar — top-16 clears the fixed mobile top bar. */}
-      <div className="sticky top-16 z-20 -mx-4 border-y border-border bg-background/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6 md:top-0 md:-mx-6">
+      <div
+        ref={barRef}
+        className="sticky top-16 z-20 -mx-4 border-y border-border bg-background/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6 md:top-0 md:-mx-6"
+      >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
             <p className="text-sm font-semibold text-foreground">
@@ -882,10 +910,16 @@ export function TranslationsEditor({
           Ничего не найдено — измените фильтры.
         </p>
       ) : view === "table" ? (
-        // Both scrollbars belong to this pane: the page never scrolls
-        // sideways, and the header/key column stay pinned inside it.
-        <div className="mt-3 max-h-[70vh] overflow-auto rounded-xl border border-border">
-          <table className="w-full min-w-[70rem] border-separate border-spacing-0">
+        // No scroll container here on purpose. A pane with its own overflow
+        // captures the mouse wheel, so scrolling the 855-row list felt dead
+        // while the page itself still had 400px to go. The page is the single
+        // vertical scroller; the header pins to the viewport via
+        // --i18n-head-top. Below lg the table keeps a minimum width and scrolls
+        // sideways (that pane then owns the wheel only horizontally, since it
+        // has no height cap and can never scroll vertically); from lg up it
+        // fits, so overflow-x-clip keeps even that container out of the way.
+        <div className="mt-3 overflow-x-auto rounded-xl border border-border lg:overflow-x-clip">
+          <table className="w-full min-w-[64rem] table-fixed border-separate border-spacing-0 lg:min-w-0">
             <thead>
               <tr>
                 <th className={`${thClass} sticky left-0 z-20 w-64 border-r`}>Ключ</th>

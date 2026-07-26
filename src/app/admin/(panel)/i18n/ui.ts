@@ -30,5 +30,11 @@ export const iconBtnClass =
   "inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-border bg-muted px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary";
 export const squareBtnClass =
   "inline-flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-md border border-border bg-muted text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary";
+/* Header cells pin to the VIEWPORT, not to a scrolling pane: the table has no
+   scroll container of its own, so the page is the only thing that scrolls (a
+   nested pane would swallow the wheel — that's the bug this replaced). The
+   offset is the bottom edge of the sticky action bar, published as
+   --i18n-head-top by TranslationsEditor because that bar changes height when
+   a publish result or an error list appears inside it. */
 export const thClass =
-  "sticky top-0 z-10 border-b border-border bg-muted px-3 py-2 text-left text-xs font-semibold text-muted-foreground";
+  "sticky top-[var(--i18n-head-top,0px)] z-10 border-b border-border bg-muted px-3 py-2 text-left text-xs font-semibold text-muted-foreground";

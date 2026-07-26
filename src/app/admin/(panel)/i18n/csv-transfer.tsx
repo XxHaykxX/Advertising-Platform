@@ -163,7 +163,10 @@ function PreviewDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="max-h-[80vh] w-full max-w-2xl overflow-auto rounded-2xl border border-border bg-card p-5 shadow-2xl">
+      <div
+        data-lenis-prevent
+        className="max-h-[80vh] w-full max-w-2xl overflow-auto rounded-2xl border border-border bg-card p-5 shadow-2xl"
+      >
         <div className="flex items-start justify-between gap-3">
           <div>
             <h2 className="text-lg font-bold text-foreground">Загрузка из файла</h2>

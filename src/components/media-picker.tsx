@@ -186,7 +186,10 @@ export function MediaPicker({
           </div>
         )}
 
-        <div className="min-h-[200px] flex-1 overflow-y-auto p-5">
+        {/* data-lenis-prevent: MediaPicker is also mounted from member forms
+            under /account… and from public-side flows, where Lenis eats the
+            wheel unless a scroller opts out. */}
+        <div data-lenis-prevent className="min-h-[200px] flex-1 overflow-y-auto p-5">
           {error && <p className="mb-3 text-xs text-primary">{error}</p>}
           {loading ? (
             <div className="flex items-center justify-center py-16 text-muted-foreground">

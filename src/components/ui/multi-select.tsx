@@ -189,6 +189,10 @@ export function MultiSelect({
           id={listboxId}
           role="listbox"
           aria-multiselectable="true"
+          // data-lenis-prevent: on the marketing side Lenis owns the wheel and
+          // preventDefault()s it, which left this list unscrollable even though
+          // it had a scrollbar (see src/components/smooth-scroll.tsx).
+          data-lenis-prevent
           className="absolute z-50 mt-1.5 max-h-64 w-full overflow-auto rounded-xl border border-border bg-card py-1 shadow-lg shadow-black/10"
         >
           {filtered.map((o, i) => {

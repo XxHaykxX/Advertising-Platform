@@ -589,7 +589,11 @@ export function CatalogView({
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-2">{filterGroups}</div>
+            {/* data-lenis-prevent: this sheet lives on the public catalog, where
+                Lenis owns the wheel — without it the filter list can't scroll. */}
+            <div data-lenis-prevent className="min-h-0 flex-1 overflow-y-auto px-4 pb-2">
+              {filterGroups}
+            </div>
             <div className="flex items-center gap-3 border-t border-border p-4">
               <Button
                 type="button"

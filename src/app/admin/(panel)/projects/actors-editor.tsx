@@ -326,6 +326,9 @@ function PersonNameField({
       {open && filtered.length > 0 && (
         <ul
           role="listbox"
+          // Belt and braces: /admin runs without Lenis, but if smooth scrolling
+          // is ever re-enabled here this list must keep its wheel.
+          data-lenis-prevent
           className="absolute z-50 mt-1 max-h-64 w-64 max-w-[80vw] overflow-auto rounded-lg border border-border bg-card py-1 shadow-lg shadow-black/10"
         >
           {filtered.map((p, i) => (
