@@ -15,6 +15,7 @@ import {
   Bell,
   Send,
   Languages,
+  Inbox,
 } from "lucide-react";
 import type { Role } from "@prisma/client";
 import {
@@ -67,6 +68,9 @@ const NAV_GROUPS: {
     label: "Content",
     items: [
       { href: "/admin/moderation", label: "Moderation", icon: ShieldCheck, show: canModerate },
+      // Audit 2.1: the applications section was deleted in July, which left a
+      // brand's message and contact stored but readable by nobody.
+      { href: "/admin/interests", label: "Applications", icon: Inbox, show: canEditContent },
       { href: "/admin/projects", label: "Projects", icon: Film, show: canEditContent },
       { href: "/admin/cast", label: "Cast & Crew", icon: Users2, show: canEditContent },
       { href: "/admin/media", label: "Media", icon: FolderOpen, show: canEditContent },
@@ -85,7 +89,9 @@ const NAV_GROUPS: {
     label: "Comms",
     items: [
       { href: "/admin/broadcast", label: "Broadcast", icon: Send, show: canManageUsers },
-      { href: "/admin/notifications", label: "Notifications", icon: Bell, show: () => true },
+      // Audit 3.4: TRANSLATOR's only admin page is /admin/i18n — hide the
+      // link (the page itself now 404s for that role too).
+      { href: "/admin/notifications", label: "Notifications", icon: Bell, show: (role) => !isTranslatorOnly(role) },
     ],
   },
 ];

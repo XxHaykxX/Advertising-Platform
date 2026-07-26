@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Download, FileVideo, Loader2, Upload, X } from "lucide-react";
 import { listUploads, uploadImage, type MediaFile } from "@/lib/actions/uploads";
 import { listMemberUploads, uploadMemberImage } from "@/lib/actions/member-uploads";
+import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
 
 // Reusable image picker modal. Opens a library of existing uploads and lets you
 // either pick one or upload a new file from the computer — the chosen /uploads/…
@@ -34,6 +35,7 @@ export function MediaPicker({
   scope = "staff",
   uploadDir,
   accept = "image",
+  locale = DEFAULT_LOCALE,
 }: {
   open: boolean;
   onClose: () => void;
@@ -45,7 +47,13 @@ export function MediaPicker({
   /** File kind this instance picks — restricts the file-input accept, the
    *  upload kind sent to the server, and which library items are shown. */
   accept?: MediaPickerAccept;
+  /** Audit 4.5: this dialog was English-only for everyone, including members
+   *  whose whole cabinet is in Armenian or Russian. Admin callers can leave it
+   *  at the default (admin UI is pinned to "en"); member-side callers pass the
+   *  visitor's locale. */
+  locale?: Locale;
 }) {
+  const t = makeUI(locale);
   const [items, setItems] = useState<MediaFile[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -66,7 +74,7 @@ export function MediaPicker({
         if (alive) setItems(files);
       })
       .catch(() => {
-        if (alive) setError("Couldn't load the library.");
+        if (alive) setError(t("media.loadError"));
       })
       .finally(() => {
         if (alive) setLoading(false);
@@ -113,7 +121,7 @@ export function MediaPicker({
         const maxMb = kind === "video" ? 50 : 8;
         if (file.size > maxMb * 1024 * 1024) {
           const mb = Math.round((file.size / (1024 * 1024)) * 10) / 10;
-          setError(`“${file.name}” is ${mb} MB — the limit is ${maxMb} MB.`);
+          setError(t("media.errTooLarge", { name: file.name, size: String(mb), limit: String(maxMb) }));
           continue;
         }
         const fd = new FormData();
@@ -130,7 +138,7 @@ export function MediaPicker({
           res = await upload(fd);
         } catch {
           const mb = Math.round((file.size / (1024 * 1024)) * 10) / 10;
-          setError(`Upload failed — “${file.name}” (${mb} MB) was rejected by the server. Try a smaller file.`);
+          setError(t("media.errUploadFailed", { name: file.name, size: String(mb) }));
           continue;
         }
         if (res.error) {
@@ -158,7 +166,11 @@ export function MediaPicker({
       >
         <div className="flex items-center justify-between border-b border-border px-5 py-3">
           <h2 className="text-sm font-semibold text-foreground">
-            {accept === "video" ? "Choose video" : accept === "any" ? "Choose file" : "Choose image"}
+            {accept === "video"
+              ? t("media.chooseVideo")
+              : accept === "any"
+                ? t("media.chooseFile")
+                : t("media.chooseImage")}
           </h2>
           <div className="flex items-center gap-2">
             <button
@@ -168,7 +180,7 @@ export function MediaPicker({
               className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground transition-colors hover:opacity-90 disabled:opacity-60"
             >
               {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-              Upload from computer
+              {t("media.upload")}
             </button>
             <input
               ref={fileInputRef}
@@ -181,7 +193,7 @@ export function MediaPicker({
             <button
               type="button"
               onClick={onClose}
-              aria-label="Close"
+              aria-label={t("media.close")}
               className="grid h-8 w-8 place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
             >
               <X className="h-5 w-5" />
@@ -202,7 +214,7 @@ export function MediaPicker({
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
               >
-                {f === "__all__" ? "All" : f}
+                {f === "__all__" ? t("media.all") : f}
               </button>
             ))}
           </div>
@@ -219,7 +231,7 @@ export function MediaPicker({
             </div>
           ) : visible.length === 0 ? (
             <p className="py-16 text-center text-sm text-muted-foreground">
-              {accept === "video" ? "No videos yet" : "No images yet"} — use “Upload from computer”.
+              {accept === "video" ? t("media.emptyVideos") : t("media.emptyImages")}
             </p>
           ) : (
             /* 16:9 tiles, one column fewer than before — every image in the app
@@ -253,8 +265,8 @@ export function MediaPicker({
                     href={f.path}
                     download
                     onClick={(e) => e.stopPropagation()}
-                    aria-label={`Download ${f.path.split("/").pop()}`}
-                    title="Download"
+                    aria-label={`${t("media.download")} ${f.path.split("/").pop()}`}
+                    title={t("media.download")}
                     className="absolute right-1 top-1 grid h-6 w-6 place-items-center rounded-md bg-background/80 text-muted-foreground opacity-0 transition-opacity hover:text-primary focus-visible:opacity-100 group-hover:opacity-100"
                   >
                     <Download className="h-3.5 w-3.5" />

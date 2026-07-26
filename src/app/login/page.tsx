@@ -8,11 +8,11 @@ import { LoginForm } from "./login-form";
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; error?: string }>;
+  searchParams: Promise<{ status?: string; error?: string; from?: string }>;
 }) {
   const locale = await getLocale();
   const t = makeUI(locale);
-  const { status, error } = await searchParams;
+  const { status, error, from } = await searchParams;
   const notice =
     error === "google"
       ? t("login.errGoogle")
@@ -40,7 +40,7 @@ export default async function LoginPage({
             {t("login.subtitle")}
           </p>
 
-          <LoginForm locale={locale} googleEnabled={googleConfigured()} notice={notice} />
+          <LoginForm locale={locale} googleEnabled={googleConfigured()} notice={notice} from={from} />
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
             {t("login.noAccount")}{" "}

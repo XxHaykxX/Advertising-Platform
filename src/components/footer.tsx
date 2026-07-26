@@ -163,7 +163,7 @@ export function Footer({
             <ul className="space-y-3">
               <li>
                 <Link
-                  href="/#about"
+                  href="/about"
                   className="text-sm text-muted-foreground transition-colors hover:text-primary"
                 >
                   {t("footer.about")}

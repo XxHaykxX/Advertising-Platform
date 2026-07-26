@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireModerator } from "@/lib/auth/require";
+import { canEditContent } from "@/lib/auth/permissions";
 import type { ModerationStatus } from "@prisma/client";
 import { RowActions } from "./row-actions";
 
@@ -41,7 +42,13 @@ export default async function ModerationAdminPage({
   // 404s a non-moderator (Publisher, or a member somehow reaching /admin)
   // instead of revealing the page exists — same disguise pattern as the
   // other requireX gates in lib/auth/require.ts.
-  await requireModerator();
+  const staff = await requireModerator();
+  // Audit 3.2: a plain MODERATOR can't open /admin/projects/[id]/edit (404 —
+  // that's content-editor-only), so the title link used to dead-end there.
+  // Content editors (SUPERADMIN/PUBLISHER) keep the edit link; a MODERATOR
+  // gets the public report page instead, which they can actually open (see
+  // the activeOnly bypass in app/reports/[id]/page.tsx).
+  const canEdit = canEditContent(staff.role);
 
   const { tab: rawTab } = await searchParams;
   const tab: "PENDING" | "REJECTED" | "ALL" =
@@ -124,7 +131,9 @@ export default async function ModerationAdminPage({
                   </td>
                   <td className="px-4 py-3">
                     <Link
-                      href={`/admin/projects/${p.id}/edit`}
+                      href={canEdit ? `/admin/projects/${p.id}/edit` : `/reports/${p.id}`}
+                      target={canEdit ? undefined : "_blank"}
+                      rel={canEdit ? undefined : "noopener noreferrer"}
                       className="font-medium text-foreground hover:text-primary"
                     >
                       {p.title}

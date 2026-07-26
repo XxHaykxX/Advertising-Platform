@@ -28,6 +28,7 @@ export default async function BrandLayout({ children }: { children: ReactNode })
             dashboard: t("account.title"),
             browse: t("nav.browseProjects"),
             favorites: t("account.brand.navFavorites"),
+            interests: t("account.brand.navInterests"),
             profile: t("account.brand.navProfile"),
             notifications: t("account.brand.navNotifications"),
             logout: t("account.logout"),

@@ -31,6 +31,15 @@ import type { ProjectListDTO } from "@/lib/types";
 
 type ViewMode = "grid" | "list";
 
+// 5.7: "default" keeps the source order (sortOrder, as getProjects returns
+// it) — the other three re-sort the already-filtered list client-side.
+type SortOption = "default" | "newest" | "deadline" | "title";
+
+// Cards per "page" — the client-side pagination reveals results in chunks of
+// this size instead of rendering the whole (small but growing) catalog at
+// once. 12 = 4 full rows of 3 in the grid view.
+const PAGE_SIZE = 12;
+
 function ProjectRow({
   project,
   locale = DEFAULT_LOCALE,
@@ -50,6 +59,12 @@ function ProjectRow({
   const countries = splitCountries(project.countries);
   const deadlineDays = daysUntil(project.applicationDeadline);
   const deadlineUrgent = deadlineDays !== null && deadlineDays <= 45;
+  // 5.6: same "first + up to 2 more, then +N" convention as ProjectCard.
+  const allGenres = project.genres.length > 0 ? project.genres : [project.genre];
+  const extraGenres = allGenres.slice(1);
+  const shownExtraGenres = extraGenres.slice(0, 2);
+  const moreGenres = extraGenres.length - shownExtraGenres.length;
+  const languages = splitCountries(project.language);
   return (
     <div className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 card-lift sm:flex-row sm:items-center">
       <div className="relative aspect-video w-full shrink-0 overflow-hidden rounded-lg sm:w-48">
@@ -79,16 +94,24 @@ function ProjectRow({
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <h3 className="text-lg font-semibold text-foreground">{project.title}</h3>
-          <GenreBadge>{localizeValue(locale, "genre", project.genre)}</GenreBadge>
+          <GenreBadge>{localizeValue(locale, "genre", allGenres[0])}</GenreBadge>
+          {shownExtraGenres.map((g) => (
+            <GenreBadge key={g}>{localizeValue(locale, "genre", g)}</GenreBadge>
+          ))}
+          {moreGenres > 0 ? <GenreBadge>+{moreGenres}</GenreBadge> : null}
           {project.placementType ? (
             <AccentBadge>{localizeValue(locale, "placement", project.placementType)}</AccentBadge>
           ) : null}
         </div>
-        <code className="text-xs text-muted-foreground">{project.code}</code>
         <p className="mt-2 line-clamp-1 text-sm text-muted-foreground">{project.synopsis}</p>
         <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
           <span>{project.format}</span>
           <span>{countries.slice(0, 3).join(", ")}</span>
+          {languages.length > 0 ? (
+            <span>
+              {t("catalog.language")}: {languages.map((l) => localizeValue(locale, "language", l)).join(", ")}
+            </span>
+          ) : null}
           {project.boxOfficeDisplay ? <span>{project.boxOfficeDisplay}</span> : null}
           {project.applicationDeadline ? (
             <span
@@ -176,8 +199,21 @@ export function CatalogView({
   isBrand?: boolean;
 }) {
   const t = makeUI(locale);
+  // 5.6: the genre facet (and the filter match below) now considers every
+  // genre a project carries, not just genres[0] — a project tagged
+  // Comedy+Drama should surface under either filter, not just the first.
   const genres = useMemo(
-    () => Array.from(new Set(projects.map((p) => p.genre))).sort(),
+    () =>
+      Array.from(
+        new Set(projects.flatMap((p) => (p.genres.length > 0 ? p.genres : [p.genre]))),
+      ).sort(),
+    [projects],
+  );
+  // 5.8: only offer the "Unspecified" format bucket when the catalog actually
+  // has a row with an empty formatCategory — same pattern as platform/country
+  // below, so the checkbox never appears with nothing behind it.
+  const hasUnspecifiedFormat = useMemo(
+    () => projects.some((p) => !p.formatCategory),
     [projects],
   );
   const statuses = useMemo(
@@ -207,6 +243,10 @@ export function CatalogView({
   const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
   const [search, setSearch] = useState("");
   const [view, setView] = useState<ViewMode>("grid");
+  const [sortBy, setSortBy] = useState<SortOption>("default");
+  // How many of the filtered+sorted results are currently rendered — the
+  // "Show more" button below the list grows this by PAGE_SIZE at a time.
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   // Mobile filters live in a bottom-sheet (industry-standard on small screens —
   // a stacked sidebar buries the results below a long filter column). Desktop
   // keeps the always-visible sidebar.
@@ -233,6 +273,7 @@ export function CatalogView({
       if (Array.isArray(f.countries)) setSelectedCountries(f.countries);
       if (typeof f.search === "string") setSearch(f.search);
       if (f.view === "grid" || f.view === "list") setView(f.view);
+      if (["default", "newest", "deadline", "title"].includes(f.sortBy)) setSortBy(f.sortBy);
     } catch {
       /* corrupt/blocked storage — fall back to defaults */
     }
@@ -254,6 +295,7 @@ export function CatalogView({
           countries: selectedCountries,
           search,
           view,
+          sortBy,
         }),
       );
     } catch {
@@ -268,6 +310,25 @@ export function CatalogView({
     selectedCountries,
     search,
     view,
+    sortBy,
+  ]);
+
+  // Pagination resets to the first page whenever the result set could change
+  // shape — any filter facet, the search term, or the sort order. Skipped on
+  // the very first render (mirrors the guard above) so restoring a persisted
+  // search doesn't clobber a resumed scroll position with page 1 anyway —
+  // it's still page 1 by default, but keeps the two effects symmetric.
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [
+    selectedGenres,
+    selectedStatuses,
+    selectedFormats,
+    selectedLanguages,
+    selectedPlatforms,
+    selectedCountries,
+    search,
+    sortBy,
   ]);
 
   // Count of active filter facets (excluding free-text search, which has its
@@ -326,8 +387,17 @@ export function CatalogView({
     const term = search.trim().toLowerCase();
 
     let list = projects.filter((p) => {
-      if (selectedGenres.length > 0 && !selectedGenres.includes(p.genre)) return false;
+      if (selectedGenres.length > 0) {
+        const gs = p.genres.length > 0 ? p.genres : [p.genre];
+        if (!selectedGenres.some((s) => gs.includes(s))) return false;
+      }
       if (selectedStatuses.length > 0 && !selectedStatuses.includes(p.status)) return false;
+      // 5.8: formatCategory can legitimately be "" (deriveFormatCategory found
+      // no match). With no format filter active (selectedFormats empty) these
+      // rows pass through untouched — "all formats" really means all. Once a
+      // filter IS active, "" only matches when the visitor explicitly ticked
+      // the "Unspecified" bucket (its value is the empty string), so a blank
+      // row never disappears silently — it just requires an explicit opt-in.
       if (selectedFormats.length > 0 && !selectedFormats.includes(p.formatCategory)) return false;
       if (selectedLanguages.length > 0) {
         // Language is now a CSV of one or more values (admin redesign phase 1,
@@ -370,6 +440,39 @@ export function CatalogView({
     search,
   ]);
 
+  // 5.7: re-sort the already-filtered list. "default" is a no-op — `filtered`
+  // preserves the source array's order (Array.prototype.filter doesn't
+  // reorder), which is exactly the sortOrder the projects arrive in.
+  const sorted = useMemo(() => {
+    if (sortBy === "default") return filtered;
+    const list = [...filtered];
+    if (sortBy === "newest") {
+      // releaseDate desc, projects with no release date sink to the end.
+      list.sort((a, b) => {
+        const at = a.releaseDate ? new Date(a.releaseDate).getTime() : null;
+        const bt = b.releaseDate ? new Date(b.releaseDate).getTime() : null;
+        if (at === null) return bt === null ? 0 : 1;
+        if (bt === null) return -1;
+        return bt - at;
+      });
+    } else if (sortBy === "deadline") {
+      // applicationDeadline asc (soonest first), no-deadline projects last.
+      list.sort((a, b) => {
+        const at = a.applicationDeadline ? new Date(a.applicationDeadline).getTime() : null;
+        const bt = b.applicationDeadline ? new Date(b.applicationDeadline).getTime() : null;
+        if (at === null) return bt === null ? 0 : 1;
+        if (bt === null) return -1;
+        return at - bt;
+      });
+    } else if (sortBy === "title") {
+      list.sort((a, b) => a.title.localeCompare(b.title, intlLocale(locale)));
+    }
+    return list;
+  }, [filtered, sortBy, locale]);
+
+  // The client-side "page" currently on screen.
+  const visible = useMemo(() => sorted.slice(0, visibleCount), [sorted, visibleCount]);
+
   // Shared filter controls — rendered in the desktop sidebar AND the mobile
   // bottom-sheet, so the two never drift out of sync.
   const filterGroups = (
@@ -393,10 +496,15 @@ export function CatalogView({
 
       <CheckboxFilter
         label={t("catalog.format")}
-        options={FORMAT_CATEGORY_VALUES.map((v) => ({
-          value: v,
-          label: localizeValue(locale, "formatCategory", v),
-        }))}
+        options={[
+          ...FORMAT_CATEGORY_VALUES.map((v) => ({
+            value: v,
+            label: localizeValue(locale, "formatCategory", v),
+          })),
+          // 5.8: explicit opt-in bucket for formatCategory === "" — see the
+          // filtering comment above for why this keeps those rows visible.
+          ...(hasUnspecifiedFormat ? [{ value: "", label: t("catalog.formatUnspecified") }] : []),
+        ]}
         selected={selectedFormats}
         onToggle={toggleFormat}
       />
@@ -501,6 +609,20 @@ export function CatalogView({
                 />
               </div>
 
+              {/* 5.7: sort control — reorders the already-filtered list
+                  client-side, doesn't touch getProjects. */}
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as SortOption)}
+                aria-label={t("catalog.sortLabel")}
+                className="shrink-0 rounded-xl border border-border bg-card px-3.5 py-2.5 text-sm text-foreground outline-none focus:border-primary"
+              >
+                <option value="default">{t("catalog.sortDefault")}</option>
+                <option value="newest">{t("catalog.sortNewest")}</option>
+                <option value="deadline">{t("catalog.sortDeadline")}</option>
+                <option value="title">{t("catalog.sortTitle")}</option>
+              </select>
+
               <div className="inline-flex rounded-xl border border-border bg-card p-1">
                 <button
                   type="button"
@@ -529,17 +651,17 @@ export function CatalogView({
 
             <p className="mb-4 text-sm text-muted-foreground">
               {t("catalog.showingProjectsPrefix")}{" "}
-              <span className="font-semibold text-foreground">{filtered.length}</span>{" "}
-              {filtered.length === 1 ? t("catalog.projectSingular") : t("catalog.projectPlural")}
+              <span className="font-semibold text-foreground">{sorted.length}</span>{" "}
+              {sorted.length === 1 ? t("catalog.projectSingular") : t("catalog.projectPlural")}
             </p>
 
-            {filtered.length === 0 ? (
+            {sorted.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-border p-16 text-center text-muted-foreground">
                 {t("catalog.noResults")}
               </div>
             ) : view === "grid" ? (
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
-                {filtered.map((project) => (
+                {visible.map((project) => (
                   <ProjectCard
                     key={project.id}
                     project={project}
@@ -553,7 +675,7 @@ export function CatalogView({
               </div>
             ) : (
               <div className="flex flex-col gap-4">
-                {filtered.map((project) => (
+                {visible.map((project) => (
                   <ProjectRow
                     key={project.id}
                     project={project}
@@ -566,6 +688,20 @@ export function CatalogView({
                 ))}
               </div>
             )}
+
+            {/* 5.7: "Show more" pagination — grows the client-side page by
+                PAGE_SIZE instead of rendering the whole catalog at once. */}
+            {visibleCount < sorted.length ? (
+              <div className="mt-8 flex justify-center">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
+                >
+                  {t("catalog.loadMore")}
+                </Button>
+              </div>
+            ) : null}
           </div>
         </div>
       </Container>
@@ -610,7 +746,7 @@ export function CatalogView({
                 className="flex-1"
                 onClick={() => setFiltersOpen(false)}
               >
-                {t("catalog.showResults")} {filtered.length}
+                {t("catalog.showResults")} {sorted.length}
               </Button>
             </div>
           </div>

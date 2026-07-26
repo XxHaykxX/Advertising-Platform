@@ -27,6 +27,10 @@ export default async function MyProjectsPage() {
     prisma.project.findMany({
       where: { ownerId: user.id },
       orderBy: { createdAt: "desc" },
+      // Audit 4.8: the creator had no numbers about their own listing at all.
+      // Only counts are exposed — WHICH brands shortlisted a project stays
+      // private to those brands (that is what Favorite is for).
+      include: { _count: { select: { favorites: true, interests: true } } },
     }),
   ]);
   const t = makeUI(locale);
@@ -63,37 +67,82 @@ export default async function MyProjectsPage() {
             // open their live listing. Pending/rejected/draft aren't viewable yet,
             // so those cards stay non-clickable (the status pill explains why).
             const viewable = p.moderationStatus === "APPROVED" && p.isActive;
-            const inner = (
-              <div className="h-full overflow-hidden rounded-2xl border border-border bg-card">
+            // The clickable "open live listing" area (poster + title + code).
+            // Kept out of the outer wrapper (which is a plain <div>, not an
+            // <a>) so the Edit link below can sit alongside it instead of
+            // nesting a second anchor inside the first (audit 2.4 / C.6 — a
+            // creator can now edit any of their projects, viewable or not).
+            const preview = (
+              <div className="overflow-hidden rounded-t-2xl">
                 <div className="aspect-video w-full bg-muted">
                   {p.poster && (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={p.poster} alt="" className="h-full w-full object-cover" />
                   )}
                 </div>
-                <div className="p-4">
-                  <span
-                    className={`inline-block rounded-full border px-2.5 py-1 text-xs font-medium ${STATUS_PILL[p.moderationStatus]}`}
-                  >
-                    {STATUS_LABEL[p.moderationStatus]}
-                  </span>
-                  <h3 className="mt-2 truncate font-semibold text-foreground">{p.title}</h3>
-                  <p className="text-xs text-muted-foreground">{p.code}</p>
-                </div>
               </div>
             );
             return (
               <Reveal key={p.id} delay={0.05 * (i % 6)}>
-                {viewable ? (
-                  <Link
-                    href={`/reports/${p.id}`}
-                    className="block h-full rounded-2xl transition-transform hover:-translate-y-0.5"
-                  >
-                    {inner}
-                  </Link>
-                ) : (
-                  inner
-                )}
+                <div className="h-full overflow-hidden rounded-2xl border border-border bg-card">
+                  {viewable ? (
+                    <Link
+                      href={`/reports/${p.id}`}
+                      className="block transition-transform hover:-translate-y-0.5"
+                    >
+                      {preview}
+                    </Link>
+                  ) : (
+                    preview
+                  )}
+                  <div className="p-4">
+                    <span
+                      className={`inline-block rounded-full border px-2.5 py-1 text-xs font-medium ${STATUS_PILL[p.moderationStatus]}`}
+                    >
+                      {STATUS_LABEL[p.moderationStatus]}
+                    </span>
+                    <h3 className="mt-2 truncate font-semibold text-foreground">{p.title}</h3>
+                    <p className="text-xs text-muted-foreground">{p.code}</p>
+                    {/* Views / shortlists / applications — shown once the
+                        listing is public, since a pending project can't have
+                        collected any of them yet. */}
+                    {p.moderationStatus === "APPROVED" ? (
+                      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                        <span>
+                          {t("account.stats.views")}: <span className="font-semibold text-foreground">{p.viewCount}</span>
+                        </span>
+                        <span>
+                          {t("account.stats.favorites")}:{" "}
+                          <span className="font-semibold text-foreground">{p._count.favorites}</span>
+                        </span>
+                        <span>
+                          {t("account.stats.applications")}:{" "}
+                          <span className="font-semibold text-foreground">{p._count.interests}</span>
+                        </span>
+                      </div>
+                    ) : null}
+                    {/* Why the moderator turned it down. The reason was typed but
+                        discarded before (audit 1.4), so a rejected card gave the
+                        creator nothing to act on. */}
+                    {p.moderationStatus === "REJECTED" && p.rejectionReason ? (
+                      <p className="mt-3 rounded-lg border border-danger/30 bg-danger/5 px-3 py-2 text-xs leading-relaxed text-foreground">
+                        <span className="font-semibold text-danger">{t("account.rejectionReason")}</span>{" "}
+                        {p.rejectionReason}
+                      </p>
+                    ) : null}
+                    {/* Closes the "edit and resubmit" loop the rejection email
+                        promises (audit 2.4 / owner decision C.6) — shown for
+                        every status, not just REJECTED, since editing an
+                        APPROVED listing is also allowed (it just goes back to
+                        moderation on save). */}
+                    <Link
+                      href={`/account/projects/${p.id}/edit`}
+                      className="mt-3 inline-block text-sm font-medium text-primary hover:underline"
+                    >
+                      {t("account.editProject")}
+                    </Link>
+                  </div>
+                </div>
               </Reveal>
             );
           })}

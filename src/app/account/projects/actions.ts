@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath, revalidateTag } from "next/cache";
+import { notFound } from "next/navigation";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireMember } from "@/lib/auth/require";
@@ -9,7 +10,14 @@ import { makeUI } from "@/lib/i18n";
 import { notifyNewProjectForModeration } from "@/lib/mail";
 import { notifyRoles } from "@/lib/data/notifications";
 import { addStreamingSources } from "@/lib/actions/streaming-sources";
-import { PLACEMENT_TYPE_VALUES, KIND_VALUES, ROLE_VALUES, kindForRole, parseCsvInput } from "@/app/admin/(panel)/projects/form-shared";
+import {
+  PLACEMENT_TYPE_VALUES,
+  KIND_VALUES,
+  ROLE_VALUES,
+  kindForRole,
+  parseCsvInput,
+  publishBlockers,
+} from "@/app/admin/(panel)/projects/form-shared";
 import type { ProjectFormValues, ProjectFormState } from "@/app/admin/(panel)/projects/actions";
 
 /* #16 (expanded 2026-07-16): the Creator self-serve submission form
@@ -127,15 +135,14 @@ function buildData(fd: FormData): ProjectFormValues {
     countries: jsonArray<string>(fd, "countries").join(", ").slice(0, VARCHAR_MAX),
     ageRating: str(fd, "ageRating", VARCHAR_MAX),
     boxOfficeAmd: intOrNull(fd, "boxOfficeAmd"),
+    productionBudgetAmd: intOrNull(fd, "productionBudgetAmd"),
     // Never trusted from the form for a Creator submission — forced to false
     // below regardless of what buildData parses here.
     isActive: bool(fd, "isActive"),
-    sortOrder: int(fd, "sortOrder"),
     applicationDeadline: str(fd, "applicationDeadline"),
     releaseDate: str(fd, "releaseDate"),
     expectedReleaseDate: str(fd, "expectedReleaseDate"),
     platforms: jsonArray<string>(fd, "platforms").join(", ").slice(0, VARCHAR_MAX),
-    streamingSource: jsonArray<string>(fd, "streamingSource").join(", ").slice(0, VARCHAR_MAX),
     placementType: enumVal(fd, "placementType", [...PLACEMENT_TYPE_VALUES, ""] as const, ""),
     tagline: taglineRu || taglineHy || taglineEn,
     taglineHy,
@@ -155,10 +162,37 @@ function validate(data: ProjectFormValues, t: ReturnType<typeof makeUI>): string
   return null;
 }
 
+/** The CSV schema's required fields, checked at submission time. Submitting is
+   this side's publication step (there is no creator-owned draft yet), so the
+   same publishBlockers() list the admin form enforces applies here — a project
+   that can't be published shouldn't reach a moderator either (audit 2.8: a
+   project with no placement package used to sail through moderation and land
+   in the catalog with nothing to buy). */
+function submitGate(
+  data: ProjectFormValues,
+  tierRows: { name: string; benefits: string }[],
+  t: ReturnType<typeof makeUI>,
+): string | null {
+  const missing = publishBlockers({
+    studio: data.studio,
+    releaseDate: data.releaseDate,
+    expectedReleaseDate: data.expectedReleaseDate,
+    tagline: data.tagline,
+    kind: data.kind,
+    episodes: data.episodes,
+    episodeMinutes: data.episodeMinutes,
+    durationMinutes: data.durationMinutes,
+    tiers: tierRows,
+  });
+  if (missing.length === 0) return null;
+  return `${t("publish.blockedSubmit")} ${missing.map((key) => t(key)).join(", ")}.`;
+}
+
 // ── Inline cast/crew + sponsorship tiers (#20², carried over from admin) ──
 const ACTOR_KIND_VALUES = ["CAST", "CREW"] as const;
 type ActorInput = { name?: string; roles?: string[]; kind?: string; photo?: string; personId?: number | null };
 type TierInput = {
+  dbId?: number; // existing SponsorshipTier.id, absent for a newly added row
   name?: string;
   priceAmd?: number;
   benefits?: string;
@@ -210,12 +244,17 @@ function parseActorRows(fd: FormData) {
     });
 }
 
-/** FIND-ONLY resolve — see the admin action's resolveActorPersonIds for the
-   full rationale. Never creates a Person: rows with a personId pass through,
-   typed-only names match an existing directory Person by name, and unmatched
-   rows are DROPPED (no auto-create, user request 2026-07-25). Duplicated rather
-   than imported (same "different zone/trust level" reasoning as the auto-code
-   generator below). */
+/** Resolve each cast/crew row to a Person — FIND-OR-CREATE on this side, unlike
+   the admin action's find-only version.
+
+   The find-only rule ("cast can only be attached from the /admin/cast
+   directory", 2026-07-25) makes sense for staff, who can open that directory.
+   A Creator can't: they typed a real name, the row matched nothing, and the
+   save silently dropped it — cast entered by a creator simply vanished (audit
+   1.3). The owner's answer on 2026-07-26 was to let creators add people
+   themselves: the Person is created together with the project and goes through
+   the same moderation, with duplicate names cleaned up by hand in the
+   directory. */
 async function resolveActorPersonIds(
   tx: Prisma.TransactionClient,
   rows: ReturnType<typeof parseActorRows>,
@@ -227,8 +266,22 @@ async function resolveActorPersonIds(
       continue;
     }
     const existing = await tx.person.findFirst({ where: { name: r.name } });
-    if (existing) resolved.push({ ...r, personId: existing.id });
-    // else: no directory match -> drop the row (no auto-create).
+    if (existing) {
+      resolved.push({ ...r, personId: existing.id });
+      continue;
+    }
+    const created = await tx.person.create({
+      data: {
+        name: r.name,
+        role: r.role,
+        kind: r.kind,
+        // The headshot the creator uploaded on the row seeds the directory
+        // entry too, so the person isn't left as a bare initials avatar.
+        photo: r.photo,
+      },
+      select: { id: true },
+    });
+    resolved.push({ ...r, personId: created.id });
   }
   return resolved;
 }
@@ -238,6 +291,7 @@ function parseTierRows(fd: FormData) {
   return jsonArray<TierInput>(fd, "tiersRows")
     .filter((r) => (r.name || "").trim())
     .map((r, i) => ({
+      dbId: typeof r.dbId === "number" ? r.dbId : null,
       name: (r.name || "").trim().slice(0, VARCHAR_MAX),
       priceAmd: Math.max(0, Number(r.priceAmd) || 0),
       benefits: benefitsToJson(r.benefits || ""),
@@ -246,6 +300,33 @@ function parseTierRows(fd: FormData) {
       totalSlots: r.totalSlots == null ? null : Math.max(0, Number(r.totalSlots) || 0),
       sortOrder: i,
     }));
+}
+
+/** Persist a project's tier rows inside an open transaction. Deliberately not
+   delete-all-then-insert: a SponsorshipTier is referenced by brand
+   applications (Interest.tierId) and holds the slot bookkeeping, so wiping and
+   re-inserting detached every application from its package and reset reserved
+   slots. Mirrors saveTierRows in admin/(panel)/projects/actions.ts (duplicated
+   for the same zone/trust-boundary reason as the rest of this file). */
+async function saveTierRows(
+  tx: Prisma.TransactionClient,
+  projectId: number,
+  rows: ReturnType<typeof parseTierRows>,
+) {
+  const keptIds = rows.map((r) => r.dbId).filter((id): id is number => id != null);
+  await tx.sponsorshipTier.deleteMany({
+    where: { projectId, ...(keptIds.length ? { id: { notIn: keptIds } } : {}) },
+  });
+  for (const row of rows) {
+    const { dbId, ...data } = row;
+    if (dbId != null) {
+      // Scoped by projectId too — a crafted payload must not reach another
+      // project's package.
+      await tx.sponsorshipTier.updateMany({ where: { id: dbId, projectId }, data });
+    } else {
+      await tx.sponsorshipTier.create({ data: { ...data, projectId } });
+    }
+  }
 }
 
 // ── Auto Code generation (#PP-YYYY-NNNN) ───────────────────────────────────
@@ -309,6 +390,9 @@ export async function createCreatorProject(
   const actorRows = parseActorRows(fd);
   const tierRows = parseTierRows(fd);
 
+  const blocked = submitGate(data, tierRows, t);
+  if (blocked) return { error: blocked, values: data };
+
   const projectData = {
     ...data,
     genres: data.genres.length ? JSON.stringify(data.genres) : null,
@@ -321,9 +405,8 @@ export async function createCreatorProject(
     releaseDate: dateOrNull(data.releaseDate),
     expectedReleaseDate: dateOrNull(data.expectedReleaseDate),
     platforms: platformsToJson(data.platforms),
-    // #29: no longer written from the form (merged into `platforms` above) —
-    // the column stays for now, just always cleared on save.
-    streamingSource: null,
+    // #29 merged the old Streaming source field into `platforms`; the
+    // `streamingSource` column is not written any more (audit 1.6).
     placementType: data.placementType || null,
     tagline: data.tagline || null,
     taglineHy: data.taglineHy || null,
@@ -356,8 +439,9 @@ export async function createCreatorProject(
           });
         }
         if (tierRows.length) {
+          // dbId is a form-only marker (see saveTierRows) — never a column.
           await tx.sponsorshipTier.createMany({
-            data: tierRows.map((r) => ({ ...r, projectId: project.id })),
+            data: tierRows.map(({ dbId: _dbId, ...r }) => ({ ...r, projectId: project.id })),
           });
         }
         return project;
@@ -388,4 +472,128 @@ export async function createCreatorProject(
     }
   }
   return { error: t("account.form.errCode"), values: data };
+}
+
+/** Edit a Creator's OWN project (audit 2.4 / owner decision C.6). Until now the
+   only creator-owned mutation was create — a REJECTED (or already-APPROVED)
+   project was a dead end, even though the rejection email tells the creator to
+   "edit and resubmit". This closes that loop: any save here re-enters
+   moderation (PENDING + inactive), whether the project was previously
+   REJECTED (a genuine resubmission) or APPROVED (per C.6, editing a published
+   project pulls it from the catalog until a moderator re-checks it). Modeled
+   on admin's updateProject (same notFound-for-both-"missing"-and-"not yours"
+   pattern) but reuses this file's create-side helpers (buildData/validate/
+   submitGate/parseActorRows/parseTierRows/resolveActorPersonIds) rather than
+   the admin action's, for the same "different trust zone" reasons documented
+   on createCreatorProject above. */
+export async function updateCreatorProject(
+  id: number,
+  _prev: ProjectFormState,
+  fd: FormData,
+): Promise<ProjectFormState> {
+  const user = await requireMember();
+  const locale = await getLocale();
+  const t = makeUI(locale);
+
+  if (user.role !== "CREATOR") {
+    return { error: t("account.form.errRequired") };
+  }
+
+  // 404 for both "doesn't exist" and "not yours" — a Creator must not be able
+  // to distinguish the two (same reasoning as admin's updateProject).
+  const existing = await prisma.project.findUnique({
+    where: { id },
+    select: { ownerId: true },
+  });
+  if (!existing) notFound();
+  if (existing.ownerId !== user.id) notFound();
+
+  const data = buildData(fd);
+  const error = validate(data, t);
+  if (error) return { error, values: data };
+
+  // Persist any custom Available-on values into the global Streaming Source
+  // dictionary (Ф2/#25) so future projects offer them too — never blocks the
+  // save. Same as createCreatorProject above.
+  try {
+    await addStreamingSources(parseCsvInput(data.platforms));
+  } catch {
+    /* ignore */
+  }
+
+  const actorRows = parseActorRows(fd);
+  const tierRows = parseTierRows(fd);
+
+  const blocked = submitGate(data, tierRows, t);
+  if (blocked) return { error: blocked, values: data };
+
+  try {
+    // #20²: update the project and fully replace its cast/crew + tiers in one
+    // transaction (delete-all then re-insert, same as admin's updateProject).
+    // Milestones are untouched — the creator form never submits milestonesRows
+    // (admin-only section), so there's nothing to replace here.
+    await prisma.$transaction(async (tx) => {
+      await tx.project.update({
+        where: { id },
+        data: {
+          ...data,
+          genres: data.genres.length ? JSON.stringify(data.genres) : null,
+          synopsisHy: data.synopsisHy || null,
+          synopsisRu: data.synopsisRu || null,
+          synopsisEn: data.synopsisEn || null,
+          poster: data.poster || null,
+          gallery: galleryToJson(data.gallery),
+          applicationDeadline: dateOrNull(data.applicationDeadline),
+          releaseDate: dateOrNull(data.releaseDate),
+          expectedReleaseDate: dateOrNull(data.expectedReleaseDate),
+          platforms: platformsToJson(data.platforms),
+          placementType: data.placementType || null,
+          tagline: data.tagline || null,
+          taglineHy: data.taglineHy || null,
+          taglineRu: data.taglineRu || null,
+          taglineEn: data.taglineEn || null,
+          references: data.references || null,
+          cinemas: data.cinemas || null,
+          videoEmbedUrl: data.videoEmbedUrl || null,
+          videoFile: data.videoFile || null,
+          // ── Never trusted from the form — forced server-side ──
+          // ownerId/code stay untouched (code arrives as a hidden readonly
+          // field mirroring the existing value, same as admin edit).
+          // A creator-edited project always goes back to moderation (C.6):
+          // an APPROVED listing disappears from the catalog until it's
+          // re-checked, and a REJECTED one becomes a genuine resubmission —
+          // either way the stale rejectionReason no longer applies.
+          moderationStatus: "PENDING",
+          isActive: false,
+          rejectionReason: null,
+        },
+      });
+      await tx.actor.deleteMany({ where: { projectId: id } });
+      if (actorRows.length) {
+        const resolvedActors = await resolveActorPersonIds(tx, actorRows);
+        await tx.actor.createMany({ data: resolvedActors.map((r) => ({ ...r, projectId: id })) });
+      }
+      await saveTierRows(tx, id, tierRows);
+    }, { timeout: 15000 });
+  } catch (e) {
+    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
+      return { error: t("account.form.errCode"), values: data };
+    }
+    throw e;
+  }
+
+  // Same moderation-team notifications as a fresh submission (#22/#25) —
+  // a resubmitted/edited project needs a moderator's attention again, just
+  // like a brand-new one.
+  notifyNewProjectForModeration({ id, title: data.title }).catch(() => {});
+  await notifyRoles(["SUPERADMIN", "MODERATOR"], {
+    type: "PROJECT_SUBMITTED",
+    data: { projectId: id, projectTitle: data.title, creatorName: user.name },
+    link: "/admin/moderation",
+  });
+
+  revalidateTag("projects", "max");
+  revalidatePath("/account/projects");
+  revalidatePath("/admin/moderation");
+  return { ok: true, redirect: "/account/projects" };
 }

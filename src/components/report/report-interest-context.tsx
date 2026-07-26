@@ -3,7 +3,7 @@
 import { createContext, useContext, useState } from "react";
 import type { InterestStatus } from "@prisma/client";
 import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
-import { ApplicationDialog } from "@/components/report/application-dialog";
+import { ApplicationDialog, type ApplicationTier } from "@/components/report/application-dialog";
 
 /** Shared Express Interest state for the report page (#23) — the page renders
  *  TWO buttons (key-facts up top, the ROI banner further down) that must
@@ -26,11 +26,14 @@ const ReportInterestContext = createContext<ReportInterestContextValue | null>(n
 export function ReportInterestProvider({
   projectId,
   initialStatus,
+  tiers = [],
   locale = DEFAULT_LOCALE,
   children,
 }: {
   projectId: number;
   initialStatus: InterestStatus | null;
+  /** Passed straight through to the popup's package picker (audit 2.3). */
+  tiers?: ApplicationTier[];
   locale?: Locale;
   children: React.ReactNode;
 }) {
@@ -52,6 +55,7 @@ export function ReportInterestProvider({
       {isOpen ? (
         <ApplicationDialog
           projectId={projectId}
+          tiers={tiers}
           t={t}
           onClose={() => setIsOpen(false)}
           onSubmitted={() => setApplied(true)}

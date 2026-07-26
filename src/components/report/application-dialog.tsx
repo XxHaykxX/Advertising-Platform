@@ -13,19 +13,37 @@ import type { makeUI } from "@/lib/i18n";
  *  timer) and calls onSubmitted so the caller can flip the button to its
  *  "already applied" state right away — the dialog itself only closes when
  *  the brand dismisses it. */
+/** The packages a brand can apply for, as shown in the picker. */
+export type ApplicationTier = {
+  id: number;
+  name: string;
+  priceDisplay: string;
+  availableSlots: number | null;
+};
+
 export function ApplicationDialog({
   projectId,
+  tiers = [],
   t,
   onClose,
   onSubmitted,
 }: {
   projectId: number;
+  /** Sponsorship packages of this project — audit 2.3: an application used to
+   *  carry no package at all, so nobody knew which placement (or price) it was
+   *  about, and two brands could each be told the same exclusive slot was
+   *  theirs. Empty list → the picker is hidden and the application is sent
+   *  without one, exactly as before. */
+  tiers?: ApplicationTier[];
   t: ReturnType<typeof makeUI>;
   onClose: () => void;
   onSubmitted: () => void;
 }) {
   const [message, setMessage] = useState("");
   const [contact, setContact] = useState("");
+  // Preselect when there is only one package — a single-option dropdown is
+  // just a click that can only go one way.
+  const [tierId, setTierId] = useState<string>(tiers.length === 1 ? String(tiers[0].id) : "");
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
@@ -42,7 +60,7 @@ export function ApplicationDialog({
     e.preventDefault();
     setError(null);
     startTransition(async () => {
-      const res = await submitApplication(projectId, message, contact);
+      const res = await submitApplication(projectId, message, contact, tierId ? Number(tierId) : null);
       if (!res.ok) {
         setError(res.error ?? t("apply.error"));
         return;
@@ -76,6 +94,37 @@ export function ApplicationDialog({
           </>
         ) : (
           <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-4">
+            {tiers.length > 0 ? (
+              <div>
+                <label
+                  htmlFor="apply-tier"
+                  className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                >
+                  {t("apply.tierLabel")}
+                </label>
+                <select
+                  id="apply-tier"
+                  value={tierId}
+                  onChange={(e) => setTierId(e.target.value)}
+                  className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+                >
+                  <option value="">{t("apply.tierNone")}</option>
+                  {tiers.map((tier) => (
+                    <option
+                      key={tier.id}
+                      value={tier.id}
+                      // A package with every slot taken can still be picked —
+                      // the seller may free one up — but say so plainly.
+                      disabled={tier.availableSlots === 0}
+                    >
+                      {tier.name} · {tier.priceDisplay}
+                      {tier.availableSlots === 0 ? ` · ${t("apply.tierSoldOut")}` : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : null}
+
             <div>
               <label htmlFor="apply-message" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 {t("apply.messageLabel")}

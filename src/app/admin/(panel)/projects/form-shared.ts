@@ -100,6 +100,55 @@ export function kindForRole(role: string): "CAST" | "CREW" {
   return CREW_ROLES.has((role || "").trim()) ? "CREW" : "CAST";
 }
 
+// ── Publish-time requirements (owner decision, 2026-07-26) ────────────────
+// The customer's CSV schema marks Studio / Release Date / Logline / at least
+// one placement package as required, but the owner was explicit: a missing
+// required field must block PUBLICATION, never the save. A half-filled project
+// always stores fine — it just can't reach the public catalog until it's
+// complete. (That is also why Duration, made save-blocking on 2026-07-26, was
+// moved back here: an old project without minutes could no longer be edited at
+// all.)
+//
+// Returns dictionary keys, not sentences, so every caller — the admin form,
+// the creator submission and the moderator's approve button — renders the same
+// list in the reader's own language.
+
+export type PublishCheckInput = {
+  studio: string;
+  releaseDate: string; // "YYYY-MM-DD" or ""
+  expectedReleaseDate: string; // "YYYY-MM-DD" or ""
+  tagline: string; // base/fallback logline (derived from the per-locale fields)
+  kind: string; // "FILM" | "SERIAL"
+  episodes: number | null;
+  episodeMinutes: number | null;
+  durationMinutes: number | null;
+  tiers: { name: string; benefits: string }[];
+};
+
+/** Everything that still blocks publication, as i18n keys (empty = publishable). */
+export function publishBlockers(input: PublishCheckInput): string[] {
+  const missing: string[] = [];
+  if (!input.studio.trim()) missing.push("publish.missing.studio");
+  // Either date satisfies the CSV's "Release Date": a released title has a real
+  // one, an upcoming title has the expected one.
+  if (!input.releaseDate && !input.expectedReleaseDate) missing.push("publish.missing.releaseDate");
+  if (!input.tagline.trim()) missing.push("publish.missing.tagline");
+  if (input.kind === "SERIAL") {
+    if (!input.episodes || !input.episodeMinutes) missing.push("publish.missing.episodes");
+  } else if (!input.durationMinutes) {
+    missing.push("publish.missing.duration");
+  }
+  const tiers = input.tiers.filter((tier) => tier.name.trim());
+  if (tiers.length === 0) {
+    missing.push("publish.missing.tiers");
+  } else if (tiers.some((tier) => !tier.benefits.trim())) {
+    // CSV requires both a Placement Name and a Placement Description; the
+    // description is the tier's benefits list.
+    missing.push("publish.missing.tierBenefits");
+  }
+  return missing;
+}
+
 /** Date | null -> "YYYY-MM-DD" for prefilling an <input type=date>. */
 export function formatDateInput(d: Date | null): string {
   return d ? d.toISOString().slice(0, 10) : "";

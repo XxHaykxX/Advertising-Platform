@@ -316,7 +316,12 @@ export function Header({
               {user ? (
                 <div className="flex flex-col gap-2 border-t border-border pt-4">
                   <Link
-                    href={STAFF_ROLES.includes(user.role) ? "/admin" : "/account"}
+                    // Audit 5.9: this used to hardcode /admin for every staff
+                    // role, sending a TRANSLATOR through an extra redirect hop
+                    // (the dashboard bounces that role straight to /admin/i18n
+                    // anyway). cabinetHrefFor is the same helper the desktop
+                    // UserMenu/Wordmark already use — go there directly.
+                    href={cabinetHrefFor(user.role)}
                     onClick={() => setMenuOpen(false)}
                     className="flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-primary/10"
                   >

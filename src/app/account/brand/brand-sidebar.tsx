@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Search, Heart, User, Bell, LogOut } from "lucide-react";
+import { LayoutDashboard, Search, Heart, Handshake, User, Bell, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutButton } from "@/components/logout-button";
 import type { Locale } from "@/lib/i18n";
@@ -32,6 +32,7 @@ export function BrandSidebar({
     dashboard: string;
     browse: string;
     favorites: string;
+    interests: string;
     profile: string;
     notifications: string;
     logout: string;
@@ -45,6 +46,9 @@ export function BrandSidebar({
     { href: "/account/brand", label: labels.dashboard, icon: LayoutDashboard, exact: true },
     { href: "/account/brand/browse", label: labels.browse, icon: Search },
     { href: "/account/brand/favorites", label: labels.favorites, icon: Heart },
+    // Audit 4.2: the interests/applications page existed but had no sidebar
+    // entry — a brand could only reach it via a dashboard card link.
+    { href: "/account/brand/interests", label: labels.interests, icon: Handshake },
     { href: "/account/brand/notifications", label: labels.notifications, icon: Bell },
     { href: "/account/brand/profile", label: labels.profile, icon: User },
   ];

@@ -5,6 +5,7 @@ import { getCurrency } from "@/lib/data/currency";
 import { getSiteHeaderUser } from "@/lib/data/site-header-user";
 import { getBrandInterestStatus } from "@/lib/data/brand-interests";
 import { loadCurrentUser } from "@/lib/auth/require";
+import { canEditContent, canModerate } from "@/lib/auth/permissions";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ReportHero } from "@/components/report/report-hero";
@@ -12,8 +13,8 @@ import { KeyFacts } from "@/components/report/key-facts";
 import { Cast } from "@/components/report/cast";
 import { Placements } from "@/components/report/placements";
 import { ProductionTimeline } from "@/components/report/production-timeline";
-import { RoiSnapshot } from "@/components/report/roi-snapshot";
 import { ReportInterestProvider } from "@/components/report/report-interest-context";
+import { ViewPing } from "@/components/report/view-ping";
 import { ReportTabs } from "./report-tabs";
 
 export async function generateStaticParams() {
@@ -34,18 +35,38 @@ export default async function ReportPage({
 
   const locale = await getLocale();
   const currency = await getCurrency();
-  const [project, user, authed] = await Promise.all([
-    getProject(pid, locale, currency, true),
-    getSiteHeaderUser(),
-    loadCurrentUser(),
-  ]);
+  // authed is needed before the getProject call (to pick activeOnly), so it
+  // can't join the same Promise.all as the project fetch below.
+  const [user, authed] = await Promise.all([getSiteHeaderUser(), loadCurrentUser()]);
+  // Audit 3.2: a moderator/content-editor reviewing the moderation queue
+  // links here to preview the project before approving/rejecting it — but
+  // getProject's activeOnly=true gate (isActive && APPROVED) would 404 on
+  // exactly the PENDING/REJECTED/DRAFT projects that queue exists for.
+  // Bypass the gate for staff who can moderate or edit content; everyone
+  // else keeps the public "approved only" behavior.
+  const canPreviewUnapproved =
+    authed != null && (canModerate(authed.role) || canEditContent(authed.role));
+  const project = await getProject(pid, locale, currency, !canPreviewUnapproved);
   if (!project) notFound();
 
   const interestStatus =
     authed?.role === "BRAND" ? await getBrandInterestStatus(authed.id, pid) : null;
 
   return (
-    <ReportInterestProvider projectId={project.id} initialStatus={interestStatus} locale={locale}>
+    <ReportInterestProvider
+      projectId={project.id}
+      initialStatus={interestStatus}
+      // The application popup asks which package the brand wants (audit 2.3).
+      tiers={project.tiers.map((tier) => ({
+        id: tier.id,
+        name: tier.name,
+        priceDisplay: tier.priceDisplay,
+        availableSlots: tier.availableSlots,
+      }))}
+      locale={locale}
+    >
+      {/* Counts this visit for the owner's stats — see the component. */}
+      <ViewPing projectId={project.id} />
       <Header user={user} locale={locale} currency={currency} />
       <ReportTabs hasCast={project.actors.length > 0} locale={locale} />
       <div id="overview">
@@ -58,7 +79,6 @@ export default async function ReportPage({
       <ProductionTimeline project={project} locale={locale} />
       <Cast project={project} locale={locale} />
       <Placements project={project} locale={locale} />
-      <RoiSnapshot project={project} locale={locale} user={user} />
       <Footer locale={locale} currency={currency} />
     </ReportInterestProvider>
   );

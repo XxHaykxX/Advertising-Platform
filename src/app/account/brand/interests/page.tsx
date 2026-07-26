@@ -93,7 +93,23 @@ export default async function BrandInterestsPage() {
                   {t("account.brand.interestedOn", {
                     date: formatFullDate(interest.createdAt, intlLocale(locale)),
                   })}
+                  {interest.tierName ? ` · ${interest.tierName}` : ""}
                 </p>
+                {/* The seller's answer. Nothing could set MUTUAL/DECLINED
+                    before wave 2, so this block never had anything to show. */}
+                {interest.respondedAt ? (
+                  <p
+                    className={cn(
+                      "mt-3 rounded-lg border px-3 py-2 text-xs leading-relaxed text-foreground",
+                      interest.status === "MUTUAL"
+                        ? "border-success/30 bg-success/5"
+                        : "border-danger/30 bg-danger/5",
+                    )}
+                  >
+                    <span className="font-semibold">{t("interests.answerFromSeller")}:</span>{" "}
+                    {interest.responseNote || STATUS_LABEL[interest.status]}
+                  </p>
+                ) : null}
               </div>
 
               <div className="flex shrink-0 flex-col items-end gap-2">

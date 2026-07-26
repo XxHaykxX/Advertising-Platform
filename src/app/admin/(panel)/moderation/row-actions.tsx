@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { Loader2 } from "lucide-react";
 import { approveProject, rejectProject } from "./actions";
 
@@ -12,13 +12,24 @@ const btnCls =
    bound Server Action via useTransition, no form/redirect involved. */
 export function RowActions({ projectId }: { projectId: number }) {
   const [pending, start] = useTransition();
+  // Approval can now be refused server-side when the project is missing
+  // something required for publication (audit 2.8) — surface that instead of
+  // letting the click look like it worked.
+  const [error, setError] = useState("");
 
   return (
+    <div className="flex flex-col gap-2">
     <div className="flex flex-wrap gap-2">
       <button
         type="button"
         disabled={pending}
-        onClick={() => start(() => approveProject(projectId))}
+        onClick={() =>
+          start(async () => {
+            setError("");
+            const result = await approveProject(projectId);
+            if ("error" in result) setError(result.error);
+          })
+        }
         className={btnCls}
       >
         {pending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
@@ -28,14 +39,26 @@ export function RowActions({ projectId }: { projectId: number }) {
         type="button"
         disabled={pending}
         onClick={() => {
-          const reason = window.prompt("Rejection reason (optional):") ?? "";
-          start(() => rejectProject(projectId, reason || undefined));
+          // The reason reaches the creator now (email + cabinet + in-app
+          // notification), so it is no longer "optional" in the throwaway
+          // sense it used to be.
+          const reason = window.prompt("Rejection reason — the creator will see this:") ?? "";
+          start(async () => {
+            setError("");
+            await rejectProject(projectId, reason || undefined);
+          });
         }}
         className={btnCls}
       >
         {pending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
         Reject
       </button>
+    </div>
+      {error ? (
+        <p className="max-w-md rounded-lg border border-danger/30 bg-danger/5 px-3 py-2 text-xs leading-relaxed text-danger">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }

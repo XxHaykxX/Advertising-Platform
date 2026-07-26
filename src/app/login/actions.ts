@@ -3,6 +3,7 @@
 import { cookies, headers } from "next/headers";
 import { authenticateMember } from "@/lib/auth/members";
 import { SESSION_COOKIE, createSessionToken, sessionCookieOptions } from "@/lib/auth/session";
+import { isMemberReachablePath } from "@/lib/auth/member-paths";
 import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
 
@@ -28,6 +29,19 @@ function recordFailure(ip: string) {
   const rec = attempts.get(ip);
   if (!rec || rec.resetAt < now) attempts.set(ip, { count: 1, resetAt: now + WINDOW_MS });
   else rec.count += 1;
+}
+
+/** Audit 4.3: a guest bounced to /login while looking at, say, a catalog
+   listing used to always land back in the cabinet after signing in, losing
+   their place. Only accept a same-origin, path-only ?from= — no protocol-
+   relative ("//evil.com") or backslash tricks that some browsers still treat
+   as a host separator — and only if a signed-in member could actually reach
+   it (same allow-list the proxy confinement enforces), so this can't be used
+   to redirect into /admin or another guest-only flow. */
+function safeMemberRedirect(from: string | null): string | null {
+  if (!from) return null;
+  if (!from.startsWith("/") || from.startsWith("//") || from.includes("\\")) return null;
+  return isMemberReachablePath(from) ? from : null;
 }
 
 export async function login(
@@ -65,10 +79,12 @@ export async function login(
   const jar = await cookies();
   jar.set(SESSION_COOKIE, token, sessionCookieOptions());
 
+  const from = safeMemberRedirect(String(formData.get("from") ?? "") || null);
+
   // Don't redirect() here: this cookie was just set in a useActionState
   // action, and Next 16 would render /account from the root in the same
   // action response before the cookie is visible to the auth gate — a
   // nested redirect there crashes the flight tree into global-error. Instead
   // report success and let the client navigate with a fresh full request.
-  return { ok: true, redirect: "/account" };
+  return { ok: true, redirect: from ?? "/account" };
 }

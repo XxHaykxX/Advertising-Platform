@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, FolderKanban, FileUp, Bell, User, LogOut } from "lucide-react";
+import { LayoutDashboard, FolderKanban, FileUp, Bell, User, LogOut, Inbox } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutButton } from "@/components/logout-button";
 import type { Locale } from "@/lib/i18n";
@@ -31,6 +31,7 @@ export function CreatorSidebar({
     home: string;
     projects: string;
     submit: string;
+    interests: string;
     notifications: string;
     profile: string;
     logout: string;
@@ -44,6 +45,9 @@ export function CreatorSidebar({
     { href: "/account", label: labels.home, icon: LayoutDashboard, exact: true },
     { href: "/account/projects", label: labels.projects, icon: FolderKanban, exact: true },
     { href: "/account/projects/new", label: labels.submit, icon: FileUp },
+    // Audit 2.1: brand applications used to arrive as a bare notification with
+    // no text, no contact and nowhere to answer them.
+    { href: "/account/interests", label: labels.interests, icon: Inbox },
     { href: "/account/notifications", label: labels.notifications, icon: Bell },
     { href: "/account/profile", label: labels.profile, icon: User },
   ];

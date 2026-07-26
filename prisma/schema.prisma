@@ -162,13 +162,27 @@ model Project {
   // Money — admin enters AMD only; the public site converts + formats for
   // display in the visitor's chosen currency (see src/lib/currency).
   boxOfficeAmd   Int? // box-office gross (кассовый сбор) — informational only, optional
+  // Production budget, the CSV schema's "Budget". Distinct from boxOfficeAmd
+  // above (gross receipts): the audit found the two conflated, and the owner
+  // decided on 2026-07-26 to keep both as separate figures (decision C.3).
+  productionBudgetAmd Int?
   isActive       Boolean       @default(true)
   sortOrder      Int           @default(0)
+  // How many times the public report page was opened. The creator had no
+  // numbers at all about their own listing (audit 4.8) — not views, not how
+  // many brands shortlisted it. Counted once per visitor per day (see the
+  // /api/projects/[id]/view route), so a refresh loop can't inflate it.
+  viewCount      Int           @default(0)
   createdAt      DateTime      @default(now())
   ownerId        Int
 
   // ── Moderation & content-kind (added for the Creator submission flow) ──
   moderationStatus ModerationStatus @default(APPROVED) // existing rows stay visible; the creator flow will set PENDING
+  // Why the last rejection happened. The moderator already typed one into a
+  // prompt(), but it was thrown away (`void reason`) — so the creator got a
+  // template email that never said what to fix. Persisted here and carried
+  // into both the email and the creator's cabinet.
+  rejectionReason  String?          @db.Text
   kind             ProjectKind      @default(FILM)
   episodes         Int? // episode count, for SERIAL
   episodeMinutes   Int? // per-episode runtime, for SERIAL
@@ -286,7 +300,8 @@ model SponsorshipTier {
   availableSlots Int? // still-open slots (CSV "Available Slots"); the "X" in "3 of 10"; null -> unspecified
   sortOrder Int     @default(0)
 
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project   Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  interests Interest[] // applications aimed at this package (audit 2.3)
 
   @@index([projectId])
 }
@@ -339,14 +354,51 @@ model Interest {
   projectId Int
   status    InterestStatus  @default(SENT)
   createdAt DateTime        @default(now())
-  message   String?         @db.Text // application message from the brand (report popup)
+  message   String?         @db.Text // latest application message from the brand (report popup)
   contact   String? // optional contact override supplied with the application
 
-  brand   User    @relation(fields: [brandId], references: [id], onDelete: Cascade)
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  // ── Wave 2 of the audit: closing the deal loop ──
+  // Which placement package the brand applied for. Optional: applications sent
+  // before this existed (and any sent from a project with no packages) carry
+  // none. Answers audit 2.3 — "неизвестно, на какой пакет и сумму отклик".
+  tierId       Int?
+  // True while this application holds one of that package's availableSlots.
+  // Set when a creator accepts, released when they decline or the brand
+  // withdraws — so two brands can no longer both "take" one exclusive slot.
+  slotReserved Boolean   @default(false)
+  respondedAt  DateTime? // when the creator accepted/declined
+  responseNote String?   @db.Text // what the creator wrote back
+
+  brand    User              @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  project  Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tier     SponsorshipTier?  @relation(fields: [tierId], references: [id], onDelete: SetNull)
+  events   InterestEvent[]
 
   @@unique([brandId, projectId])
   @@index([projectId])
+  @@index([tierId])
+}
+
+/// One entry in an application's history. The Interest row above stays the
+/// CURRENT state of a brand↔project conversation (that pair is unique, and a
+/// resend overwrites it) — this table keeps what used to be overwritten: every
+/// application the brand sent and every answer the creator gave, with dates
+/// (audit 2.6, "истории обращений нет ни у бренда, ни у площадки").
+/// Deliberately a log, not a chat: in-platform messaging was postponed by the
+/// owner on 2026-07-26 (decision C.2).
+model InterestEvent {
+  id         Int             @id @default(autoincrement())
+  interestId Int
+  kind       String // APPLICATION (from the brand) | RESPONSE (from the creator/staff)
+  status     InterestStatus? // the status this event set, for RESPONSE rows
+  body       String?         @db.Text // the message / the answer
+  contact    String? // contact supplied with an APPLICATION
+  authorId   Int? // who wrote it; null if that account was deleted
+  createdAt  DateTime        @default(now())
+
+  interest Interest @relation(fields: [interestId], references: [id], onDelete: Cascade)
+
+  @@index([interestId])
 }
 
 /// Private brand shortlist ("favorite" heart on cards) — separate from Interest.

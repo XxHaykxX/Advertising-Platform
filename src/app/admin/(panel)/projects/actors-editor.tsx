@@ -26,7 +26,7 @@ import { ROLE_VALUES, kindForRole } from "./form-shared";
 import type { PersonSuggestion } from "@/lib/data/actors";
 import { matchesNameQuery } from "@/lib/translit";
 import { cn } from "@/lib/utils";
-import type { makeUI } from "@/lib/i18n";
+import type { makeUI, Locale } from "@/lib/i18n";
 
 // Controlled cast/crew section (#20²). Rows are owned by the parent ProjectForm —
 // cast/crew save together with the main project in a single submit; the parent
@@ -61,10 +61,13 @@ export function ActorsSection({
   knownPeople = [],
   t,
   scope = "staff",
+  pickerLocale,
 }: {
   value: ActorRow[];
   onChange: (rows: ActorRow[]) => void;
   scope?: MediaPickerScope;
+  /** Language for the media dialog — members see it in their own (audit 4.5). */
+  pickerLocale?: Locale;
   /** The Person directory (Ф3) — backs a searchable dropdown on the Name
    *  field. Picking a person fills name/photo/personId for that row (and, if
    *  the row has no roles yet, prefills their default role); typing a
@@ -230,6 +233,7 @@ export function ActorsSection({
         }}
         scope={scope}
         uploadDir="actors"
+        locale={pickerLocale}
       />
     </div>
   );

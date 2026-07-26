@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { FileVideo, ImageIcon, X } from "lucide-react";
 import { MediaPicker, isVideoPath, type MediaPickerAccept, type MediaPickerScope } from "@/components/media-picker";
+import type { Locale } from "@/lib/i18n";
 import { imageSizeHint } from "@/lib/images/size-hint";
 
 // Drop-in replacement for the old "<input> a URL" image fields (partner logo,
@@ -19,6 +20,7 @@ export function MediaField({
   uploadDir,
   scope = "staff",
   accept = "image",
+  locale,
 }: {
   name: string;
   initial?: string;
@@ -26,6 +28,9 @@ export function MediaField({
   uploadDir: string;
   scope?: MediaPickerScope;
   accept?: MediaPickerAccept;
+  /** Passed through to the picker so a member sees it in their own language
+   *  (audit 4.5). Admin callers omit it — the admin UI is pinned to English. */
+  locale?: Locale;
 }) {
   const [value, setValue] = useState(initial);
   const [open, setOpen] = useState(false);
@@ -85,6 +90,7 @@ export function MediaField({
         scope={scope}
         uploadDir={uploadDir}
         accept={accept}
+        locale={locale}
       />
     </div>
   );

@@ -80,15 +80,15 @@ export default async function EditProjectPage({
     countries: p.countries,
     ageRating: p.ageRating,
     boxOfficeAmd: p.boxOfficeAmd,
+    productionBudgetAmd: p.productionBudgetAmd,
     isActive: p.isActive,
-    sortOrder: p.sortOrder,
+    // sortOrder is not a form value any more (audit 1.2) — the catalog order
+    // belongs to the drag-and-drop list, and round-tripping it through the
+    // form reset it to 0 on every save.
     applicationDeadline: formatDateInput(p.applicationDeadline),
     releaseDate: formatDateInput(p.releaseDate),
     expectedReleaseDate: formatDateInput(p.expectedReleaseDate),
     platforms: parsePlatformsInput(p.platforms),
-    // The merged "Available on" field (#29) reads from `platforms` above —
-    // streamingSource is no longer seeded into the form.
-    streamingSource: "",
     placementType: p.placementType ?? "",
     tagline: p.tagline ?? "",
     taglineHy: p.taglineHy ?? "",
@@ -124,6 +124,9 @@ export default async function EditProjectPage({
           personId: a.personId,
         }))}
         initialTiers={p.tiers.map((tier) => ({
+          // Carries the DB id so a save updates this tier in place instead of
+          // deleting and re-creating it (which detached brand applications).
+          dbId: tier.id,
           name: tier.name,
           priceAmd: tier.priceAmd,
           benefits: parseBenefitsInput(tier.benefits),

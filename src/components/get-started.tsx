@@ -45,7 +45,9 @@ export default function GetStarted({ locale = DEFAULT_LOCALE }: { locale?: Local
                 {t("getStarted.forCreatorsBody")}
               </p>
               <Button asChild variant="secondary" size="md">
-                <Link href="/contact">{t("btn.listProject")}</Link>
+                {/* Register has no query-param role preselection (5.9) — plain
+                    /register lands on the account-type picker, defaulted to brand. */}
+                <Link href="/register">{t("btn.listProject")}</Link>
               </Button>
             </div>
           </Reveal>

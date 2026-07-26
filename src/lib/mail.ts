@@ -143,9 +143,20 @@ export function projectApprovedTemplate(project: ProjectMailInput, base: string 
   return { subject, html, text };
 }
 
-export function projectRejectedTemplate(project: ProjectMailInput, base: string = siteUrl()) {
+/** `reason` is what the moderator typed in the rejection prompt. It used to be
+   thrown away, leaving the creator with a template letter that never said what
+   to fix (audit 1.4); when present it is quoted in every language block. */
+export function projectRejectedTemplate(
+  project: ProjectMailInput,
+  base: string = siteUrl(),
+  reason = "",
+) {
   const url = `${base}/account`;
   const subject = `«${project.title}» — проект отклонён / Մերժված է / Rejected`;
+  const reasonHtml = reason
+    ? `<p style="margin:16px 0;padding:12px 16px;border-left:3px solid ${ACCENT};background:#1f1f1f;color:#e5e5e5;">
+    <strong>Պատճառը / Причина / Reason</strong><br/>${escapeHtml(reason)}</p>`
+    : "";
   const html = layout(
     `
     <p><strong>Ձեր նախագիծը մերժվել է</strong><br/>
@@ -154,16 +165,28 @@ export function projectRejectedTemplate(project: ProjectMailInput, base: string 
     «${project.title}» пока не опубликован. Свяжитесь с нами за подробностями или отредактируйте и отправьте повторно.</p>
     <p><strong>Submission rejected</strong><br/>
     «${project.title}» wasn't published at this time. Reach out for details, or edit and resubmit.</p>
+    ${reasonHtml}
     `,
     "Անձնական հաշիվ / Кабинет / Account",
     url,
   );
+  const reasonText = reason ? `\nՊատճառը / Причина / Reason: ${reason}` : "";
   const text = [
-    `«${project.title}» նախագիծը մերժվել է։ Կաբինետ․ ${url}`,
-    `Проект «${project.title}» отклонён. Кабинет: ${url}`,
-    `«${project.title}» was rejected. Account: ${url}`,
+    `«${project.title}» նախագիծը մերժվել է։ Կաբինետ․ ${url}${reasonText}`,
+    `Проект «${project.title}» отклонён. Кабинет: ${url}${reasonText}`,
+    `«${project.title}» was rejected. Account: ${url}${reasonText}`,
   ].join("\n\n");
   return { subject, html, text };
+}
+
+/** Minimal HTML escaping for free text a moderator typed — the templates are
+   built by string concatenation, so an unescaped "<" would break the markup. */
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 export function newProjectForModerationTemplate(project: ProjectMailInput, base: string = siteUrl()) {
@@ -196,8 +219,12 @@ export async function notifyProjectApproved(project: ProjectMailInput, ownerEmai
   return sendMail({ to: ownerEmail, subject, html, text });
 }
 
-export async function notifyProjectRejected(project: ProjectMailInput, ownerEmail: string) {
-  const { subject, html, text } = projectRejectedTemplate(project);
+export async function notifyProjectRejected(
+  project: ProjectMailInput,
+  ownerEmail: string,
+  reason = "",
+) {
+  const { subject, html, text } = projectRejectedTemplate(project, siteUrl(), reason);
   return sendMail({ to: ownerEmail, subject, html, text });
 }
 
@@ -212,6 +239,93 @@ export async function notifyNewProjectForModeration(project: ProjectMailInput) {
   }
   const { subject, html, text } = newProjectForModerationTemplate(project);
   return sendMail({ to: adminEmail, subject, html, text });
+}
+
+/* ── Application (Interest) loop ──────────────────────────────────────
+   Audit 2.7: a brand's application only ever produced an in-app notification
+   and a push, so a creator who doesn't live in the cabinet never learned a
+   lead had arrived. Audit 2.2: the answer never reached the brand at all,
+   because MUTUAL/DECLINED were unreachable. Both directions send email now. */
+
+type InterestMailInput = {
+  projectId: number;
+  projectTitle: string;
+  brandName: string;
+  tierName?: string;
+  message?: string;
+  contact?: string;
+  note?: string;
+};
+
+export function newInterestTemplate(input: InterestMailInput, base: string = siteUrl()) {
+  const url = `${base}/account/interests`;
+  const subject = `Նոր հայտ / Новая заявка: «${input.projectTitle}» — ${input.brandName}`;
+  const details = [
+    input.tierName ? `<br/><strong>${escapeHtml(input.tierName)}</strong>` : "",
+    input.message ? `<br/>${escapeHtml(input.message)}` : "",
+    input.contact ? `<br/>${escapeHtml(input.contact)}` : "",
+  ].join("");
+  const html = layout(
+    `
+    <p><strong>Նոր հայտ ձեր նախագծի համար</strong><br/>
+    ${escapeHtml(input.brandName)} — «${input.projectTitle}»${details}</p>
+    <p><strong>Новая заявка на ваш проект</strong><br/>
+    ${escapeHtml(input.brandName)} — «${input.projectTitle}»${details}</p>
+    <p><strong>New application for your project</strong><br/>
+    ${escapeHtml(input.brandName)} — «${input.projectTitle}»${details}</p>
+    `,
+    "Բացել հայտերը / Открыть заявки / Open applications",
+    url,
+  );
+  const text = [
+    `${input.brandName} — «${input.projectTitle}». ${input.message ?? ""} ${url}`,
+    `${input.brandName} — «${input.projectTitle}». ${input.message ?? ""} ${url}`,
+  ].join("\n\n");
+  return { subject, html, text };
+}
+
+export function interestAnsweredTemplate(
+  input: InterestMailInput & { accepted: boolean },
+  base: string = siteUrl(),
+) {
+  const url = `${base}/account/brand/interests`;
+  const subject = input.accepted
+    ? `Հայտը հաստատվեց / Заявка принята: «${input.projectTitle}»`
+    : `Հայտը մերժվեց / Заявка отклонена: «${input.projectTitle}»`;
+  const noteHtml = input.note
+    ? `<p style="margin:16px 0;padding:12px 16px;border-left:3px solid ${ACCENT};background:#1f1f1f;color:#e5e5e5;">${escapeHtml(input.note)}</p>`
+    : "";
+  const hy = input.accepted
+    ? `«${input.projectTitle}» նախագծի համար ձեր հայտը հաստատվել է։ Կապ կհաստատեն ձեզ հետ։`
+    : `«${input.projectTitle}» նախագծի համար ձեր հայտը մերժվել է։`;
+  const ru = input.accepted
+    ? `Ваша заявка на проект «${input.projectTitle}» принята. С вами свяжутся для деталей.`
+    : `Ваша заявка на проект «${input.projectTitle}» отклонена.`;
+  const en = input.accepted
+    ? `Your application for «${input.projectTitle}» was accepted. You'll be contacted with the details.`
+    : `Your application for «${input.projectTitle}» was declined.`;
+  const html = layout(
+    `<p>${hy}</p><p>${ru}</p><p>${en}</p>${noteHtml}`,
+    "Իմ հայտերը / Мои заявки / My applications",
+    url,
+  );
+  const text = [hy, ru, en, input.note ?? "", url].filter(Boolean).join("\n\n");
+  return { subject, html, text };
+}
+
+/** Sent to the creator who owns the project a brand just applied for. */
+export async function notifyNewInterest(input: InterestMailInput, ownerEmail: string) {
+  const { subject, html, text } = newInterestTemplate(input);
+  return sendMail({ to: ownerEmail, subject, html, text });
+}
+
+/** Sent to the brand once the creator accepted or declined. */
+export async function notifyInterestAnswered(
+  input: InterestMailInput & { accepted: boolean },
+  brandEmail: string,
+) {
+  const { subject, html, text } = interestAnsweredTemplate(input);
+  return sendMail({ to: brandEmail, subject, html, text });
 }
 
 export function passwordResetTemplate(resetUrl: string) {

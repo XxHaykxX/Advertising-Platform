@@ -6,7 +6,12 @@ import type { Locale } from "@/lib/i18n";
 import { formatMoney } from "@/lib/currency";
 import { getRates } from "@/lib/currency/rates";
 import type { CurrencyCode } from "@/lib/currency";
-import { deriveFormatCategory, parseRolesInput } from "@/app/admin/(panel)/projects/form-shared";
+import {
+  deriveFormatCategory,
+  parseRolesInput,
+  parseReferencesInput,
+  parseGenresInput,
+} from "@/app/admin/(panel)/projects/form-shared";
 
 /** locale → en → base fallback chain for a per-locale content field. Returns
    the first non-empty candidate in that order. */
@@ -85,7 +90,12 @@ const COUNTRY_TOKENS: Record<string, { ru: string; hy: string }> = {
 };
 
 /** "Bohemian Rhapsody, Ray, Michael" -> ["Bohemian Rhapsody", "Ray", "Michael"].
-   Used for the comma-list press-kit fields (references, cinemas). */
+   Used for the comma-list press-kit fields (cinemas). NOT for `references` —
+   that column holds [{name,url}] JSON since the Reference Projects editor
+   landed, and splitting it on commas printed JSON fragments as chips and lost
+   every link (audit 1.1). It goes through parseReferencesInput instead, which
+   is the same parser the editor prefills from and still understands the legacy
+   comma-separated rows. */
 function splitCommaList(s: string | null): string[] {
   if (!s) return [];
   return s
@@ -149,6 +159,7 @@ const getProjectsCached = unstable_cache(
     code: p.code,
     title: pickLocale(locale, { hy: p.titleHy, ru: p.titleRu, en: p.titleEn }, p.title),
     genre: p.genre,
+    genres: parseGenresInput(p.genres, p.genre),
     synopsis: pickLocale(locale, { hy: p.synopsisHy, ru: p.synopsisRu, en: p.synopsisEn }, p.synopsis),
     poster: p.poster ?? "",
     format: effectiveFormat(locale, p),
@@ -201,6 +212,7 @@ const getProjectCached = unstable_cache(
     code: p.code,
     title: pickLocale(locale, { hy: p.titleHy, ru: p.titleRu, en: p.titleEn }, p.title),
     genre: p.genre,
+    genres: parseGenresInput(p.genres, p.genre),
     synopsis: pickLocale(locale, { hy: p.synopsisHy, ru: p.synopsisRu, en: p.synopsisEn }, p.synopsis),
     poster: p.poster ?? "",
     gallery: p.gallery ?? "[]",
@@ -225,8 +237,11 @@ const getProjectCached = unstable_cache(
       photo: a.photo ?? "",
     })),
     tagline: pickLocale(locale, { hy: p.taglineHy, ru: p.taglineRu, en: p.taglineEn }, p.tagline ?? ""),
-    references: splitCommaList(p.references),
+    references: parseReferencesInput(p.references ?? "").filter((r) => r.name),
     cinemas: splitCommaList(p.cinemas),
+    expectedReleaseDate: p.expectedReleaseDate?.toISOString() ?? null,
+    productionBudgetDisplay:
+      p.productionBudgetAmd != null ? formatMoney(p.productionBudgetAmd, currency, rates, locale) : "",
     tiers: p.tiers.map((tier) => ({
       id: tier.id,
       name: tier.name,

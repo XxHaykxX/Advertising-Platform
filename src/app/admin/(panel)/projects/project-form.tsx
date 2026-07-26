@@ -87,13 +87,12 @@ const EMPTY: ProjectFormInitial = {
   countries: "",
   ageRating: "",
   boxOfficeAmd: null,
+  productionBudgetAmd: null,
   isActive: true,
-  sortOrder: 0,
   applicationDeadline: "",
   releaseDate: "",
   expectedReleaseDate: "",
   platforms: "",
-  streamingSource: "",
   placementType: "",
   tagline: "",
   taglineHy: "",
@@ -231,6 +230,16 @@ export function ProjectForm({
   const uploaderScope = mode === "creator" ? "member" : "staff";
 
   const [state, formAction, pending] = useActionState<ProjectFormState, FormData>(action, {});
+
+  // The error banner sits at the very bottom of a form that runs ~11 000px
+  // tall, while both Save buttons live in the sticky header — so a rejected
+  // save (e.g. the publish-time requirements added 2026-07-26) looked exactly
+  // like a dead button: nothing visibly happened. Scroll the message into view
+  // whenever one arrives.
+  const errorRef = useRef<HTMLParagraphElement>(null);
+  useEffect(() => {
+    if (state.error) errorRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [state.error]);
 
   // On a failed submit (validation error), the server echoes back exactly
   // what the user typed in state.values — so re-rendering the form never
@@ -760,6 +769,7 @@ export function ProjectForm({
                   name="poster"
                   dir="projects"
                   scope={uploaderScope}
+                  pickerLocale={locale}
                   browseLabel={t("btn.browse")}
                   initial={posterInitial}
                   label={t("projectForm.uploadPoster")}
@@ -790,6 +800,7 @@ export function ProjectForm({
               onUse={(path) => posterUploaderRef.current?.addPath(path)}
               t={t}
               scope={uploaderScope}
+                  pickerLocale={locale}
               uploadDir="projects"
             />
             <Field label={t("projectForm.field.gallery")}>
@@ -799,6 +810,7 @@ export function ProjectForm({
                 dir="projects"
                 multiple
                 scope={uploaderScope}
+                  pickerLocale={locale}
                 browseLabel={t("btn.browse")}
                 initial={galleryInitial}
                 label={t("projectForm.uploadGalleryImages")}
@@ -842,6 +854,7 @@ export function ProjectForm({
                   uploadDir="videos"
                   accept="video"
                   scope={uploaderScope}
+                  locale={locale}
                 />
               </Field>
             )}
@@ -850,7 +863,7 @@ export function ProjectForm({
           {/* ── Cast & crew (inline, #20²) ── */}
           <section id="sec-cast" className="scroll-mt-24 space-y-3 rounded-xl border border-border bg-card p-4">
             <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">{t("projectForm.section.castCrew")}</h2>
-            <ActorsSection value={actors} onChange={setActors} knownPeople={knownPeople} t={t} scope={uploaderScope} />
+            <ActorsSection value={actors} onChange={setActors} knownPeople={knownPeople} t={t} scope={uploaderScope} pickerLocale={locale} />
           </section>
 
           {/* ── Placement(s) (was "Sponsorship tiers") ── */}
@@ -907,6 +920,12 @@ export function ProjectForm({
                 ))}
               </div>
             </Field>
+            {/* Runtime is required to PUBLISH, not to save (owner decision
+                2026-07-26). It briefly carried `required`, which meant an old
+                project without minutes could not be edited at all until they
+                were typed in — the server-side publishBlockers() check replaced
+                that. The asterisk in the label stays: the field is still
+                mandatory before the project can reach the catalog. */}
             {kind === "SERIAL" ? (
               <div className="grid grid-cols-2 gap-3">
                 <Field label={t("projectForm.field.episodes")}>
@@ -914,7 +933,6 @@ export function ProjectForm({
                     name="episodes"
                     type="number"
                     min={0}
-                    required
                     defaultValue={numOrEmpty(data.episodes)}
                     placeholder="24"
                     className={inputCls}
@@ -925,7 +943,6 @@ export function ProjectForm({
                     name="episodeMinutes"
                     type="number"
                     min={0}
-                    required
                     defaultValue={numOrEmpty(data.episodeMinutes)}
                     placeholder="50"
                     className={inputCls}
@@ -933,16 +950,11 @@ export function ProjectForm({
                 </Field>
               </div>
             ) : (
-              /* Single must carry a runtime (CSV schema marks it required, user
-                 request 2026-07-26). `required` is safe here — unlike the About
-                 tabs, the inactive branch UNMOUNTS, so the browser never blocks
-                 submit on a field nobody can see. */
               <Field label={t("projectForm.field.durationMinutes")}>
                 <input
                   name="durationMinutes"
                   type="number"
                   min={0}
-                  required
                   defaultValue={numOrEmpty(data.durationMinutes)}
                   placeholder="95"
                   className={inputCls}
@@ -978,6 +990,19 @@ export function ProjectForm({
                   <option key={s} value={s} />
                 ))}
               </datalist>
+            </Field>
+            {/* Two separate money figures (owner decision C.3, 2026-07-26):
+                the CSV schema's "Budget" is the production budget, while the
+                pre-existing column holds box-office gross. They were being
+                conflated under one "Budget" label. */}
+            <Field label={t("projectForm.field.productionBudget")}>
+              <input
+                name="productionBudgetAmd"
+                type="number"
+                min={0}
+                defaultValue={numOrEmpty(data.productionBudgetAmd)}
+                className={inputCls}
+              />
             </Field>
             <Field label={t("projectForm.field.boxOffice")}>
               <input
@@ -1032,6 +1057,18 @@ export function ProjectForm({
             </Field>
             <Field label={t("projectForm.field.releaseDate")}>
               <input name="releaseDate" type="date" defaultValue={data.releaseDate} className={inputCls} />
+            </Field>
+            {/* Planned release for a title that isn't out yet. The column and
+                the server-side parsing existed all along, but the form had no
+                input for it, so the field was unreachable (audit 1.5). Either
+                this or Release date satisfies the CSV's required date. */}
+            <Field label={t("projectForm.field.expectedReleaseDate")}>
+              <input
+                name="expectedReleaseDate"
+                type="date"
+                defaultValue={data.expectedReleaseDate}
+                className={inputCls}
+              />
             </Field>
             <Field label={t("projectForm.field.applicationDeadline")} hint={t("projectForm.help.placementDeadline")}>
               <input
@@ -1112,7 +1149,10 @@ export function ProjectForm({
       </div>
 
       {state.error && (
-        <p className="rounded-lg border border-primary/40 bg-primary/10 px-4 py-2.5 text-sm text-primary">
+        <p
+          ref={errorRef}
+          className="rounded-lg border border-primary/40 bg-primary/10 px-4 py-2.5 text-sm text-primary"
+        >
           {state.error}
         </p>
       )}

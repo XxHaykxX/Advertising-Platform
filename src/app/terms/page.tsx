@@ -74,7 +74,7 @@ const content: Record<
       {
         heading: "Описание услуг",
         body: [
-          "iGovazd — это цифровая торговая площадка, которая соединяет режиссёров и продюсеров с брендами, ищущими возможности продакт-плейсмента в кино- и телепроизводстве. Платформа облегчает общение, переговоры и управление сделками между создателями контента (Продюсерами) и представителями брендов (Брендами). iGovazd самостоятельно не производит контент, не управляет съёмками и напрямую не размещает продукты. Мы предоставляем инфраструктуру для поиска, отчётности и коммуникации.",
+          "iGovazd — это цифровая торговая площадка, которая соединяет создателей и продюсеров с брендами, ищущими возможности продакт-плейсмента в кино- и телепроизводстве. Платформа облегчает общение, переговоры и управление сделками между создателями контента (Создателями) и представителями брендов (Брендами). iGovazd самостоятельно не производит контент, не управляет съёмками и напрямую не размещает продукты. Мы предоставляем инфраструктуру для поиска, отчётности и коммуникации.",
           "Услуги включают: (1) доступный для поиска каталог производственных возможностей с подробной информацией о проектах; (2) защищённую переписку между Продюсерами и Брендами; (3) инструменты отчётности, показывающие информацию о размещении по сценам; (4) обработку платежей и услуги эскроу; (5) поддержку в разрешении споров. iGovazd предоставляется «как есть» без каких-либо гарантий относительно результатов производства, успешности размещения или действий третьих сторон.",
         ],
       },
@@ -123,8 +123,8 @@ const content: Record<
       {
         heading: "Service Description",
         body: [
-          "iGovazd is a digital marketplace that connects filmmakers and producers with brands seeking product placement opportunities in film and television productions. The platform facilitates communication, negotiations, and transaction management between content creators (Filmmakers) and brand representatives (Brands). iGovazd does not itself produce content, manage productions, or directly place products. We provide infrastructure for discovery, reporting, and communication.",
-          "Services include: (1) a searchable catalog of production opportunities with detailed project information; (2) secure messaging between Filmmakers and Brands; (3) reporting tools showing scene-specific placement information; (4) payment processing and escrow services; (5) dispute resolution support. iGovazd is provided 'as-is' without warranties of any kind regarding production outcomes, placement success, or third-party performance.",
+          "iGovazd is a digital marketplace that connects creators and producers with brands seeking product placement opportunities in film and television productions. The platform facilitates communication, negotiations, and transaction management between content creators (Creators) and brand representatives (Brands). iGovazd does not itself produce content, manage productions, or directly place products. We provide infrastructure for discovery, reporting, and communication.",
+          "Services include: (1) a searchable catalog of production opportunities with detailed project information; (2) secure messaging between Creators and Brands; (3) reporting tools showing scene-specific placement information; (4) payment processing and escrow services; (5) dispute resolution support. iGovazd is provided 'as-is' without warranties of any kind regarding production outcomes, placement success, or third-party performance.",
         ],
       },
       {
@@ -137,14 +137,14 @@ const content: Record<
       {
         heading: "Placement Applications and Agreements",
         body: [
-          "Brands may submit placement applications for specific production opportunities. Filmmakers review applications and communicate acceptance or rejection. A placement agreement is formed only when both parties explicitly agree in writing to terms including scope, compensation, usage rights, and delivery timeline. iGovazd facilitates this communication but is not a party to placement agreements.",
+          "Brands may submit placement applications for specific production opportunities. Creators review applications and communicate acceptance or rejection. A placement agreement is formed only when both parties explicitly agree in writing to terms including scope, compensation, usage rights, and delivery timeline. iGovazd facilitates this communication but is not a party to placement agreements.",
           "All placement agreements must comply with applicable law and industry standards. iGovazd does not guarantee that applications will be accepted, that productions will proceed, or that placed products will appear in final edited content. Compensation disputes and performance issues are the responsibility of the parties involved. iGovazd offers dispute resolution services but cannot compel specific outcomes.",
         ],
       },
       {
         heading: "Content Ownership and Rights",
         body: [
-          "Filmmakers retain all rights to their production content. By listing a project on iGovazd, Filmmakers grant us a limited license to display production information, posters, and metadata in the marketplace. Brands may not use production content for purposes beyond the agreed placement scope without explicit permission.",
+          "Creators retain all rights to their production content. By listing a project on iGovazd, Creators grant us a limited license to display production information, posters, and metadata in the marketplace. Brands may not use production content for purposes beyond the agreed placement scope without explicit permission.",
           "Brands retain ownership of product images, logos, and marketing materials they upload. By uploading to iGovazd, Brands grant us a limited license to display materials in the marketplace and reports. Neither party may reproduce, modify, or distribute the other's content beyond the scope explicitly authorized in their placement agreement.",
         ],
       },

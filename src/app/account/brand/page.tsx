@@ -75,7 +75,7 @@ export default async function BrandDashboardPage() {
   const profile = await getBrandProfile(user.id);
   const [interests, recommended, recent] = await Promise.all([
     getBrandInterests(user.id, locale),
-    getRecommendedProjects(locale, profile?.brandCategories ?? []),
+    getRecommendedProjects(locale, profile?.brandCategories ?? [], profile?.budgetRange ?? ""),
     getRecentProjects(locale),
   ]);
 

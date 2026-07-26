@@ -16,6 +16,7 @@ import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
 import { Images, Loader2, Sparkles, Upload, X } from "lucide-react";
 import { MediaPicker, type MediaPickerScope } from "@/components/media-picker";
+import type { Locale } from "@/lib/i18n";
 
 export type PosterGenerateInput = {
   prompt: string;
@@ -39,6 +40,7 @@ export function PosterGenerator({
   onOpenChange,
   hideTrigger = false,
   scope = "staff",
+  pickerLocale,
   uploadDir = "projects",
 }: {
   action: (input: PosterGenerateInput) => Promise<PosterGenerateResult>;
@@ -60,6 +62,8 @@ export function PosterGenerator({
    *  only the caller's own uploads, matching how ImageUploader/MediaField are
    *  scoped elsewhere on the same form. Defaults to "staff" (admin). */
   scope?: MediaPickerScope;
+  /** Language for the media dialog — members see it in their own (audit 4.5). */
+  pickerLocale?: Locale;
   /** Subfolder the library picker's own "Upload from computer" writes new
    *  files into. */
   uploadDir?: string;
@@ -256,6 +260,7 @@ export function PosterGenerator({
             onClose={() => setSourcePickerOpen(false)}
             onSelect={onPickSourceFromLibrary}
             scope={scope}
+            locale={pickerLocale}
             uploadDir={uploadDir}
           />
 

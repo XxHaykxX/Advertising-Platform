@@ -13,6 +13,12 @@ export type BrandInterestDTO = {
   id: number;
   status: InterestStatus;
   createdAt: string;
+  // ── Wave 2 of the audit: the seller can answer now, so the brand has
+  // something to read back. Before this, every row said "Sent" forever and no
+  // reply existed anywhere (audit 2.2).
+  respondedAt: string | null;
+  responseNote: string;
+  tierName: string; // the package applied for, "" when none was picked
   project: {
     id: number;
     code: string;
@@ -39,13 +45,16 @@ function pickTitle(
 export async function getBrandInterests(brandId: number, locale: Locale): Promise<BrandInterestDTO[]> {
   const rows = await prisma.interest.findMany({
     where: { brandId },
-    include: { project: true },
+    include: { project: true, tier: { select: { name: true } } },
     orderBy: { createdAt: "desc" },
   });
   return rows.map((r) => ({
     id: r.id,
     status: r.status,
     createdAt: r.createdAt.toISOString(),
+    respondedAt: r.respondedAt?.toISOString() ?? null,
+    responseNote: r.responseNote ?? "",
+    tierName: r.tier?.name ?? "",
     project: {
       id: r.project.id,
       code: r.project.code,

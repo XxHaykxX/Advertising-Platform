@@ -14,10 +14,16 @@ export function LoginForm({
   locale,
   googleEnabled,
   notice,
+  from,
 }: {
   locale: Locale;
   googleEnabled?: boolean;
   notice?: string;
+  /** Audit 4.3: the page a guest was bounced from (proxy sets ?from= — see
+   *  proxy.ts) — round-tripped through a hidden field so actions.ts can send
+   *  the member back there instead of always to the cabinet. Re-validated
+   *  server-side; this component just carries it along. */
+  from?: string;
 }) {
   const t = makeUI(locale);
   const [state, formAction, pending] = useActionState<LoginState, FormData>(login, {});
@@ -58,6 +64,7 @@ export function LoginForm({
         </div>
       )}
       <form action={formAction} className={cn("space-y-5", googleEnabled ? "mt-4" : "mt-8")}>
+      {from && <input type="hidden" name="from" value={from} />}
       <label className="block">
         <span className="mb-1.5 block text-sm font-semibold text-foreground">{t("form.email")}</span>
         <div className="relative">

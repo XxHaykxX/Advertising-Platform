@@ -10,6 +10,8 @@ import { randomUUID } from "node:crypto";
 import { mkdir, writeFile, readdir, stat, unlink } from "node:fs/promises";
 import path from "node:path";
 import { requireMember } from "@/lib/auth/require";
+import { getLocale } from "@/lib/data/locale";
+import { makeUI } from "@/lib/i18n";
 import { UPLOADS_DIR } from "@/lib/uploads-dir";
 import { findUploadUsage } from "@/lib/uploads-usage";
 import { optimizeImage, kindForDir } from "@/lib/images/optimize";
@@ -37,19 +39,24 @@ function safeSegment(input: string): string {
 
 export async function uploadMemberImage(fd: FormData): Promise<{ path?: string; error?: string }> {
   const me = await requireMember();
+  // Audit 4.5: these messages surface directly in a member's cabinet, which is
+  // in their own language — they used to be hardcoded English.
+  const t = makeUI(await getLocale());
 
   const file = fd.get("file");
-  if (!(file instanceof File) || file.size === 0) return { error: "No file provided." };
+  if (!(file instanceof File) || file.size === 0) return { error: t("media.errNoFile") };
 
   const dir = safeSegment(String(fd.get("dir") || "misc"));
   const kind = String(fd.get("kind") || "image");
 
   if (kind === "video") {
-    if (file.size > MAX_BYTES_VIDEO) return { error: "File too large (max 50 MB)." };
+    if (file.size > MAX_BYTES_VIDEO) {
+      return { error: t("media.errTooLargeServer", { limit: String(MAX_BYTES_VIDEO / (1024 * 1024)) }) };
+    }
     // See uploads.ts: fall back to the filename extension when the browser sends
     // a blank/non-standard MIME for an otherwise valid mp4/webm.
     const ext = EXT_BY_TYPE_VIDEO[file.type] || file.name.toLowerCase().match(/\.(mp4|webm)$/)?.[1];
-    if (!ext) return { error: "Unsupported type — use MP4 or WebM." };
+    if (!ext) return { error: t("media.errUnsupportedVideo") };
 
     const name = `${Date.now()}-${randomUUID().slice(0, 8)}.${ext}`;
     const destDir = path.join(MEMBERS_ROOT, String(me.id), dir);
@@ -59,15 +66,17 @@ export async function uploadMemberImage(fd: FormData): Promise<{ path?: string; 
     return { path: `/uploads/members/${me.id}/${dir}/${name}` };
   }
 
-  if (file.size > MAX_BYTES) return { error: "File too large (max 8 MB)." };
+  if (file.size > MAX_BYTES) {
+    return { error: t("media.errTooLargeServer", { limit: String(MAX_BYTES / (1024 * 1024)) }) };
+  }
   const ext = EXT_BY_TYPE[file.type];
-  if (!ext) return { error: "Unsupported type — use JPG, PNG, WebP, GIF or AVIF." };
+  if (!ext) return { error: t("media.errUnsupportedImage") };
 
   let optimized;
   try {
     optimized = await optimizeImage(Buffer.from(await file.arrayBuffer()), kindForDir(dir));
   } catch {
-    return { error: "Could not process image." };
+    return { error: t("media.loadError") };
   }
 
   const name = `${Date.now()}-${randomUUID().slice(0, 8)}.${optimized.ext}`;

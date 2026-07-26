@@ -33,6 +33,13 @@ import type { makeUI } from "@/lib/i18n";
 // focus; rows drag-reorder via @dnd-kit. TierRow[]/onChange/TiersSection export
 // are unchanged.
 export type TierRow = {
+  /** SponsorshipTier.id for a row that already exists in the DB; undefined for
+   *  a row the editor just added. Saving used to delete every tier and
+   *  re-insert the lot, which silently detached the brand applications that
+   *  pointed at them (Interest.tierId → null on cascade) and dropped the slot
+   *  a creator had already reserved. Carrying the id lets the save update in
+   *  place instead. */
+  dbId?: number;
   name: string;
   priceAmd: number;
   benefits: string;

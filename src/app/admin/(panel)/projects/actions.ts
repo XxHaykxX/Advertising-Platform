@@ -8,7 +8,16 @@ import { prisma } from "@/lib/prisma";
 import { requireContentEditor, requireSuperadmin } from "@/lib/auth/require";
 import { deleteUpload } from "@/lib/actions/uploads";
 import { addStreamingSources } from "@/lib/actions/streaming-sources";
-import { PLACEMENT_TYPE_VALUES, KIND_VALUES, ROLE_VALUES, kindForRole, parseCsvInput } from "./form-shared";
+import { getLocale } from "@/lib/data/locale";
+import { makeUI } from "@/lib/i18n";
+import {
+  PLACEMENT_TYPE_VALUES,
+  KIND_VALUES,
+  ROLE_VALUES,
+  kindForRole,
+  parseCsvInput,
+  publishBlockers,
+} from "./form-shared";
 
 const STATUS_VALUES = ["PRE_PRODUCTION", "FILMING", "POST_PRODUCTION", "RELEASED"] as const;
 
@@ -45,15 +54,23 @@ export type ProjectFormValues = {
   status: ProjectStatus;
   countries: string;
   ageRating: string; // content rating badge ("16+", "18+"); "" when unset
-  boxOfficeAmd: number | null; // box-office gross ("Budget"), informational, optional
+  boxOfficeAmd: number | null; // box-office gross, informational, optional
+  productionBudgetAmd: number | null; // production budget — the CSV schema's "Budget" (owner decision C.3)
   isActive: boolean;
-  sortOrder: number;
+  // NB: `sortOrder` is deliberately NOT part of the form values (audit 1.2).
+  // The form has no field for it, so parsing it here meant every save wrote 0
+  // over the catalog position a superadmin had set by drag-and-drop —
+  // reordering silently collapsed whenever anyone fixed a typo. Ordering is
+  // owned solely by reorderProjects() further down.
   // ── Placement parity fields ──
   applicationDeadline: string; // <input type=date> value, "" when unset
   releaseDate: string; // <input type=date> value, "" when unset
   expectedReleaseDate: string; // <input type=date> value, "" when unset
   platforms: string; // comma-separated in the form; JSON string[] at rest — also the "Available on" field (#29, merged with the old Streaming source)
-  streamingSource: string; // column stays (unused by the form since #29's merge into `platforms`); comma-separated in the form; JSON/CSV at rest
+  // NB: `streamingSource` is gone from the form values too (audit 1.6). #29
+  // merged that field into `platforms`; the column stays for the historical
+  // data it still holds, but every save used to force it to null, which is
+  // just a slow wipe. Nothing writes it now.
   placementType: string; // "" | one of PLACEMENT_TYPE_VALUES
   // ── Press-kit fields (Aram, 2026-07-09) ──
   tagline: string; // one-line logline (hero) — base/fallback, derived from the per-locale fields
@@ -191,13 +208,12 @@ function buildData(fd: FormData): ProjectFormValues {
     countries: jsonArray<string>(fd, "countries").join(", ").slice(0, VARCHAR_MAX),
     ageRating: str(fd, "ageRating", VARCHAR_MAX),
     boxOfficeAmd: intOrNull(fd, "boxOfficeAmd"),
+    productionBudgetAmd: intOrNull(fd, "productionBudgetAmd"),
     isActive: bool(fd, "isActive"),
-    sortOrder: int(fd, "sortOrder"),
     applicationDeadline: str(fd, "applicationDeadline"),
     releaseDate: str(fd, "releaseDate"),
     expectedReleaseDate: str(fd, "expectedReleaseDate"),
     platforms: jsonArray<string>(fd, "platforms").join(", ").slice(0, VARCHAR_MAX),
-    streamingSource: jsonArray<string>(fd, "streamingSource").join(", ").slice(0, VARCHAR_MAX),
     placementType: enumVal(fd, "placementType", [...PLACEMENT_TYPE_VALUES, ""] as const, ""),
     tagline: taglineRu || taglineHy || taglineEn, // base/fallback, mirrors synopsis
     taglineHy,
@@ -210,11 +226,47 @@ function buildData(fd: FormData): ProjectFormValues {
   };
 }
 
+/** Save-time validation: the bare minimum a row needs to exist at all.
+   Everything the CSV schema marks required is checked separately, at publish
+   time — see publishGate() below and the owner's 2026-07-26 decision. */
 function validate(data: ProjectFormValues): string | null {
   if (!data.title) return "Enter a title in at least one language.";
   if (data.genres.length === 0) return "Genre is required.";
   if (!data.synopsis) return "Enter a synopsis in at least one language.";
   return null;
+}
+
+/** Publish-time validation. Fires only on the transition INTO publication —
+   creating an active project, or flipping an inactive one live. An incomplete
+   project still saves fine as an inactive draft, which is what the owner asked
+   for.
+
+   `wasActive` is why an already-live project is exempt: most rows in the
+   catalog predate these requirements, and blocking their save would mean a
+   publisher couldn't fix a typo without first filling four unrelated fields —
+   exactly the trap the (now reverted) save-blocking Duration field created on
+   2026-07-26. Creator-submitted content is still gated, at the moderation step
+   (approveProject). Returns a ready localized message, or null. */
+async function publishGate(
+  data: ProjectFormValues,
+  tierRows: { name: string; benefits: string }[],
+  wasActive = false,
+): Promise<string | null> {
+  if (!data.isActive || wasActive) return null;
+  const missing = publishBlockers({
+    studio: data.studio,
+    releaseDate: data.releaseDate,
+    expectedReleaseDate: data.expectedReleaseDate,
+    tagline: data.tagline,
+    kind: data.kind,
+    episodes: data.episodes,
+    episodeMinutes: data.episodeMinutes,
+    durationMinutes: data.durationMinutes,
+    tiers: tierRows,
+  });
+  if (missing.length === 0) return null;
+  const t = makeUI(await getLocale());
+  return `${t("publish.blocked")} ${missing.map((key) => t(key)).join(", ")}. ${t("publish.blockedHint")}`;
 }
 
 // ── Inline cast/crew + sponsorship tiers (#20²) ───────────────────────────
@@ -227,6 +279,7 @@ function validate(data: ProjectFormValues): string | null {
 const ACTOR_KIND_VALUES = ["CAST", "CREW"] as const;
 type ActorInput = { name?: string; roles?: string[]; kind?: string; photo?: string; personId?: number | null };
 type TierInput = {
+  dbId?: number; // existing SponsorshipTier.id, absent for a newly added row
   name?: string;
   priceAmd?: number;
   benefits?: string;
@@ -308,11 +361,13 @@ async function resolveActorPersonIds(
   return resolved;
 }
 
-/** Rows for prisma.sponsorshipTier.createMany (projectId added by the caller). */
+/** Rows for prisma.sponsorshipTier (projectId added by the caller). `dbId`
+   marks a row that already exists — see saveTierRows for why that matters. */
 function parseTierRows(fd: FormData) {
   return jsonArray<TierInput>(fd, "tiersRows")
     .filter((r) => (r.name || "").trim())
     .map((r, i) => ({
+      dbId: typeof r.dbId === "number" ? r.dbId : null,
       name: (r.name || "").trim().slice(0, VARCHAR_MAX),
       priceAmd: Math.max(0, Number(r.priceAmd) || 0),
       benefits: benefitsToJson(r.benefits || ""),
@@ -321,6 +376,36 @@ function parseTierRows(fd: FormData) {
       totalSlots: r.totalSlots == null ? null : Math.max(0, Number(r.totalSlots) || 0),
       sortOrder: i,
     }));
+}
+
+/** Persist the tier rows of one project inside an open transaction.
+
+   Deliberately NOT the delete-all-then-insert shape the cast/milestone editors
+   use. A SponsorshipTier is referenced by brand applications (Interest.tierId)
+   and carries the slot bookkeeping a creator already committed to, so wiping
+   and re-inserting silently detached every application from its package (they
+   showed up as "no package specified") and reset reserved slots. Rows that
+   came back with their id are updated in place, rows without one are created,
+   and only tiers the editor actually removed get deleted. */
+async function saveTierRows(
+  tx: Prisma.TransactionClient,
+  projectId: number,
+  rows: ReturnType<typeof parseTierRows>,
+) {
+  const keptIds = rows.map((r) => r.dbId).filter((id): id is number => id != null);
+  await tx.sponsorshipTier.deleteMany({
+    where: { projectId, ...(keptIds.length ? { id: { notIn: keptIds } } : {}) },
+  });
+  for (const row of rows) {
+    const { dbId, ...data } = row;
+    if (dbId != null) {
+      // Scoped by projectId as well as id: a crafted payload must not be able
+      // to overwrite another project's package.
+      await tx.sponsorshipTier.updateMany({ where: { id: dbId, projectId }, data });
+    } else {
+      await tx.sponsorshipTier.create({ data: { ...data, projectId } });
+    }
+  }
 }
 
 /** Rows for prisma.productionMilestone.createMany (projectId added by the
@@ -411,6 +496,9 @@ export async function createProject(
   const tierRows = parseTierRows(fd);
   const milestoneRows = parseMilestoneRows(fd);
 
+  const blocked = await publishGate(data, tierRows);
+  if (blocked) return { error: blocked, values: data };
+
   // Project columns shared across code-retry attempts (code is added per-attempt).
   const projectData = {
     ...data,
@@ -424,9 +512,9 @@ export async function createProject(
     releaseDate: dateOrNull(data.releaseDate),
     expectedReleaseDate: dateOrNull(data.expectedReleaseDate),
     platforms: platformsToJson(data.platforms),
-    // #29: no longer written from the form (merged into `platforms` above) —
-    // the column stays for now, just always cleared on save.
-    streamingSource: null,
+    // #29 merged the old Streaming source field into `platforms`; the
+    // `streamingSource` column is simply not written any more (audit 1.6 —
+    // it used to be force-cleared on every save).
     placementType: data.placementType || null,
     tagline: data.tagline || null,
     taglineHy: data.taglineHy || null,
@@ -461,8 +549,9 @@ export async function createProject(
           });
         }
         if (tierRows.length) {
+          // dbId is a form-only marker (see saveTierRows) — never a column.
           await tx.sponsorshipTier.createMany({
-            data: tierRows.map((r) => ({ ...r, projectId: created.id })),
+            data: tierRows.map(({ dbId: _dbId, ...r }) => ({ ...r, projectId: created.id })),
           });
         }
         if (milestoneRows.length) {
@@ -494,7 +583,9 @@ export async function updateProject(
 
   const existing = await prisma.project.findUnique({
     where: { id },
-    select: { ownerId: true },
+    // isActive feeds publishGate below: an already-live project isn't
+    // re-validated, only one being taken live.
+    select: { ownerId: true, isActive: true },
   });
   // 404 for both "doesn't exist" and "not yours" — a Publisher must not be
   // able to distinguish the two.
@@ -519,6 +610,9 @@ export async function updateProject(
   const tierRows = parseTierRows(fd);
   const milestoneRows = parseMilestoneRows(fd);
 
+  const blocked = await publishGate(data, tierRows, existing.isActive);
+  if (blocked) return { error: blocked, values: data };
+
   try {
     // #20²: update the project and fully replace its cast/crew + tiers in one
     // transaction (delete-all then re-insert mirrors the old saveActors/saveTiers
@@ -541,9 +635,8 @@ export async function updateProject(
           releaseDate: dateOrNull(data.releaseDate),
           expectedReleaseDate: dateOrNull(data.expectedReleaseDate),
           platforms: platformsToJson(data.platforms),
-          // #29: no longer written from the form (merged into `platforms`
-          // above) — the column stays for now, just always cleared on save.
-          streamingSource: null,
+          // #29 merged the old Streaming source field into `platforms`; the
+          // `streamingSource` column is not written any more (audit 1.6).
           placementType: data.placementType || null,
           tagline: data.tagline || null,
           taglineHy: data.taglineHy || null,
@@ -560,10 +653,7 @@ export async function updateProject(
         const resolvedActors = await resolveActorPersonIds(tx, actorRows);
         await tx.actor.createMany({ data: resolvedActors.map((r) => ({ ...r, projectId: id })) });
       }
-      await tx.sponsorshipTier.deleteMany({ where: { projectId: id } });
-      if (tierRows.length) {
-        await tx.sponsorshipTier.createMany({ data: tierRows.map((r) => ({ ...r, projectId: id })) });
-      }
+      await saveTierRows(tx, id, tierRows);
       await tx.productionMilestone.deleteMany({ where: { projectId: id } });
       if (milestoneRows.length) {
         await tx.productionMilestone.createMany({ data: milestoneRows.map((r) => ({ ...r, projectId: id })) });

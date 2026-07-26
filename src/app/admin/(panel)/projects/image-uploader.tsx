@@ -21,6 +21,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { MediaPicker, type MediaPickerScope } from "@/components/media-picker";
+import type { Locale } from "@/lib/i18n";
 import { imageSizeHint } from "@/lib/images/size-hint";
 
 /** Imperative handle (#26) — lets a sibling component (the "Generate poster"
@@ -43,6 +44,8 @@ export const ImageUploader = forwardRef<ImageUploaderHandle, {
   trailing?: React.ReactNode; // rendered inline next to the browse button (e.g. an "or Generate poster" action)
   removeLabel?: string; // aria-label for the per-thumbnail remove button, localized by the caller
   scope?: MediaPickerScope; // "member" (creator forms) uploads to /uploads/members/<id>/ and the picker shows only own files
+  /** Language for the media dialog — members see it in their own (audit 4.5). */
+  pickerLocale?: Locale;
   browseLabel?: string; // label for the picker button
 }>(function ImageUploader({
   name,
@@ -53,6 +56,7 @@ export const ImageUploader = forwardRef<ImageUploaderHandle, {
   trailing,
   removeLabel = "Remove",
   scope = "staff",
+  pickerLocale,
   browseLabel = "Browse",
 }, ref) {
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -123,6 +127,7 @@ export const ImageUploader = forwardRef<ImageUploaderHandle, {
         onSelect={(path) => commit(multiple ? [...paths, path] : [path])}
         scope={scope}
         uploadDir={dir}
+        locale={pickerLocale}
       />
 
       {paths.length > 0 && (

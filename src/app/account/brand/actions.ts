@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireMember } from "@/lib/auth/require";
 import { getLocale } from "@/lib/data/locale";
@@ -9,6 +10,7 @@ import { getBrandInterestCount, getBrandInterests } from "@/lib/data/brand-inter
 import { BRAND_CATEGORIES, BUDGET_RANGES } from "@/lib/brand-categories";
 import { makeUI } from "@/lib/i18n";
 import { createNotification, notifyRoles } from "@/lib/data/notifications";
+import { notifyNewInterest } from "@/lib/mail";
 
 /* #23 — BRAND-cabinet server actions. Every action re-checks requireMember()
  * + role === "BRAND" itself (defense in depth — the layout gate already
@@ -64,6 +66,7 @@ export async function submitApplication(
   projectId: number,
   message: string,
   contact: string,
+  tierId?: number | null,
 ): Promise<ExpressInterestResult> {
   const user = await requireMember();
   const locale = await getLocale();
@@ -78,12 +81,88 @@ export async function submitApplication(
   // empty application submitted via a direct POST.
   if (!trimmedMessage) return { ok: false, error: t("account.brand.expressInterestError") };
 
-  try {
-    await prisma.interest.upsert({
-      where: { brandId_projectId: { brandId: user.id, projectId } },
-      create: { brandId: user.id, projectId, status: "SENT", message: trimmedMessage, contact: trimmedContact },
-      update: { status: "SENT", message: trimmedMessage, contact: trimmedContact },
+  // The package the brand is applying for (audit 2.3 — an application used to
+  // say nothing about which placement or price it was about). Verified to
+  // belong to this project so a crafted POST can't attach someone else's tier.
+  let resolvedTierId: number | null = null;
+  if (tierId != null && Number.isInteger(tierId)) {
+    const tier = await prisma.sponsorshipTier.findFirst({
+      where: { id: tierId, projectId },
+      select: { id: true },
     });
+    resolvedTierId = tier?.id ?? null;
+  }
+
+  // Snapshot the application as it stands BEFORE the upsert overwrites it:
+  // resending switches packages, and the slot to release belongs to the OLD
+  // tier. Reading it afterwards would hand the slot back to the new package
+  // instead, quietly leaking the old one.
+  const previous = await prisma.interest.findUnique({
+    where: { brandId_projectId: { brandId: user.id, projectId } },
+    select: { slotReserved: true, tierId: true },
+  });
+
+  let interestId: number;
+  try {
+    const saved = await prisma.interest.upsert({
+      where: { brandId_projectId: { brandId: user.id, projectId } },
+      create: {
+        brandId: user.id,
+        projectId,
+        status: "SENT",
+        message: trimmedMessage,
+        contact: trimmedContact,
+        tierId: resolvedTierId,
+      },
+      // A resend reopens the conversation: back to SENT, new message, and any
+      // slot the previous answer had taken is released below.
+      update: {
+        status: "SENT",
+        message: trimmedMessage,
+        contact: trimmedContact,
+        tierId: resolvedTierId,
+        respondedAt: null,
+        responseNote: null,
+      },
+      select: { id: true },
+    });
+    interestId = saved.id;
+
+    // The previous round of this application is not overwritten any more — it
+    // stays in the history (audit 2.6).
+    await prisma.interestEvent.create({
+      data: {
+        interestId: saved.id,
+        kind: "APPLICATION",
+        status: "SENT",
+        body: trimmedMessage,
+        contact: trimmedContact,
+        authorId: user.id,
+      },
+    });
+
+    // Reopening frees the slot the earlier acceptance held, so it can't stay
+    // booked by an application that is pending again. `availableSlots: null`
+    // means "capacity unspecified" — incrementing that is meaningless (and in
+    // MySQL just yields NULL), so only counted packages are touched.
+    if (previous?.slotReserved && previous.tierId != null) {
+      const previousTier = await prisma.sponsorshipTier.findUnique({
+        where: { id: previous.tierId },
+        select: { availableSlots: true },
+      });
+      const ops: Prisma.PrismaPromise<unknown>[] = [
+        prisma.interest.update({ where: { id: saved.id }, data: { slotReserved: false } }),
+      ];
+      if (previousTier?.availableSlots != null) {
+        ops.unshift(
+          prisma.sponsorshipTier.update({
+            where: { id: previous.tierId },
+            data: { availableSlots: { increment: 1 } },
+          }),
+        );
+      }
+      await prisma.$transaction(ops);
+    }
   } catch {
     return { ok: false, error: t("account.brand.expressInterestError") };
   }
@@ -93,23 +172,42 @@ export async function submitApplication(
   try {
     const project = await prisma.project.findUnique({
       where: { id: projectId },
-      select: { ownerId: true, title: true },
+      select: { ownerId: true, title: true, owner: { select: { email: true } } },
     });
     if (project) {
       const payload = {
         type: "INTEREST" as const,
         data: { projectId, projectTitle: project.title, brandName: user.name },
       };
-      // Owning creator (or staff owner) — link to the public report they can view.
-      await createNotification(project.ownerId, { ...payload, link: `/reports/${projectId}` });
+      // Owning creator (or staff owner) — link straight to the application.
+      await createNotification(project.ownerId, { ...payload, link: "/account/interests" });
       // Superadmins watch all interests; exclude the owner to avoid a duplicate.
-      await notifyRoles(["SUPERADMIN"], { ...payload, link: "/admin" }, project.ownerId);
+      await notifyRoles(["SUPERADMIN"], { ...payload, link: "/admin/interests" }, project.ownerId);
+      // Audit 2.7: only in-app + push went out before, so a creator who doesn't
+      // open the cabinet never learned a lead had arrived.
+      const tierName = resolvedTierId
+        ? (await prisma.sponsorshipTier.findUnique({ where: { id: resolvedTierId }, select: { name: true } }))?.name
+        : undefined;
+      await notifyNewInterest(
+        {
+          projectId,
+          projectTitle: project.title,
+          brandName: user.name,
+          tierName,
+          message: trimmedMessage ?? undefined,
+          contact: trimmedContact ?? user.email,
+        },
+        project.owner.email,
+      );
     }
   } catch {
     // best-effort notification — ignore
   }
 
+  void interestId;
   revalidateBrandPaths();
+  revalidatePath("/account/interests");
+  revalidatePath("/admin/interests");
   return { ok: true };
 }
 

@@ -31,6 +31,8 @@ export type NotificationData = {
   // BROADCAST only — admin-authored free text, shown verbatim (not localized).
   title?: string;
   message?: string;
+  // PROJECT_REJECTED only — the moderator's own words, shown verbatim.
+  reason?: string;
 };
 
 export function parseNotificationData(
@@ -65,8 +67,15 @@ export function renderNotification(
       return { title: t("notif.submitted.title"), body: t("notif.submitted.body", vars) };
     case "PROJECT_APPROVED":
       return { title: t("notif.approved.title"), body: t("notif.approved.body", vars) };
-    case "PROJECT_REJECTED":
-      return { title: t("notif.rejected.title"), body: t("notif.rejected.body", vars) };
+    case "PROJECT_REJECTED": {
+      // Append the moderator's reason when there is one — without it the
+      // creator only learns THAT the project was refused (audit 1.4).
+      const body = t("notif.rejected.body", vars);
+      return {
+        title: t("notif.rejected.title"),
+        body: data.reason ? `${body} ${t("notif.rejected.reasonPrefix")} ${data.reason}` : body,
+      };
+    }
     case "INTEREST_APPROVED":
       return { title: t("notif.interestApproved.title"), body: t("notif.interestApproved.body", vars) };
     case "INTEREST_DECLINED":

@@ -5,7 +5,12 @@ import { redirect } from "next/navigation";
 import { notFound } from "next/navigation";
 import { SESSION_COOKIE, verifySessionToken } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
-import { canEditContent, canEditTranslations, canModerate } from "@/lib/auth/permissions";
+import {
+  canEditContent,
+  canEditTranslations,
+  canModerate,
+  isTranslatorOnly,
+} from "@/lib/auth/permissions";
 import type { Role } from "@prisma/client";
 
 export type AuthedUser = {
@@ -124,6 +129,17 @@ export async function requireModerator(): Promise<AuthedUser> {
 export async function requireTranslator(): Promise<AuthedUser> {
   const user = await requireUser();
   if (!canEditTranslations(user.role)) notFound();
+  return user;
+}
+
+/** Require a logged-in, active staff user who isn't confined to the
+   TRANSLATOR-only section (SUPERADMIN, PUBLISHER or MODERATOR). 404s for
+   TRANSLATOR, same disguise-as-not-found pattern as the guards above — that
+   role's only admin page is /admin/i18n (audit 3.4: Notifications was still
+   reachable directly via requireUser()). */
+export async function requireStaffExceptTranslator(): Promise<AuthedUser> {
+  const user = await requireUser();
+  if (isTranslatorOnly(user.role)) notFound();
   return user;
 }
 

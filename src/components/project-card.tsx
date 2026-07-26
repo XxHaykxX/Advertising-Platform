@@ -5,6 +5,7 @@ import {
   Clapperboard,
   Clock,
   Film,
+  Globe,
   MapPin,
   Wallet,
 } from "lucide-react";
@@ -40,6 +41,17 @@ export function ProjectCard({
   const releaseLabel = formatMonthYear(project.releaseDate, intlLocale(locale));
   const deadlineDays = daysUntil(project.applicationDeadline);
   const deadlineUrgent = deadlineDays !== null && deadlineDays <= 45;
+  // 5.6: the poster overlay keeps showing genres[0] only (unchanged), but a
+  // project can carry more than one genre — surface those too instead of
+  // silently dropping them. Cap the extra chips at 2 and collapse the rest
+  // into a "+N" pill, same convention as the country list above.
+  const allGenres = project.genres.length > 0 ? project.genres : [project.genre];
+  const extraGenres = allGenres.slice(1);
+  const shownExtraGenres = extraGenres.slice(0, 2);
+  const moreGenres = extraGenres.length - shownExtraGenres.length;
+  // Language is a CSV of one or more values (admin redesign phase 1) — used to
+  // only drive the filter and was never shown on the card itself.
+  const languages = splitCountries(project.language);
 
   return (
     <div className="relative flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card card-lift">
@@ -80,6 +92,10 @@ export function ProjectCard({
       <div className="flex flex-1 flex-col p-6">
         <div className="flex flex-wrap items-center gap-2">
           <h3 className="text-lg font-semibold text-foreground md:text-xl">{project.title}</h3>
+          {shownExtraGenres.map((g) => (
+            <GenreBadge key={g}>{localizeValue(locale, "genre", g)}</GenreBadge>
+          ))}
+          {moreGenres > 0 ? <GenreBadge>+{moreGenres}</GenreBadge> : null}
           {project.placementType ? (
             <AccentBadge>{localizeValue(locale, "placement", project.placementType)}</AccentBadge>
           ) : null}
@@ -101,6 +117,14 @@ export function ProjectCard({
               {extraCountries > 0 ? ` +${extraCountries}` : ""}
             </span>
           </div>
+          {languages.length > 0 ? (
+            <div className="flex items-center gap-2">
+              <Globe className="h-3.5 w-3.5 shrink-0" />
+              <span>
+                {t("catalog.language")}: {languages.map((l) => localizeValue(locale, "language", l)).join(", ")}
+              </span>
+            </div>
+          ) : null}
           {project.boxOfficeDisplay ? (
             <div className="flex items-center gap-2">
               <Wallet className="h-3.5 w-3.5 shrink-0" />

@@ -37,6 +37,7 @@ export default async function AccountLayout({ children }: { children: ReactNode 
                   home: t("account.title"),
                   projects: t("account.myProjects"),
                   submit: t("account.submitProject"),
+                  interests: t("interests.title"),
                   notifications: t("notif.title"),
                   profile: t("account.profile"),
                   logout: t("account.logout"),

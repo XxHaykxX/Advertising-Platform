@@ -41,6 +41,9 @@ export function KeyFacts({
   const t = makeUI(locale);
   const platforms = parseStringArray(project.platforms);
   const release = formatMonthYear(project.releaseDate, intlLocale(locale));
+  // Fall back to the planned date when the project has no actual release yet
+  // (audit 1.5 — the column existed but was never shown anywhere).
+  const expectedRelease = release ? "" : formatMonthYear(project.expectedReleaseDate, intlLocale(locale));
   const deadline = formatFullDate(project.applicationDeadline, intlLocale(locale));
 
   return (
@@ -51,6 +54,12 @@ export function KeyFacts({
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               {release ? (
                 <Fact icon={<CalendarDays className="h-3.5 w-3.5" />} label={t("keyFacts.release")} value={release} />
+              ) : expectedRelease ? (
+                <Fact
+                  icon={<CalendarDays className="h-3.5 w-3.5" />}
+                  label={t("keyFacts.expectedRelease")}
+                  value={expectedRelease}
+                />
               ) : null}
 
               {deadline ? (
@@ -103,14 +112,28 @@ export function KeyFacts({
                     {t("keyFacts.comparableTo")}
                   </div>
                   <div className="mt-2 flex flex-wrap gap-1.5">
-                    {project.references.map((r) => (
-                      <span
-                        key={r}
-                        className="inline-flex items-center rounded-full border border-primary/30 bg-primary/5 px-2.5 py-1 text-xs font-medium text-foreground"
-                      >
-                        {r}
-                      </span>
-                    ))}
+                    {/* A reference may carry a link (the editor stores
+                        [{name,url}]); render it as one when it does. */}
+                    {project.references.map((r) =>
+                      r.url ? (
+                        <a
+                          key={`${r.name}-${r.url}`}
+                          href={r.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center rounded-full border border-primary/30 bg-primary/5 px-2.5 py-1 text-xs font-medium text-foreground underline-offset-2 transition-colors hover:border-primary hover:text-primary hover:underline"
+                        >
+                          {r.name}
+                        </a>
+                      ) : (
+                        <span
+                          key={r.name}
+                          className="inline-flex items-center rounded-full border border-primary/30 bg-primary/5 px-2.5 py-1 text-xs font-medium text-foreground"
+                        >
+                          {r.name}
+                        </span>
+                      ),
+                    )}
                   </div>
                 </div>
               ) : null}
@@ -127,7 +150,10 @@ export function KeyFacts({
                   use for either action here, so nothing is rendered. */}
               {!user ? (
                 <Button asChild variant="primary" size="lg" className="w-full whitespace-nowrap lg:w-auto">
-                  <Link href="/login">{t("cta.loginToApply")}</Link>
+                  {/* ?from= brings the visitor back to THIS project after
+                      signing in — the CTA used to drop them on the cabinet
+                      dashboard with no way back (audit 4.3). */}
+                  <Link href={`/login?from=/reports/${project.id}`}>{t("cta.loginToApply")}</Link>
                 </Button>
               ) : user.role === "BRAND" ? (
                 <ReportInterestButton

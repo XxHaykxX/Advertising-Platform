@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Film, Users } from "lucide-react";
+import { Film, ShieldCheck, Users } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth/require";
 import { isTranslatorOnly } from "@/lib/auth/permissions";
+import { makeUI } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 
 export default async function AdminDashboard() {
@@ -15,43 +16,70 @@ export default async function AdminDashboard() {
     redirect("/admin/i18n");
   }
 
+  // English-only panel — see the note in interests/page.tsx.
+  const t = makeUI("en");
+
   const isSuperadmin = user.role === "SUPERADMIN";
+  // MODERATOR never owns projects, so an "ownerId" count would always read 0
+  // (audit 7) — it gets the moderation queue count instead.
+  const isModerator = user.role === "MODERATOR";
 
   // Publishers only ever see their own projects; a super-admin gets the
-  // platform-wide counts (all projects, all users).
-  const [projectCount, userCount] = await Promise.all([
+  // platform-wide counts (only what's actually live in the catalog / actual
+  // staff accounts — audit 7 found both cards counting more than their
+  // label promised); a moderator gets the pending-review queue.
+  const [projectCount, userCount, moderationQueueCount] = await Promise.all([
     isSuperadmin
-      ? prisma.project.count()
-      : prisma.project.count({ where: { ownerId: user.id } }),
-    isSuperadmin ? prisma.user.count() : Promise.resolve(null),
+      ? prisma.project.count({ where: { isActive: true, moderationStatus: "APPROVED" } })
+      : isModerator
+        ? Promise.resolve(0)
+        : prisma.project.count({ where: { ownerId: user.id } }),
+    isSuperadmin
+      ? prisma.user.count({ where: { role: { in: ["SUPERADMIN", "PUBLISHER", "MODERATOR", "TRANSLATOR"] } } })
+      : Promise.resolve(null),
+    isModerator ? prisma.project.count({ where: { moderationStatus: "PENDING" } }) : Promise.resolve(null),
   ]);
 
-  const cards = [
-    {
-      label: "Projects",
-      value: projectCount,
-      sub: isSuperadmin ? "in catalog" : "your projects",
-      icon: Film,
-      href: "/admin/projects",
-    },
-    ...(isSuperadmin
-      ? [
-          {
-            label: "Users",
-            value: userCount ?? 0,
-            sub: "admins & publishers",
-            icon: Users,
-            href: "/admin/users",
-          },
-        ]
-      : []),
-  ];
+  const cards = isModerator
+    ? [
+        {
+          label: t("admin.dashboard.moderationQueue"),
+          value: moderationQueueCount ?? 0,
+          sub: t("admin.dashboard.pendingReview"),
+          icon: ShieldCheck,
+          href: "/admin/moderation",
+        },
+      ]
+    : [
+        {
+          label: "Projects",
+          value: projectCount,
+          sub: isSuperadmin ? "in catalog" : "your projects",
+          icon: Film,
+          href: "/admin/projects",
+        },
+        ...(isSuperadmin
+          ? [
+              {
+                label: "Users",
+                value: userCount ?? 0,
+                sub: "admins & publishers",
+                icon: Users,
+                href: "/admin/users",
+              },
+            ]
+          : []),
+      ];
 
   return (
     <div>
       <h1 className="text-2xl font-bold text-foreground">Welcome, {user.name}</h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        {isSuperadmin ? "Platform overview." : "Your placement projects at a glance."}
+        {isSuperadmin
+          ? "Platform overview."
+          : isModerator
+            ? "Projects awaiting your review."
+            : "Your placement projects at a glance."}
       </p>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

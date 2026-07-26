@@ -1,13 +1,15 @@
-import { requireUser } from "@/lib/auth/require";
+import { requireStaffExceptTranslator } from "@/lib/auth/require";
 import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
 import { getNotifications } from "@/lib/data/notifications";
 import { NotificationList } from "@/components/notifications/notification-list";
 
 /* #V9 admin nav entry: staff-side notification inbox, mirrors the account-
-   side page but scoped to the signed-in staff user's own rows. */
+   side page but scoped to the signed-in staff user's own rows. Audit 3.4:
+   TRANSLATOR's only admin page is /admin/i18n — gated accordingly so this
+   404s for that role instead of being reachable by direct URL. */
 export default async function AdminNotificationsPage() {
-  const user = await requireUser();
+  const user = await requireStaffExceptTranslator();
   const locale = await getLocale();
   const t = makeUI(locale);
   const rows = await getNotifications(user.id);

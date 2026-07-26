@@ -359,6 +359,11 @@ export const UI: Record<string, Dict> = {
   "catalog.max": { ru: "Макс", en: "Max", hy: "Առավ." },
   "catalog.status": { ru: "Статус", en: "Status", hy: "Կարգավիճակ" },
   "catalog.format": { ru: "Формат", en: "Format", hy: "Ձևաչափ" },
+  // 5.8: explicit bucket for rows whose formatCategory heuristic found nothing
+  // (deriveFormatCategory can legitimately return "") — lets a visitor opt
+  // into seeing them instead of the value silently vanishing from every
+  // specific-format selection.
+  "catalog.formatUnspecified": { ru: "Не указан", en: "Unspecified", hy: "Չնշված" },
   "catalog.age": { ru: "Возраст", en: "Age", hy: "Տարիք" },
   "catalog.platform": { ru: "Платформа", en: "Platform", hy: "Հարթակ" },
   "catalog.country": { ru: "Страна", en: "Country", hy: "Երկիր" },
@@ -369,6 +374,14 @@ export const UI: Record<string, Dict> = {
   "catalog.sortMostRelevant": { ru: "Сначала релевантные", en: "Most relevant", hy: "Առավել համապատասխան" },
   "catalog.sortViews": { ru: "Просмотры", en: "Views", hy: "Դիտումներ" },
   "catalog.sortBudget": { ru: "Бюджет", en: "Budget", hy: "Բյուջե" },
+  // 5.7: the actual sort control wired up in catalog-view.tsx (the three keys
+  // above were pre-existing scaffolding that was never connected to a select).
+  "catalog.sortLabel": { ru: "Сортировка", en: "Sort", hy: "Դասավորել ըստ" },
+  "catalog.sortDefault": { ru: "По умолчанию", en: "Default order", hy: "Կանխադրված" },
+  "catalog.sortNewest": { ru: "Сначала новые", en: "Newest first", hy: "Նախ նորերը" },
+  "catalog.sortDeadline": { ru: "Дедлайн ближе", en: "Deadline soonest", hy: "Ժամկետը՝ մոտակա" },
+  "catalog.sortTitle": { ru: "Название А→Я", en: "Title A→Z", hy: "Անվանում Ա→Ֆ" },
+  "catalog.loadMore": { ru: "Показать ещё", en: "Show more", hy: "Ցուցադրել ավելին" },
   "catalog.gridView": { ru: "Вид сеткой", en: "Grid view", hy: "Ցանցի տեսք" },
   "catalog.listView": { ru: "Вид списком", en: "List view", hy: "Ցուցակի տեսք" },
   "catalog.showingProjectsPrefix": { ru: "Показано", en: "Showing", hy: "Ցուցադրված է" },
@@ -755,8 +768,11 @@ export const UI: Record<string, Dict> = {
   "keyFacts.onRequest": { ru: "По запросу", en: "On request", hy: "Ըստ պահանջի" },
   "keyFacts.platforms": { ru: "Где смотреть", en: "Available on", hy: "Հասանելի է" },
   "keyFacts.boxOffice": { ru: "Кассовый сбор", en: "Box office", hy: "Դրամարկղ" },
+  "keyFacts.productionBudget": { ru: "Бюджет производства", en: "Production budget", hy: "Արտադրության բյուջե" },
+  "keyFacts.expectedRelease": { ru: "Ожидаемый выход", en: "Expected release", hy: "Սպասվող թողարկում" },
   "card.boxOffice": { ru: "Кассовый сбор", en: "Box office", hy: "Դրամարկղ" },
   "report.boxOffice": { ru: "Кассовый сбор", en: "Box office", hy: "Դրամարկղ" },
+  "report.productionBudget": { ru: "Бюджет производства", en: "Production budget", hy: "Արտադրության բյուջե" },
 
   // ── report: ROI / express interest banner ──────
   "roi.title": { ru: "Прогноз ROI", en: "Estimated ROI Snapshot", hy: "Կանխատեսվող ROI-ի պատկեր" },
@@ -1054,6 +1070,63 @@ export const UI: Record<string, Dict> = {
   "account.status.pending": { ru: "На модерации", en: "Pending review", hy: "Մոդերացիայի փուլում" },
   "account.status.approved": { ru: "Одобрен", en: "Approved", hy: "Հաստատված" },
   "account.status.rejected": { ru: "Отклонён", en: "Rejected", hy: "Մերժված" },
+  "account.rejectionReason": { ru: "Причина отказа:", en: "Reason for rejection:", hy: "Մերժման պատճառը․" },
+  // Per-listing numbers for the creator (audit 4.8).
+  "account.stats.views": { ru: "Просмотры", en: "Views", hy: "Դիտումներ" },
+  "account.stats.favorites": { ru: "В избранном", en: "Shortlisted", hy: "Ընտրյալում" },
+  "account.stats.applications": { ru: "Заявки", en: "Applications", hy: "Հայտեր" },
+  // ── creator: edit + resubmit own project (audit 2.4 / owner decision C.6) ──
+  "account.editProject": { ru: "Редактировать проект", en: "Edit project", hy: "Խմբագրել նախագիծը" },
+  "account.editProjectSubtitle": {
+    ru: "Изменения снова отправят проект на модерацию.",
+    en: "Saving changes sends the project back for moderation.",
+    hy: "Փոփոխությունները նախագիծը կրկին կուղարկեն մոդերացիայի։",
+  },
+  // ── Applications inbox (audit wave 2) ──
+  "interests.title": { ru: "Заявки", en: "Applications", hy: "Հայտեր" },
+  "interests.subtitle": {
+    ru: "Заявки брендов на ваши проекты: сообщение, контакт и ответ.",
+    en: "Brand applications for your projects: message, contact and your answer.",
+    hy: "Բրենդների հայտերը ձեր նախագծերի համար՝ հաղորդագրություն, կոնտակտ և պատասխան։",
+  },
+  "interests.subtitleAdmin": {
+    ru: "Все заявки брендов на площадке.",
+    en: "Every brand application on the platform.",
+    hy: "Հարթակի բոլոր բրենդային հայտերը։",
+  },
+  "interests.empty": { ru: "Заявок пока нет.", en: "No applications yet.", hy: "Հայտեր դեռ չկան։" },
+  "interests.from": { ru: "От кого", en: "From", hy: "Ումից" },
+  "interests.contact": { ru: "Контакт", en: "Contact", hy: "Կոնտակտ" },
+  "interests.package": { ru: "Пакет размещения", en: "Placement package", hy: "Տեղադրման փաթեթ" },
+  "interests.noPackage": { ru: "Пакет не указан", en: "No package specified", hy: "Փաթեթը նշված չէ" },
+  "interests.message": { ru: "Сообщение", en: "Message", hy: "Հաղորդագրություն" },
+  "interests.history": { ru: "История обращений", en: "History", hy: "Դիմումների պատմություն" },
+  "interests.accept": { ru: "Принять", en: "Accept", hy: "Ընդունել" },
+  "interests.decline": { ru: "Отклонить", en: "Decline", hy: "Մերժել" },
+  "interests.answerPrompt": {
+    ru: "Ответ бренду (необязательно) — он его увидит:",
+    en: "Your answer to the brand (optional) — they will see it:",
+    hy: "Ձեր պատասխանը բրենդին (ոչ պարտադիր) — նա կտեսնի այն․",
+  },
+  "interests.answered": { ru: "Ваш ответ", en: "Your answer", hy: "Ձեր պատասխանը" },
+  // Same field seen from the buyer's side — there it's the seller's answer.
+  "interests.answerFromSeller": { ru: "Ответ площадки", en: "Reply from the seller", hy: "Հարթակի պատասխանը" },
+  "interests.status.SENT": { ru: "Ожидает ответа", en: "Awaiting answer", hy: "Սպասում է պատասխանի" },
+  "interests.status.MUTUAL": { ru: "Принята", en: "Accepted", hy: "Ընդունված" },
+  "interests.status.DECLINED": { ru: "Отклонена", en: "Declined", hy: "Մերժված" },
+  "interests.errNotAllowed": {
+    ru: "Недостаточно прав для этого действия.",
+    en: "You don't have permission for this action.",
+    hy: "Այս գործողության համար իրավունքները բավարար չեն։",
+  },
+  "interests.errNotFound": { ru: "Заявка не найдена.", en: "Application not found.", hy: "Հայտը չի գտնվել։" },
+  "interests.errNoSlots": {
+    ru: "В этом пакете не осталось свободных слотов.",
+    en: "This package has no free slots left.",
+    hy: "Այս փաթեթում ազատ տեղեր չեն մնացել։",
+  },
+  "interests.eventApplication": { ru: "Заявка бренда", en: "Brand application", hy: "Բրենդի հայտ" },
+  "interests.eventResponse": { ru: "Ответ", en: "Answer", hy: "Պատասխան" },
   "account.brandOnlyNotice": {
     ru: "Подача проектов доступна только для аккаунтов создателей.",
     en: "Submitting projects is only available for creator accounts.",
@@ -1117,6 +1190,56 @@ export const UI: Record<string, Dict> = {
     ru: "Проект отправлен на модерацию. Мы уведомим вас, когда он будет рассмотрен.",
     en: "Project submitted for review. We'll let you know once it's been reviewed.",
     hy: "Նախագիծն ուղարկվել է մոդերացիայի։ Կտեղեկացնենք, երբ այն ստուգվի։",
+  },
+  // ── Publish-time requirements (owner decision 2026-07-26) ──
+  // A missing required field blocks publication, never the save — see
+  // publishBlockers() in admin/(panel)/projects/form-shared.ts.
+  "publish.blocked": {
+    ru: "Проект нельзя опубликовать, пока не заполнено:",
+    en: "This project can't be published until you fill in:",
+    hy: "Նախագիծը հնարավոր չէ հրապարակել, քանի դեռ լրացված չէ․",
+  },
+  "publish.blockedHint": {
+    ru: "Снимите галочку «Активен», чтобы сохранить как черновик.",
+    en: "Untick “Active” to save it as a draft instead.",
+    hy: "Հանեք «Ակտիվ» նշումը՝ որպես սևագիր պահելու համար։",
+  },
+  "publish.blockedSubmit": {
+    ru: "Проект нельзя отправить на модерацию, пока не заполнено:",
+    en: "This project can't be submitted for review until you fill in:",
+    hy: "Նախագիծը հնարավոր չէ ուղարկել մոդերացիայի, քանի դեռ լրացված չէ․",
+  },
+  "publish.blockedApprove": {
+    ru: "Проект нельзя опубликовать — создатель не заполнил:",
+    en: "This project can't be published — the creator hasn't filled in:",
+    hy: "Նախագիծը հնարավոր չէ հրապարակել — ստեղծողը չի լրացրել․",
+  },
+  "publish.missing.studio": { ru: "Студия", en: "Studio", hy: "Ստուդիա" },
+  "publish.missing.releaseDate": {
+    ru: "Дата релиза или ожидаемая дата выхода",
+    en: "Release date or expected release date",
+    hy: "Թողարկման կամ սպասվող թողարկման ամսաթիվ",
+  },
+  "publish.missing.tagline": {
+    ru: "Короткое описание (логлайн)",
+    en: "Short description (logline)",
+    hy: "Կարճ նկարագրություն (լոգլայն)",
+  },
+  "publish.missing.duration": { ru: "Длительность", en: "Duration", hy: "Տևողություն" },
+  "publish.missing.episodes": {
+    ru: "Количество серий и хронометраж серии",
+    en: "Episode count and minutes per episode",
+    hy: "Սերիաների քանակը և սերիայի տևողությունը",
+  },
+  "publish.missing.tiers": {
+    ru: "Хотя бы один пакет размещения",
+    en: "At least one placement package",
+    hy: "Առնվազն մեկ տեղադրման փաթեթ",
+  },
+  "publish.missing.tierBenefits": {
+    ru: "Описание (что входит) у каждого пакета размещения",
+    en: "A description of what's included for every placement package",
+    hy: "Յուրաքանչյուր փաթեթի նկարագրությունը (ինչ է ներառված)",
   },
   "account.form.errTitleRequired": {
     ru: "Введите название хотя бы на одном языке.",
@@ -1235,10 +1358,18 @@ export const UI: Record<string, Dict> = {
   "projectForm.field.episodeMinutes": { ru: "Хронометраж серии (мин) *", en: "Minutes per episode *", hy: "Սերիայի տևողությունը (րոպե) *" },
   // Ф2: FILM-only counterpart of episodes/episodeMinutes — same slot, Single only.
   "projectForm.field.durationMinutes": { ru: "Длительность (мин) *", en: "Duration (min) *", hy: "Տևողություն (րոպե) *" },
+  // Two distinct money figures, kept apart on purpose (owner decision C.3,
+  // 2026-07-26): boxOffice is gross receipts, productionBudget is what the
+  // CSV schema calls "Budget".
   "projectForm.field.boxOffice": {
-    ru: "Бюджет (драм, необязательно)",
-    en: "Budget (AMD, optional)",
-    hy: "Բյուջե (դրամ, ոչ պարտադիր)",
+    ru: "Кассовые сборы (драм, необязательно)",
+    en: "Box office (AMD, optional)",
+    hy: "Դրամարկղային մուտքեր (դրամ, ոչ պարտադիր)",
+  },
+  "projectForm.field.productionBudget": {
+    ru: "Бюджет производства (драм, необязательно)",
+    en: "Production budget (AMD, optional)",
+    hy: "Արտադրության բյուջե (դրամ, ոչ պարտադիր)",
   },
   "projectForm.field.studio": { ru: "Студия", en: "Studio", hy: "Ստուդիա" },
   "projectForm.studioPlaceholder": {
@@ -1428,6 +1559,10 @@ export const UI: Record<string, Dict> = {
   "admin.registrations.statusRejected": { ru: "Отклонён", en: "Rejected", hy: "Մերժված" },
   "admin.registrations.statusBlocked": { ru: "Заблокирован", en: "Blocked", hy: "Արգելափակված" },
 
+  // ── admin: dashboard (audit 7 — moderator queue card) ──
+  "admin.dashboard.moderationQueue": { ru: "Очередь модерации", en: "Moderation queue", hy: "Մոդերացիայի հերթ" },
+  "admin.dashboard.pendingReview": { ru: "проектов ожидают проверки", en: "projects pending review", hy: "նախագծեր սպասում են ստուգման" },
+
   // ── BRAND cabinet (#23, /account/brand/**) ──
   // (sidebar nav Dashboard/Log Out/Browse Projects reuse existing base keys —
   // account.title, account.logout, nav.browseProjects)
@@ -1452,6 +1587,7 @@ export const UI: Record<string, Dict> = {
   "notif.approved.body": { ru: "Проект «{project}» одобрен и опубликован.", en: "“{project}” was approved and published.", hy: "«{project}» նախագիծը հաստատվեց և հրապարակվեց։" },
   "notif.rejected.title": { ru: "Проект отклонён", en: "Project rejected", hy: "Նախագիծը մերժված է" },
   "notif.rejected.body": { ru: "Проект «{project}» отклонён модератором.", en: "“{project}” was rejected by a moderator.", hy: "«{project}» նախագիծը մերժվեց մոդերատորի կողմից։" },
+  "notif.rejected.reasonPrefix": { ru: "Причина:", en: "Reason:", hy: "Պատճառը․" },
   // Favorites / Application feature (2026-07-19)
   "notif.interestApproved.title": { ru: "Заявка одобрена", en: "Application approved", hy: "Հայտը հաստատվեց" },
   "notif.interestApproved.body": { ru: "Ваша заявка на проект «{project}» одобрена.", en: "Your application for “{project}” was approved.", hy: "«{project}» նախագծի համար ձեր հայտը հաստատվեց։" },
@@ -1463,6 +1599,54 @@ export const UI: Record<string, Dict> = {
   "apply.messageLabel": { ru: "Сообщение", en: "Message", hy: "Հաղորդագրություն" },
   "apply.messagePlaceholder": { ru: "Расскажите о вашем интересе к размещению…", en: "Tell us about your placement interest…", hy: "Պատմեք ձեր տեղադրման հետաքրքրության մասին…" },
   "apply.contactLabel": { ru: "Контакт (необязательно)", en: "Contact (optional)", hy: "Կոնտակտ (ըստ ցանկության)" },
+  // ── Media picker (audit 4.5: the dialog was English-only for members) ──
+  "media.chooseImage": { ru: "Выберите изображение", en: "Choose image", hy: "Ընտրեք պատկերը" },
+  "media.chooseVideo": { ru: "Выберите видео", en: "Choose video", hy: "Ընտրեք տեսանյութը" },
+  "media.chooseFile": { ru: "Выберите файл", en: "Choose file", hy: "Ընտրեք ֆայլը" },
+  "media.upload": { ru: "Загрузить с компьютера", en: "Upload from computer", hy: "Վերբեռնել համակարգչից" },
+  "media.close": { ru: "Закрыть", en: "Close", hy: "Փակել" },
+  "media.all": { ru: "Все", en: "All", hy: "Բոլորը" },
+  "media.download": { ru: "Скачать", en: "Download", hy: "Ներբեռնել" },
+  "media.loadError": { ru: "Не удалось загрузить медиатеку.", en: "Couldn't load the library.", hy: "Չհաջողվեց բեռնել գրադարանը։" },
+  "media.emptyImages": {
+    ru: "Изображений пока нет — нажмите «Загрузить с компьютера».",
+    en: "No images yet — use “Upload from computer”.",
+    hy: "Պատկերներ դեռ չկան — սեղմեք «Վերբեռնել համակարգչից»։",
+  },
+  "media.emptyVideos": {
+    ru: "Видео пока нет — нажмите «Загрузить с компьютера».",
+    en: "No videos yet — use “Upload from computer”.",
+    hy: "Տեսանյութեր դեռ չկան — սեղմեք «Վերբեռնել համակարգչից»։",
+  },
+  "media.errTooLarge": {
+    ru: "«{name}» весит {size} МБ — лимит {limit} МБ.",
+    en: "“{name}” is {size} MB — the limit is {limit} MB.",
+    hy: "«{name}»-ը {size} ՄԲ է — սահմանաչափը {limit} ՄԲ է։",
+  },
+  "media.errUploadFailed": {
+    ru: "Загрузка не удалась — «{name}» ({size} МБ) отклонён сервером. Попробуйте файл меньше.",
+    en: "Upload failed — “{name}” ({size} MB) was rejected by the server. Try a smaller file.",
+    hy: "Վերբեռնումը ձախողվեց — «{name}» ({size} ՄԲ) մերժվել է սերվերի կողմից։ Փորձեք ավելի փոքր ֆայլ։",
+  },
+  "media.errNoFile": { ru: "Файл не выбран.", en: "No file provided.", hy: "Ֆայլ ընտրված չէ։" },
+  "media.errTooLargeServer": {
+    ru: "Файл слишком большой (максимум {limit} МБ).",
+    en: "File too large (max {limit} MB).",
+    hy: "Ֆայլը շատ մեծ է (առավելագույնը {limit} ՄԲ)։",
+  },
+  "media.errUnsupportedVideo": {
+    ru: "Неподдерживаемый тип — используйте MP4 или WebM.",
+    en: "Unsupported type — use MP4 or WebM.",
+    hy: "Չաջակցվող տեսակ — օգտագործեք MP4 կամ WebM։",
+  },
+  "media.errUnsupportedImage": {
+    ru: "Неподдерживаемый тип — используйте JPG, PNG, WebP, GIF или AVIF.",
+    en: "Unsupported type — use JPG, PNG, WebP, GIF or AVIF.",
+    hy: "Չաջակցվող տեսակ — օգտագործեք JPG, PNG, WebP, GIF կամ AVIF։",
+  },
+  "apply.tierLabel": { ru: "Пакет размещения", en: "Placement package", hy: "Տեղադրման փաթեթ" },
+  "apply.tierNone": { ru: "Не выбран — обсудим", en: "Not selected — let's discuss", hy: "Ընտրված չէ — կքննարկենք" },
+  "apply.tierSoldOut": { ru: "мест нет", en: "no slots left", hy: "տեղեր չկան" },
   "apply.contactPlaceholder": { ru: "Email или телефон", en: "Email or phone", hy: "Էլ. փոստ կամ հեռախոս" },
   "apply.submit": { ru: "Отправить заявку", en: "Send application", hy: "Ուղարկել հայտը" },
   "apply.cancel": { ru: "Отмена", en: "Cancel", hy: "Չեղարկել" },
@@ -1541,6 +1725,29 @@ export const UI: Record<string, Dict> = {
     en: "Something went wrong — please try again.",
     hy: "Ինչ-որ բան այն չէ․ փորձեք կրկին։",
   },
+
+  // ── browse filters (4.4) ──
+  "account.brand.slotsAvailableOnly": {
+    ru: "Только со свободными местами",
+    en: "Only with open slots",
+    hy: "Միայն ազատ տեղերով",
+  },
+  "account.brand.filtersToggle": { ru: "Фильтры", en: "Filters", hy: "Զտիչներ" },
+  "account.brand.filtersClose": { ru: "Свернуть фильтры", en: "Hide filters", hy: "Փակել զտիչները" },
+
+  // ── favorites comparison (4.7) ──
+  "account.brand.sortLabel": { ru: "Сортировка", en: "Sort by", hy: "Դասավորել" },
+  "account.brand.sortAdded": { ru: "Дата добавления", en: "Date added", hy: "Ավելացման ամսաթիվ" },
+  "account.brand.sortPriceAsc": { ru: "Цена: сначала дешевле", en: "Price: low to high", hy: "Գին՝ նախ ցածրը" },
+  "account.brand.sortDeadline": { ru: "Ближайший дедлайн", en: "Deadline soonest", hy: "Ամենամոտ վերջնաժամկետ" },
+  "account.brand.compareTitle": { ru: "Сравнение проектов", en: "Compare projects", hy: "Համեմատել նախագծերը" },
+  "account.brand.compareProject": { ru: "Проект", en: "Project", hy: "Նախագիծ" },
+  "account.brand.comparePriceFrom": { ru: "Цена от", en: "Price from", hy: "Գինը՝ սկսած" },
+  "account.brand.compareSlots": { ru: "Свободные места", en: "Open slots", hy: "Ազատ տեղեր" },
+  "account.brand.compareDeadline": { ru: "Дедлайн заявок", en: "Application deadline", hy: "Հայտերի վերջնաժամկետ" },
+  "account.brand.compareStage": { ru: "Стадия", en: "Stage", hy: "Փուլ" },
+  "account.brand.compareFormat": { ru: "Формат", en: "Format", hy: "Ձևաչափ" },
+  "account.brand.compareNoValue": { ru: "—", en: "—", hy: "—" },
 
   // ── my profile ──
   "account.brand.profileSubtitle": { ru: "Управляйте профилем бренда", en: "Manage your brand profile", hy: "Կառավարեք ձեր բրենդի պրոֆիլը" },
