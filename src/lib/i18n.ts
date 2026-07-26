@@ -1383,12 +1383,10 @@ export const UI: Record<string, Dict> = {
   "projectForm.field.synopsisHy": { ru: "Синопсис (HY)", en: "Synopsis (HY)", hy: "Սինոպսիս (HY)" },
   "projectForm.field.synopsisRu": { ru: "Синопсис (RU)", en: "Synopsis (RU)", hy: "Սինոպսիս (RU)" },
   "projectForm.field.synopsisEn": { ru: "Синопсис (EN)", en: "Synopsis (EN)", hy: "Սինոպսիս (EN)" },
-  "projectForm.field.status": { ru: "Стадия производства", en: "Production stage", hy: "Արտադրության փուլ" },
-  "projectForm.help.status": {
-    ru: "На каком этапе фильм. Используется фильтром каталога; бренд может присоединиться, пока идёт пре-продакшен / съёмки.",
-    en: "Where the film is in its lifecycle. Powers the catalog filter; a brand can only join while in pre-production / filming.",
-    hy: "Ֆիլմի փուլը։ Օգտագործվում է կատալոգի զտիչում. բրենդը կարող է միանալ միայն նախապատրաստման / նկարահանման ընթացքում։",
-  },
+  // "Production stage" (projectForm.field.status / .help.status) and its option
+  // labels were removed on 2026-07-26 — the field is gone from both editors at
+  // the owner's request. The stage is still shown to visitors through the
+  // report.status.* / catalog.* keys, which stay.
   "projectForm.help.placementDeadline": {
     ru: "Последняя дата, когда бренд может подать заявку на размещение — после неё монтаж закрыт.",
     en: "Last date a brand can apply for a placement — after this the shoot / edit is locked.",
@@ -1406,10 +1404,6 @@ export const UI: Record<string, Dict> = {
   },
   "projectForm.field.availableOn": { ru: "Где смотреть", en: "Available on", hy: "Հասանելի է" },
   "projectForm.availableOnPlaceholder": { ru: "Kinodaran, YouTube, TV…", en: "Kinodaran, YouTube, TV…", hy: "Kinodaran, YouTube, TV…" },
-  "projectForm.status.PRE_PRODUCTION": { ru: "Пре-продакшен", en: "Pre-production", hy: "Նախապատրաստական փուլ" },
-  "projectForm.status.FILMING": { ru: "Съёмки", en: "Filming", hy: "Նկարահանումներ" },
-  "projectForm.status.POST_PRODUCTION": { ru: "Пост-продакшен", en: "Post-production", hy: "Հետնկարահանման փուլ" },
-  "projectForm.status.RELEASED": { ru: "Вышел", en: "Released", hy: "Թողարկված" },
   "projectForm.field.countries": { ru: "Страны", en: "Countries", hy: "Երկրներ" },
   "projectForm.countriesPlaceholder": { ru: "США, Великобритания, …", en: "US, UK, …", hy: "ԱՄՆ, Մեծ Բրիտանիա, …" },
   "projectForm.field.applicationDeadline": { ru: "Дедлайн размещения", en: "Placement deadline", hy: "Տեղադրման վերջնաժամկետ" },

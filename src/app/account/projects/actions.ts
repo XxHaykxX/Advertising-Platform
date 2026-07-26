@@ -32,8 +32,6 @@ import type { ProjectFormValues, ProjectFormState } from "@/app/admin/(panel)/pr
    to APPROVED, creator-authored ones never do — moderationStatus/isActive/
    ownerId are forced below and must never be reachable from the form. */
 
-const STATUS_VALUES = ["PRE_PRODUCTION", "FILMING", "POST_PRODUCTION", "RELEASED"] as const;
-
 // MySQL caps a plain (non-@db.Text) Prisma String column at VarChar(191) —
 // same boundary as the admin form's buildData().
 const VARCHAR_MAX = 191;
@@ -131,7 +129,6 @@ function buildData(fd: FormData): ProjectFormValues {
     episodes: kind === "SERIAL" ? intOrNull(fd, "episodes") : null,
     episodeMinutes: kind === "SERIAL" ? intOrNull(fd, "episodeMinutes") : null,
     durationMinutes: kind === "FILM" ? intOrNull(fd, "durationMinutes") : null,
-    status: enumVal(fd, "status", STATUS_VALUES, "PRE_PRODUCTION"),
     countries: jsonArray<string>(fd, "countries").join(", ").slice(0, VARCHAR_MAX),
     ageRating: str(fd, "ageRating", VARCHAR_MAX),
     boxOfficeAmd: intOrNull(fd, "boxOfficeAmd"),

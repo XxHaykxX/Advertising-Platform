@@ -83,7 +83,6 @@ const EMPTY: ProjectFormInitial = {
   episodes: null,
   episodeMinutes: null,
   durationMinutes: null,
-  status: "PRE_PRODUCTION",
   countries: "",
   ageRating: "",
   boxOfficeAmd: null,
@@ -103,10 +102,6 @@ const EMPTY: ProjectFormInitial = {
   videoEmbedUrl: "",
   videoFile: "",
 };
-
-// Labels come from t("projectForm.status.*") at render time (admin's t is
-// pinned to "en", matching the strings this list used to hardcode).
-const STATUS_OPTIONS = ["PRE_PRODUCTION", "FILMING", "POST_PRODUCTION", "RELEASED"] as const;
 
 // #11 About block: the three locale tabs.
 const ABOUT_LANGS = ["hy", "ru", "en"] as const;
@@ -1042,19 +1037,14 @@ export function ProjectForm({
               type. The ambiguous ones carry a helper hint under the field. */}
           <section id="sec-production" className="scroll-mt-24 space-y-3 rounded-xl border border-border bg-card p-4">
             <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">{t("projectForm.section.production")}</h2>
-            {/* No hint here: the "powers the catalog filter / brand can only
-                join while in pre-production" explanation was noise for staff who
-                already know the pipeline (user request 2026-07-26). The
-                projectForm.help.status key stays in the dictionary. */}
-            <Field label={t("projectForm.field.status")}>
-              <select name="status" defaultValue={data.status} className={inputCls}>
-                {STATUS_OPTIONS.map((o) => (
-                  <option key={o} value={o}>
-                    {t(`projectForm.status.${o}`)}
-                  </option>
-                ))}
-              </select>
-            </Field>
+            {/* "Production stage" (and its helper text) was removed from both
+                editors on 2026-07-26 at the owner's request. The Project.status
+                column stays — the public catalog still filters on it and the
+                report page still shows it — but nobody edits it here any more,
+                which is also why `status` left ProjectFormValues: parsing an
+                absent field would have written PRE_PRODUCTION over the real
+                value on every save (the same trap the `format` column fell into
+                earlier that day). */}
             <Field label={t("projectForm.field.releaseDate")}>
               <input name="releaseDate" type="date" defaultValue={data.releaseDate} className={inputCls} />
             </Field>

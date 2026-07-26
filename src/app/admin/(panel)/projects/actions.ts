@@ -3,7 +3,7 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 import { notFound } from "next/navigation";
 import { Prisma } from "@prisma/client";
-import type { ProjectStatus, ProjectKind } from "@prisma/client";
+import type { ProjectKind } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireContentEditor, requireSuperadmin } from "@/lib/auth/require";
 import { deleteUpload } from "@/lib/actions/uploads";
@@ -18,8 +18,6 @@ import {
   parseCsvInput,
   publishBlockers,
 } from "./form-shared";
-
-const STATUS_VALUES = ["PRE_PRODUCTION", "FILMING", "POST_PRODUCTION", "RELEASED"] as const;
 
 export type ProjectFormValues = {
   title: string;
@@ -51,7 +49,10 @@ export type ProjectFormValues = {
   episodes: number | null; // SERIAL only
   episodeMinutes: number | null; // SERIAL only
   durationMinutes: number | null; // FILM only — total runtime, minutes
-  status: ProjectStatus;
+  // NB: `status` (Production stage) is NOT a form value — the field was removed
+  // from both editors on 2026-07-26 at the owner's request. The column stays
+  // (public catalog filter + report page), so parsing it here would write the
+  // enum fallback over the stored value on every save.
   countries: string;
   ageRating: string; // content rating badge ("16+", "18+"); "" when unset
   boxOfficeAmd: number | null; // box-office gross, informational, optional
@@ -204,7 +205,6 @@ function buildData(fd: FormData): ProjectFormValues {
     episodes: kind === "SERIAL" ? intOrNull(fd, "episodes") : null,
     episodeMinutes: kind === "SERIAL" ? intOrNull(fd, "episodeMinutes") : null,
     durationMinutes: kind === "FILM" ? intOrNull(fd, "durationMinutes") : null,
-    status: enumVal(fd, "status", STATUS_VALUES, "PRE_PRODUCTION"),
     countries: jsonArray<string>(fd, "countries").join(", ").slice(0, VARCHAR_MAX),
     ageRating: str(fd, "ageRating", VARCHAR_MAX),
     boxOfficeAmd: intOrNull(fd, "boxOfficeAmd"),

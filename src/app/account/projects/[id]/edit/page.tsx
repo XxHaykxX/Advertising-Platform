@@ -91,7 +91,6 @@ export default async function EditCreatorProjectPage({
     episodes: p.episodes,
     episodeMinutes: p.episodeMinutes,
     durationMinutes: p.durationMinutes,
-    status: p.status,
     countries: p.countries,
     ageRating: p.ageRating,
     boxOfficeAmd: p.boxOfficeAmd,
