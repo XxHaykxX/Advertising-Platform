@@ -31,7 +31,7 @@ test.describe("member registration + role routing", () => {
   });
 });
 
-test.describe("brand — sends an application (V8)", () => {
+test.describe("brand — sends an offer (V8)", () => {
   // The one-click "express interest" toggle on the browse cards is gone: since
   // dfc188d an application is sent from the project's own page through the
   // popup, because a bare toggle told the seller nothing about what was being
@@ -67,10 +67,10 @@ test.describe("brand — sends an application (V8)", () => {
     await dialog
       .locator("#apply-message")
       .fill("E2E: проверка отправки заявки с брифом и минимальной длиной.");
-    await dialog.getByRole("button", { name: "Ուղարկել հայտը" }).click();
+    await dialog.getByRole("button", { name: "Ուղարկել առաջարկը" }).click();
 
     // The dialog swaps the form for its success state rather than closing.
-    await expect(dialog.getByText("Հայտն ուղարկվեց")).toBeVisible({ timeout: 15000 });
+    await expect(dialog.getByText("Առաջարկն ուղարկվեց")).toBeVisible({ timeout: 15000 });
 
     // And the brand's own cabinet shows what it sent — it used to show only a
     // status pill with no trace of the request.
@@ -95,7 +95,7 @@ test.describe("brand — sends an application (V8)", () => {
 
     await dialog.locator("#apply-phone").fill("+374 91 234 567");
     await dialog.locator("#apply-message").fill("привет");
-    await expect(dialog.getByRole("button", { name: "Ուղարկել հայտը" })).toBeDisabled();
+    await expect(dialog.getByRole("button", { name: "Ուղարկել առաջարկը" })).toBeDisabled();
   });
 
   test("an application without a real phone number cannot be submitted", async ({ page }) => {
@@ -113,7 +113,7 @@ test.describe("brand — sends an application (V8)", () => {
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible({ timeout: 10000 });
 
-    const submit = dialog.getByRole("button", { name: "Ուղարկել հայտը" });
+    const submit = dialog.getByRole("button", { name: "Ուղարկել առաջարկը" });
     await dialog
       .locator("#apply-message")
       .fill("E2E: сообщение достаточной длины, но телефон не дописан.");

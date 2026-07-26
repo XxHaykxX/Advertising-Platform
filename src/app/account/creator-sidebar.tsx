@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { LogoutButton } from "@/components/logout-button";
 import type { Locale } from "@/lib/i18n";
 import { getUnreadNotificationCount } from "@/lib/actions/notifications";
+import { getPendingOfferCountForMe } from "@/app/account/interests/actions";
 
 type NavItem = {
   href: string;
@@ -60,11 +61,19 @@ export function CreatorSidebar({
   // Unread-notifications badge — same direct-Server-Action-call pattern as
   // BrandSidebar/admin-nav: refetched on every route change.
   const [unreadCount, setUnreadCount] = useState(0);
+  // Offers waiting for this creator's answer. The count existed in the data
+  // layer but nothing showed it, so an offer arrived with no visible sign.
+  const [pendingOffers, setPendingOffers] = useState(0);
   useEffect(() => {
     let alive = true;
     getUnreadNotificationCount()
       .then((n) => {
         if (alive) setUnreadCount(n);
+      })
+      .catch(() => {});
+    getPendingOfferCountForMe()
+      .then((n) => {
+        if (alive) setPendingOffers(n);
       })
       .catch(() => {});
     return () => {
@@ -94,6 +103,11 @@ export function CreatorSidebar({
               {item.href === "/account/notifications" && unreadCount > 0 && (
                 <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-primary px-1.5 text-[11px] font-semibold text-primary-foreground">
                   {unreadCount}
+                </span>
+              )}
+              {item.href === "/account/interests" && pendingOffers > 0 && (
+                <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-primary px-1.5 text-[11px] font-semibold text-primary-foreground">
+                  {pendingOffers}
                 </span>
               )}
             </Link>

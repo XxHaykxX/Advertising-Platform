@@ -763,7 +763,7 @@ export const UI: Record<string, Dict> = {
   "cast.subtitle": { ru: "Актёры и создатели, задействованные в проекте", en: "Actors and creators attached to this project", hy: "Այս նախագծին կցված դերասաններ և ստեղծագործողներ" },
 
   "keyFacts.release": { ru: "Выход", en: "Release", hy: "Թողարկում" },
-  "keyFacts.applicationDeadline": { ru: "Срок подачи заявок", en: "Application Deadline", hy: "Հայտերի ընդունման վերջնաժամկետ" },
+  "keyFacts.applicationDeadline": { ru: "Срок подачи предложений", en: "Offer deadline", hy: "Առաջարկների ընդունման վերջնաժամկետ" },
   "keyFacts.price": { ru: "Цена", en: "Price", hy: "Գին" },
   "keyFacts.onRequest": { ru: "По запросу", en: "On request", hy: "Ըստ պահանջի" },
   "keyFacts.platforms": { ru: "Где смотреть", en: "Available on", hy: "Հասանելի է" },
@@ -1083,18 +1083,23 @@ export const UI: Record<string, Dict> = {
     hy: "Փոփոխությունները նախագիծը կրկին կուղարկեն մոդերացիայի։",
   },
   // ── Applications inbox (audit wave 2) ──
-  "interests.title": { ru: "Заявки", en: "Applications", hy: "Հայտեր" },
+  /* "Applications" was the wrong word: an application is something you file
+     hoping to be accepted, but here the brand arrives with money and names a
+     package. It also collided with the other two things called "заявка" in
+     the panel — project submissions in Moderation, and account approvals.
+     Renamed to Brand offers (owner decision 2026-07-26). */
+  "interests.title": { ru: "Предложения брендов", en: "Brand offers", hy: "Բրենդների առաջարկներ" },
   "interests.subtitle": {
-    ru: "Заявки брендов на ваши проекты: сообщение, контакт и ответ.",
-    en: "Brand applications for your projects: message, contact and your answer.",
-    hy: "Բրենդների հայտերը ձեր նախագծերի համար՝ հաղորդագրություն, կոնտակտ և պատասխան։",
+    ru: "Предложения брендов по вашим проектам: пакет, условия и ваш ответ.",
+    en: "Brand offers on your projects: package, terms and your answer.",
+    hy: "Բրենդների առաջարկները ձեր նախագծերի վերաբերյալ՝ փաթեթ, պայմաններ և ձեր պատասխանը։",
   },
   "interests.subtitleAdmin": {
-    ru: "Все заявки брендов на площадке.",
-    en: "Every brand application on the platform.",
-    hy: "Հարթակի բոլոր բրենդային հայտերը։",
+    ru: "Все предложения брендов на площадке.",
+    en: "Every brand offer on the platform.",
+    hy: "Հարթակի բոլոր բրենդային առաջարկները։",
   },
-  "interests.empty": { ru: "Заявок пока нет.", en: "No applications yet.", hy: "Հայտեր դեռ չկան։" },
+  "interests.empty": { ru: "Предложений пока нет.", en: "No offers yet.", hy: "Առաջարկներ դեռ չկան։" },
   "interests.from": { ru: "От кого", en: "From", hy: "Ումից" },
   "interests.contact": { ru: "Контакт", en: "Contact", hy: "Կոնտակտ" },
   "interests.package": { ru: "Пакет размещения", en: "Placement package", hy: "Տեղադրման փաթեթ" },
@@ -1134,17 +1139,17 @@ export const UI: Record<string, Dict> = {
     hy: "Հայտին պատասխանում է նախագծի սեփականատերը։",
   },
   "interests.errOwnerOnly": {
-    ru: "Ответить на заявку может только владелец проекта.",
-    en: "Only the project's owner can answer this application.",
-    hy: "Հայտին կարող է պատասխանել միայն նախագծի սեփականատերը։",
+    ru: "Ответить на предложение может только владелец проекта.",
+    en: "Only the project's owner can answer this offer.",
+    hy: "Առաջարկին կարող է պատասխանել միայն նախագծի սեփականատերը։",
   },
-  "interests.errNotFound": { ru: "Заявка не найдена.", en: "Application not found.", hy: "Հայտը չի գտնվել։" },
+  "interests.errNotFound": { ru: "Предложение не найдено.", en: "Offer not found.", hy: "Առաջարկը չի գտնվել։" },
   "interests.errNoSlots": {
     ru: "В этом пакете не осталось свободных слотов.",
     en: "This package has no free slots left.",
     hy: "Այս փաթեթում ազատ տեղեր չեն մնացել։",
   },
-  "interests.eventApplication": { ru: "Заявка бренда", en: "Brand application", hy: "Բրենդի հայտ" },
+  "interests.eventApplication": { ru: "Предложение бренда", en: "Brand offer", hy: "Բրենդի առաջարկ" },
   "interests.eventResponse": { ru: "Ответ", en: "Answer", hy: "Պատասխան" },
   "account.brandOnlyNotice": {
     ru: "Подача проектов доступна только для аккаунтов создателей.",
@@ -1596,7 +1601,7 @@ export const UI: Record<string, Dict> = {
   // ── BRAND cabinet (#23, /account/brand/**) ──
   // (sidebar nav Dashboard/Log Out/Browse Projects reuse existing base keys —
   // account.title, account.logout, nav.browseProjects)
-  "account.brand.navInterests": { ru: "Мои интересы", en: "My Interests", hy: "Իմ հետաքրքրությունները" },
+  "account.brand.navInterests": { ru: "Мои предложения", en: "My offers", hy: "Իմ առաջարկները" },
   "account.brand.navFavorites": { ru: "Избранное", en: "Favorites", hy: "Ընտրանի" },
   "account.brand.navProfile": { ru: "Мой профиль", en: "My Profile", hy: "Իմ պրոֆիլը" },
   "account.brand.navNotifications": { ru: "Уведомления", en: "Notifications", hy: "Ծանուցումներ" },
@@ -1620,12 +1625,12 @@ export const UI: Record<string, Dict> = {
   "notif.rejected.reasonPrefix": { ru: "Причина:", en: "Reason:", hy: "Պատճառը․" },
   // Favorites / Application feature (2026-07-19)
   "notif.interestApproved.title": { ru: "Заявка одобрена", en: "Application approved", hy: "Հայտը հաստատվեց" },
-  "notif.interestApproved.body": { ru: "Ваша заявка на проект «{project}» одобрена.", en: "Your application for “{project}” was approved.", hy: "«{project}» նախագծի համար ձեր հայտը հաստատվեց։" },
-  "notif.interestDeclined.title": { ru: "Заявка отклонена", en: "Application declined", hy: "Հայտը մերժվեց" },
-  "notif.interestDeclined.body": { ru: "Ваша заявка на проект «{project}» отклонена.", en: "Your application for “{project}” was declined.", hy: "«{project}» նախագծի համար ձեր հայտը մերժվեց։" },
+  "notif.interestApproved.body": { ru: "Ваше предложение по проекту «{project}» принято.", en: "Your offer for “{project}” was accepted.", hy: "«{project}» նախագծի համար ձեր առաջարկն ընդունվեց։" },
+  "notif.interestDeclined.title": { ru: "Предложение отклонено", en: "Offer declined", hy: "Առաջարկը մերժվեց" },
+  "notif.interestDeclined.body": { ru: "Ваше предложение по проекту «{project}» отклонено.", en: "Your offer for “{project}” was declined.", hy: "«{project}» նախագծի համար ձեր առաջարկը մերժվեց։" },
   "favorite.addAria": { ru: "Добавить в избранное", en: "Add to favorites", hy: "Ավելացնել ընտրյալում" },
   "favorite.removeAria": { ru: "Убрать из избранного", en: "Remove from favorites", hy: "Հեռացնել ընտրյալից" },
-  "apply.title": { ru: "Отправить заявку", en: "Send an application", hy: "Ուղարկել հայտ" },
+  "apply.title": { ru: "Отправить предложение", en: "Send an offer", hy: "Ուղարկել առաջարկ" },
   "apply.messageLabel": { ru: "Сообщение", en: "Message", hy: "Հաղորդագրություն" },
   "apply.messagePlaceholder": { ru: "Расскажите о вашем интересе к размещению…", en: "Tell us about your placement interest…", hy: "Պատմեք ձեր տեղադրման հետաքրքրության մասին…" },
   "apply.contactLabel": { ru: "Контакт (необязательно)", en: "Contact (optional)", hy: "Կոնտակտ (ըստ ցանկության)" },
@@ -1691,10 +1696,10 @@ export const UI: Record<string, Dict> = {
   "apply.phoneLabel": { ru: "Телефон", en: "Phone", hy: "Հեռախոս" },
   "apply.phonePlaceholder": { ru: "+374 XX XXX XXX", en: "+374 XX XXX XXX", hy: "+374 XX XXX XXX" },
   "apply.phoneInvalid": { ru: "Укажите номер с кодом страны, например +374 XX XXX XXX", en: "Enter the number with its country code, for example +374 XX XXX XXX", hy: "Նշեք համարը երկրի կոդով, օրինակ՝ +374 XX XXX XXX" },
-  "apply.submit": { ru: "Отправить заявку", en: "Send application", hy: "Ուղարկել հայտը" },
+  "apply.submit": { ru: "Отправить предложение", en: "Send offer", hy: "Ուղարկել առաջարկը" },
   "apply.cancel": { ru: "Отмена", en: "Cancel", hy: "Չեղարկել" },
-  "apply.success": { ru: "Заявка отправлена", en: "Application sent", hy: "Հայտն ուղարկվեց" },
-  "apply.error": { ru: "Не удалось отправить заявку. Попробуйте ещё раз.", en: "Could not send the application. Please try again.", hy: "Չհաջողվեց ուղարկել հայտը։ Փորձեք նորից։" },
+  "apply.success": { ru: "Предложение отправлено", en: "Offer sent", hy: "Առաջարկն ուղարկվեց" },
+  "apply.error": { ru: "Не удалось отправить предложение. Попробуйте ещё раз.", en: "Could not send the offer. Please try again.", hy: "Չհաջողվեց ուղարկել առաջարկը։ Փորձեք նորից։" },
   "admin.interests.approve": { ru: "Одобрить", en: "Approve", hy: "Հաստատել" },
   "admin.interests.decline": { ru: "Отклонить", en: "Decline", hy: "Մերժել" },
   "admin.interests.message": { ru: "Сообщение", en: "Message", hy: "Հաղորդագրություն" },
@@ -1733,14 +1738,14 @@ export const UI: Record<string, Dict> = {
 
   // ── my interests ──
   "account.brand.interestsSubtitle": {
-    ru: "Проекты, к которым вы проявили интерес",
-    en: "Projects you have expressed interest in",
-    hy: "Նախագծեր, որոնց հանդեպ դուք հետաքրքրություն եք հայտնել",
+    ru: "Проекты, которым вы отправили предложение",
+    en: "Projects you have sent an offer to",
+    hy: "Նախագծեր, որոնց ուղարկել եք առաջարկ",
   },
   "account.brand.noInterestsPageBody": {
-    ru: "Просмотрите каталог и проявите интерес к проектам, подходящим вашему бренду.",
-    en: "Browse the catalog and express interest in projects that match your brand.",
-    hy: "Դիտեք կատալոգը և հետաքրքրություն հայտնեք ձեր բրենդին համապատասխան նախագծերի հանդեպ։",
+    ru: "Просмотрите каталог и отправьте предложение проектам, подходящим вашему бренду.",
+    en: "Browse the catalog and send an offer to projects that match your brand.",
+    hy: "Դիտեք կատալոգը և առաջարկ ուղարկեք ձեր բրենդին համապատասխան նախագծերին։",
   },
   "account.brand.interestStatusSent": { ru: "Отправлено", en: "Sent", hy: "Ուղարկված" },
   "account.brand.interestStatusMutual": { ru: "Взаимный интерес", en: "Mutual interest", hy: "Փոխադարձ հետաքրքրություն" },

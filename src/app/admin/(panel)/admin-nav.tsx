@@ -26,6 +26,7 @@ import {
   isTranslatorOnly,
 } from "@/lib/auth/permissions";
 import { getPendingModerationCount } from "./moderation/actions";
+import { getPendingOfferCount } from "./interests/actions";
 import { getUnreadNotificationCount } from "@/lib/actions/notifications";
 
 // Per-role nav visibility. Dashboard is universal (except for TRANSLATOR,
@@ -70,7 +71,7 @@ const NAV_GROUPS: {
       { href: "/admin/moderation", label: "Moderation", icon: ShieldCheck, show: canModerate },
       // Audit 2.1: the applications section was deleted in July, which left a
       // brand's message and contact stored but readable by nobody.
-      { href: "/admin/interests", label: "Applications", icon: Inbox, show: canEditContent },
+      { href: "/admin/interests", label: "Brand offers", icon: Inbox, show: canEditContent },
       { href: "/admin/projects", label: "Projects", icon: Film, show: canEditContent },
       { href: "/admin/cast", label: "Cast & Crew", icon: Users2, show: canEditContent },
       { href: "/admin/media", label: "Media", icon: FolderOpen, show: canEditContent },
@@ -110,11 +111,20 @@ export function AdminNav({ role, collapsed = false }: { role: Role; collapsed?: 
   // reviewing the moderation queue then navigating elsewhere.
   const [pendingModerationCount, setPendingModerationCount] = useState(0);
   const [unreadCount, setUnreadCount] = useState(0);
+  // Offers waiting for an answer. Without this the section gave no sign that
+  // anything had arrived — a brand's offer sat unanswered until somebody
+  // happened to open the page.
+  const [pendingOfferCount, setPendingOfferCount] = useState(0);
   useEffect(() => {
     let alive = true;
     getPendingModerationCount()
       .then((n) => {
         if (alive) setPendingModerationCount(n);
+      })
+      .catch(() => {});
+    getPendingOfferCount()
+      .then((n) => {
+        if (alive) setPendingOfferCount(n);
       })
       .catch(() => {});
     getUnreadNotificationCount()
@@ -162,7 +172,9 @@ export function AdminNav({ role, collapsed = false }: { role: Role; collapsed?: 
                   ? pendingModerationCount
                   : item.href === "/admin/notifications"
                     ? unreadCount
-                    : 0;
+                    : item.href === "/admin/interests"
+                      ? pendingOfferCount
+                      : 0;
 
               return (
                 <Link
