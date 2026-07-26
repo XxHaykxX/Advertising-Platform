@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { CalendarClock, CalendarDays } from "lucide-react";
+import { CalendarClock, CalendarDays, Film } from "lucide-react";
+import { isVideoPath } from "@/components/media-picker";
 import { AccentBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/ui/reveal";
@@ -111,30 +112,76 @@ export function KeyFacts({
                   <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                     {t("keyFacts.comparableTo")}
                   </div>
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {/* A reference may carry a link (the editor stores
-                        [{name,url}]); render it as one when it does. */}
-                    {project.references.map((r) =>
-                      r.url ? (
-                        <a
-                          key={`${r.name}-${r.url}`}
-                          href={r.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center rounded-full border border-primary/30 bg-primary/5 px-2.5 py-1 text-xs font-medium text-foreground underline-offset-2 transition-colors hover:border-primary hover:text-primary hover:underline"
-                        >
-                          {r.name}
-                        </a>
-                      ) : (
-                        <span
-                          key={r.name}
-                          className="inline-flex items-center rounded-full border border-primary/30 bg-primary/5 px-2.5 py-1 text-xs font-medium text-foreground"
-                        >
-                          {r.name}
-                        </span>
-                      ),
-                    )}
-                  </div>
+                  {/* A reference carries a name plus, optionally, a link and an
+                      uploaded still/clip. With media it gets a card (the visual
+                      is the point); without, the compact chip it always was. */}
+                  {project.references.some((r) => r.media) ? (
+                    <div className="mt-2 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                      {project.references.map((r) => {
+                        const body = (
+                          <>
+                            <div className="aspect-video w-full overflow-hidden rounded-lg border border-border bg-muted">
+                              {r.media ? (
+                                isVideoPath(r.media) ? (
+                                  <video
+                                    src={r.media}
+                                    className="h-full w-full object-cover"
+                                    muted
+                                    playsInline
+                                    preload="metadata"
+                                  />
+                                ) : (
+                                  // eslint-disable-next-line @next/next/no-img-element
+                                  <img src={r.media} alt="" className="h-full w-full object-cover" />
+                                )
+                              ) : (
+                                <div className="grid h-full w-full place-items-center text-muted-foreground">
+                                  <Film className="h-5 w-5" />
+                                </div>
+                              )}
+                            </div>
+                            <div className="mt-1.5 text-xs font-medium text-foreground">{r.name}</div>
+                          </>
+                        );
+                        return r.url ? (
+                          <a
+                            key={`${r.name}-${r.url}`}
+                            href={r.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="group block transition-opacity hover:opacity-90"
+                          >
+                            {body}
+                          </a>
+                        ) : (
+                          <div key={r.name}>{body}</div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {project.references.map((r) =>
+                        r.url ? (
+                          <a
+                            key={`${r.name}-${r.url}`}
+                            href={r.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center rounded-full border border-primary/30 bg-primary/5 px-2.5 py-1 text-xs font-medium text-foreground underline-offset-2 transition-colors hover:border-primary hover:text-primary hover:underline"
+                          >
+                            {r.name}
+                          </a>
+                        ) : (
+                          <span
+                            key={r.name}
+                            className="inline-flex items-center rounded-full border border-primary/30 bg-primary/5 px-2.5 py-1 text-xs font-medium text-foreground"
+                          >
+                            {r.name}
+                          </span>
+                        ),
+                      )}
+                    </div>
+                  )}
                 </div>
               ) : null}
             </div>

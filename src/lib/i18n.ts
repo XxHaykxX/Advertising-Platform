@@ -1269,6 +1269,20 @@ export const UI: Record<string, Dict> = {
   "projectForm.restoreDraft": { ru: "Восстановить черновик", en: "Restore draft", hy: "Վերականգնել սևագիրը" },
   "projectForm.discardDraft": { ru: "Отклонить", en: "Discard", hy: "Մերժել" },
   // Sticky Save bar's dirty-state dot (admin redesign, phase 2).
+  // Leave-guard dialog: shown when a nav link is clicked with unsaved edits.
+  "projectForm.leaveTitle": {
+    ru: "Изменения не сохранены",
+    en: "You have unsaved changes",
+    hy: "Փոփոխությունները պահպանված չեն",
+  },
+  "projectForm.leaveMessage": {
+    ru: "Если уйти сейчас, правки будут потеряны.",
+    en: "If you leave now, your edits will be lost.",
+    hy: "Եթե հիմա հեռանաք, խմբագրումները կկորչեն։",
+  },
+  "projectForm.leaveSave": { ru: "Сохранить и выйти", en: "Save and leave", hy: "Պահպանել և դուրս գալ" },
+  "projectForm.leaveDiscard": { ru: "Выйти без сохранения", en: "Leave without saving", hy: "Դուրս գալ առանց պահպանելու" },
+  "projectForm.leaveStay": { ru: "Остаться", en: "Stay on this page", hy: "Մնալ այս էջում" },
   "projectForm.unsavedChanges": {
     ru: "Есть несохранённые изменения",
     en: "Unsaved changes",
@@ -1458,6 +1472,9 @@ export const UI: Record<string, Dict> = {
   // comma-separated input above, which is now unused).
   "projectForm.field.referenceName": { ru: "Название", en: "Title", hy: "Վերնագիր" },
   "projectForm.field.referenceUrl": { ru: "Ссылка / URL изображения", en: "Link/image URL", hy: "Հղում / նկարի URL" },
+  // A past project can also carry an uploaded still or clip, not just a link
+  // (the customer's CSV schema allowed either; only the link half existed).
+  "projectForm.field.referenceMedia": { ru: "Фото / видео", en: "Photo / video", hy: "Լուսանկար / տեսանյութ" },
   "projectForm.addReference": { ru: "Добавить проект", en: "Add reference", hy: "Ավելացնել նախագիծ" },
   "projectForm.referencesEmpty": {
     ru: "Пока нет похожих проектов.",

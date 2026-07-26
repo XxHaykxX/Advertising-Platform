@@ -266,6 +266,13 @@ export function ProjectForm({
     // now what's stored, so it becomes the new comparison baseline.
     baselineSnapshot.current = snapshotForm();
     setIsDirty(false);
+    // "Save and leave": the click that was held now goes through.
+    if (leaveAfterSave.current) {
+      const href = leaveAfterSave.current;
+      leaveAfterSave.current = null;
+      window.location.assign(href);
+      return;
+    }
     setSaved(true);
     if (savedTimer.current) clearTimeout(savedTimer.current);
     savedTimer.current = setTimeout(() => setSaved(false), 3000);
@@ -308,6 +315,51 @@ export function ProjectForm({
     recomputeDirty();
     scheduleSaveDraft();
   }
+
+  // ── Leaving with unsaved work ─────────────────────────────────────────
+  // The sticky bar only *shows* the dirty state; clicking a nav link still
+  // dropped everything typed without a word (user report 2026-07-26). A
+  // pending in-app navigation is held here until the user decides.
+  const [pendingHref, setPendingHref] = useState<string | null>(null);
+  // Set when they chose "save and leave": the post-save effect below picks it
+  // up and completes the navigation once the action reports success.
+  const leaveAfterSave = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!isDirty) return;
+
+    // Reload / close tab / external URL — the browser's own generic prompt is
+    // the only thing available here.
+    function onBeforeUnload(e: BeforeUnloadEvent) {
+      e.preventDefault();
+      e.returnValue = "";
+    }
+
+    // In-app navigation (admin sidebar, "Back to projects", any <Link>) never
+    // hits beforeunload, so intercept the click itself while it's still
+    // cancellable and ask properly.
+    function onDocumentClick(e: MouseEvent) {
+      if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      const anchor = (e.target as HTMLElement | null)?.closest?.("a[href]") as HTMLAnchorElement | null;
+      if (!anchor) return;
+      const href = anchor.getAttribute("href") ?? "";
+      // Same-page anchors, downloads and new tabs aren't leaving the form.
+      if (!href || href.startsWith("#") || anchor.target === "_blank" || anchor.hasAttribute("download")) return;
+      const url = new URL(anchor.href, window.location.href);
+      if (url.origin !== window.location.origin) return;
+      if (url.pathname === window.location.pathname) return;
+      e.preventDefault();
+      e.stopPropagation();
+      setPendingHref(url.pathname + url.search);
+    }
+
+    window.addEventListener("beforeunload", onBeforeUnload);
+    document.addEventListener("click", onDocumentClick, true);
+    return () => {
+      window.removeEventListener("beforeunload", onBeforeUnload);
+      document.removeEventListener("click", onDocumentClick, true);
+    };
+  }, [isDirty]);
 
   // ── Controlled fields that don't fit a plain <input defaultValue> ──
   const [genres, setGenres] = useState<string[]>(() => data.genres);
@@ -906,7 +958,13 @@ export function ProjectForm({
               hidden `references` input at the top of the form. */}
           <section id="sec-references" className="scroll-mt-24 space-y-3 rounded-xl border border-border bg-card p-4">
             <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">{t("projectForm.section.references")}</h2>
-            <ReferencesSection value={references} onChange={setReferences} t={t} />
+            <ReferencesSection
+              value={references}
+              onChange={setReferences}
+              t={t}
+              scope={uploaderScope}
+              locale={locale}
+            />
           </section>
 
           {/* ── Production Timeline (Ф4/#27) ── admin-only: a repeatable list of
@@ -1197,6 +1255,58 @@ export function ProjectForm({
           {t("projectForm.cancel")}
         </Link>
       </div>
+
+      {/* Held navigation: the link click was cancelled, now the user picks.
+          "Save and leave" is a plain submit — the post-save effect completes
+          the navigation once the action reports success. Rendered inside the
+          <form> so that button can submit it directly. */}
+      {pendingHref ? (
+        <div
+          className="fixed inset-0 z-[100] grid place-items-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="leave-dialog-title"
+        >
+          <div className="absolute inset-0 bg-black/50" onClick={() => setPendingHref(null)} />
+          <div className="relative w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-2xl">
+            <h2 id="leave-dialog-title" className="text-base font-bold text-foreground">
+              {t("projectForm.leaveTitle")}
+            </h2>
+            <p className="mt-2 text-sm text-muted-foreground">{t("projectForm.leaveMessage")}</p>
+            <div className="mt-6 flex flex-col gap-2">
+              <button
+                type="submit"
+                onClick={() => {
+                  leaveAfterSave.current = pendingHref;
+                  setPendingHref(null);
+                }}
+                className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:opacity-90"
+              >
+                {t("projectForm.leaveSave")}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const href = pendingHref;
+                  setPendingHref(null);
+                  setIsDirty(false); // stop the guard re-firing on the way out
+                  if (href) window.location.assign(href);
+                }}
+                className="inline-flex items-center justify-center rounded-lg border border-danger/40 px-4 py-2.5 text-sm font-medium text-danger transition-colors hover:bg-danger/10"
+              >
+                {t("projectForm.leaveDiscard")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setPendingHref(null)}
+                className="inline-flex items-center justify-center rounded-lg px-4 py-2.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+              >
+                {t("projectForm.leaveStay")}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </form>
   );
 }

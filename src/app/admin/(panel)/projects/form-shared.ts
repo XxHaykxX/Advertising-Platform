@@ -226,7 +226,14 @@ export function parseMilestonesInput(raw: string | null): MilestoneRow[] {
   return [];
 }
 
-export type ReferenceRow = { name: string; url: string };
+export type ReferenceRow = {
+  name: string;
+  url: string;
+  /** Uploaded image or video for this reference ("/uploads/…"), picked from the
+   *  media library. The customer's CSV schema allows a past project to be shown
+   *  as a link OR as an image; only the link half existed until 2026-07-26. */
+  media?: string;
+};
 
 /** JSON string (or legacy CSV) -> ReferenceRow[] for the repeatable Reference
    Projects editor. New saves store JSON [{name,url}]; rows saved before this
@@ -237,7 +244,11 @@ export function parseReferencesInput(raw: string): ReferenceRow[] {
   try {
     const arr = JSON.parse(raw);
     if (Array.isArray(arr) && arr.every((r) => r && typeof r === "object")) {
-      return arr.map((r) => ({ name: String(r.name || ""), url: String(r.url || "") }));
+      return arr.map((r) => ({
+        name: String(r.name || ""),
+        url: String(r.url || ""),
+        media: String(r.media || ""),
+      }));
     }
   } catch {
     // not JSON — legacy comma-separated string, fall through

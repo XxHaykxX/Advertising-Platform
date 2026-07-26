@@ -237,7 +237,9 @@ const getProjectCached = unstable_cache(
       photo: a.photo ?? "",
     })),
     tagline: pickLocale(locale, { hy: p.taglineHy, ru: p.taglineRu, en: p.taglineEn }, p.tagline ?? ""),
-    references: parseReferencesInput(p.references ?? "").filter((r) => r.name),
+    references: parseReferencesInput(p.references ?? "")
+      .filter((r) => r.name)
+      .map((r) => ({ name: r.name, url: r.url, media: r.media ?? "" })),
     cinemas: splitCommaList(p.cinemas),
     expectedReleaseDate: p.expectedReleaseDate?.toISOString() ?? null,
     productionBudgetDisplay:

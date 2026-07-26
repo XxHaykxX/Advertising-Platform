@@ -58,6 +58,7 @@ export interface ProjectDetailDTO extends ProjectListDTO {
 export interface ReferenceDTO {
   name: string;
   url: string; // "" when the reference carries no link
+  media: string; // uploaded image/video path ("/uploads/…"), "" when none
 }
 
 export interface ActorDTO {

@@ -171,8 +171,8 @@ describe("parseReferencesInput", () => {
       { name: "Ray", url: "" },
     ]);
     expect(parseReferencesInput(raw)).toEqual([
-      { name: "Bohemian Rhapsody", url: "https://imdb.com/title/tt1727824" },
-      { name: "Ray", url: "" },
+      { name: "Bohemian Rhapsody", url: "https://imdb.com/title/tt1727824", media: "" },
+      { name: "Ray", url: "", media: "" },
     ]);
   });
 
@@ -180,6 +180,15 @@ describe("parseReferencesInput", () => {
     expect(parseReferencesInput("Ray, Bohemian Rhapsody")).toEqual([
       { name: "Ray", url: "" },
       { name: "Bohemian Rhapsody", url: "" },
+    ]);
+  });
+
+  it("keeps an uploaded still/clip alongside the link", () => {
+    const raw = JSON.stringify([
+      { name: "Ray", url: "https://example.com", media: "/uploads/references/ray.jpg" },
+    ]);
+    expect(parseReferencesInput(raw)).toEqual([
+      { name: "Ray", url: "https://example.com", media: "/uploads/references/ray.jpg" },
     ]);
   });
 
