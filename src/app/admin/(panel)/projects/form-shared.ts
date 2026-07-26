@@ -76,6 +76,30 @@ export const ROLE_VALUES = [
   "Guest",
 ] as const;
 
+// Which of ROLE_VALUES belong behind the camera. The CAST/CREW split used to be
+// a separate dropdown next to Role; it's now DERIVED from the picked role (user
+// request 2026-07-26 — "instead of choosing between those two, we pick from
+// these roles"), so the editors only ask for the role and the report page keeps
+// its two groups. Anything not listed here counts as CAST (on-screen talent).
+const CREW_ROLES: ReadonlySet<string> = new Set([
+  "Director",
+  "Writer",
+  "Producer",
+  "Music",
+  "Showrunner",
+  "General Producer",
+  "Executive Producer",
+  "Animator",
+  "Line Producer",
+  "Creative Producer",
+]);
+
+/** Role (one of ROLE_VALUES, or a legacy free-text value) -> "CAST" | "CREW".
+   Unknown/blank roles fall back to CAST, matching the old default. */
+export function kindForRole(role: string): "CAST" | "CREW" {
+  return CREW_ROLES.has((role || "").trim()) ? "CREW" : "CAST";
+}
+
 /** Date | null -> "YYYY-MM-DD" for prefilling an <input type=date>. */
 export function formatDateInput(d: Date | null): string {
   return d ? d.toISOString().slice(0, 10) : "";

@@ -20,6 +20,16 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: "52mb",
     },
+    // The REAL mp4-upload blocker (found 2026-07-26 by uploading 10/12/14 MB
+    // clips locally): because this app has a proxy (src/proxy.ts), Next clones
+    // and buffers every request body, capped at 10 MB by default. Past that the
+    // body is silently TRUNCATED, so the multipart parser inside the upload
+    // action died with "Unexpected end of form" → 500, and the picker showed
+    // nothing at all. serverActions.bodySizeLimit above is necessary but not
+    // sufficient — both caps must clear MAX_BYTES_VIDEO (50 MB) in
+    // src/lib/actions/uploads.ts. Cost: a 50 MB upload is buffered in memory,
+    // hence the deliberately tight per-file cap on the action side.
+    proxyClientMaxBodySize: "52mb",
   },
 };
 

@@ -8,7 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { requireContentEditor, requireSuperadmin } from "@/lib/auth/require";
 import { deleteUpload } from "@/lib/actions/uploads";
 import { addStreamingSources } from "@/lib/actions/streaming-sources";
-import { PLACEMENT_TYPE_VALUES, KIND_VALUES, ROLE_VALUES, parseCsvInput } from "./form-shared";
+import { PLACEMENT_TYPE_VALUES, KIND_VALUES, ROLE_VALUES, kindForRole, parseCsvInput } from "./form-shared";
 
 const STATUS_VALUES = ["PRE_PRODUCTION", "FILMING", "POST_PRODUCTION", "RELEASED"] as const;
 
@@ -28,7 +28,12 @@ export type ProjectFormValues = {
   synopsisEn: string;
   poster: string;
   gallery: string; // newline/comma-separated image URLs in the form; JSON string[] at rest
-  format: string;
+  // NB: the free-text `format` column is deliberately NOT part of the form
+  // values (user request 2026-07-26 — "remove Format from admin"). It has had
+  // no field since the redesign, so parsing it here meant every save wrote ""
+  // over whatever the column held; leaving it out keeps the stored value (and
+  // the catalog's Format chip) intact. Duration/episodes below are the admin's
+  // only format inputs now.
   formatCategory: string; // marketing format bucket (FEATURE|SERIES|…); "" when unset
   language: string; // primary language (Armenian|Russian|…); "" when unset
   studio: string;
@@ -173,7 +178,6 @@ function buildData(fd: FormData): ProjectFormValues {
     synopsisEn,
     poster: str(fd, "poster", VARCHAR_MAX),
     gallery: str(fd, "gallery"),
-    format: str(fd, "format", VARCHAR_MAX),
     formatCategory: str(fd, "formatCategory", VARCHAR_MAX),
     // Language is now a MultiSelect (admin redesign phase 1) — same CSV
     // storage convention as genres/countries/platforms/cinemas.
@@ -263,7 +267,16 @@ function parseActorRows(fd: FormData) {
         name: (r.name || "").trim(),
         role: roles[0] ?? "",
         roles: JSON.stringify(roles),
-        kind: (ACTOR_KIND_VALUES as readonly string[]).includes(r.kind ?? "") ? r.kind! : "CAST",
+        // CAST/CREW is derived from the picked role now (the dropdown is gone
+        // from the editor). Only a role from the fixed list decides it; a legacy
+        // free-text role (pre-Ф3, often hy/ru like "Ռեժիսոր") keeps the kind the
+        // row already carries, so an edit-save can't flip an existing CREW
+        // member to CAST just because their role predates ROLE_VALUES.
+        kind: roles.length && (ROLE_VALUES as readonly string[]).includes(roles[0])
+          ? kindForRole(roles[0])
+          : (ACTOR_KIND_VALUES as readonly string[]).includes(r.kind ?? "")
+            ? r.kind!
+            : "CAST",
         photo: (r.photo || "").trim() || null,
         sortOrder: i,
         personId: typeof r.personId === "number" ? r.personId : null,

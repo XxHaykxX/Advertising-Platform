@@ -1231,14 +1231,14 @@ export const UI: Record<string, Dict> = {
   "projectForm.languagePlaceholder": { ru: "Выберите языки…", en: "Select languages…", hy: "Ընտրեք լեզուները…" },
   "projectForm.kindFilm": { ru: "Одиночный", en: "Single", hy: "Առանձին" },
   "projectForm.kindSerial": { ru: "Сериал", en: "Series", hy: "Շարք" },
-  "projectForm.field.episodes": { ru: "Кол-во серий", en: "Episodes", hy: "Սերիաների քանակ" },
-  "projectForm.field.episodeMinutes": { ru: "Хронометраж серии (мин)", en: "Minutes per episode", hy: "Սերիայի տևողությունը (րոպե)" },
+  "projectForm.field.episodes": { ru: "Кол-во серий *", en: "Episodes *", hy: "Սերիաների քանակ *" },
+  "projectForm.field.episodeMinutes": { ru: "Хронометраж серии (мин) *", en: "Minutes per episode *", hy: "Սերիայի տևողությունը (րոպե) *" },
   // Ф2: FILM-only counterpart of episodes/episodeMinutes — same slot, Single only.
-  "projectForm.field.durationMinutes": { ru: "Длительность (мин)", en: "Duration (min)", hy: "Տևողություն (րոպե)" },
+  "projectForm.field.durationMinutes": { ru: "Длительность (мин) *", en: "Duration (min) *", hy: "Տևողություն (րոպե) *" },
   "projectForm.field.boxOffice": {
-    ru: "Бюджет (кассовый сбор, драм)",
-    en: "Budget (box office, AMD)",
-    hy: "Բյուջե (գանձարկղ, դրամ)",
+    ru: "Бюджет (драм, необязательно)",
+    en: "Budget (AMD, optional)",
+    hy: "Բյուջե (դրամ, ոչ պարտադիր)",
   },
   "projectForm.field.studio": { ru: "Студия", en: "Studio", hy: "Ստուդիա" },
   "projectForm.studioPlaceholder": {

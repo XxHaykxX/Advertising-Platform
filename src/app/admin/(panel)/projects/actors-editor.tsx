@@ -22,7 +22,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Plus, Trash2, User, X } from "lucide-react";
 import { MediaPicker, type MediaPickerScope } from "@/components/media-picker";
 import { MultiSelect } from "@/components/ui/multi-select";
-import { ROLE_VALUES } from "./form-shared";
+import { ROLE_VALUES, kindForRole } from "./form-shared";
 import type { PersonSuggestion } from "@/lib/data/actors";
 import { matchesNameQuery } from "@/lib/translit";
 import { cn } from "@/lib/utils";
@@ -43,6 +43,10 @@ import type { makeUI } from "@/lib/i18n";
 // fixed ROLE_VALUES list, one person can hold several) and a new `personId`
 // links the row to the global Person directory (null until a name is picked
 // from — or newly created via — that directory on save).
+//
+// 2026-07-26: the Cast/Crew dropdown is gone — `kind` is derived from the first
+// picked role (kindForRole) both here and server-side, so the row only asks for
+// the role. It stays on ActorRow because the report page groups by it.
 export type ActorRow = { name: string; roles: string[]; kind: string; photo: string; personId: number | null };
 
 export const EMPTY_ACTOR: ActorRow = { name: "", roles: [], kind: "CAST", photo: "", personId: null };
@@ -119,6 +123,7 @@ export function ActorsSection({
     const patch: Partial<ActorRow> = { name: p.name, photo: p.photo, personId: p.id ?? null };
     if (value[i].roles.length === 0 && (ROLE_VALUES as readonly string[]).includes(p.role)) {
       patch.roles = [p.role];
+      patch.kind = kindForRole(p.role);
     }
     update(i, patch);
   }
@@ -175,12 +180,11 @@ export function ActorsSection({
               float OUT of the table (over the rows / next section). Clipping
               them cut the Role list and hid the name suggestions. Rounding is
               handled per-edge (header top) instead of by clipping. */}
-          <div className="hidden grid-cols-[24px_40px_1fr_1fr_110px_32px] items-center gap-2 rounded-t-xl border-b border-border bg-muted px-3 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground sm:grid">
+          <div className="hidden grid-cols-[24px_40px_1fr_1fr_32px] items-center gap-2 rounded-t-xl border-b border-border bg-muted px-3 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground sm:grid">
             <span />
             <span>{t("projectForm.cast.photo")}</span>
             <span>{t("projectForm.cast.name")}</span>
             <span>{t("projectForm.cast.role")}</span>
-            <span>{t("projectForm.cast.kind")}</span>
             <span />
           </div>
           <DndContext
@@ -201,8 +205,7 @@ export function ActorsSection({
                     knownPeople={knownPeople}
                     onName={(name) => updateName(i, name)}
                     onSelectPerson={(p) => selectPerson(i, p)}
-                    onRoles={(roles) => update(i, { roles })}
-                    onKind={(kind) => update(i, { kind })}
+                    onRoles={(roles) => update(i, { roles, kind: kindForRole(roles[0] ?? "") })}
                     onClearPhoto={() => update(i, { photo: "" })}
                     onOpenPhoto={() => setPickerFor(ids[i])}
                     onDelete={() => removeRow(i)}
@@ -372,7 +375,6 @@ function ActorTableRow({
   onName,
   onSelectPerson,
   onRoles,
-  onKind,
   onClearPhoto,
   onOpenPhoto,
   onDelete,
@@ -385,7 +387,6 @@ function ActorTableRow({
   onName: (name: string) => void;
   onSelectPerson: (p: PersonSuggestion) => void;
   onRoles: (roles: string[]) => void;
-  onKind: (kind: string) => void;
   onClearPhoto: () => void;
   onOpenPhoto: () => void;
   onDelete: () => void;
@@ -403,14 +404,14 @@ function ActorTableRow({
     boxShadow: isDragging ? "0 8px 24px -8px rgb(0 0 0 / 0.35)" : undefined,
   };
 
-  // Desktop: one 6-column grid row. Mobile (<sm): the same cells wrap to two
+  // Desktop: one 5-column grid row. Mobile (<sm): the same cells wrap to two
   // lines — handle+photo span both rows on the left, name+delete on line 1,
-  // role+kind on line 2 — via explicit col/row placement per cell.
+  // role on line 2 — via explicit col/row placement per cell.
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`grid grid-cols-[24px_40px_1fr_1fr] items-center gap-x-2 gap-y-1 px-3 py-1.5 sm:grid-cols-[24px_40px_1fr_1fr_110px_32px] ${
+      className={`grid grid-cols-[24px_40px_1fr_1fr] items-center gap-x-2 gap-y-1 px-3 py-1.5 sm:grid-cols-[24px_40px_1fr_1fr_32px] ${
         isDragging ? "" : "hover:bg-muted/50"
       }`}
     >
@@ -471,19 +472,10 @@ function ActorTableRow({
           placeholder={t("projectForm.cast.role")}
         />
       </div>
-      <select
-        value={r.kind}
-        onChange={(e) => onKind(e.target.value)}
-        className={`${cellCls} col-start-4 row-start-2 sm:col-start-5 sm:row-start-1`}
-      >
-        <option value="CAST">{t("projectForm.cast.kindCast")}</option>
-        <option value="CREW">{t("projectForm.cast.kindCrew")}</option>
-      </select>
-
       <button
         type="button"
         onClick={onDelete}
-        className="col-start-4 row-start-1 grid h-8 w-8 place-items-center justify-self-end self-center rounded-lg text-muted-foreground hover:bg-muted hover:text-primary sm:col-start-6 sm:justify-self-auto"
+        className="col-start-4 row-start-1 grid h-8 w-8 place-items-center justify-self-end self-center rounded-lg text-muted-foreground hover:bg-muted hover:text-primary sm:col-start-5 sm:justify-self-auto"
         aria-label={t("projectForm.remove")}
       >
         <Trash2 className="h-4 w-4" />

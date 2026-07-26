@@ -71,7 +71,12 @@ export function MediaField({
         </div>
       </div>
 
-      {accept !== "video" && <p className="text-xs text-muted-foreground">{imageSizeHint(uploadDir)}</p>}
+      {/* Video fields state the format + the 50 MB per-file cap enforced by
+          uploadImage (MAX_BYTES_VIDEO) — the old silent limit was half the
+          "MP4 upload doesn't work" confusion. */}
+      <p className="text-xs text-muted-foreground">
+        {accept === "video" ? "MP4 / WebM · ≤50 MB" : imageSizeHint(uploadDir)}
+      </p>
 
       <MediaPicker
         open={open}

@@ -52,10 +52,22 @@ function localizeFormat(locale: Locale, format: string): string {
    plain localized `format` string as before. */
 function effectiveFormat(
   locale: Locale,
-  p: { format: string; kind: string; episodes: number | null; episodeMinutes: number | null },
+  p: {
+    format: string;
+    kind: string;
+    episodes: number | null;
+    episodeMinutes: number | null;
+    durationMinutes?: number | null;
+  },
 ): string {
   if (p.kind === "SERIAL" && p.episodes && p.episodeMinutes) {
     return `${p.episodeMinutes}m/${p.episodes}episodes`;
+  }
+  // Single with a runtime: same treatment as the SERIAL branch. The admin form
+  // has no free-text `format` field any more (2026-07-26), so Duration is the
+  // only thing a new Single carries — without this its chip would be blank.
+  if (p.kind === "FILM" && p.durationMinutes) {
+    return `${p.durationMinutes}m`;
   }
   return localizeFormat(locale, p.format);
 }

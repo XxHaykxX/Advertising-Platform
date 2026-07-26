@@ -69,7 +69,6 @@ export default async function EditProjectPage({
     synopsisEn: p.synopsisEn ?? "",
     poster: p.poster ?? "",
     gallery: parseGalleryInput(p.gallery),
-    format: p.format,
     formatCategory: p.formatCategory,
     language: p.language,
     studio: p.studio,

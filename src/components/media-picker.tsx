@@ -105,12 +105,34 @@ export function MediaPicker({
     startTransition(async () => {
       const added: MediaFile[] = [];
       for (const file of picked) {
+        const kind = accept === "any" ? (file.type.startsWith("video/") ? "video" : "image") : accept;
+        // Size-check before the round trip: past the framework body limit the
+        // request is cut off mid-flight and the server-side "max 50 MB" message
+        // never gets a chance to run, so the user would only see a generic
+        // failure. Mirrors MAX_BYTES / MAX_BYTES_VIDEO in lib/actions/uploads.ts.
+        const maxMb = kind === "video" ? 50 : 8;
+        if (file.size > maxMb * 1024 * 1024) {
+          const mb = Math.round((file.size / (1024 * 1024)) * 10) / 10;
+          setError(`“${file.name}” is ${mb} MB — the limit is ${maxMb} MB.`);
+          continue;
+        }
         const fd = new FormData();
         fd.append("file", file);
         fd.append("dir", uploadDir);
-        const kind = accept === "any" ? (file.type.startsWith("video/") ? "video" : "image") : accept;
         fd.append("kind", kind);
-        const res = await upload(fd);
+        // A rejected action (framework 413 when the body exceeds
+        // serverActions.bodySizeLimit, a proxy cutting the request, a network
+        // drop) used to reject this promise inside startTransition: no message,
+        // no thrown error the user could see — the dialog just sat there and
+        // "MP4 upload doesn't work". Surface it instead.
+        let res: { path?: string; error?: string };
+        try {
+          res = await upload(fd);
+        } catch {
+          const mb = Math.round((file.size / (1024 * 1024)) * 10) / 10;
+          setError(`Upload failed — “${file.name}” (${mb} MB) was rejected by the server. Try a smaller file.`);
+          continue;
+        }
         if (res.error) {
           setError(res.error);
           continue;
@@ -200,11 +222,14 @@ export function MediaPicker({
               {accept === "video" ? "No videos yet" : "No images yet"} — use “Upload from computer”.
             </p>
           ) : (
-            <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5">
+            /* 16:9 tiles, one column fewer than before — every image in the app
+               is 16:9, so square tiles cropped the preview AND made it small
+               (user request 2026-07-26: "a bit bigger, 16:9"). */
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
               {visible.map((f) => (
                 <div
                   key={f.path}
-                  className="group relative aspect-square overflow-hidden rounded-lg border border-border bg-muted transition-colors hover:border-primary"
+                  className="group relative aspect-video overflow-hidden rounded-lg border border-border bg-muted transition-colors hover:border-primary"
                 >
                   <button
                     type="button"
@@ -221,7 +246,7 @@ export function MediaPicker({
                         <span className="line-clamp-2 text-[10px] leading-tight">{f.path.split("/").pop()}</span>
                       </span>
                     ) : (
-                      <Image src={f.path} alt="" fill className="object-cover" sizes="120px" unoptimized />
+                      <Image src={f.path} alt="" fill className="object-cover" sizes="200px" unoptimized />
                     )}
                   </button>
                   <a

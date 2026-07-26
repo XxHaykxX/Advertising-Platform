@@ -1,5 +1,8 @@
+import { createReadStream } from "node:fs";
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
+import { Readable } from "node:stream";
+import { parseRange } from "@/lib/http-range";
 import { UPLOADS_DIR } from "@/lib/uploads-dir";
 
 // Serves uploaded/generated images from UPLOADS_DIR over the same /uploads/…
@@ -23,7 +26,7 @@ const CONTENT_TYPE: Record<string, string> = {
   ".webm": "video/webm",
 };
 
-export async function GET(_req: Request, ctx: { params: Promise<{ path: string[] }> }) {
+export async function GET(req: Request, ctx: { params: Promise<{ path: string[] }> }) {
   const { path: segments } = await ctx.params;
 
   // Resolve against UPLOADS_DIR and reject anything that escapes it (../ etc.).
@@ -35,12 +38,39 @@ export async function GET(_req: Request, ctx: { params: Promise<{ path: string[]
   try {
     const s = await stat(abs);
     if (!s.isFile()) return new Response("Not found", { status: 404 });
+    const ext = path.extname(abs).toLowerCase();
+    const type = CONTENT_TYPE[ext] || "application/octet-stream";
+    const isVideo = type.startsWith("video/");
+
+    // Video needs byte ranges: Chrome/Safari request "Range: bytes=0-" for a
+    // <video> and Safari refuses to play at all without a 206. Answering with
+    // the whole file also meant a 50 MB trailer was buffered into memory on
+    // shared hosting — the "MP4 upload doesn't work" report was really "the
+    // uploaded MP4 doesn't play". Images keep the simple buffered path.
+    if (isVideo) {
+      const range = parseRange(req.headers.get("range"), s.size);
+      const [start, end] = range ?? [0, s.size - 1];
+      const stream = Readable.toWeb(
+        createReadStream(abs, { start, end }),
+      ) as unknown as ReadableStream<Uint8Array>;
+      return new Response(stream, {
+        status: range ? 206 : 200,
+        headers: {
+          "Content-Type": type,
+          "Content-Length": String(end - start + 1),
+          "Accept-Ranges": "bytes",
+          ...(range ? { "Content-Range": `bytes ${start}-${end}/${s.size}` } : {}),
+          "Cache-Control": "public, max-age=31536000, immutable",
+        },
+      });
+    }
+
     const buf = await readFile(abs);
-    const type = CONTENT_TYPE[path.extname(abs).toLowerCase()] || "application/octet-stream";
     return new Response(new Uint8Array(buf), {
       headers: {
         "Content-Type": type,
         "Content-Length": String(s.size),
+        "Accept-Ranges": "bytes",
         "Cache-Control": "public, max-age=31536000, immutable",
       },
     });

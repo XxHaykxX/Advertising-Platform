@@ -9,7 +9,7 @@ import { makeUI } from "@/lib/i18n";
 import { notifyNewProjectForModeration } from "@/lib/mail";
 import { notifyRoles } from "@/lib/data/notifications";
 import { addStreamingSources } from "@/lib/actions/streaming-sources";
-import { PLACEMENT_TYPE_VALUES, KIND_VALUES, ROLE_VALUES, parseCsvInput } from "@/app/admin/(panel)/projects/form-shared";
+import { PLACEMENT_TYPE_VALUES, KIND_VALUES, ROLE_VALUES, kindForRole, parseCsvInput } from "@/app/admin/(panel)/projects/form-shared";
 import type { ProjectFormValues, ProjectFormState } from "@/app/admin/(panel)/projects/actions";
 
 /* #16 (expanded 2026-07-16): the Creator self-serve submission form
@@ -114,7 +114,6 @@ function buildData(fd: FormData): ProjectFormValues {
     synopsisEn,
     poster: str(fd, "poster", VARCHAR_MAX),
     gallery: str(fd, "gallery"),
-    format: str(fd, "format", VARCHAR_MAX),
     formatCategory: str(fd, "formatCategory", VARCHAR_MAX),
     // Language is now a MultiSelect (admin redesign phase 1) — same CSV
     // storage convention as genres/countries/platforms/cinemas.
@@ -194,7 +193,16 @@ function parseActorRows(fd: FormData) {
         name: (r.name || "").trim(),
         role: roles[0] ?? "",
         roles: JSON.stringify(roles),
-        kind: (ACTOR_KIND_VALUES as readonly string[]).includes(r.kind ?? "") ? r.kind! : "CAST",
+        // CAST/CREW is derived from the picked role now (the dropdown is gone
+        // from the editor). Only a role from the fixed list decides it; a legacy
+        // free-text role (pre-Ф3, often hy/ru like "Ռեժիսոր") keeps the kind the
+        // row already carries, so an edit-save can't flip an existing CREW
+        // member to CAST just because their role predates ROLE_VALUES.
+        kind: roles.length && (ROLE_VALUES as readonly string[]).includes(roles[0])
+          ? kindForRole(roles[0])
+          : (ACTOR_KIND_VALUES as readonly string[]).includes(r.kind ?? "")
+            ? r.kind!
+            : "CAST",
         photo: (r.photo || "").trim() || null,
         sortOrder: i,
         personId: typeof r.personId === "number" ? r.personId : null,

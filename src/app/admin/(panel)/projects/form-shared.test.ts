@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { deriveFormatCategory, FORMAT_CATEGORY_VALUES } from "./form-shared";
+import { deriveFormatCategory, kindForRole, FORMAT_CATEGORY_VALUES, ROLE_VALUES } from "./form-shared";
 
 describe("deriveFormatCategory", () => {
   it("returns an explicit saved formatCategory verbatim (always wins)", () => {
@@ -44,6 +44,35 @@ describe("deriveFormatCategory", () => {
     const samples = ["Series", "Feature", "Movie", "podcast", "reality", "short", "program", "", "junk"];
     for (const s of samples) {
       expect(valid.has(deriveFormatCategory("", "FILM", s))).toBe(true);
+    }
+  });
+});
+
+describe("kindForRole", () => {
+  it("maps behind-the-camera roles to CREW", () => {
+    expect(kindForRole("Director")).toBe("CREW");
+    expect(kindForRole("Executive Producer")).toBe("CREW");
+    expect(kindForRole("Writer")).toBe("CREW");
+  });
+
+  it("maps on-screen roles to CAST", () => {
+    expect(kindForRole("Actor")).toBe("CAST");
+    expect(kindForRole("Voice Actor")).toBe("CAST");
+    expect(kindForRole("Show Host")).toBe("CAST");
+  });
+
+  it("falls back to CAST for blank / legacy free-text roles", () => {
+    expect(kindForRole("")).toBe("CAST");
+    expect(kindForRole("Ռեժիսոր")).toBe("CAST");
+  });
+
+  it("tolerates surrounding whitespace", () => {
+    expect(kindForRole("  Producer  ")).toBe("CREW");
+  });
+
+  it("classifies every ROLE_VALUES entry as CAST or CREW", () => {
+    for (const r of ROLE_VALUES) {
+      expect(["CAST", "CREW"]).toContain(kindForRole(r));
     }
   });
 });

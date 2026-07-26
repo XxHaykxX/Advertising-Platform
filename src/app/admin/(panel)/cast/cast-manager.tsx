@@ -24,6 +24,7 @@ import { ConfirmDialog } from "@/components/confirm-dialog";
 import { MediaPicker } from "@/components/media-picker";
 import type { PersonRow } from "@/lib/data/persons";
 import { matchesNameQuery } from "@/lib/translit";
+import { ROLE_VALUES, kindForRole } from "@/app/admin/(panel)/projects/form-shared";
 import { createPerson, deletePerson, reorderPersons, updatePerson } from "./person-actions";
 
 type PersonPatch = Partial<Pick<PersonRow, "name" | "role" | "kind" | "photo">>;
@@ -202,12 +203,11 @@ export function CastManager({ persons }: { persons: PersonRow[] }) {
         </p>
       ) : (
         <div className="overflow-hidden rounded-2xl border border-border bg-card">
-          <div className="grid grid-cols-[24px_40px_1fr_1fr_110px_32px] items-center gap-2 border-b border-border bg-muted px-3 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          <div className="grid grid-cols-[24px_40px_1fr_1fr_32px] items-center gap-2 border-b border-border bg-muted px-3 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
             <span />
             <span>Photo</span>
             <span>Name</span>
             <span>Role</span>
-            <span>Kind</span>
             <span />
           </div>
           <DndContext
@@ -292,7 +292,7 @@ function SortableRow({
     <div
       ref={setNodeRef}
       style={style}
-      className={`grid grid-cols-[24px_40px_1fr_1fr_110px_32px] items-center gap-2 px-3 py-1.5 ${isDragging ? "" : "hover:bg-muted/50"}`}
+      className={`grid grid-cols-[24px_40px_1fr_1fr_32px] items-center gap-2 px-3 py-1.5 ${isDragging ? "" : "hover:bg-muted/50"}`}
     >
       <button
         type="button"
@@ -338,15 +338,24 @@ function SortableRow({
         placeholder="Name"
         className={inputCls}
       />
-      <input
+      {/* Role picks from the fixed ROLE_VALUES list and DERIVES Cast/Crew
+          (kindForRole) — the separate Kind dropdown is gone (user request
+          2026-07-26). A legacy free-text role still renders as its own option
+          so editing another cell can't silently rewrite it. */}
+      <select
         value={r.role}
-        onChange={(e) => onChange({ role: e.target.value }, true)}
-        placeholder="Role"
+        onChange={(e) => onChange({ role: e.target.value, kind: kindForRole(e.target.value) })}
         className={inputCls}
-      />
-      <select value={r.kind} onChange={(e) => onChange({ kind: e.target.value })} className={inputCls}>
-        <option value="CAST">Cast</option>
-        <option value="CREW">Crew</option>
+      >
+        <option value="">—</option>
+        {!(ROLE_VALUES as readonly string[]).includes(r.role) && r.role && (
+          <option value={r.role}>{r.role}</option>
+        )}
+        {ROLE_VALUES.map((v) => (
+          <option key={v} value={v}>
+            {v}
+          </option>
+        ))}
       </select>
 
       <button

@@ -76,7 +76,6 @@ const EMPTY: ProjectFormInitial = {
   synopsisEn: "",
   poster: "",
   gallery: "",
-  format: "",
   formatCategory: "",
   language: "",
   studio: "",
@@ -915,6 +914,7 @@ export function ProjectForm({
                     name="episodes"
                     type="number"
                     min={0}
+                    required
                     defaultValue={numOrEmpty(data.episodes)}
                     placeholder="24"
                     className={inputCls}
@@ -925,6 +925,7 @@ export function ProjectForm({
                     name="episodeMinutes"
                     type="number"
                     min={0}
+                    required
                     defaultValue={numOrEmpty(data.episodeMinutes)}
                     placeholder="50"
                     className={inputCls}
@@ -932,11 +933,16 @@ export function ProjectForm({
                 </Field>
               </div>
             ) : (
+              /* Single must carry a runtime (CSV schema marks it required, user
+                 request 2026-07-26). `required` is safe here — unlike the About
+                 tabs, the inactive branch UNMOUNTS, so the browser never blocks
+                 submit on a field nobody can see. */
               <Field label={t("projectForm.field.durationMinutes")}>
                 <input
                   name="durationMinutes"
                   type="number"
                   min={0}
+                  required
                   defaultValue={numOrEmpty(data.durationMinutes)}
                   placeholder="95"
                   className={inputCls}
