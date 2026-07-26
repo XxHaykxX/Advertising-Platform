@@ -64,3 +64,22 @@
   `session-2026-07-20-poster-uploads-fix`).
 - Файл-источник по SQL-миграциям — `docs/prod-migrations/*.sql`, по одному файлу на батч,
   с датой в имени.
+
+## Грабли локальной сборки (добавлено 26.07.2026)
+
+- **Билд падает на `/opengraph-image`** с `colourspace: parameter space not set`
+  (libvips/GLib) — это **не код**, а битый кэш `.next`. Ловится после
+  принудительной остановки dev-сервера. Лечится `rm -rf .next`. Падает
+  стабильно, а не через раз, так что на флак списывать нельзя.
+- **`npx prisma generate` → EPERM** на `query_engine-windows.dll.node`, пока
+  поднят dev на 3001. Сначала проверь, не содержит ли клиент уже нужные поля:
+  `grep viewCount node_modules/.prisma/client/index.d.ts`. Часто генерация
+  вообще не нужна и лок можно не трогать.
+- **Собрать git-worktree, подцепив `node_modules` junction'ом, нельзя** —
+  Turbopack отвечает «Symlink is invalid, it points out of the filesystem
+  root». Проверять сборку отдельного коммита проще в основном дереве на
+  detached HEAD (`git checkout --detach <sha>`, потом `git checkout main`).
+- **Дамп прод-базы**: `mysqldump` из образа mysql:8 против сервера Hostinger
+  требует `--column-statistics=0`, иначе падает на
+  `information_schema.COLUMN_STATISTICS` и оставляет файл ~6 КБ, который на
+  вид похож на дамп. Проверять хвост файла на `-- Dump completed`.
