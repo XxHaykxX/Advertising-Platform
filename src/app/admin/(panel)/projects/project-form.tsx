@@ -262,7 +262,9 @@ export function ProjectForm({
       window.location.assign(state.redirect);
       return;
     }
-    // Edit: stay put, clear the dirty flag, flash "Saved".
+    // Edit: stay put, clear the dirty flag, flash "Saved". What's on screen is
+    // now what's stored, so it becomes the new comparison baseline.
+    baselineSnapshot.current = snapshotForm();
     setIsDirty(false);
     setSaved(true);
     if (savedTimer.current) clearTimeout(savedTimer.current);
@@ -275,8 +277,35 @@ export function ProjectForm({
   // native "input" event (already wired for draft autosave), and controlled
   // widgets (MultiSelect, kind, actors, tiers) flip it via the effect below.
   const [isDirty, setIsDirty] = useState(false);
+
+  // The flag used to be "anything fired an event → dirty", which lit up the
+  // moment the form mounted: several controlled widgets settle into their
+  // seeded value on the first render, and that counted as an edit even though
+  // the user hadn't touched anything. It now compares the live form against a
+  // snapshot taken once the form has settled, so "Unsaved changes" appears
+  // only when something actually differs from what's stored.
+  const baselineSnapshot = useRef<string | null>(null);
+
+  /** Every string field of the form, serialized in DOM order. File inputs are
+   *  skipped (same filter the draft autosave uses). */
+  function snapshotForm(): string | null {
+    const form = formRef.current;
+    if (!form) return null;
+    const values: Record<string, string> = {};
+    for (const [k, v] of new FormData(form).entries()) {
+      if (typeof v === "string") values[k] = v;
+    }
+    return JSON.stringify(values);
+  }
+
+  function recomputeDirty() {
+    const current = snapshotForm();
+    if (current === null || baselineSnapshot.current === null) return;
+    setIsDirty(current !== baselineSnapshot.current);
+  }
+
   function handleFormInput() {
-    setIsDirty(true);
+    recomputeDirty();
     scheduleSaveDraft();
   }
 
@@ -414,14 +443,16 @@ export function ProjectForm({
 
   // Re-save whenever a controlled widget changes (its hidden input has already
   // re-rendered by the time this effect runs, so the snapshot is current).
-  // Skip the very first run so merely opening the form doesn't write a draft
-  // or flip the sticky-bar dirty dot.
+  // The first run is where the baseline is taken instead: by then every
+  // controlled widget has mirrored its seeded value into a hidden input, so
+  // the snapshot matches what's actually stored.
   useEffect(() => {
     if (skipFirstDraftEffect.current) {
       skipFirstDraftEffect.current = false;
+      baselineSnapshot.current = snapshotForm();
       return;
     }
-    setIsDirty(true);
+    recomputeDirty();
     if (isEdit) return;
     scheduleSaveDraft();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -448,6 +479,9 @@ export function ProjectForm({
       }
     }
     pendingRestore.current = null;
+    // A restored draft IS unsaved work — compare against the stored values,
+    // not against what was just replayed onto the DOM.
+    recomputeDirty();
   }, [restoreNonce]);
 
   function restoreDraft() {
