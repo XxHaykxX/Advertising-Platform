@@ -5,7 +5,6 @@ import {
   Clapperboard,
   Clock,
   Film,
-  Globe,
   MapPin,
   Wallet,
 } from "lucide-react";
@@ -51,7 +50,6 @@ export function ProjectCard({
   const moreGenres = extraGenres.length - shownExtraGenres.length;
   // Language is a CSV of one or more values (admin redesign phase 1) — used to
   // only drive the filter and was never shown on the card itself.
-  const languages = splitCountries(project.language);
 
   return (
     <div className="relative flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card card-lift">
@@ -117,14 +115,6 @@ export function ProjectCard({
               {extraCountries > 0 ? ` +${extraCountries}` : ""}
             </span>
           </div>
-          {languages.length > 0 ? (
-            <div className="flex items-center gap-2">
-              <Globe className="h-3.5 w-3.5 shrink-0" />
-              <span>
-                {t("catalog.language")}: {languages.map((l) => localizeValue(locale, "language", l)).join(", ")}
-              </span>
-            </div>
-          ) : null}
           {project.boxOfficeDisplay ? (
             <div className="flex items-center gap-2">
               <Wallet className="h-3.5 w-3.5 shrink-0" />

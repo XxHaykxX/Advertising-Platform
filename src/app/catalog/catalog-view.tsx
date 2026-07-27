@@ -23,7 +23,7 @@ import { FavoriteHeart } from "@/components/favorite-heart";
 import { Footer } from "@/components/footer";
 import { Header, type SiteHeaderUser } from "@/components/header";
 import { daysUntil, formatFullDate, parseStringArray, splitCountries } from "@/lib/data/format";
-import { FORMAT_CATEGORY_VALUES, LANGUAGE_VALUES } from "@/app/admin/(panel)/projects/form-shared";
+import { FORMAT_CATEGORY_VALUES } from "@/app/admin/(panel)/projects/form-shared";
 import { cn } from "@/lib/utils";
 import { DEFAULT_LOCALE, intlLocale, localizeValue, makeUI, UI, LOCALES, type Locale } from "@/lib/i18n";
 import { DEFAULT_CURRENCY, type CurrencyCode } from "@/lib/currency";
@@ -64,7 +64,6 @@ function ProjectRow({
   const extraGenres = allGenres.slice(1);
   const shownExtraGenres = extraGenres.slice(0, 2);
   const moreGenres = extraGenres.length - shownExtraGenres.length;
-  const languages = splitCountries(project.language);
   return (
     <div className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 card-lift sm:flex-row sm:items-center">
       <div className="relative aspect-video w-full shrink-0 overflow-hidden rounded-lg sm:w-48">
@@ -107,11 +106,6 @@ function ProjectRow({
         <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
           <span>{project.format}</span>
           <span>{countries.slice(0, 3).join(", ")}</span>
-          {languages.length > 0 ? (
-            <span>
-              {t("catalog.language")}: {languages.map((l) => localizeValue(locale, "language", l)).join(", ")}
-            </span>
-          ) : null}
           {project.boxOfficeDisplay ? <span>{project.boxOfficeDisplay}</span> : null}
           {project.applicationDeadline ? (
             <span
@@ -516,18 +510,11 @@ export function CatalogView({
         onToggle={toggleStatus}
       />
 
-      <CheckboxFilter
-        label={t("catalog.language")}
-        options={LANGUAGE_VALUES.map((v) => ({
-          value: v,
-          label: localizeValue(locale, "language", v),
-        }))}
-        selected={selectedLanguages}
-        onToggle={toggleLanguage}
-      />
-
-      {/* Platform / Country only appear when the catalog actually carries such
-          values — an empty facet would render a bare header with no options. */}
+      {/* Platform only appears when the catalog actually carries such values —
+          an empty facet would render a bare header with no options. The
+          Language and Country facets were removed on 2026-07-27 (content
+          review); the state below still parses them from a saved/shared URL so
+          old links keep working, it just isn't offered as a control. */}
       {platformOptions.length > 0 ? (
         <CheckboxFilter
           label={t("catalog.platform")}
@@ -537,14 +524,6 @@ export function CatalogView({
         />
       ) : null}
 
-      {countryOptions.length > 0 ? (
-        <CheckboxFilter
-          label={t("catalog.country")}
-          options={countryOptions.map((c) => ({ value: c, label: c }))}
-          selected={selectedCountries}
-          onToggle={toggleCountry}
-        />
-      ) : null}
     </>
   );
 

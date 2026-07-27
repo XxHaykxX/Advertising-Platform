@@ -6,7 +6,6 @@ import { Languages, Loader2, RotateCcw, Sparkles, X } from "lucide-react";
 import {
   AGE_RATING_VALUES,
   KIND_VALUES,
-  LANGUAGE_VALUES,
   PLACEMENT_TYPE_VALUES,
   parseCsvInput,
   parseReferencesInput,
@@ -1072,17 +1071,11 @@ export function ProjectForm({
                 removeLabel={t("ui.remove")}
               />
             </Field>
-            <Field label={t("projectForm.field.language")}>
-              <MultiSelect
-                options={LANGUAGE_VALUES.map((v) => ({ value: v, label: t(`language.${v}`) }))}
-                value={languages}
-                onChange={setLanguages}
-                name="language"
-                placeholder={t("projectForm.languagePlaceholder")}
-                addLabel={t("ui.addOption")}
-                removeLabel={t("ui.remove")}
-              />
-            </Field>
+            {/* The Language field was removed on 2026-07-27 (content review).
+                The column and the value a project already carries stay — this
+                hidden input round-trips it — but nobody is asked to fill it in
+                any more, and it is not shown or filtered on anywhere. */}
+            <input type="hidden" name="language" value={JSON.stringify(languages)} />
             <Field label={t("projectForm.field.studio")}>
               <input name="studio" defaultValue={data.studio} list="studio-list" placeholder={t("projectForm.studioPlaceholder")} className={inputCls} />
               <datalist id="studio-list">

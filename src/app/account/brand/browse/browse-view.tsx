@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { GenreBadge } from "@/components/ui/badge";
 import { FavoriteHeart } from "@/components/favorite-heart";
 import { daysUntil, formatFullDate, splitCountries } from "@/lib/data/format";
-import { FORMAT_CATEGORY_VALUES, LANGUAGE_VALUES } from "@/app/admin/(panel)/projects/form-shared";
+import { FORMAT_CATEGORY_VALUES } from "@/app/admin/(panel)/projects/form-shared";
 import { cn } from "@/lib/utils";
 import { DEFAULT_LOCALE, intlLocale, localizeValue, makeUI, type Locale } from "@/lib/i18n";
 import type { ProjectListDTO } from "@/lib/types";
@@ -225,6 +225,8 @@ export function BrowseView({
     });
   }, [projects, search, selectedFormats, selectedLanguages, selectedCountries, selectedStatuses, slotsOnly]);
 
+  // Language and Country facets removed 2026-07-27 (content review) — the
+  // filter state stays so nothing downstream has to change shape.
   const filterGroups = (
     <>
       <CheckboxFilter
@@ -232,18 +234,6 @@ export function BrowseView({
         options={FORMAT_CATEGORY_VALUES.map((v) => ({ value: v, label: localizeValue(locale, "formatCategory", v) }))}
         selected={selectedFormats}
         onToggle={toggleFormat}
-      />
-      <CheckboxFilter
-        label={t("catalog.country")}
-        options={countryOptions.map((c) => ({ value: c, label: c }))}
-        selected={selectedCountries}
-        onToggle={toggleCountry}
-      />
-      <CheckboxFilter
-        label={t("catalog.language")}
-        options={LANGUAGE_VALUES.map((v) => ({ value: v, label: localizeValue(locale, "language", v) }))}
-        selected={selectedLanguages}
-        onToggle={toggleLanguage}
       />
       <CheckboxFilter
         label={t("catalog.status")}

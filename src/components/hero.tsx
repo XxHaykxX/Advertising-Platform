@@ -148,10 +148,11 @@ export function Hero({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
           transition={{ duration: 0.7, ease: "easeOut", delay: 0.08 }}
           className="mt-6 text-balance text-4xl font-extrabold leading-[1.05] tracking-tight text-white drop-shadow-[0_2px_20px_rgba(0,0,0,0.8)] sm:text-6xl md:text-7xl"
         >
+          {/* The trailing "Marketplace" word is gone (content review
+              2026-07-27) — the headline now reads as one full sentence. */}
           <span className="bg-gradient-to-r from-indigo-400 via-indigo-300 to-indigo-400 bg-clip-text text-transparent">
             {t("hero.titleHighlight")}
-          </span>{" "}
-          {t("hero.titleRest")}
+          </span>
         </motion.h1>
 
         <motion.p
@@ -185,14 +186,9 @@ export function Hero({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
           </Link>
         </motion.div>
 
-        <motion.p
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, ease: "easeOut", delay: 0.32 }}
-          className="mt-5 text-sm text-white/60 drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)]"
-        >
-          {t("hero.disclaimer")}
-        </motion.p>
+        {/* The price disclaimer ("placements from $5000, fee only on closed
+            deals") was removed on 2026-07-27: pricing is per project and set
+            in the packages, so a fixed floor on the front page was wrong. */}
       </motion.div>
 
       {/* ── Scroll indicator ─────────────────────────────────── */}

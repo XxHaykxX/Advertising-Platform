@@ -12,6 +12,15 @@ export const KIND_VALUES = ["FILM", "SERIAL"] as const;
 export const FORMAT_CATEGORY_VALUES = [
   "FEATURE",
   "SERIES",
+  // Added 2026-07-27 from the localization sheet — the content writer listed
+  // five formats the catalog had no bucket for, all of which exist in the
+  // Armenian market (mini-series, YouTube shows, documentaries, animation and
+  // live events).
+  "MINISERIES",
+  "YOUTUBESHOW",
+  "DOCUMENTARY",
+  "ANIMATION",
+  "EVENTS",
   "SITCOM",
   "PODCAST",
   "REALITY",
@@ -19,8 +28,10 @@ export const FORMAT_CATEGORY_VALUES = [
   "SHORT",
 ] as const;
 
-// Primary-language bucket (catalog Language filter). Labeled via
-// t(`language.${v}`) / localizeValue(locale, "language", v).
+// Primary-language bucket. The Language field and its catalog facet were
+// removed on 2026-07-27 (content review), so nothing offers these as a choice
+// any more — the list stays because the `language` column still holds the
+// values entered before that, and a future field would use the same set.
 export const LANGUAGE_VALUES = ["Armenian", "Russian", "English", "Georgian", "Other"] as const;
 
 // Fall back to a sensible Format bucket when a row has no explicit
