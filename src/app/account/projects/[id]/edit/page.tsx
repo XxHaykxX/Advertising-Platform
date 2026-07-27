@@ -96,7 +96,6 @@ export default async function EditCreatorProjectPage({
     durationMinutes: p.durationMinutes,
     countries: p.countries,
     ageRating: p.ageRating,
-    boxOfficeAmd: p.boxOfficeAmd,
     productionBudgetAmd: p.productionBudgetAmd,
     isActive: p.isActive,
     applicationDeadline: formatDateInput(p.applicationDeadline),

@@ -17,6 +17,9 @@ export interface ProjectListDTO {
   ageRating: string; // content rating badge ("16+", "18+"); "" when unset
   // Preformatted (converted + symbol) by the data layer — a single formatting
   // point so display components never touch currency math. "" when unset.
+  // NOT rendered anywhere since 2026-07-27 (the field was removed from the
+  // editors and the storefront at the owner's request); kept so the stored
+  // figures aren't lost and bringing the display back is a one-line change.
   boxOfficeDisplay: string;
   status: string;
   applicationDeadline: string | null;

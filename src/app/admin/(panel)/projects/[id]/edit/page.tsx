@@ -81,7 +81,6 @@ export default async function EditProjectPage({
     durationMinutes: p.durationMinutes,
     countries: p.countries,
     ageRating: p.ageRating,
-    boxOfficeAmd: p.boxOfficeAmd,
     productionBudgetAmd: p.productionBudgetAmd,
     isActive: p.isActive,
     // sortOrder is not a form value any more (audit 1.2) — the catalog order

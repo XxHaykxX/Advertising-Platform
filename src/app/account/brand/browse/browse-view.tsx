@@ -85,9 +85,6 @@ function BrowseCard({
           ) : null}
         </div>
 
-        {project.boxOfficeDisplay ? (
-          <p className="mt-3 text-sm font-semibold text-foreground">{project.boxOfficeDisplay}</p>
-        ) : null}
 
         <div className="mt-auto pt-5">
           <Button asChild variant="ghost" size="sm" className="w-full">

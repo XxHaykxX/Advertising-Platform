@@ -103,13 +103,6 @@ export function ReportHero({
                   <div className="text-xs text-muted-foreground">{t("report.productionBudget")}</div>
                 </div>
               ) : null}
-              {project.boxOfficeDisplay ? (
-                <div className="rounded-xl border border-border bg-card p-3 sm:p-4">
-                  <Wallet className="h-4 w-4 text-primary" />
-                  <div className="mt-2 break-words text-base font-bold text-foreground sm:text-lg">{project.boxOfficeDisplay}</div>
-                  <div className="text-xs text-muted-foreground">{t("report.boxOffice")}</div>
-                </div>
-              ) : null}
             </div>
           </div>
         </Reveal>

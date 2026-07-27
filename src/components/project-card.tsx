@@ -6,7 +6,6 @@ import {
   Clock,
   Film,
   MapPin,
-  Wallet,
 } from "lucide-react";
 import { AccentBadge, GenreBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -115,12 +114,6 @@ export function ProjectCard({
               {extraCountries > 0 ? ` +${extraCountries}` : ""}
             </span>
           </div>
-          {project.boxOfficeDisplay ? (
-            <div className="flex items-center gap-2">
-              <Wallet className="h-3.5 w-3.5 shrink-0" />
-              <span>{t("card.boxOffice")}: {project.boxOfficeDisplay}</span>
-            </div>
-          ) : null}
           {releaseLabel ? (
             <div className="flex items-center gap-2">
               <Calendar className="h-3.5 w-3.5 shrink-0" />

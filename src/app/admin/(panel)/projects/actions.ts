@@ -56,7 +56,11 @@ export type ProjectFormValues = {
   // enum fallback over the stored value on every save.
   countries: string;
   ageRating: string; // content rating badge ("16+", "18+"); "" when unset
-  boxOfficeAmd: number | null; // box-office gross, informational, optional
+  // NB: `boxOfficeAmd` is deliberately NOT a form value (owner request
+  // 2026-07-27 — the field was removed from both editors and from the
+  // storefront). The column stays for the data it holds; parsing it here would
+  // write null over that on every save, the same way `format` and `sortOrder`
+  // were quietly wiped before.
   productionBudgetAmd: number | null; // production budget — the CSV schema's "Budget" (owner decision C.3)
   isActive: boolean;
   // NB: `sortOrder` is deliberately NOT part of the form values (audit 1.2).
@@ -208,7 +212,6 @@ function buildData(fd: FormData): ProjectFormValues {
     durationMinutes: kind === "FILM" ? intOrNull(fd, "durationMinutes") : null,
     countries: jsonArray<string>(fd, "countries").join(", ").slice(0, VARCHAR_MAX),
     ageRating: str(fd, "ageRating", VARCHAR_MAX),
-    boxOfficeAmd: intOrNull(fd, "boxOfficeAmd"),
     productionBudgetAmd: intOrNull(fd, "productionBudgetAmd"),
     isActive: bool(fd, "isActive"),
     applicationDeadline: str(fd, "applicationDeadline"),

@@ -106,7 +106,6 @@ function ProjectRow({
         <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
           <span>{project.format}</span>
           <span>{countries.slice(0, 3).join(", ")}</span>
-          {project.boxOfficeDisplay ? <span>{project.boxOfficeDisplay}</span> : null}
           {project.applicationDeadline ? (
             <span
               className={cn(

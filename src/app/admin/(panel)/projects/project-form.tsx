@@ -86,7 +86,6 @@ const EMPTY: ProjectFormInitial = {
   durationMinutes: null,
   countries: "",
   ageRating: "",
-  boxOfficeAmd: null,
   productionBudgetAmd: null,
   isActive: true,
   applicationDeadline: "",
@@ -1109,15 +1108,11 @@ export function ProjectForm({
                 className={inputCls}
               />
             </Field>
-            <Field label={t("projectForm.field.boxOffice")}>
-              <input
-                name="boxOfficeAmd"
-                type="number"
-                min={0}
-                defaultValue={numOrEmpty(data.boxOfficeAmd)}
-                className={inputCls}
-              />
-            </Field>
+            {/* Box office was removed on 2026-07-27 (owner request): it is a
+                past-performance number, not part of what a brand is buying, and
+                it was the only money figure on the card competing with the
+                package price. The column stays with its data; nothing asks for
+                it or shows it. */}
             {/* Was a free-text field: every editor typed their own spelling
                 ("US" / "USA" / "United States") and the catalog counted them as
                 three countries. Now a closed list, picked the same way as Genre

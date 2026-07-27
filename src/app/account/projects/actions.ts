@@ -133,7 +133,6 @@ function buildData(fd: FormData): ProjectFormValues {
     durationMinutes: kind === "FILM" ? intOrNull(fd, "durationMinutes") : null,
     countries: jsonArray<string>(fd, "countries").join(", ").slice(0, VARCHAR_MAX),
     ageRating: str(fd, "ageRating", VARCHAR_MAX),
-    boxOfficeAmd: intOrNull(fd, "boxOfficeAmd"),
     productionBudgetAmd: intOrNull(fd, "productionBudgetAmd"),
     // Never trusted from the form for a Creator submission — forced to false
     // below regardless of what buildData parses here.
