@@ -21,27 +21,27 @@ ALTER TABLE `Actor`
   ADD COLUMN `nameRu` VARCHAR(191) NOT NULL DEFAULT '',
   ADD COLUMN `nameEn` VARCHAR(191) NOT NULL DEFAULT '';
 
--- Backfill: put each existing name in the column its script belongs to, and
--- leave the other two empty so the fallback chain (locale -> en -> base) does
--- the work until someone fills them in. Mirrors guessNameLocale() in
--- src/lib/person-name.ts — Armenian script -> hy, everything else -> en.
--- Russian is never guessed: no Cyrillic spelling was ever entered, and a wrong
--- guess would show the same string twice instead of falling back.
-UPDATE `Person`
-SET `nameHy` = `name`
-WHERE `name` REGEXP '[\\u0530-\\u058F]' AND `nameHy` = '';
+-- Backfill: put each existing name in the column its script belongs to and
+-- leave the other two empty, so the fallback chain (locale -> en -> base) does
+-- the work until someone fills them in.
+--
+-- NB: prod is MariaDB 11.8, whose PCRE2 build rejects \u escapes in REGEXP
+-- ("PCRE2 does not support \F, \L, \l, \N{name}, \U, or \u"), so the script
+-- test is done with CONVERT(... USING ascii) instead: an Armenian name is not
+-- representable in ASCII, a Latin one is. Russian is never guessed — no
+-- Cyrillic spelling was ever entered, and a wrong guess would show the same
+-- string twice instead of falling back.
+UPDATE `Person` SET `nameHy` = `name`
+WHERE `nameHy` = '' AND `name` <> '' AND CONVERT(`name` USING ascii) <> `name`;
 
-UPDATE `Person`
-SET `nameEn` = `name`
-WHERE `name` NOT REGEXP '[\\u0530-\\u058F]' AND `name` <> '' AND `nameEn` = '';
+UPDATE `Person` SET `nameEn` = `name`
+WHERE `nameHy` = '' AND `nameEn` = '' AND `name` <> '';
 
-UPDATE `Actor`
-SET `nameHy` = `name`
-WHERE `name` REGEXP '[\\u0530-\\u058F]' AND `nameHy` = '';
+UPDATE `Actor` SET `nameHy` = `name`
+WHERE `nameHy` = '' AND `name` <> '' AND CONVERT(`name` USING ascii) <> `name`;
 
-UPDATE `Actor`
-SET `nameEn` = `name`
-WHERE `name` NOT REGEXP '[\\u0530-\\u058F]' AND `name` <> '' AND `nameEn` = '';
+UPDATE `Actor` SET `nameEn` = `name`
+WHERE `nameHy` = '' AND `nameEn` = '' AND `name` <> '';
 
 -- Check: every row should now have at least one spelling filled in.
 -- SELECT COUNT(*) FROM Person WHERE nameHy = '' AND nameRu = '' AND nameEn = '' AND name <> '';
