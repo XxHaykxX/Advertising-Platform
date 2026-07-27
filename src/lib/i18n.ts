@@ -810,8 +810,6 @@ export const UI: Record<string, Dict> = {
   "keyFacts.boxOffice": { ru: "Кассовый сбор", en: "Box office", hy: "Դրամարկղ" },
   "keyFacts.productionBudget": { ru: "Бюджет производства", en: "Production budget", hy: "Արտադրության բյուջե" },
   "keyFacts.expectedRelease": { ru: "Ожидаемый выход", en: "Expected release", hy: "Սպասվող թողարկում" },
-  "card.boxOffice": { ru: "Кассовый сбор", en: "Box office", hy: "Դրամարկղ" },
-  "report.boxOffice": { ru: "Кассовый сбор", en: "Box office", hy: "Դրամարկղ" },
   "report.productionBudget": { ru: "Бюджет производства", en: "Production budget", hy: "Արտադրության բյուջե" },
 
   // ── report: ROI / express interest banner ──────
@@ -1442,14 +1440,9 @@ export const UI: Record<string, Dict> = {
   "projectForm.field.episodeMinutes": { ru: "Хронометраж серии (мин) *", en: "Minutes per episode *", hy: "Սերիայի տևողությունը (րոպե) *" },
   // Ф2: FILM-only counterpart of episodes/episodeMinutes — same slot, Single only.
   "projectForm.field.durationMinutes": { ru: "Длительность (мин) *", en: "Duration (min) *", hy: "Տևողություն (րոպե) *" },
-  // Two distinct money figures, kept apart on purpose (owner decision C.3,
-  // 2026-07-26): boxOffice is gross receipts, productionBudget is what the
-  // CSV schema calls "Budget".
-  "projectForm.field.boxOffice": {
-    ru: "Кассовые сборы (драм, необязательно)",
-    en: "Box office (AMD, optional)",
-    hy: "Դրամարկղային մուտքեր (դրամ, ոչ պարտադիր)",
-  },
+  // Box office (gross receipts) was removed on 2026-07-27 — the figure is not
+  // part of what a brand buys. Production budget is what the CSV schema calls
+  // "Budget" and stays.
   "projectForm.field.productionBudget": {
     ru: "Бюджет производства (драм, необязательно)",
     en: "Production budget (AMD, optional)",
