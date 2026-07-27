@@ -8,6 +8,7 @@ import { getLocale } from "@/lib/data/locale";
 import { getPersonDirectory } from "@/lib/data/actors";
 import { getStreamingSources } from "@/lib/data/streaming-sources";
 import { getCountryOptions } from "@/lib/data/countries";
+import { getStudioOptions } from "@/lib/data/studios";
 import { makeUI } from "@/lib/i18n";
 import { ProjectForm } from "@/app/admin/(panel)/projects/project-form";
 import { createCreatorProject } from "../actions";
@@ -27,14 +28,8 @@ export default async function NewProjectPage() {
   const locale = await getLocale();
   const t = makeUI(locale);
 
-  // Distinct studio names already on file, for the Studio autocomplete —
-  // same query as the admin new/page.tsx.
-  const rows = await prisma.project.findMany({
-    where: { studio: { not: "" } },
-    select: { studio: true },
-    distinct: ["studio"],
-  });
-  const studios = rows.map((r) => r.studio).sort();
+  // Studio options — the shared dictionary, same as the admin form (2026-07-27).
+  const studios = await getStudioOptions();
 
   // Person directory (Ф3), for the Cast & Crew name picker — same helper as
   // the admin new/page.tsx.

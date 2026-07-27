@@ -297,9 +297,6 @@ export const UI: Record<string, Dict> = {
   "genre.Reality Show": { ru: "Реалити-шоу", en: "Reality Show", hy: "Ռեալիթի շոու" },
   "genre.Western": { ru: "Вестерн", en: "Western", hy: "Վեսթերն" },
   "genre.Interview": { ru: "Интервью", en: "Interview", hy: "Հարցազրույց" },
-  "placement.In-Frame": { ru: "В кадре", en: "In-Frame", hy: "Կադրում" },
-  "placement.Story Integration": { ru: "Интеграция в сюжет", en: "Story Integration", hy: "Սյուժեի ինտեգրում" },
-  "placement.Mention": { ru: "Упоминание", en: "Mention", hy: "Հիշատակում" },
   // Cast & crew ROLES (IA-23) — localized via localizeValue(locale, "role", value).
   // Roles are free text entered per actor, so this is best-effort: standard
   // crew/cast roles map here (keyed by both the Armenian source, as stored, and
@@ -794,6 +791,13 @@ export const UI: Record<string, Dict> = {
   "report.status.FILMING": { ru: "Съёмки", en: "Filming", hy: "Նկարահանում" },
   "report.status.POST_PRODUCTION": { ru: "Пост-продакшен", en: "Post-Production", hy: "Հետարտադրական փուլ" },
   "report.status.RELEASED": { ru: "Выпущено", en: "Released", hy: "Թողարկված" },
+  // Replaces the "Express interest" button once the placement deadline has
+  // passed — the page still reads, the offer just can't be made any more.
+  "report.offersClosed": {
+    ru: "Приём предложений закрыт",
+    en: "Offers closed",
+    hy: "Առաջարկների ընդունումը փակ է",
+  },
   "report.tabs.overview": { ru: "Обзор", en: "Overview", hy: "Ընդհանուր տեսք" },
   "report.tabs.cast": { ru: "Актёры", en: "Cast", hy: "Դերասաններ" },
   "report.tabs.investment": { ru: "Инвестиции", en: "Investment", hy: "Ներդրում" },
@@ -809,7 +813,6 @@ export const UI: Record<string, Dict> = {
   "keyFacts.platforms": { ru: "Где смотреть", en: "Available on", hy: "Հասանելի է" },
   "keyFacts.boxOffice": { ru: "Кассовый сбор", en: "Box office", hy: "Դրամարկղ" },
   "keyFacts.productionBudget": { ru: "Бюджет производства", en: "Production budget", hy: "Արտադրության բյուջե" },
-  "keyFacts.expectedRelease": { ru: "Ожидаемый выход", en: "Expected release", hy: "Սպասվող թողարկում" },
   "report.productionBudget": { ru: "Бюджет производства", en: "Production budget", hy: "Արտադրության բյուջե" },
 
   // ── report: ROI / express interest banner ──────
@@ -1108,6 +1111,9 @@ export const UI: Record<string, Dict> = {
   "account.status.pending": { ru: "На модерации", en: "Pending review", hy: "Մոդերացիայի փուլում" },
   "account.status.approved": { ru: "Одобрен", en: "Approved", hy: "Հաստատված" },
   "account.status.rejected": { ru: "Отклонён", en: "Rejected", hy: "Մերժված" },
+  // Not a moderation status — the placement deadline simply passed, so the
+  // listing left the catalog. Shown alongside the moderation pill.
+  "account.status.archived": { ru: "В архиве", en: "Archived", hy: "Արխիվում" },
   "account.rejectionReason": { ru: "Причина отказа:", en: "Reason for rejection:", hy: "Մերժման պատճառը․" },
   // Per-listing numbers for the creator (audit 4.8).
   "account.stats.views": { ru: "Просмотры", en: "Views", hy: "Դիտումներ" },
@@ -1225,8 +1231,12 @@ export const UI: Record<string, Dict> = {
   "account.form.posterPlaceholder": { ru: "https://…", en: "https://…", hy: "https://…" },
   "account.form.format": { ru: "Формат", en: "Format", hy: "Ձևաչափ" },
   "account.form.formatPlaceholder": { ru: "Например, 50 серий × 45 мин", en: "e.g. 50 ep × 45 min", hy: "օր.՝ 50 դրվագ × 45 րոպե" },
-  "account.form.studio": { ru: "Студия", en: "Studio", hy: "Ստուդիա" },
-  "account.form.studioPlaceholder": { ru: "Арменфильм, Sharm Holding…", en: "Armenfilm, Sharm Holding…", hy: "Արմենֆիլմ, Sharm Holding…" },
+  "account.form.studio": {
+    ru: "Название студии",
+    en: "Studio name",
+    hy: "Ստուդիայի անվանումը",
+  },
+  "account.form.studioPlaceholder": { ru: "Kinodaran, Sharm…", en: "Kinodaran, Sharm…", hy: "Kinodaran, Sharm…" },
   "account.form.countries": { ru: "Страны", en: "Countries", hy: "Երկրներ" },
   "account.form.countriesPlaceholder": { ru: "Армения, Россия", en: "Armenia, Russia", hy: "Հայաստան, Ռուսաստան" },
   "account.form.submit": { ru: "Отправить на модерацию", en: "Submit for review", hy: "Ուղարկել մոդերացիայի" },
@@ -1448,11 +1458,15 @@ export const UI: Record<string, Dict> = {
     en: "Production budget (AMD, optional)",
     hy: "Արտադրության բյուջե (դրամ, ոչ պարտադիր)",
   },
-  "projectForm.field.studio": { ru: "Студия", en: "Studio", hy: "Ստուդիա" },
+  "projectForm.field.studio": {
+    ru: "Название студии",
+    en: "Studio name",
+    hy: "Ստուդիայի անվանումը",
+  },
   "projectForm.studioPlaceholder": {
-    ru: "Арменфильм, Sharm Holding…",
-    en: "Armenfilm, Sharm Holding…",
-    hy: "Արմենֆիլմ, Sharm Holding…",
+    ru: "Kinodaran, Sharm…",
+    en: "Kinodaran, Sharm…",
+    hy: "Kinodaran, Sharm…",
   },
   "projectForm.field.titleHy": { ru: "Название (HY)", en: "Title (HY)", hy: "Վերնագիր (HY)" },
   "projectForm.field.titleRu": { ru: "Название (RU)", en: "Title (RU)", hy: "Վերնագիր (RU)" },
@@ -1474,11 +1488,6 @@ export const UI: Record<string, Dict> = {
     en: "Streaming / online platforms where the film is watchable. Shown to brands and used by the catalog filter.",
     hy: "Սթրիմինգ / առցանց հարթակներ, որտեղ ֆիլմը հասանելի է։ Ցուցադրվում է բրենդներին և օգտագործվում կատալոգի զտիչում։",
   },
-  "projectForm.help.placementType": {
-    ru: "Как продукт бренда появляется на экране.",
-    en: "How the brand's product appears on screen.",
-    hy: "Ինչպես է բրենդի արտադրանքը հայտնվում էկրանին։",
-  },
   "projectForm.field.availableOn": { ru: "Где смотреть", en: "Available on", hy: "Հասանելի է" },
   "projectForm.availableOnPlaceholder": { ru: "Kinodaran, YouTube, TV…", en: "Kinodaran, YouTube, TV…", hy: "Kinodaran, YouTube, TV…" },
   "projectForm.field.countries": {
@@ -1493,11 +1502,6 @@ export const UI: Record<string, Dict> = {
   },
   "projectForm.field.applicationDeadline": { ru: "Дедлайн размещения", en: "Placement deadline", hy: "Տեղադրման վերջնաժամկետ" },
   "projectForm.field.releaseDate": { ru: "Дата релиза", en: "Release date", hy: "Թողարկման ամսաթիվ" },
-  "projectForm.field.expectedReleaseDate": {
-    ru: "Ожидаемая дата выхода",
-    en: "Expected release date",
-    hy: "Սպասվող թողարկման ամսաթիվ",
-  },
   "projectForm.field.platforms": { ru: "Платформы", en: "Platforms", hy: "Հարթակներ" },
   "projectForm.platformsPlaceholder": { ru: "YouTube, Kinodaran, TV", en: "YouTube, Kinodaran, TV", hy: "YouTube, Kinodaran, TV" },
   "projectForm.field.streamingSource": { ru: "Источник показа", en: "Streaming source", hy: "Հեռարձակման աղբյուր" },
@@ -1506,7 +1510,6 @@ export const UI: Record<string, Dict> = {
     en: "Select sources…",
     hy: "Ընտրեք աղբյուրները…",
   },
-  "projectForm.field.placementType": { ru: "Тип размещения", en: "Placement type", hy: "Տեղադրման տեսակ" },
   "projectForm.field.priceNote": { ru: "Примечание к цене (необязательно)", en: "Price note (optional caption)", hy: "Գնի նշում (ոչ պարտադիր)" },
   "projectForm.priceNotePlaceholder": { ru: "/ сцена", en: "/ scene", hy: "/ տեսարան" },
   "projectForm.field.priceMin": { ru: "Цена мин. (AMD)", en: "Price min (AMD)", hy: "Գին նվազ. (AMD)" },
@@ -1898,7 +1901,7 @@ export const UI: Record<string, Dict> = {
 /** Build a UI translator bound to a locale. Supports `{token}` interpolation
  *  via a second argument, e.g. t("catalog.showingProjectsPrefix"). */
 /**
- * Localize a raw DB value from a closed set (genre, placementType, gender) via
+ * Localize a raw DB value from a closed set (genre, role, gender) via
  * a `${prefix}.${value}` dict key. Falls back to the raw value when there's no
  * translation (e.g. a custom genre an admin typed), so nothing ever renders a
  * bare key. Free-text content (title/synopsis) is NOT handled here.

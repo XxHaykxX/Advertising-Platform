@@ -6,7 +6,6 @@ import { Languages, Loader2, RotateCcw, Sparkles, X } from "lucide-react";
 import {
   AGE_RATING_VALUES,
   KIND_VALUES,
-  PLACEMENT_TYPE_VALUES,
   parseCsvInput,
   parseReferencesInput,
   parseMilestonesInput,
@@ -15,6 +14,7 @@ import {
 } from "./form-shared";
 import { deleteStreamingSource } from "@/lib/actions/streaming-sources";
 import { deleteCountry } from "@/lib/actions/countries";
+import { deleteStudio } from "@/lib/actions/studios";
 import { ImageUploader, type ImageUploaderHandle } from "./image-uploader";
 import { ActorsSection, type ActorRow } from "./actors-editor";
 import type { PersonSuggestion } from "@/lib/data/actors";
@@ -90,9 +90,7 @@ const EMPTY: ProjectFormInitial = {
   isActive: true,
   applicationDeadline: "",
   releaseDate: "",
-  expectedReleaseDate: "",
   platforms: "",
-  placementType: "",
   tagline: "",
   taglineHy: "",
   taglineRu: "",
@@ -176,8 +174,11 @@ export function ProjectForm({
    *  hidden-JSON-mirror pattern. Empty on create. */
   initialMilestones?: MilestoneRow[];
   submitLabel: string;
-  /** Distinct studio names already used elsewhere — powers a <datalist>
-   *  autocomplete on the Studio field. */
+  /** Global studio dictionary (2026-07-27) — the "Studio name" picker's option
+   *  list. Was a plain <datalist> of names already typed elsewhere; it is a
+   *  real dictionary now, with the same contract as streamingSources/
+   *  countryOptions (a typed-in studio persists for future projects, staff can
+   *  delete one from the pool). */
   studios?: string[];
   /** Global Streaming Source dictionary (Ф2/#25) — powers the Streaming
    *  Source MultiSelect's option list; custom additions persist here for
@@ -388,6 +389,14 @@ export function ProjectForm({
   const [countryOptions, setCountryOptions] = useState<string[]>(() => countries0);
   const [countryOptionPending, startCountryOptionTransition] = useTransition();
   const [deletingCountryOption, setDeletingCountryOption] = useState<string | null>(null);
+  // Studio became the third dictionary of this shape (2026-07-27). It used to
+  // be one free-text input, so co-productions had nowhere to go and the same
+  // company arrived spelled several ways; the column now holds a comma list,
+  // exactly like `countries`.
+  const [studioValues, setStudioValues] = useState<string[]>(() => parseCsvInput(data.studio));
+  const [studioOptions, setStudioOptions] = useState<string[]>(() => studios);
+  const [studioOptionPending, startStudioOptionTransition] = useTransition();
+  const [deletingStudioOption, setDeletingStudioOption] = useState<string | null>(null);
   // ── Cast/crew + sponsorship tiers, inline (#20²) ──
   const [actors, setActors] = useState<ActorRow[]>(() => initialActors);
   const [tiers, setTiers] = useState<TierRow[]>(() => initialTiers);
@@ -1087,14 +1096,10 @@ export function ProjectForm({
                 hidden input round-trips it — but nobody is asked to fill it in
                 any more, and it is not shown or filtered on anywhere. */}
             <input type="hidden" name="language" value={JSON.stringify(languages)} />
-            <Field label={t("projectForm.field.studio")}>
-              <input name="studio" defaultValue={data.studio} list="studio-list" placeholder={t("projectForm.studioPlaceholder")} className={inputCls} />
-              <datalist id="studio-list">
-                {studios.map((s) => (
-                  <option key={s} value={s} />
-                ))}
-              </datalist>
-            </Field>
+            {/* Studio name moved to Production Info, next to "Available on"
+                (owner request 2026-07-27): who made it and where it plays are
+                one question, and it sat here between the poster and the money
+                fields for no reason. */}
             {/* Two separate money figures (owner decision C.3, 2026-07-26):
                 the CSV schema's "Budget" is the production budget, while the
                 pre-existing column holds box-office gross. They were being
@@ -1146,8 +1151,8 @@ export function ProjectForm({
 
           {/* ── Production Info ── project status/timeline + where it plays:
               Status, Release date, Application deadline, Available on
-              (Platforms + Streaming source merged, #29), Cinemas, Placement
-              type. The ambiguous ones carry a helper hint under the field. */}
+              (Platforms + Streaming source merged, #29), Cinemas. The
+              ambiguous ones carry a helper hint under the field. */}
           <section id="sec-production" className="scroll-mt-24 space-y-3 rounded-xl border border-border bg-card p-4">
             <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">{t("projectForm.section.production")}</h2>
             {/* "Production stage" (and its helper text) was removed from both
@@ -1161,24 +1166,33 @@ export function ProjectForm({
             <Field label={t("projectForm.field.releaseDate")}>
               <input name="releaseDate" type="date" defaultValue={data.releaseDate} className={inputCls} />
             </Field>
-            {/* Planned release for a title that isn't out yet. The column and
-                the server-side parsing existed all along, but the form had no
-                input for it, so the field was unreachable (audit 1.5). Either
-                this or Release date satisfies the CSV's required date. */}
-            <Field label={t("projectForm.field.expectedReleaseDate")}>
-              <input
-                name="expectedReleaseDate"
-                type="date"
-                defaultValue={data.expectedReleaseDate}
-                className={inputCls}
-              />
-            </Field>
             <Field label={t("projectForm.field.applicationDeadline")} hint={t("projectForm.help.placementDeadline")}>
               <input
                 name="applicationDeadline"
                 type="date"
                 defaultValue={data.applicationDeadline}
                 className={inputCls}
+              />
+            </Field>
+            {/* Studio name — was a single free-text input with a <datalist> of
+                past values (so "Sharm Holding" / "Sharm holding" / "SHARM"
+                all coexisted) and no room for a co-production. Now a picker
+                over the studio dictionary, with the same escape hatch as
+                Countries: type one that isn't listed and it is offered on every
+                future project. */}
+            <Field label={t("projectForm.field.studio")}>
+              <MultiSelect
+                options={studioOptions}
+                value={studioValues}
+                onChange={setStudioValues}
+                name="studio"
+                allowCustom
+                placeholder={t("projectForm.studioPlaceholder")}
+                addLabel={t("ui.addOption")}
+                removeLabel={t("ui.remove")}
+                // Deleting is global — every project loses the option — so it
+                // is staff-only, never offered in creator mode.
+                onDeleteOption={mode === "creator" ? undefined : (v) => setDeletingStudioOption(v)}
               />
             </Field>
             {/* "Available on" (#29) — Platforms + Streaming source merged into
@@ -1214,16 +1228,6 @@ export function ProjectForm({
                 addLabel={t("ui.addOption")}
                 removeLabel={t("ui.remove")}
               />
-            </Field>
-            <Field label={t("projectForm.field.placementType")} hint={t("projectForm.help.placementType")}>
-              <select name="placementType" defaultValue={data.placementType} className={inputCls}>
-                <option value="">—</option>
-                {PLACEMENT_TYPE_VALUES.map((pt) => (
-                  <option key={pt} value={pt}>
-                    {t(`placement.${pt}`)}
-                  </option>
-                ))}
-              </select>
             </Field>
           </section>
 
@@ -1356,6 +1360,25 @@ export function ProjectForm({
             setCountryOptions((opts) => opts.filter((x) => x !== value));
             setCountries((sel) => sel.filter((x) => x !== value));
             setDeletingCountryOption(null);
+          });
+        }}
+      />
+
+      <ConfirmDialog
+        open={deletingStudioOption !== null}
+        title={`Delete “${deletingStudioOption ?? ""}” from the studio list?`}
+        message="It stops being offered on every project. Projects that already list it keep it."
+        confirmLabel="Delete"
+        pending={studioOptionPending}
+        onCancel={() => setDeletingStudioOption(null)}
+        onConfirm={() => {
+          const value = deletingStudioOption;
+          if (!value) return;
+          startStudioOptionTransition(async () => {
+            await deleteStudio(value);
+            setStudioOptions((opts) => opts.filter((x) => x !== value));
+            setStudioValues((sel) => sel.filter((x) => x !== value));
+            setDeletingStudioOption(null);
           });
         }}
       />

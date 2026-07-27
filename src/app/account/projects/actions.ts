@@ -12,8 +12,8 @@ import { notifyNewProjectForModeration } from "@/lib/mail";
 import { notifyRoles } from "@/lib/data/notifications";
 import { addStreamingSources } from "@/lib/actions/streaming-sources";
 import { addCountries } from "@/lib/actions/countries";
+import { addStudios } from "@/lib/actions/studios";
 import {
-  PLACEMENT_TYPE_VALUES,
   KIND_VALUES,
   ROLE_VALUES,
   kindForRole,
@@ -126,7 +126,10 @@ function buildData(fd: FormData): ProjectFormValues {
     // Language is now a MultiSelect (admin redesign phase 1) — same CSV
     // storage convention as genres/countries/platforms/cinemas.
     language: jsonArray<string>(fd, "language").join(", ").slice(0, VARCHAR_MAX),
-    studio: str(fd, "studio", VARCHAR_MAX),
+    // Studio became a MultiSelect over a dictionary (2026-07-27) — same CSV
+    // storage convention as genres/countries/platforms, so a co-production can
+    // list every company instead of cramming them into one text field.
+    studio: jsonArray<string>(fd, "studio").join(", ").slice(0, VARCHAR_MAX),
     kind,
     episodes: kind === "SERIAL" ? intOrNull(fd, "episodes") : null,
     episodeMinutes: kind === "SERIAL" ? intOrNull(fd, "episodeMinutes") : null,
@@ -139,9 +142,7 @@ function buildData(fd: FormData): ProjectFormValues {
     isActive: bool(fd, "isActive"),
     applicationDeadline: str(fd, "applicationDeadline"),
     releaseDate: str(fd, "releaseDate"),
-    expectedReleaseDate: str(fd, "expectedReleaseDate"),
     platforms: jsonArray<string>(fd, "platforms").join(", ").slice(0, VARCHAR_MAX),
-    placementType: enumVal(fd, "placementType", [...PLACEMENT_TYPE_VALUES, ""] as const, ""),
     tagline: taglineRu || taglineHy || taglineEn,
     taglineHy,
     taglineRu,
@@ -174,7 +175,6 @@ function submitGate(
   const missing = publishBlockers({
     studio: data.studio,
     releaseDate: data.releaseDate,
-    expectedReleaseDate: data.expectedReleaseDate,
     tagline: data.tagline,
     kind: data.kind,
     episodes: data.episodes,
@@ -424,6 +424,8 @@ export async function createCreatorProject(
     // Same for the country dictionary: a country typed into this project is
     // offered on every future one (2026-07-27).
     await addCountries(parseCsvInput(data.countries));
+    // …and for studios (2026-07-27).
+    await addStudios(parseCsvInput(data.studio));
   } catch {
     /* ignore */
   }
@@ -448,11 +450,9 @@ export async function createCreatorProject(
     gallery: galleryToJson(data.gallery),
     applicationDeadline: dateOrNull(data.applicationDeadline),
     releaseDate: dateOrNull(data.releaseDate),
-    expectedReleaseDate: dateOrNull(data.expectedReleaseDate),
     platforms: platformsToJson(data.platforms),
     // #29 merged the old Streaming source field into `platforms`; the
     // `streamingSource` column is not written any more (audit 1.6).
-    placementType: data.placementType || null,
     tagline: data.tagline || null,
     taglineHy: data.taglineHy || null,
     taglineRu: data.taglineRu || null,
@@ -565,6 +565,8 @@ export async function updateCreatorProject(
     // Same for the country dictionary: a country typed into this project is
     // offered on every future one (2026-07-27).
     await addCountries(parseCsvInput(data.countries));
+    // …and for studios (2026-07-27).
+    await addStudios(parseCsvInput(data.studio));
   } catch {
     /* ignore */
   }
@@ -593,9 +595,7 @@ export async function updateCreatorProject(
           gallery: galleryToJson(data.gallery),
           applicationDeadline: dateOrNull(data.applicationDeadline),
           releaseDate: dateOrNull(data.releaseDate),
-          expectedReleaseDate: dateOrNull(data.expectedReleaseDate),
           platforms: platformsToJson(data.platforms),
-          placementType: data.placementType || null,
           tagline: data.tagline || null,
           taglineHy: data.taglineHy || null,
           taglineRu: data.taglineRu || null,

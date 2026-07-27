@@ -16,6 +16,13 @@ import { ApplicationDialog, type ApplicationTier } from "@/components/report/app
 type ReportInterestContextValue = {
   applied: boolean;
   isOpen: boolean;
+  /** The placement deadline has passed, so the project no longer takes offers.
+   *  The report page itself stays reachable by direct link — only the action
+   *  is closed. */
+  archived: boolean;
+  /** Localized copy for the disabled button, resolved here so the button stays
+   *  free of the report page's translation plumbing. */
+  archivedLabel: string;
   openDialog: () => void;
   closeDialog: () => void;
   markApplied: () => void;
@@ -29,10 +36,13 @@ export function ReportInterestProvider({
   tiers = [],
   locale = DEFAULT_LOCALE,
   brandPhone = "",
+  archived = false,
   children,
 }: {
   projectId: number;
   initialStatus: InterestStatus | null;
+  /** Placement deadline is behind us (see isArchived) — offers are closed. */
+  archived?: boolean;
   /** Passed straight through to the popup's package picker (audit 2.3). */
   tiers?: ApplicationTier[];
   locale?: Locale;
@@ -48,7 +58,14 @@ export function ReportInterestProvider({
   const value: ReportInterestContextValue = {
     applied,
     isOpen,
-    openDialog: () => setIsOpen(true),
+    archived,
+    archivedLabel: t("report.offersClosed"),
+    // Guarded as well as disabled in the UI: the popup must not be reachable
+    // for a project that has stopped taking offers.
+    openDialog: () => {
+      if (archived) return;
+      setIsOpen(true);
+    },
     closeDialog: () => setIsOpen(false),
     markApplied: () => setApplied(true),
   };

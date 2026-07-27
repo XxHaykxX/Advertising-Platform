@@ -2,8 +2,6 @@
    the client form. Kept out of actions.ts because a "use server" module may
    only export async functions. */
 
-export const PLACEMENT_TYPE_VALUES = ["In-Frame", "Story Integration", "Mention"] as const;
-
 export const KIND_VALUES = ["FILM", "SERIAL"] as const;
 
 // Marketing format bucket (drives the catalog Format filter) — distinct from
@@ -127,7 +125,6 @@ export function kindForRole(role: string): "CAST" | "CREW" {
 export type PublishCheckInput = {
   studio: string;
   releaseDate: string; // "YYYY-MM-DD" or ""
-  expectedReleaseDate: string; // "YYYY-MM-DD" or ""
   tagline: string; // base/fallback logline (derived from the per-locale fields)
   kind: string; // "FILM" | "SERIAL"
   episodes: number | null;
@@ -140,9 +137,7 @@ export type PublishCheckInput = {
 export function publishBlockers(input: PublishCheckInput): string[] {
   const missing: string[] = [];
   if (!input.studio.trim()) missing.push("publish.missing.studio");
-  // Either date satisfies the CSV's "Release Date": a released title has a real
-  // one, an upcoming title has the expected one.
-  if (!input.releaseDate && !input.expectedReleaseDate) missing.push("publish.missing.releaseDate");
+  if (!input.releaseDate) missing.push("publish.missing.releaseDate");
   if (!input.tagline.trim()) missing.push("publish.missing.tagline");
   if (input.kind === "SERIAL") {
     if (!input.episodes || !input.episodeMinutes) missing.push("publish.missing.episodes");

@@ -29,7 +29,7 @@ async function main() {
         countries: p.countries,
         sortOrder: i, ownerId: admin.id,
         applicationDeadline: new Date(p.applicationDeadline), releaseDate: new Date(p.releaseDate),
-        platforms: JSON.stringify(p.platforms), placementType: p.placementType,
+        platforms: JSON.stringify(p.platforms),
         actors: {
           create: p.actors.map((a, idx) => ({ ...a, sortOrder: idx })),
         },

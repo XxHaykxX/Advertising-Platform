@@ -30,7 +30,6 @@ type SeedProject = {
   applicationDeadline: string; // ISO date
   releaseDate: string; // ISO date
   platforms: string[];
-  placementType: "In-Frame" | "Story Integration" | "Mention";
   priceNote: string;
   actors: { name: string; role: string }[];
 };
@@ -88,7 +87,6 @@ export const SEED_PROJECTS: SeedProject[] = [
     applicationDeadline: "2026-08-10",
     releaseDate: "2026-10-25",
     platforms: ["Kinodaran"],
-    placementType: "In-Frame",
     priceMinAmd: 9_600_000,
     priceMaxAmd: 12_000_000,
     priceNote: "/ scene",
@@ -136,7 +134,6 @@ export const SEED_PROJECTS: SeedProject[] = [
     applicationDeadline: "2026-08-20",
     releaseDate: "2026-11-05",
     platforms: ["Kinodaran", "TV"],
-    placementType: "In-Frame",
     priceMinAmd: 15_400_000,
     priceMaxAmd: 15_400_000,
     priceNote: "/ episode",
@@ -184,7 +181,6 @@ export const SEED_PROJECTS: SeedProject[] = [
     applicationDeadline: "2026-09-15",
     releaseDate: "2027-01-10",
     platforms: ["Kinodaran"],
-    placementType: "Mention",
     priceNote: "",
     actors: [
       { name: "Ani Vardanyan", role: "Voice of Valdakar" },
@@ -230,7 +226,6 @@ export const SEED_PROJECTS: SeedProject[] = [
     applicationDeadline: "2026-07-28",
     releaseDate: "2026-09-05",
     platforms: ["Kinodaran", "YouTube"],
-    placementType: "Story Integration",
     priceNote: "",
     actors: [
       { name: "Henrikh Mkhitaryan", role: "Himself" },
@@ -275,7 +270,6 @@ export const SEED_PROJECTS: SeedProject[] = [
     applicationDeadline: "2026-07-20",
     releaseDate: "2026-07-25",
     platforms: ["Kinodaran", "YouTube"],
-    placementType: "Mention",
     priceNote: "",
     actors: [
       { name: "Tigran Hovhannisyan", role: "Host / Stand-up Lead" },
@@ -321,7 +315,6 @@ export const SEED_PROJECTS: SeedProject[] = [
     applicationDeadline: "2026-09-05",
     releaseDate: "2026-11-20",
     platforms: ["Kinodaran"],
-    placementType: "In-Frame",
     priceNote: "",
     actors: [
       { name: "Gor Martirosyan", role: "Lead — Resident" },

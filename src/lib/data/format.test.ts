@@ -5,6 +5,7 @@ import {
   formatMonthYear,
   formatFullDate,
   daysUntil,
+  isArchived,
 } from "./format";
 
 describe("splitCountries", () => {
@@ -103,5 +104,33 @@ describe("daysUntil", () => {
     const past = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString();
     expect(daysUntil(future)).toBeGreaterThan(0);
     expect(daysUntil(past)).toBeLessThan(0);
+  });
+});
+
+describe("isArchived", () => {
+  it("is false when there is no deadline at all", () => {
+    // A project without a placement deadline never expires on its own.
+    expect(isArchived(null)).toBe(false);
+    expect(isArchived("nonsense")).toBe(false);
+  });
+
+  it("is false while the deadline is still ahead", () => {
+    const future = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
+    expect(isArchived(future)).toBe(false);
+  });
+
+  it("is true once the deadline is behind us", () => {
+    const past = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
+    expect(isArchived(past)).toBe(true);
+  });
+
+  it("keeps the deadline day itself open", () => {
+    // Deadlines are stored as UTC midnight of the chosen day; that whole day
+    // still accepts offers, matching the "Applications until <date>" copy.
+    const today = new Date();
+    const midnightToday = new Date(
+      Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()),
+    ).toISOString();
+    expect(isArchived(midnightToday)).toBe(false);
   });
 });

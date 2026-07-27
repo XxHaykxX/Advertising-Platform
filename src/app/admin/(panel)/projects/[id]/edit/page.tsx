@@ -7,6 +7,7 @@ import { getPersonDirectory } from "@/lib/data/actors";
 import { pickPersonName } from "@/lib/person-name";
 import { getStreamingSources } from "@/lib/data/streaming-sources";
 import { getCountryOptions } from "@/lib/data/countries";
+import { getStudioOptions } from "@/lib/data/studios";
 import { updateProject } from "../../actions";
 import {
   formatDateInput,
@@ -43,13 +44,8 @@ export default async function EditProjectPage({
   // edit URL gets a 404 (indistinguishable from "doesn't exist").
   if (!isSuperadmin && p.ownerId !== user.id) notFound();
 
-  // Distinct studio names already on file, for the Studio autocomplete.
-  const studioRows = await prisma.project.findMany({
-    where: { studio: { not: "" } },
-    select: { studio: true },
-    distinct: ["studio"],
-  });
-  const studios = studioRows.map((r) => r.studio).sort();
+  // Studio options — the dictionary, not distinct project values (2026-07-27).
+  const studios = await getStudioOptions();
 
   // Person directory (Ф3), for the Cast & Crew name picker.
   const knownPeople = await getPersonDirectory();
@@ -88,9 +84,7 @@ export default async function EditProjectPage({
     // form reset it to 0 on every save.
     applicationDeadline: formatDateInput(p.applicationDeadline),
     releaseDate: formatDateInput(p.releaseDate),
-    expectedReleaseDate: formatDateInput(p.expectedReleaseDate),
     platforms: parsePlatformsInput(p.platforms),
-    placementType: p.placementType ?? "",
     tagline: p.tagline ?? "",
     taglineHy: p.taglineHy ?? "",
     taglineRu: p.taglineRu ?? "",

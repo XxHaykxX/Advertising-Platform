@@ -5,19 +5,17 @@ import { requireContentEditor } from "@/lib/auth/require";
 import { getPersonDirectory } from "@/lib/data/actors";
 import { getStreamingSources } from "@/lib/data/streaming-sources";
 import { getCountryOptions } from "@/lib/data/countries";
+import { getStudioOptions } from "@/lib/data/studios";
 import { createProject } from "../actions";
 import { ProjectForm } from "../project-form";
 
 export default async function NewProjectPage() {
   const user = await requireContentEditor();
 
-  // Distinct studio names already on file, for the Studio autocomplete.
-  const rows = await prisma.project.findMany({
-    where: { studio: { not: "" } },
-    select: { studio: true },
-    distinct: ["studio"],
-  });
-  const studios = rows.map((r) => r.studio).sort();
+  // Studio options. Was a distinct-values query over Project.studio feeding a
+  // <datalist>; it is a real dictionary now (2026-07-27), so misspellings no
+  // longer become permanent suggestions.
+  const studios = await getStudioOptions();
 
   // Person directory (Ф3), for the Cast & Crew name picker.
   const knownPeople = await getPersonDirectory();

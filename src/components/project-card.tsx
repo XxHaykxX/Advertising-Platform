@@ -7,7 +7,7 @@ import {
   Film,
   MapPin,
 } from "lucide-react";
-import { AccentBadge, GenreBadge } from "@/components/ui/badge";
+import { GenreBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FavoriteHeart } from "@/components/favorite-heart";
 import { daysUntil, formatFullDate, formatMonthYear, parseStringArray, splitCountries } from "@/lib/data/format";
@@ -93,9 +93,6 @@ export function ProjectCard({
             <GenreBadge key={g}>{localizeValue(locale, "genre", g)}</GenreBadge>
           ))}
           {moreGenres > 0 ? <GenreBadge>+{moreGenres}</GenreBadge> : null}
-          {project.placementType ? (
-            <AccentBadge>{localizeValue(locale, "placement", project.placementType)}</AccentBadge>
-          ) : null}
           {project.slotsTotal > 0 ? (
             <GenreBadge>
               {project.slotsAvailable} / {project.slotsTotal} {t("card.slotsAvailable")}

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { getProject, getProjectIds } from "@/lib/data/projects";
 import { getLocale } from "@/lib/data/locale";
 import { getCurrency } from "@/lib/data/currency";
+import { isArchived } from "@/lib/data/format";
 import { getSiteHeaderUser } from "@/lib/data/site-header-user";
 import { getBrandInterestStatus } from "@/lib/data/brand-interests";
 import { prisma } from "@/lib/prisma";
@@ -82,6 +83,10 @@ export default async function ReportPage({
       }))}
       locale={locale}
       brandPhone={brandPhone}
+      // Past its placement deadline the project is archived: it drops out of
+      // the catalog, but this page stays reachable by direct link (a brand may
+      // have bookmarked it) with the offer button closed instead.
+      archived={isArchived(project.applicationDeadline)}
     >
       {/* Counts this visit for the owner's stats — see the component. */}
       <ViewPing projectId={project.id} />

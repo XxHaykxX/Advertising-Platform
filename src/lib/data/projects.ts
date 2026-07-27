@@ -7,6 +7,7 @@ import { formatMoney } from "@/lib/currency";
 import { localizeCountryList } from "@/lib/countries";
 import { pickPersonName } from "@/lib/person-name";
 import { getRates } from "@/lib/currency/rates";
+import { isArchived } from "@/lib/data/format";
 import type { CurrencyCode } from "@/lib/currency";
 import {
   deriveFormatCategory,
@@ -158,7 +159,6 @@ const getProjectsCached = unstable_cache(
     applicationDeadline: p.applicationDeadline?.toISOString() ?? null,
     releaseDate: p.releaseDate?.toISOString() ?? null,
     platforms: p.platforms ?? "[]",
-    placementType: p.placementType,
     slotsAvailable: p.tiers.reduce((sum, tier) => sum + (tier.availableSlots ?? 0), 0),
     slotsTotal: p.tiers.reduce((sum, tier) => sum + (tier.totalSlots ?? 0), 0),
   }));
@@ -172,7 +172,20 @@ export async function getProjects(
   currency: CurrencyCode,
   activeOnly = true,
 ): Promise<ProjectListDTO[]> {
-  return getProjectsCached(locale, currency, activeOnly);
+  const rows = await getProjectsCached(locale, currency, activeOnly);
+  // Archive (2026-07-27): a project whose placement deadline has passed drops
+  // out of every public listing — catalog, home page, the brand cabinet's
+  // browse. Its report page stays reachable by direct link (see reports/[id]).
+  //
+  // Filtered HERE, outside getProjectsCached, on purpose: "is the deadline
+  // behind us?" is a function of the current time, and baking it into a cached
+  // row would freeze the answer for the cache lifetime — a project would linger
+  // in the catalog for up to REVALIDATE_SECONDS after expiring.
+  //
+  // Only for the public view: admin call sites pass activeOnly=false and must
+  // keep seeing everything, archived included.
+  if (!activeOnly) return rows;
+  return rows.filter((p) => !isArchived(p.applicationDeadline));
 }
 
 const getProjectCached = unstable_cache(
@@ -212,7 +225,6 @@ const getProjectCached = unstable_cache(
     applicationDeadline: p.applicationDeadline?.toISOString() ?? null,
     releaseDate: p.releaseDate?.toISOString() ?? null,
     platforms: p.platforms ?? "[]",
-    placementType: p.placementType,
     actors: p.actors.map((a) => ({
       id: a.id,
       // Names are transliterated per locale (Արամ / Арам / Aram), snapshotted
@@ -230,7 +242,6 @@ const getProjectCached = unstable_cache(
       .filter((r) => r.name || r.media)
       .map((r) => ({ name: r.name, url: r.url, media: r.media ?? "" })),
     cinemas: splitCommaList(p.cinemas),
-    expectedReleaseDate: p.expectedReleaseDate?.toISOString() ?? null,
     productionBudgetDisplay:
       p.productionBudgetAmd != null ? formatMoney(p.productionBudgetAmd, currency, rates, locale) : "",
     tiers: p.tiers.map((tier) => ({

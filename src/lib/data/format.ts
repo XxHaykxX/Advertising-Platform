@@ -85,6 +85,27 @@ export function daysUntil(iso: string | null): number | null {
   return Math.ceil(diffMs / (1000 * 60 * 60 * 24));
 }
 
+/**
+ * A project is archived once its placement deadline has passed — it stops
+ * accepting offers and drops out of the catalog.
+ *
+ * Derived, never stored: there is no `archived` column and no cron job. The
+ * deadline is the single source of truth, so pushing the date forward brings a
+ * project straight back, and a missed nightly job can't leave stale rows live.
+ *
+ * The deadline day itself still counts as open (daysUntil is 0 all day and only
+ * turns negative once the date is behind us), matching the "Applications until
+ * <date>" copy on the card.
+ *
+ * Callers must run this OUTSIDE the unstable_cache'd project queries — baking
+ * "is it past yet?" into a cached row would freeze the answer for the cache
+ * lifetime.
+ */
+export function isArchived(applicationDeadline: string | null): boolean {
+  const days = daysUntil(applicationDeadline);
+  return days !== null && days < 0;
+}
+
 /** IA-2: view/metric counts (e.g. ProjectDetailDTO.projViews) are stored as
  * admin-entered strings that may already be compact ("420K", "1.2M") or plain
  * ("5000"). English keeps the compact abbreviation; hy/ru don't use "K"/"M"

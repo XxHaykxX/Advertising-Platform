@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Film, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GenreBadge } from "@/components/ui/badge";
-import { daysUntil, formatFullDate } from "@/lib/data/format";
+import { daysUntil, formatFullDate, isArchived } from "@/lib/data/format";
 import { cn } from "@/lib/utils";
 import { intlLocale, localizeValue, makeUI, type Locale } from "@/lib/i18n";
 import type { BrandFavoriteDTO } from "@/lib/data/brand-favorites";
@@ -109,6 +109,14 @@ export function FavoritesView({ favorites, locale }: { favorites: BrandFavoriteD
                       >
                         {p.title}
                       </Link>
+                      {/* A shortlisted project can expire while it sits here.
+                          Said outright, so the brand doesn't chase a listing
+                          that no longer takes offers. */}
+                      {isArchived(p.applicationDeadline) ? (
+                        <span className="ml-2 inline-block rounded-full border border-border bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                          {t("report.offersClosed")}
+                        </span>
+                      ) : null}
                     </td>
                     <td className="border-b border-border py-2.5 pr-4 text-foreground">
                       {p.priceFromDisplay || dash}

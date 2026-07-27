@@ -92,7 +92,6 @@ describe("kindForRole", () => {
 const COMPLETE: PublishCheckInput = {
   studio: "Sharm Holding",
   releaseDate: "2026-09-01",
-  expectedReleaseDate: "",
   tagline: "One line that sells it",
   kind: "FILM",
   episodes: null,
@@ -110,11 +109,8 @@ describe("publishBlockers", () => {
     expect(publishBlockers({ ...COMPLETE, studio: "  " })).toContain("publish.missing.studio");
   });
 
-  it("accepts the expected release date in place of a real one", () => {
-    expect(
-      publishBlockers({ ...COMPLETE, releaseDate: "", expectedReleaseDate: "2027-01-01" }),
-    ).toEqual([]);
-    expect(publishBlockers({ ...COMPLETE, releaseDate: "", expectedReleaseDate: "" })).toContain(
+  it("flags a missing release date", () => {
+    expect(publishBlockers({ ...COMPLETE, releaseDate: "" })).toContain(
       "publish.missing.releaseDate",
     );
   });

@@ -5,6 +5,7 @@ import { Reveal } from "@/components/ui/reveal";
 import { requireMember } from "@/lib/auth/require";
 import { prisma } from "@/lib/prisma";
 import { getLocale } from "@/lib/data/locale";
+import { isArchived } from "@/lib/data/format";
 import { makeUI } from "@/lib/i18n";
 import type { ModerationStatus } from "@prisma/client";
 
@@ -102,6 +103,16 @@ export default async function MyProjectsPage() {
                     >
                       {STATUS_LABEL[p.moderationStatus]}
                     </span>
+                    {/* Past its placement deadline the listing leaves the
+                        catalog and stops taking offers. Told plainly here,
+                        because from the creator's side nothing else would
+                        explain why the views stopped — moving the deadline in
+                        the form brings it back. */}
+                    {isArchived(p.applicationDeadline?.toISOString() ?? null) ? (
+                      <span className="ml-2 inline-block rounded-full border border-border bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                        {t("account.status.archived")}
+                      </span>
+                    ) : null}
                     <h3 className="mt-2 truncate font-semibold text-foreground">{p.title}</h3>
                     {/* The #PP-… code is a staff-side identifier and is not
                         shown in member cabinets (owner decision 2026-07-26). */}

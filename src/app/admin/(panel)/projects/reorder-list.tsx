@@ -29,18 +29,23 @@ export type ProjectRow = {
   title: string;
   isActive: boolean;
   ownerName: string;
+  /** Placement deadline has passed — the project is out of the public catalog
+   *  and no longer takes offers. Derived on the server from
+   *  applicationDeadline (see isArchived in src/lib/data/format.ts), never
+   *  stored, so it is always in sync with the date on the form. */
+  archived: boolean;
 };
 
 // --- Client-side filtering (redesign §3.4) -------------------------------
 // Filters the already-loaded rows; no server round-trip. Status filter was
 // removed per user request (2026-07-25) — search + visibility only.
 
-type Filters = { query: string; active: string };
+type Filters = { query: string; active: string; archive: string };
 
-const NO_FILTERS: Filters = { query: "", active: "ALL" };
+const NO_FILTERS: Filters = { query: "", active: "ALL", archive: "ALL" };
 
 function isFiltering(f: Filters) {
-  return f.query.trim() !== "" || f.active !== "ALL";
+  return f.query.trim() !== "" || f.active !== "ALL" || f.archive !== "ALL";
 }
 
 function applyFilters(rows: ProjectRow[], f: Filters) {
@@ -48,7 +53,17 @@ function applyFilters(rows: ProjectRow[], f: Filters) {
   return rows.filter(
     (p) =>
       (!q || p.title.toLowerCase().includes(q)) &&
-      (f.active === "ALL" || (f.active === "ACTIVE") === p.isActive),
+      (f.active === "ALL" || (f.active === "ACTIVE") === p.isActive) &&
+      (f.archive === "ALL" || (f.archive === "ARCHIVED") === p.archived),
+  );
+}
+
+/** Shown next to the title of a project whose placement deadline has passed. */
+function ArchivedBadge() {
+  return (
+    <span className="ml-2 inline-block rounded-full bg-muted px-2 py-0.5 align-middle text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+      Archived
+    </span>
   );
 }
 
@@ -86,6 +101,19 @@ function FilterBar({
         <option value="ALL">All</option>
         <option value="ACTIVE">Active</option>
         <option value="INACTIVE">Inactive</option>
+      </select>
+      {/* Archive is derived from the placement deadline, so it can't be
+          toggled here — only filtered on. Moving the date in the form is what
+          brings a project back. */}
+      <select
+        value={filters.archive}
+        onChange={(e) => onChange({ ...filters, archive: e.target.value })}
+        className={selectCls}
+        aria-label="Filter by archive state"
+      >
+        <option value="ALL">All deadlines</option>
+        <option value="LIVE">Deadline open</option>
+        <option value="ARCHIVED">Archive</option>
       </select>
       {isFiltering(filters) && (
         <>
@@ -343,6 +371,7 @@ function SortableRow({
         >
           {p.title}
         </Link>
+        {p.archived && <ArchivedBadge />}
         <Link
           href={`/admin/projects/${p.id}/edit`}
           className="mt-0.5 block text-xs text-muted-foreground hover:text-primary"
@@ -413,6 +442,7 @@ export function PlainProjectsTable({ projects }: { projects: ProjectRow[] }) {
                     >
                       {p.title}
                     </Link>
+                    {p.archived && <ArchivedBadge />}
                     <Link
                       href={`/admin/projects/${p.id}/edit`}
                       className="mt-0.5 block text-xs text-muted-foreground hover:text-primary"

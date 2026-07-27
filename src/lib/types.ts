@@ -25,7 +25,6 @@ export interface ProjectListDTO {
   applicationDeadline: string | null;
   releaseDate: string | null;
   platforms: string; // JSON string[]; parse with parseStringArray
-  placementType: string | null;
   // Sums across the project's sponsorship tiers (null slots count as 0) —
   // powers the "X / Y placements available" indicator on the catalog card.
   // slotsTotal === 0 means no tier has a total set, i.e. hide the indicator.
@@ -45,9 +44,6 @@ export interface ProjectDetailDTO extends ProjectListDTO {
   // reference with a url renders as a link.
   references: ReferenceDTO[];
   cinemas: string[]; // exhibition venues, parsed from the comma list
-  // Planned release when the project isn't out yet (CSV "Expected Release
-  // Date"). ISO string, null when unset.
-  expectedReleaseDate: string | null;
   // Production budget, preformatted in the visitor's currency. Distinct from
   // boxOfficeDisplay (gross receipts) — owner decision C.3. "" when unset.
   productionBudgetDisplay: string;

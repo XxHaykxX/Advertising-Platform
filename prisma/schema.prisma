@@ -193,10 +193,8 @@ model Project {
 
   applicationDeadline DateTime?
   releaseDate         DateTime?
-  expectedReleaseDate DateTime? // planned release when not yet released (CSV "Expected Release Date")
   streamingSource     String?   @db.Text // JSON/CSV multi (Kinodaran|YouTube|TV|Cinema) — Production Info
   platforms           String?   @db.Text // JSON string[]; nullable — MySQL forbids literal defaults on TEXT columns
-  placementType       String? // "In-Frame" | "Story Integration" | "Mention"
 
   // ── Real press-kit fields (added for the Aram title, 2026-07-09) ──
   tagline   String? // one-line logline, shown in the report hero (base/fallback, mirrors `synopsis`)
@@ -289,6 +287,19 @@ model StreamingSource {
 /// typed into one project is offered on every future one, and deleting one
 /// removes it from the pool without touching what projects already store.
 model Country {
+  id        Int    @id @default(autoincrement())
+  name      String @unique
+  sortOrder Int    @default(0)
+}
+
+/// Global, editable dictionary of production companies offered by the project
+/// form's "Studio name" multi-select (2026-07-27). Third dictionary of the same
+/// shape as StreamingSource/Country: Studio was a free-text input with a
+/// <datalist> of past values, which did nothing to stop one company being
+/// stored under three spellings. Seeded from src/lib/studios.ts; a studio typed
+/// into one project is offered on every future one, and deleting one removes it
+/// from the pool without touching what projects already store.
+model Studio {
   id        Int    @id @default(autoincrement())
   name      String @unique
   sortOrder Int    @default(0)

@@ -19,7 +19,25 @@ export function ReportInterestButton({
   labelIdle: string;
   labelSent: string;
 }) {
-  const { applied, openDialog } = useReportInterest();
+  const { applied, archived, archivedLabel, openDialog } = useReportInterest();
+
+  // Past its placement deadline the project is in the archive: the page still
+  // reads, but there is nothing left to apply to.
+  if (archived) {
+    return (
+      <div className="flex w-full flex-col gap-1 lg:w-auto">
+        <Button
+          type="button"
+          variant="secondary"
+          size="lg"
+          disabled
+          className="h-auto min-h-9 w-full min-w-0 max-w-full whitespace-normal break-words py-2 text-center leading-tight lg:w-auto"
+        >
+          {archivedLabel}
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex w-full flex-col gap-1 lg:w-auto">

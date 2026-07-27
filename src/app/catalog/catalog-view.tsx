@@ -17,7 +17,7 @@ import {
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { PageHero } from "@/components/ui/page-hero";
-import { AccentBadge, GenreBadge } from "@/components/ui/badge";
+import { GenreBadge } from "@/components/ui/badge";
 import { ProjectCard } from "@/components/project-card";
 import { FavoriteHeart } from "@/components/favorite-heart";
 import { Footer } from "@/components/footer";
@@ -98,9 +98,6 @@ function ProjectRow({
             <GenreBadge key={g}>{localizeValue(locale, "genre", g)}</GenreBadge>
           ))}
           {moreGenres > 0 ? <GenreBadge>+{moreGenres}</GenreBadge> : null}
-          {project.placementType ? (
-            <AccentBadge>{localizeValue(locale, "placement", project.placementType)}</AccentBadge>
-          ) : null}
         </div>
         <p className="mt-2 line-clamp-1 text-sm text-muted-foreground">{project.synopsis}</p>
         <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">

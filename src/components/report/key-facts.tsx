@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { CalendarClock, CalendarDays, Film } from "lucide-react";
-import { AccentBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/ui/reveal";
-import { formatFullDate, formatMonthYear, parseStringArray } from "@/lib/data/format";
+import { formatFullDate, formatMonthYear, isArchived, parseStringArray } from "@/lib/data/format";
 import { DEFAULT_LOCALE, intlLocale, localizeValue, makeUI, type Locale } from "@/lib/i18n";
 import { ReportInterestButton } from "@/components/report/report-interest-button";
 import type { SiteHeaderUser } from "@/components/header";
@@ -49,9 +48,6 @@ export function KeyFacts({
   const t = makeUI(locale);
   const platforms = parseStringArray(project.platforms);
   const release = formatMonthYear(project.releaseDate, intlLocale(locale));
-  // Fall back to the planned date when the project has no actual release yet
-  // (audit 1.5 — the column existed but was never shown anywhere).
-  const expectedRelease = release ? "" : formatMonthYear(project.expectedReleaseDate, intlLocale(locale));
   const deadline = formatFullDate(project.applicationDeadline, intlLocale(locale));
 
   return (
@@ -62,12 +58,6 @@ export function KeyFacts({
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
               {release ? (
                 <Fact icon={<CalendarDays className="h-3.5 w-3.5" />} label={t("keyFacts.release")} value={release} />
-              ) : expectedRelease ? (
-                <Fact
-                  icon={<CalendarDays className="h-3.5 w-3.5" />}
-                  label={t("keyFacts.expectedRelease")}
-                  value={expectedRelease}
-                />
               ) : null}
 
               {deadline ? (
@@ -194,15 +184,19 @@ export function KeyFacts({
             </div>
 
             <div className="flex flex-col items-start gap-3 border-t border-border pt-5 lg:items-end lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0">
-              {project.placementType ? (
-                <AccentBadge>{localizeValue(locale, "placement", project.placementType)}</AccentBadge>
-              ) : null}
               {/* Guests get the login CTA; a BRAND already viewing this report
                   gets the Express Interest trigger, which opens the
                   application popup (#23 — a link back to this same page was
                   a dead click). Other signed-in roles (CREATOR/staff) have no
                   use for either action here, so nothing is rendered. */}
-              {!user ? (
+              {/* Past the placement deadline the project is archived and takes
+                  no more offers — so a guest is told that instead of being
+                  sent to sign in for a button that would be disabled anyway. */}
+              {isArchived(project.applicationDeadline) ? (
+                <Button variant="secondary" size="lg" disabled className="w-full whitespace-nowrap lg:w-auto">
+                  {t("report.offersClosed")}
+                </Button>
+              ) : !user ? (
                 <Button asChild variant="primary" size="lg" className="w-full whitespace-nowrap lg:w-auto">
                   {/* ?from= brings the visitor back to THIS project after
                       signing in — the CTA used to drop them on the cabinet

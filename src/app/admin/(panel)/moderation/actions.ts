@@ -53,7 +53,6 @@ export async function approveProject(projectId: number): Promise<{ ok: true } | 
       moderationStatus: true,
       studio: true,
       releaseDate: true,
-      expectedReleaseDate: true,
       tagline: true,
       taglineHy: true,
       taglineRu: true,
@@ -70,7 +69,6 @@ export async function approveProject(projectId: number): Promise<{ ok: true } | 
   const missing = publishBlockers({
     studio: before.studio,
     releaseDate: before.releaseDate ? "set" : "",
-    expectedReleaseDate: before.expectedReleaseDate ? "set" : "",
     tagline: before.tagline || before.taglineHy || before.taglineRu || before.taglineEn || "",
     kind: before.kind,
     episodes: before.episodes,

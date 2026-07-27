@@ -9,10 +9,10 @@ import { requireContentEditor, requireSuperadmin } from "@/lib/auth/require";
 import { deleteUpload } from "@/lib/actions/uploads";
 import { addStreamingSources } from "@/lib/actions/streaming-sources";
 import { addCountries } from "@/lib/actions/countries";
+import { addStudios } from "@/lib/actions/studios";
 import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
 import {
-  PLACEMENT_TYPE_VALUES,
   KIND_VALUES,
   ROLE_VALUES,
   kindForRole,
@@ -71,13 +71,11 @@ export type ProjectFormValues = {
   // ── Placement parity fields ──
   applicationDeadline: string; // <input type=date> value, "" when unset
   releaseDate: string; // <input type=date> value, "" when unset
-  expectedReleaseDate: string; // <input type=date> value, "" when unset
   platforms: string; // comma-separated in the form; JSON string[] at rest — also the "Available on" field (#29, merged with the old Streaming source)
   // NB: `streamingSource` is gone from the form values too (audit 1.6). #29
   // merged that field into `platforms`; the column stays for the historical
   // data it still holds, but every save used to force it to null, which is
   // just a slow wipe. Nothing writes it now.
-  placementType: string; // "" | one of PLACEMENT_TYPE_VALUES
   // ── Press-kit fields (Aram, 2026-07-09) ──
   tagline: string; // one-line logline (hero) — base/fallback, derived from the per-locale fields
   taglineHy: string; // per-locale logline (mirrors synopsisHy/Ru/En)
@@ -205,7 +203,10 @@ function buildData(fd: FormData): ProjectFormValues {
     // Language is now a MultiSelect (admin redesign phase 1) — same CSV
     // storage convention as genres/countries/platforms/cinemas.
     language: jsonArray<string>(fd, "language").join(", ").slice(0, VARCHAR_MAX),
-    studio: str(fd, "studio", VARCHAR_MAX),
+    // Studio became a MultiSelect over a dictionary (2026-07-27) — same CSV
+    // storage convention as genres/countries/platforms, so a co-production can
+    // list every company instead of cramming them into one text field.
+    studio: jsonArray<string>(fd, "studio").join(", ").slice(0, VARCHAR_MAX),
     kind,
     episodes: kind === "SERIAL" ? intOrNull(fd, "episodes") : null,
     episodeMinutes: kind === "SERIAL" ? intOrNull(fd, "episodeMinutes") : null,
@@ -216,9 +217,7 @@ function buildData(fd: FormData): ProjectFormValues {
     isActive: bool(fd, "isActive"),
     applicationDeadline: str(fd, "applicationDeadline"),
     releaseDate: str(fd, "releaseDate"),
-    expectedReleaseDate: str(fd, "expectedReleaseDate"),
     platforms: jsonArray<string>(fd, "platforms").join(", ").slice(0, VARCHAR_MAX),
-    placementType: enumVal(fd, "placementType", [...PLACEMENT_TYPE_VALUES, ""] as const, ""),
     tagline: taglineRu || taglineHy || taglineEn, // base/fallback, mirrors synopsis
     taglineHy,
     taglineRu,
@@ -260,7 +259,6 @@ async function publishGate(
   const missing = publishBlockers({
     studio: data.studio,
     releaseDate: data.releaseDate,
-    expectedReleaseDate: data.expectedReleaseDate,
     tagline: data.tagline,
     kind: data.kind,
     episodes: data.episodes,
@@ -533,6 +531,8 @@ export async function createProject(
     // Same for the country dictionary: a country typed into this project is
     // offered on every future one (2026-07-27).
     await addCountries(parseCsvInput(data.countries));
+    // …and for studios (2026-07-27).
+    await addStudios(parseCsvInput(data.studio));
   } catch {
     /* ignore */
   }
@@ -561,12 +561,10 @@ export async function createProject(
     gallery: galleryToJson(data.gallery),
     applicationDeadline: dateOrNull(data.applicationDeadline),
     releaseDate: dateOrNull(data.releaseDate),
-    expectedReleaseDate: dateOrNull(data.expectedReleaseDate),
     platforms: platformsToJson(data.platforms),
     // #29 merged the old Streaming source field into `platforms`; the
     // `streamingSource` column is simply not written any more (audit 1.6 —
     // it used to be force-cleared on every save).
-    placementType: data.placementType || null,
     tagline: data.tagline || null,
     taglineHy: data.taglineHy || null,
     taglineRu: data.taglineRu || null,
@@ -656,6 +654,8 @@ export async function updateProject(
     // Same for the country dictionary: a country typed into this project is
     // offered on every future one (2026-07-27).
     await addCountries(parseCsvInput(data.countries));
+    // …and for studios (2026-07-27).
+    await addStudios(parseCsvInput(data.studio));
   } catch {
     /* ignore */
   }
@@ -687,11 +687,9 @@ export async function updateProject(
           gallery: galleryToJson(data.gallery),
           applicationDeadline: dateOrNull(data.applicationDeadline),
           releaseDate: dateOrNull(data.releaseDate),
-          expectedReleaseDate: dateOrNull(data.expectedReleaseDate),
           platforms: platformsToJson(data.platforms),
           // #29 merged the old Streaming source field into `platforms`; the
           // `streamingSource` column is not written any more (audit 1.6).
-          placementType: data.placementType || null,
           tagline: data.tagline || null,
           taglineHy: data.taglineHy || null,
           taglineRu: data.taglineRu || null,

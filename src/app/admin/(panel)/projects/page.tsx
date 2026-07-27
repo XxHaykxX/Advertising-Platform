@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireContentEditor } from "@/lib/auth/require";
+import { isArchived } from "@/lib/data/format";
 import { PlainProjectsTable, ReorderableProjectsTable, type ProjectRow } from "./reorder-list";
 
 export default async function ProjectsAdminPage() {
@@ -45,7 +46,12 @@ export default async function ProjectsAdminPage() {
     title: p.title,
     isActive: p.isActive,
     ownerName: p.owner.name,
+    // Derived here rather than queried: the archive is "the placement deadline
+    // is behind us", with no column and no cron job to keep in sync.
+    archived: isArchived(p.applicationDeadline?.toISOString() ?? null),
   }));
+
+  const archivedCount = rows.filter((r) => r.archived).length;
 
   return (
     <div>
@@ -55,11 +61,19 @@ export default async function ProjectsAdminPage() {
           {/* "in catalog" used to count every row, including the ones not in
               the catalog at all. Count what the visitor can actually see. */}
           <p className="mt-1 text-sm text-muted-foreground">
-            {projects.filter((p) => p.isActive).length} in catalog
+            {/* An archived project is switched on but past its deadline, so it
+                is off the catalog too — counting it as "in catalog" would
+                overstate what a visitor can see. */}
+            {rows.filter((p) => p.isActive && !p.archived).length} in catalog
             {projects.length !== projects.filter((p) => p.isActive).length
               ? ` · ${projects.length - projects.filter((p) => p.isActive).length} unpublished`
               : ""}
           </p>
+          {archivedCount > 0 ? (
+            <p className="mt-1 text-sm text-muted-foreground">
+              {archivedCount} in archive — placement deadline has passed
+            </p>
+          ) : null}
           {awaitingModeration > 0 ? (
             <p className="mt-1 text-sm">
               <Link href="/admin/moderation" className="text-warn hover:underline">
