@@ -6,6 +6,7 @@ import { requireContentEditor } from "@/lib/auth/require";
 import { getPersonDirectory } from "@/lib/data/actors";
 import { pickPersonName } from "@/lib/person-name";
 import { getStreamingSources } from "@/lib/data/streaming-sources";
+import { getCountryOptions } from "@/lib/data/countries";
 import { updateProject } from "../../actions";
 import {
   formatDateInput,
@@ -55,6 +56,7 @@ export default async function EditProjectPage({
 
   // Global Streaming Source dictionary (Ф2/#25), for the MultiSelect options.
   const streamingSources = await getStreamingSources();
+  const countryOptions = await getCountryOptions();
 
   const initial: ProjectFormInitial = {
     title: p.title,
@@ -145,6 +147,7 @@ export default async function EditProjectPage({
         submitLabel="Save"
         studios={studios}
         streamingSources={streamingSources}
+        countryOptions={countryOptions}
         knownPeople={knownPeople}
         projectId={pid}
         ownerHasAvatar={!!p.owner.avatar}

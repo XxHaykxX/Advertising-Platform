@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import type { ProjectListDTO, ProjectDetailDTO } from "@/lib/types";
 import type { Locale } from "@/lib/i18n";
 import { formatMoney } from "@/lib/currency";
+import { localizeCountryList } from "@/lib/countries";
 import { pickPersonName } from "@/lib/person-name";
 import { getRates } from "@/lib/currency/rates";
 import type { CurrencyCode } from "@/lib/currency";
@@ -78,18 +79,6 @@ function effectiveFormat(
   return localizeFormat(locale, p.format);
 }
 
-// ── country token dictionary ─────────────────────────────────────────────
-const COUNTRY_TOKENS: Record<string, { ru: string; hy: string }> = {
-  Armenia: { ru: "Армения", hy: "Հայաստան" },
-  Russia: { ru: "Россия", hy: "Ռուսաստան" },
-  Georgia: { ru: "Грузия", hy: "Վրաստան" },
-  Italy: { ru: "Италия", hy: "Իտալիա" },
-  France: { ru: "Франция", hy: "Ֆրանսիա" },
-  US: { ru: "США", hy: "ԱՄՆ" },
-  USA: { ru: "США", hy: "ԱՄՆ" },
-  Diaspora: { ru: "Диаспора", hy: "Սփյուռք" },
-};
-
 /** "Bohemian Rhapsody, Ray, Michael" -> ["Bohemian Rhapsody", "Ray", "Michael"].
    Used for the comma-list press-kit fields (cinemas). NOT for `references` —
    that column holds [{name,url}] JSON since the Reference Projects editor
@@ -117,15 +106,10 @@ function parseJsonList(json: string | null): string[] {
 }
 
 function localizeCountries(locale: Locale, countries: string): string {
-  if (locale === "en" || !countries) return countries;
-  return countries
-    .split(", ")
-    .map((token) => {
-      const entry = COUNTRY_TOKENS[token];
-      if (!entry) return token;
-      return locale === "ru" ? entry.ru : entry.hy;
-    })
-    .join(", ");
+  // The list and its labels live in src/lib/countries.ts — the same source the
+  // project form's picker uses, so a country can't be spelled one way in the
+  // form and another in the catalog.
+  return localizeCountryList(locale, countries);
 }
 
 // Cache DB-backed reads. On the shared host every uncached request opens a

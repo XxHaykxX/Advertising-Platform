@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { requireContentEditor, requireSuperadmin } from "@/lib/auth/require";
 import { deleteUpload } from "@/lib/actions/uploads";
 import { addStreamingSources } from "@/lib/actions/streaming-sources";
+import { addCountries } from "@/lib/actions/countries";
 import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
 import {
@@ -526,6 +527,9 @@ export async function createProject(
   // field into `platforms`, so it's the source now.
   try {
     await addStreamingSources(parseCsvInput(data.platforms));
+    // Same for the country dictionary: a country typed into this project is
+    // offered on every future one (2026-07-27).
+    await addCountries(parseCsvInput(data.countries));
   } catch {
     /* ignore */
   }
@@ -646,6 +650,9 @@ export async function updateProject(
   // field into `platforms`, so it's the source now.
   try {
     await addStreamingSources(parseCsvInput(data.platforms));
+    // Same for the country dictionary: a country typed into this project is
+    // offered on every future one (2026-07-27).
+    await addCountries(parseCsvInput(data.countries));
   } catch {
     /* ignore */
   }

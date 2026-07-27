@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireContentEditor } from "@/lib/auth/require";
 import { getPersonDirectory } from "@/lib/data/actors";
 import { getStreamingSources } from "@/lib/data/streaming-sources";
+import { getCountryOptions } from "@/lib/data/countries";
 import { createProject } from "../actions";
 import { ProjectForm } from "../project-form";
 
@@ -23,6 +24,7 @@ export default async function NewProjectPage() {
 
   // Global Streaming Source dictionary (Ф2/#25), for the MultiSelect options.
   const streamingSources = await getStreamingSources();
+  const countryOptions = await getCountryOptions();
 
   // No owner yet on create — the poster generator's logo overlay (#26) falls
   // back to the current staff user's own avatar (see poster-action.ts).
@@ -43,6 +45,7 @@ export default async function NewProjectPage() {
         submitLabel="Create project"
         studios={studios}
         streamingSources={streamingSources}
+        countryOptions={countryOptions}
         knownPeople={knownPeople}
         ownerHasAvatar={!!me?.avatar}
       />

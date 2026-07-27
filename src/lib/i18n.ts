@@ -1488,8 +1488,16 @@ export const UI: Record<string, Dict> = {
   },
   "projectForm.field.availableOn": { ru: "Где смотреть", en: "Available on", hy: "Հասանելի է" },
   "projectForm.availableOnPlaceholder": { ru: "Kinodaran, YouTube, TV…", en: "Kinodaran, YouTube, TV…", hy: "Kinodaran, YouTube, TV…" },
-  "projectForm.field.countries": { ru: "Страны", en: "Countries", hy: "Երկրներ" },
-  "projectForm.countriesPlaceholder": { ru: "США, Великобритания, …", en: "US, UK, …", hy: "ԱՄՆ, Մեծ Բրիտանիա, …" },
+  "projectForm.field.countries": {
+    ru: "Страны происхождения контента",
+    en: "Content Original Countries",
+    hy: "Բովանդակության ծագման երկրները",
+  },
+  "projectForm.countriesPlaceholder": {
+    ru: "Выберите страны…",
+    en: "Pick countries…",
+    hy: "Ընտրեք երկրները…",
+  },
   "projectForm.field.applicationDeadline": { ru: "Дедлайн размещения", en: "Placement deadline", hy: "Տեղադրման վերջնաժամկետ" },
   "projectForm.field.releaseDate": { ru: "Дата релиза", en: "Release date", hy: "Թողարկման ամսաթիվ" },
   "projectForm.field.expectedReleaseDate": {

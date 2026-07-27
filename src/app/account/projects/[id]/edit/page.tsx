@@ -8,6 +8,7 @@ import { getLocale } from "@/lib/data/locale";
 import { getPersonDirectory } from "@/lib/data/actors";
 import { pickPersonName } from "@/lib/person-name";
 import { getStreamingSources } from "@/lib/data/streaming-sources";
+import { getCountryOptions } from "@/lib/data/countries";
 import { makeUI } from "@/lib/i18n";
 import {
   formatDateInput,
@@ -70,6 +71,7 @@ export default async function EditCreatorProjectPage({
 
   // Global Streaming Source dictionary (Ф2/#25), for the MultiSelect options.
   const streamingSources = await getStreamingSources();
+  const countryOptions = await getCountryOptions();
 
   const initial: ProjectFormInitial = {
     title: p.title,
@@ -162,6 +164,7 @@ export default async function EditCreatorProjectPage({
           submitLabel={t("account.form.submit")}
           studios={studios}
           streamingSources={streamingSources}
+        countryOptions={countryOptions}
           knownPeople={knownPeople}
           projectId={pid}
           ownerHasAvatar={!!p.owner.avatar}

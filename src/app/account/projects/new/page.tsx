@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { getLocale } from "@/lib/data/locale";
 import { getPersonDirectory } from "@/lib/data/actors";
 import { getStreamingSources } from "@/lib/data/streaming-sources";
+import { getCountryOptions } from "@/lib/data/countries";
 import { makeUI } from "@/lib/i18n";
 import { ProjectForm } from "@/app/admin/(panel)/projects/project-form";
 import { createCreatorProject } from "../actions";
@@ -43,6 +44,7 @@ export default async function NewProjectPage() {
   // — same helper as the admin new/page.tsx. The delete-"×" itself stays
   // staff-only (ProjectForm hides it in creator mode).
   const streamingSources = await getStreamingSources();
+  const countryOptions = await getCountryOptions();
 
   // Gates the "logo" checkbox in the poster generator panel (#26).
   const me = await prisma.user.findUnique({ where: { id: user.id }, select: { avatar: true } });
@@ -73,6 +75,7 @@ export default async function NewProjectPage() {
           submitLabel={t("account.form.submit")}
           studios={studios}
           streamingSources={streamingSources}
+        countryOptions={countryOptions}
           knownPeople={knownPeople}
           ownerHasAvatar={!!me?.avatar}
         />

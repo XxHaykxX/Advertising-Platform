@@ -281,6 +281,19 @@ model StreamingSource {
   sortOrder Int    @default(0)
 }
 
+/// Global, editable dictionary of countries offered by the project form's
+/// "Content Original Countries" multi-select (2026-07-27). Same shape and same
+/// reasoning as StreamingSource: the field was free text, so every editor typed
+/// their own spelling ("US" / "USA" / "United States") and the catalog counted
+/// them as different countries. Seeded from src/lib/countries.ts; a country
+/// typed into one project is offered on every future one, and deleting one
+/// removes it from the pool without touching what projects already store.
+model Country {
+  id        Int    @id @default(autoincrement())
+  name      String @unique
+  sortOrder Int    @default(0)
+}
+
 model Person {
   id        Int      @id @default(autoincrement())
   name      String // legacy base — kept as the ultimate fallback (see pickPersonName)

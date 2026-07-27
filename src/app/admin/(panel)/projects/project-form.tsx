@@ -14,6 +14,7 @@ import {
   type MilestoneRow,
 } from "./form-shared";
 import { deleteStreamingSource } from "@/lib/actions/streaming-sources";
+import { deleteCountry } from "@/lib/actions/countries";
 import { ImageUploader, type ImageUploaderHandle } from "./image-uploader";
 import { ActorsSection, type ActorRow } from "./actors-editor";
 import type { PersonSuggestion } from "@/lib/data/actors";
@@ -156,6 +157,7 @@ export function ProjectForm({
   submitLabel,
   studios = [],
   streamingSources = [],
+  countryOptions: countries0 = [],
   knownPeople = [],
   projectId,
   ownerHasAvatar = false,
@@ -182,6 +184,11 @@ export function ProjectForm({
    *  Source MultiSelect's option list; custom additions persist here for
    *  future projects (see addStreamingSources in actions.ts). */
   streamingSources?: string[];
+  /** Global country dictionary (2026-07-27) — the "Content Original Countries"
+   *  picker's option list. Same contract as streamingSources: a value typed in
+   *  is added to the dictionary on save, and staff can delete one from the
+   *  dropdown. */
+  countryOptions?: string[];
   /** People previously entered as cast/crew on any project (#11) — powers
    *  the Cast & Crew name autocomplete/autofill. */
   knownPeople?: PersonSuggestion[];
@@ -377,6 +384,11 @@ export function ProjectForm({
   // dialog that replaced window.confirm() here. Deleting is global: every
   // project loses the option, so it warrants a real warning, not an OS box.
   const [deletingStreamOption, setDeletingStreamOption] = useState<string | null>(null);
+  // Same three pieces of state for the country dictionary (2026-07-27) — the
+  // options list, the pending delete, and the transition that persists it.
+  const [countryOptions, setCountryOptions] = useState<string[]>(() => countries0);
+  const [countryOptionPending, startCountryOptionTransition] = useTransition();
+  const [deletingCountryOption, setDeletingCountryOption] = useState<string | null>(null);
   // ── Cast/crew + sponsorship tiers, inline (#20²) ──
   const [actors, setActors] = useState<ActorRow[]>(() => initialActors);
   const [tiers, setTiers] = useState<TierRow[]>(() => initialTiers);
@@ -1106,9 +1118,14 @@ export function ProjectForm({
                 className={inputCls}
               />
             </Field>
+            {/* Was a free-text field: every editor typed their own spelling
+                ("US" / "USA" / "United States") and the catalog counted them as
+                three countries. Now a closed list, picked the same way as Genre
+                (2026-07-27). A value a project already carries stays as a chip
+                even if it isn't on the list. */}
             <Field label={t("projectForm.field.countries")}>
               <MultiSelect
-                options={[]}
+                options={countryOptions}
                 value={countries}
                 onChange={setCountries}
                 name="countries"
@@ -1116,6 +1133,9 @@ export function ProjectForm({
                 placeholder={t("projectForm.countriesPlaceholder")}
                 addLabel={t("ui.addOption")}
                 removeLabel={t("ui.remove")}
+                // Deleting is global — every project loses the option — so it
+                // is staff-only, never offered in creator mode.
+                onDeleteOption={mode === "creator" ? undefined : (v) => setDeletingCountryOption(v)}
               />
             </Field>
             <Field label={t("projectForm.field.ageRating")}>
@@ -1322,6 +1342,25 @@ export function ProjectForm({
             setStreamOptions((opts) => opts.filter((x) => x !== value));
             setPlatforms((sel) => sel.filter((x) => x !== value));
             setDeletingStreamOption(null);
+          });
+        }}
+      />
+
+      <ConfirmDialog
+        open={deletingCountryOption !== null}
+        title={`Delete “${deletingCountryOption ?? ""}” from the country list?`}
+        message="It stops being offered on every project. Projects that already list it keep it."
+        confirmLabel="Delete"
+        pending={countryOptionPending}
+        onCancel={() => setDeletingCountryOption(null)}
+        onConfirm={() => {
+          const value = deletingCountryOption;
+          if (!value) return;
+          startCountryOptionTransition(async () => {
+            await deleteCountry(value);
+            setCountryOptions((opts) => opts.filter((x) => x !== value));
+            setCountries((sel) => sel.filter((x) => x !== value));
+            setDeletingCountryOption(null);
           });
         }}
       />

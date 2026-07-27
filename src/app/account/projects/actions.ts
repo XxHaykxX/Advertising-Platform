@@ -11,6 +11,7 @@ import { seedNames } from "@/lib/person-name";
 import { notifyNewProjectForModeration } from "@/lib/mail";
 import { notifyRoles } from "@/lib/data/notifications";
 import { addStreamingSources } from "@/lib/actions/streaming-sources";
+import { addCountries } from "@/lib/actions/countries";
 import {
   PLACEMENT_TYPE_VALUES,
   KIND_VALUES,
@@ -421,6 +422,9 @@ export async function createCreatorProject(
   // field into `platforms`, so it's the source now.
   try {
     await addStreamingSources(parseCsvInput(data.platforms));
+    // Same for the country dictionary: a country typed into this project is
+    // offered on every future one (2026-07-27).
+    await addCountries(parseCsvInput(data.countries));
   } catch {
     /* ignore */
   }
@@ -559,6 +563,9 @@ export async function updateCreatorProject(
   // save. Same as createCreatorProject above.
   try {
     await addStreamingSources(parseCsvInput(data.platforms));
+    // Same for the country dictionary: a country typed into this project is
+    // offered on every future one (2026-07-27).
+    await addCountries(parseCsvInput(data.countries));
   } catch {
     /* ignore */
   }
