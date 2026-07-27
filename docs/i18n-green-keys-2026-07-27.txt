@@ -1,0 +1,55 @@
+# Applied from the localization sheet, 2026-07-27
+nav.catalog
+nav.browseProjects
+hero.eyebrow
+hero.titleHighlight
+hero.subtitle
+btn.viewReport
+catalog.heroTitle
+catalog.heroSubtitle
+catalog.filters
+genre.Crime
+genre.Romance
+genre.Fantasy
+genre.Rock-Opera
+genre.Tragicomedy
+genre.Teen Movies
+genre.Theater
+genre.Music
+genre.Reality Show
+genre.Western
+placement.In-Frame
+placement.Story Integration
+placement.Mention
+catalog.searchPlaceholder
+catalog.noResults
+trust.scriptsAnalyzedNumber
+trust.scriptsAnalyzedTitle
+trust.scriptsAnalyzedCaption
+trust.countriesCaption
+featured.title
+landingHow.subtitle
+landingHow.forCreators
+landingHow.brand1Title
+landingHow.brand1Caption
+landingHow.brand2Title
+landingHow.brand2Caption
+landingHow.brand3Title
+landingHow.brand3Caption
+landingHow.film1Title
+landingHow.film1Caption
+landingHow.film2Caption
+landingHow.film3Title
+landingHow.film3Caption
+landingHow.matchTitle
+landingHow.matchCaption
+getStarted.title
+getStarted.forBrandsBody
+getStarted.forCreatorsTitle
+getStarted.forCreatorsBody
+# New keys added from the sheet
+formatCategory.MINISERIES
+formatCategory.YOUTUBESHOW
+formatCategory.DOCUMENTARY
+formatCategory.ANIMATION
+formatCategory.EVENTS
