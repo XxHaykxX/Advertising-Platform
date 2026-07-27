@@ -16,10 +16,6 @@ function str(fd: FormData, key: string, maxLen?: number) {
   const v = String(fd.get(key) || "").trim();
   return maxLen ? v.slice(0, maxLen) : v;
 }
-function int(fd: FormData, key: string, fallback = 0) {
-  const n = parseInt(String(fd.get(key) || ""), 10);
-  return Number.isFinite(n) ? n : fallback;
-}
 
 export type PortfolioFormValues = {
   // Legacy base columns — the form no longer submits generic title/description
@@ -29,8 +25,7 @@ export type PortfolioFormValues = {
   description: string;
   brand: string;
   image: string;
-  metrics: string; // raw JSON text as typed in the form
-  sortOrder: number;
+  metrics: string; // JSON object, built by the MetricsEditor's hidden input
   // ── Per-locale translations (#41) — mirror Project's titleHy/synopsisHy set ──
   titleHy: string;
   titleRu: string;
@@ -58,7 +53,6 @@ function buildData(fd: FormData): PortfolioFormValues {
     brand: str(fd, "brand", VARCHAR_MAX),
     image: str(fd, "image", VARCHAR_MAX),
     metrics: str(fd, "metrics"),
-    sortOrder: int(fd, "sortOrder"),
     titleHy,
     titleRu,
     titleEn,
@@ -114,6 +108,10 @@ export async function createPortfolio(
   const { error: metricsError, json: metrics } = validateMetrics(data.metrics, t);
   if (metricsError) return { error: metricsError, values: data };
 
+  // Position is owned by the list (drag-and-drop), not by a field — a new case
+  // lands at the end, one past the current maximum.
+  const max = await prisma.portfolio.aggregate({ _max: { sortOrder: true } });
+
   await prisma.portfolio.create({
     data: {
       title: data.title,
@@ -127,7 +125,7 @@ export async function createPortfolio(
       descriptionEn: data.descriptionEn || null,
       image: data.image || null,
       metrics,
-      sortOrder: data.sortOrder,
+      sortOrder: (max._max.sortOrder ?? 0) + 1,
     },
   });
 
@@ -167,7 +165,8 @@ export async function updatePortfolio(
       descriptionEn: data.descriptionEn || null,
       image: data.image || null,
       metrics,
-      sortOrder: data.sortOrder,
+      // sortOrder deliberately absent: editing a case must not move it. The
+      // order is set by dragging in the list (reorderPortfolio below).
     },
   });
 
@@ -178,5 +177,19 @@ export async function updatePortfolio(
 export async function deletePortfolio(id: number) {
   await requireSuperadmin();
   await prisma.portfolio.delete({ where: { id } }).catch(() => null);
+  revalidatePortfolioPaths();
+}
+
+/** Persist the whole case-study order in one go — the list is dragged as a
+ *  sequence, so writing every row's position keeps it unambiguous even if two
+ *  rows previously shared a number. Same shape as reorderProjects. */
+export async function reorderPortfolio(orderedIds: number[]) {
+  await requireSuperadmin();
+  if (orderedIds.length === 0) return;
+  await prisma.$transaction(
+    orderedIds.map((id, index) =>
+      prisma.portfolio.update({ where: { id }, data: { sortOrder: index } }),
+    ),
+  );
   revalidatePortfolioPaths();
 }

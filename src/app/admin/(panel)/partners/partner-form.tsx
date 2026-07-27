@@ -12,7 +12,6 @@ const EMPTY: PartnerFormInitial = {
   name: "",
   logo: "",
   url: "",
-  sortOrder: 0,
 };
 
 const inputCls =
@@ -53,14 +52,15 @@ export function PartnerForm({
           <input name="name" defaultValue={data.name} required className={inputCls} />
         </Field>
         <Field label="Logo">
-          <MediaField name="logo" initial={data.logo} uploadDir="partners" />
+          {/* Picked from (or uploaded into) the shared Media library — a logo is
+              shown whole, not cropped to a square. */}
+          <MediaField name="logo" initial={data.logo} uploadDir="partners" fit="contain" />
         </Field>
         <Field label="Website URL">
           <input name="url" defaultValue={data.url} placeholder="https://…" className={inputCls} />
         </Field>
-        <Field label="Sort order">
-          <input name="sortOrder" type="number" defaultValue={data.sortOrder} className={inputCls} />
-        </Field>
+        {/* Sort order is not a field any more — partners are ordered by
+            dragging them in the list (2026-07-27). */}
       </section>
 
       {state.error && (

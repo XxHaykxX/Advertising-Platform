@@ -24,7 +24,6 @@ export default async function EditPartnerPage({
     name: p.name,
     logo: p.logo ?? "",
     url: p.url ?? "",
-    sortOrder: p.sortOrder,
   };
 
   const action = updatePartner.bind(null, pid);

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Languages, Loader2 } from "lucide-react";
 import { makeUI } from "@/lib/i18n";
 import { MediaField } from "@/components/media-field";
+import { MetricsEditor } from "./metrics-editor";
 import type { PortfolioFormState, PortfolioFormValues } from "./actions";
 import { translatePortfolioAction, type TranslatePortfolioState } from "./translate-action";
 
@@ -16,13 +17,18 @@ type TranslateLang = "hy" | "ru" | "en";
 // shared translate.* error strings surfaced by the Translate button.
 const t = makeUI("en");
 
+// Locale tabs, same pattern (and same reasoning) as the project form's About
+// block: all three panels stay mounted, the inactive ones are just `hidden`, so
+// the uncontrolled refs and the Translate button keep working untouched.
+const LANGS = ["hy", "ru", "en"] as const;
+const LANG_NAMES: Record<TranslateLang, string> = { hy: "Հայերեն", ru: "Русский", en: "English" };
+
 const EMPTY: PortfolioFormInitial = {
   title: "",
   description: "",
   brand: "",
   image: "",
   metrics: "",
-  sortOrder: 0,
   titleHy: "",
   titleRu: "",
   titleEn: "",
@@ -79,6 +85,36 @@ export function PortfolioForm({
   const [translating, startTranslate] = useTransition();
   const [translateError, setTranslateError] = useState<NonNullable<TranslatePortfolioState["errorCode"]> | null>(null);
 
+  // Which locale panel is showing, and which locales carry text — the dot on a
+  // tab is the only way to see that a language is still empty once the fields
+  // are behind tabs instead of side by side.
+  const initialFilled = (() => {
+    const filled = new Set<TranslateLang>();
+    for (const l of LANGS) {
+      const title = l === "hy" ? data.titleHy : l === "ru" ? data.titleRu : data.titleEn;
+      const desc = l === "hy" ? data.descriptionHy : l === "ru" ? data.descriptionRu : data.descriptionEn;
+      if ((title || "").trim() || (desc || "").trim()) filled.add(l);
+    }
+    return filled;
+  })();
+  // Open on a language that actually has text — landing on an empty Armenian
+  // panel for a case written only in English reads as "the case is blank".
+  const [tab, setTab] = useState<TranslateLang>(LANGS.find((l) => initialFilled.has(l)) ?? "hy");
+  const [filledLangs, setFilledLangs] = useState<Set<TranslateLang>>(initialFilled);
+
+  /** Recompute the tab dots from what the (uncontrolled) fields hold right now —
+   *  cheap enough to run per keystroke and keeps Translate's DOM writes honest
+   *  once the button re-reads them. */
+  function markFilled() {
+    const filled = new Set<TranslateLang>();
+    for (const l of LANGS) {
+      if ((titleRefs[l].current?.value || "").trim() || (descriptionRefs[l].current?.value || "").trim()) {
+        filled.add(l);
+      }
+    }
+    setFilledLangs(filled);
+  }
+
   function handleTranslate() {
     setTranslateError(null);
     // Source = whichever per-locale title field is already filled (ru first).
@@ -104,6 +140,7 @@ export function PortfolioForm({
         if (titleRefs[l]?.current) titleRefs[l].current!.value = value.title;
         if (descriptionRefs[l]?.current) descriptionRefs[l].current!.value = value.description;
       }
+      markFilled();
     });
   }
 
@@ -132,68 +169,72 @@ export function PortfolioForm({
           <input name="brand" defaultValue={data.brand} required className={inputCls} />
         </Field>
 
-        {/* ── Title (per-locale) ── */}
-        <div className="grid gap-4 sm:grid-cols-3">
-          <Field label="Title (HY) *">
-            <input ref={titleRefs.hy} name="titleHy" defaultValue={data.titleHy} placeholder="Վերնագիր հայերեն" className={inputCls} />
-          </Field>
-          <Field label="Title (RU) *">
-            <input ref={titleRefs.ru} name="titleRu" defaultValue={data.titleRu} placeholder="Название по-русски" className={inputCls} />
-          </Field>
-          <Field label="Title (EN) *">
-            <input ref={titleRefs.en} name="titleEn" defaultValue={data.titleEn} placeholder="Title in English" className={inputCls} />
-          </Field>
+        {/* Language switcher — one panel per locale instead of three columns of
+            every field, which pushed the description boxes down to a third of
+            the width each. */}
+        <div className="flex gap-1 rounded-xl border border-border bg-background p-1">
+          {LANGS.map((l) => (
+            <button
+              key={l}
+              type="button"
+              onClick={() => setTab(l)}
+              className={`flex-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                tab === l ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {LANG_NAMES[l]}
+              {filledLangs.has(l) && <span className="ml-1.5 text-xs opacity-70">●</span>}
+            </button>
+          ))}
         </div>
 
-        {/* ── Description (per-locale) ── */}
-        <div className="grid gap-4 sm:grid-cols-3">
-          <Field label="Description (HY) *">
-            <textarea
-              ref={descriptionRefs.hy}
-              name="descriptionHy"
-              defaultValue={data.descriptionHy}
-              rows={4}
-              placeholder="Նկարագրություն հայերեն"
-              className={`${inputCls} resize-none`}
-            />
-          </Field>
-          <Field label="Description (RU) *">
-            <textarea
-              ref={descriptionRefs.ru}
-              name="descriptionRu"
-              defaultValue={data.descriptionRu}
-              rows={4}
-              placeholder="Описание по-русски"
-              className={`${inputCls} resize-none`}
-            />
-          </Field>
-          <Field label="Description (EN) *">
-            <textarea
-              ref={descriptionRefs.en}
-              name="descriptionEn"
-              defaultValue={data.descriptionEn}
-              rows={4}
-              placeholder="Description in English"
-              className={`${inputCls} resize-none`}
-            />
-          </Field>
-        </div>
+        {LANGS.map((l) => {
+          const suffix = l === "hy" ? "Hy" : l === "ru" ? "Ru" : "En";
+          const titleValue = l === "hy" ? data.titleHy : l === "ru" ? data.titleRu : data.titleEn;
+          const descValue =
+            l === "hy" ? data.descriptionHy : l === "ru" ? data.descriptionRu : data.descriptionEn;
+          return (
+            <div key={l} className={tab === l ? "space-y-4" : "hidden"}>
+              {/* Not `required`: a field on a hidden tab can't be focused for
+                  native validation, which would block submit with no visible
+                  reason. The server checks that at least one locale is filled. */}
+              <Field label="Title">
+                <input
+                  ref={titleRefs[l]}
+                  name={`title${suffix}`}
+                  defaultValue={titleValue}
+                  onChange={markFilled}
+                  placeholder={l === "hy" ? "Վերնագիր" : l === "ru" ? "Название" : "Title"}
+                  className={inputCls}
+                />
+              </Field>
+              <Field label="Description">
+                <textarea
+                  ref={descriptionRefs[l]}
+                  name={`description${suffix}`}
+                  defaultValue={descValue}
+                  onChange={markFilled}
+                  rows={6}
+                  placeholder={l === "hy" ? "Նկարագրություն" : l === "ru" ? "Описание" : "Description"}
+                  className={`${inputCls} resize-none`}
+                />
+              </Field>
+            </div>
+          );
+        })}
+      </section>
 
+      <section className="space-y-4 rounded-2xl border border-border bg-card p-6">
+        <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">Media & results</h2>
         <Field label="Image">
           <MediaField name="image" initial={data.image} uploadDir="portfolio" />
         </Field>
-        <Field label="Metrics (JSON)">
-          <textarea
-            name="metrics"
-            defaultValue={data.metrics}
-            rows={3}
-            placeholder={'{"views":"2.1M","recall":"+38%"}'}
-            className={`${inputCls} resize-none font-mono`}
-          />
+        <Field label="Metrics">
+          <MetricsEditor name="metrics" initial={data.metrics} />
         </Field>
-        <Field label="Sort order">
-          <input name="sortOrder" type="number" defaultValue={data.sortOrder} className={inputCls} />
-        </Field>
+        {/* Sort order is not a field any more — the list page orders cases by
+            drag-and-drop (2026-07-27), same as Projects. New cases go to the
+            end; the server assigns the position. */}
       </section>
 
       {state.error && (

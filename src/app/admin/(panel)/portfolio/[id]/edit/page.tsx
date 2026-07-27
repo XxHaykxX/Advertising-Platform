@@ -26,7 +26,6 @@ export default async function EditPortfolioPage({
     brand: p.brand,
     image: p.image ?? "",
     metrics: p.metrics ?? "",
-    sortOrder: p.sortOrder,
     titleHy: p.titleHy,
     titleRu: p.titleRu,
     titleEn: p.titleEn,

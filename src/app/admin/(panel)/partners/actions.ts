@@ -16,16 +16,11 @@ function str(fd: FormData, key: string, maxLen?: number) {
   const v = String(fd.get(key) || "").trim();
   return maxLen ? v.slice(0, maxLen) : v;
 }
-function int(fd: FormData, key: string, fallback = 0) {
-  const n = parseInt(String(fd.get(key) || ""), 10);
-  return Number.isFinite(n) ? n : fallback;
-}
 
 export type PartnerFormValues = {
   name: string;
   logo: string;
   url: string;
-  sortOrder: number;
 };
 
 export type PartnerFormState = { error?: string; values?: PartnerFormValues };
@@ -35,7 +30,6 @@ function buildData(fd: FormData): PartnerFormValues {
     name: str(fd, "name", VARCHAR_MAX),
     logo: str(fd, "logo", VARCHAR_MAX),
     url: str(fd, "url", VARCHAR_MAX),
-    sortOrder: int(fd, "sortOrder"),
   };
 }
 
@@ -60,12 +54,16 @@ export async function createPartner(
   const error = validate(data, t);
   if (error) return { error, values: data };
 
+  // Position is owned by the list (drag-and-drop, 2026-07-27), not by a field —
+  // a new partner lands at the end of the strip.
+  const max = await prisma.partner.aggregate({ _max: { sortOrder: true } });
+
   await prisma.partner.create({
     data: {
       name: data.name,
       logo: data.logo || null,
       url: data.url || null,
-      sortOrder: data.sortOrder,
+      sortOrder: (max._max.sortOrder ?? 0) + 1,
     },
   });
 
@@ -94,7 +92,8 @@ export async function updatePartner(
       name: data.name,
       logo: data.logo || null,
       url: data.url || null,
-      sortOrder: data.sortOrder,
+      // sortOrder deliberately absent: editing a partner must not move it in
+      // the strip. Order is set by dragging in the list (reorderPartners).
     },
   });
 
@@ -105,5 +104,16 @@ export async function updatePartner(
 export async function deletePartner(id: number) {
   await requireSuperadmin();
   await prisma.partner.delete({ where: { id } }).catch(() => null);
+  revalidatePartnerPaths();
+}
+
+/** Persist the whole partner order in one go — same shape and reasoning as
+ *  reorderProjects / reorderPortfolio. */
+export async function reorderPartners(orderedIds: number[]) {
+  await requireSuperadmin();
+  if (orderedIds.length === 0) return;
+  await prisma.$transaction(
+    orderedIds.map((id, index) => prisma.partner.update({ where: { id }, data: { sortOrder: index } })),
+  );
   revalidatePartnerPaths();
 }

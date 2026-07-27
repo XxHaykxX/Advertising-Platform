@@ -20,6 +20,7 @@ export function MediaField({
   uploadDir,
   scope = "staff",
   accept = "image",
+  fit = "cover",
   locale,
 }: {
   name: string;
@@ -28,6 +29,10 @@ export function MediaField({
   uploadDir: string;
   scope?: MediaPickerScope;
   accept?: MediaPickerAccept;
+  /** How the preview fills its 64px box. "cover" (default) suits photos and
+   *  posters; "contain" is for logos, where cropping the edges off a wide
+   *  wordmark makes it unrecognizable. */
+  fit?: "cover" | "contain";
   /** Passed through to the picker so a member sees it in their own language
    *  (audit 4.5). Admin callers omit it — the admin UI is pinned to English. */
   locale?: Locale;
@@ -46,7 +51,14 @@ export function MediaField({
                 <FileVideo className="h-5 w-5" />
               </span>
             ) : (
-              <Image src={value} alt="" fill className="object-cover" sizes="64px" unoptimized />
+              <Image
+                src={value}
+                alt=""
+                fill
+                className={fit === "contain" ? "object-contain p-1" : "object-cover"}
+                sizes="64px"
+                unoptimized
+              />
             )}
           </span>
         ) : (
