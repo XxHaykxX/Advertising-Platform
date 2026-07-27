@@ -19,15 +19,31 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Loader2, Plus, Search, Trash2, User, X } from "lucide-react";
+import { GripVertical, Languages, Loader2, Plus, Search, Trash2, User, X } from "lucide-react";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { MediaPicker } from "@/components/media-picker";
 import type { PersonRow } from "@/lib/data/persons";
-import { matchesNameQuery } from "@/lib/translit";
+import { allSpellings } from "@/lib/person-name";
+import { matchesAnyNameQuery } from "@/lib/translit";
 import { ROLE_VALUES, kindForRole } from "@/app/admin/(panel)/projects/form-shared";
-import { createPerson, deletePerson, reorderPersons, updatePerson } from "./person-actions";
+import { createPerson, deletePerson, reorderPersons, spellPersonName, updatePerson } from "./person-actions";
 
-type PersonPatch = Partial<Pick<PersonRow, "name" | "role" | "kind" | "photo">>;
+type PersonPatch = Partial<Pick<PersonRow, "nameHy" | "nameRu" | "nameEn" | "role" | "kind" | "photo">>;
+
+// Why a "Fill" button per row: the directory holds 30+ people whose names are
+// the same word in three scripts (Արամ / Арам / Aram). Typing each one three
+// times is the kind of work a model does correctly and instantly — see
+// transliterateName in src/lib/translate.ts (a separate call from the project
+// translator, whose prompt is told to leave proper nouns alone).
+const NAME_ERRORS: Record<string, string> = {
+  emptyFields: "Type the name in one language first.",
+  notConfigured: "Auto-fill is not configured on this server.",
+  busy: "The translation service is busy — try again in a moment.",
+  rateLimited: "Too many requests — try again in a moment.",
+  timeout: "The translation service timed out — try again.",
+  network: "Network error — check the connection and try again.",
+  genericError: "Could not fill the other spellings.",
+};
 
 const inputCls =
   "w-full rounded-lg border border-transparent bg-transparent px-2 py-1.5 text-sm text-foreground outline-none transition-colors focus:border-primary focus:bg-card";
@@ -51,6 +67,8 @@ export function CastManager({ persons }: { persons: PersonRow[] }) {
   const [deleting, startDelete] = useTransition();
   const nameInputs = useRef<Map<number, HTMLInputElement>>(new Map());
   const [focusId, setFocusId] = useState<number | null>(null);
+  const [spellingId, setSpellingId] = useState<number | null>(null);
+  const [nameError, setNameError] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
@@ -110,6 +128,30 @@ export function CastManager({ persons }: { persons: PersonRow[] }) {
     timers.set(id, setTimeout(() => flushPatch(id), 600));
   }
 
+  /** Fill the empty spellings of one row from the one that is typed. Flushes
+   *  any debounced edit first — otherwise the server would read the name as it
+   *  was before the last keystrokes and transliterate the wrong text. */
+  async function fillSpellings(id: number) {
+    flushPatch(id);
+    setNameError(null);
+    setSpellingId(id);
+    try {
+      const res = await spellPersonName(id);
+      if (!res.ok) {
+        setNameError(NAME_ERRORS[res.errorCode] ?? NAME_ERRORS.genericError);
+        return;
+      }
+      setRows((prev) =>
+        prev.map((r) =>
+          r.id === id ? { ...r, nameHy: res.nameHy, nameRu: res.nameRu, nameEn: res.nameEn } : r,
+        ),
+      );
+      flashSaved();
+    } finally {
+      setSpellingId(null);
+    }
+  }
+
   function addPerson() {
     setShowSaved(false);
     startTransition(async () => {
@@ -157,7 +199,10 @@ export function CastManager({ persons }: { persons: PersonRow[] }) {
   // reasoning as the media-manager filename search. `from`/`to` in move()
   // still index into the full `rows` array via id lookup, so dragging within
   // a filtered view reorders correctly.
-  const shown = useMemo(() => rows.filter((r) => matchesNameQuery(r.name, search)), [rows, search]);
+  const shown = useMemo(
+    () => rows.filter((r) => matchesAnyNameQuery(allSpellings(r, r.name), search)),
+    [rows, search],
+  );
 
   return (
     <div>
@@ -169,6 +214,7 @@ export function CastManager({ persons }: { persons: PersonRow[] }) {
             </span>
           )}
           {showSaved && !pending && <span className="font-medium text-success">Saved</span>}
+          {nameError && <span className="text-danger">{nameError}</span>}
         </div>
         <div className="flex items-center gap-2">
           {rows.length > 0 && (
@@ -202,39 +248,49 @@ export function CastManager({ persons }: { persons: PersonRow[] }) {
           No one matches “{search}”.
         </p>
       ) : (
-        <div className="overflow-hidden rounded-2xl border border-border bg-card">
-          <div className="grid grid-cols-[24px_40px_1fr_1fr_32px] items-center gap-2 border-b border-border bg-muted px-3 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-            <span />
-            <span>Photo</span>
-            <span>Name</span>
-            <span>Role</span>
-            <span />
+        <div className="overflow-x-auto rounded-2xl border border-border bg-card">
+          {/* One name column became three (hy/ru/en) + a fill button, so the row
+              no longer fits a narrow panel — the wrapper scrolls sideways and a
+              min-width keeps the columns readable instead of squeezing them. */}
+          <div className="min-w-[880px]">
+            <div className="grid grid-cols-[24px_40px_1fr_1fr_1fr_28px_150px_32px] items-center gap-2 border-b border-border bg-muted px-3 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              <span />
+              <span>Photo</span>
+              <span>Name (հայ)</span>
+              <span>Name (рус)</span>
+              <span>Name (eng)</span>
+              <span />
+              <span>Role</span>
+              <span />
+            </div>
+            <DndContext
+              id="cast-directory"
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              modifiers={[restrictToVerticalAxis, restrictToParentElement]}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext items={shown.map((r) => r.id)} strategy={verticalListSortingStrategy}>
+                <div className="divide-y divide-border">
+                  {shown.map((r) => (
+                    <SortableRow
+                      key={r.id}
+                      person={r}
+                      onChange={(patch, debounce) => updateField(r.id, patch, debounce)}
+                      onOpenPhoto={() => setPhotoPickerId(r.id)}
+                      onDelete={() => setDeleteTarget(r)}
+                      onFillSpellings={() => void fillSpellings(r.id)}
+                      filling={spellingId === r.id}
+                      nameInputRef={(el) => {
+                        if (el) nameInputs.current.set(r.id, el);
+                        else nameInputs.current.delete(r.id);
+                      }}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
           </div>
-          <DndContext
-            id="cast-directory"
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            modifiers={[restrictToVerticalAxis, restrictToParentElement]}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext items={shown.map((r) => r.id)} strategy={verticalListSortingStrategy}>
-              <div className="divide-y divide-border">
-                {shown.map((r) => (
-                  <SortableRow
-                    key={r.id}
-                    person={r}
-                    onChange={(patch, debounce) => updateField(r.id, patch, debounce)}
-                    onOpenPhoto={() => setPhotoPickerId(r.id)}
-                    onDelete={() => setDeleteTarget(r)}
-                    nameInputRef={(el) => {
-                      if (el) nameInputs.current.set(r.id, el);
-                      else nameInputs.current.delete(r.id);
-                    }}
-                  />
-                ))}
-              </div>
-            </SortableContext>
-          </DndContext>
         </div>
       )}
 
@@ -250,7 +306,7 @@ export function CastManager({ persons }: { persons: PersonRow[] }) {
 
       <ConfirmDialog
         open={deleteTarget !== null}
-        title={`Delete “${deleteTarget?.name || "this person"}”?`}
+        title={`Delete “${deleteTarget?.nameHy || deleteTarget?.nameEn || deleteTarget?.name || "this person"}”?`}
         message="Removed from the global directory. Projects that already credit them keep their own cast rows untouched."
         confirmLabel="Delete"
         pending={deleting}
@@ -266,12 +322,16 @@ function SortableRow({
   onChange,
   onOpenPhoto,
   onDelete,
+  onFillSpellings,
+  filling,
   nameInputRef,
 }: {
   person: PersonRow;
   onChange: (patch: PersonPatch, debounce?: boolean) => void;
   onOpenPhoto: () => void;
   onDelete: () => void;
+  onFillSpellings: () => void;
+  filling: boolean;
   nameInputRef: (el: HTMLInputElement | null) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: r.id });
@@ -292,7 +352,7 @@ function SortableRow({
     <div
       ref={setNodeRef}
       style={style}
-      className={`grid grid-cols-[24px_40px_1fr_1fr_32px] items-center gap-2 px-3 py-1.5 ${isDragging ? "" : "hover:bg-muted/50"}`}
+      className={`grid grid-cols-[24px_40px_1fr_1fr_1fr_28px_150px_32px] items-center gap-2 px-3 py-1.5 ${isDragging ? "" : "hover:bg-muted/50"}`}
     >
       <button
         type="button"
@@ -331,13 +391,39 @@ function SortableRow({
         )}
       </div>
 
+      {/* Three spellings of the same proper noun, not three translations —
+          Արամ Խաչատրյան / Арам Хачатрян / Aram Khachatryan. The legacy `name`
+          column is kept in step server-side (withBaseName) so nothing that
+          still reads it breaks. */}
       <input
         ref={nameInputRef}
-        value={r.name}
-        onChange={(e) => onChange({ name: e.target.value }, true)}
+        value={r.nameHy}
+        onChange={(e) => onChange({ nameHy: e.target.value }, true)}
+        placeholder="Անուն"
+        className={inputCls}
+      />
+      <input
+        value={r.nameRu}
+        onChange={(e) => onChange({ nameRu: e.target.value }, true)}
+        placeholder="Имя"
+        className={inputCls}
+      />
+      <input
+        value={r.nameEn}
+        onChange={(e) => onChange({ nameEn: e.target.value }, true)}
         placeholder="Name"
         className={inputCls}
       />
+      <button
+        type="button"
+        onClick={onFillSpellings}
+        disabled={filling}
+        title="Fill the empty spellings from the one that is typed"
+        aria-label="Fill the other spellings"
+        className="grid h-7 w-7 place-items-center rounded-lg text-muted-foreground hover:bg-muted hover:text-primary disabled:opacity-50"
+      >
+        {filling ? <Loader2 className="h-4 w-4 animate-spin" /> : <Languages className="h-4 w-4" />}
+      </button>
       {/* Role picks from the fixed ROLE_VALUES list and DERIVES Cast/Crew
           (kindForRole) — the separate Kind dropdown is gone (user request
           2026-07-26). A legacy free-text role still renders as its own option

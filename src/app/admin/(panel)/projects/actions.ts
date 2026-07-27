@@ -344,21 +344,65 @@ function parseActorRows(fd: FormData) {
    name are matched to an existing Person by name (case-insensitive via the
    column collation), and if none exists the row is DROPPED — the person simply
    can't be attached until they're created in the directory first. */
+type ResolvedActorRow = ReturnType<typeof parseActorRows>[number] & {
+  personId: number;
+  nameHy: string;
+  nameRu: string;
+  nameEn: string;
+};
+
 async function resolveActorPersonIds(
   tx: Prisma.TransactionClient,
   rows: ReturnType<typeof parseActorRows>,
-): Promise<(ReturnType<typeof parseActorRows>[number] & { personId: number })[]> {
+): Promise<ResolvedActorRow[]> {
   const resolved: (ReturnType<typeof parseActorRows>[number] & { personId: number })[] = [];
   for (const r of rows) {
     if (r.personId != null) {
       resolved.push({ ...r, personId: r.personId });
       continue;
     }
-    const existing = await tx.person.findFirst({ where: { name: r.name } });
+    // Match on ANY spelling: the form sends the name in the language it was
+    // showing, which is no longer necessarily the base column.
+    const existing = await tx.person.findFirst({
+      where: {
+        OR: [{ name: r.name }, { nameHy: r.name }, { nameRu: r.name }, { nameEn: r.name }],
+      },
+    });
     if (existing) resolved.push({ ...r, personId: existing.id });
     // else: no directory match -> drop the row (no auto-create).
   }
-  return resolved;
+  return snapshotPersonNames(tx, resolved);
+}
+
+/**
+ * Overwrite each row's name columns with the directory's spelling of that
+ * person (2026-07-27). The form only carries ONE name — whichever locale the
+ * editor was showing — so trusting it would write an English spelling into the
+ * base column the moment an admin saves a project. The Person row is the single
+ * source of truth for how someone is spelled; the Actor row is its snapshot,
+ * refreshed on every save. A person missing from the directory (shouldn't
+ * happen — resolve is find-only) keeps whatever the form sent.
+ */
+async function snapshotPersonNames(
+  tx: Prisma.TransactionClient,
+  rows: (ReturnType<typeof parseActorRows>[number] & { personId: number })[],
+): Promise<ResolvedActorRow[]> {
+  if (rows.length === 0) return [];
+  const persons = await tx.person.findMany({
+    where: { id: { in: [...new Set(rows.map((r) => r.personId))] } },
+    select: { id: true, name: true, nameHy: true, nameRu: true, nameEn: true },
+  });
+  const byId = new Map(persons.map((p) => [p.id, p]));
+  return rows.map((r) => {
+    const p = byId.get(r.personId);
+    return {
+      ...r,
+      name: p?.name || r.name,
+      nameHy: p?.nameHy ?? "",
+      nameRu: p?.nameRu ?? "",
+      nameEn: p?.nameEn ?? "",
+    };
+  });
 }
 
 /** Rows for prisma.sponsorshipTier (projectId added by the caller). `dbId`
@@ -813,6 +857,9 @@ export async function duplicateProject(
             data: actors.map((a, i) => ({
               projectId: proj.id,
               name: a.name,
+              nameHy: a.nameHy,
+              nameRu: a.nameRu,
+              nameEn: a.nameEn,
               role: a.role,
               roles: a.roles,
               kind: a.kind,

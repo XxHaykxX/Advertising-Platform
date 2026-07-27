@@ -6,7 +6,8 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireMember } from "@/lib/auth/require";
 import { getLocale } from "@/lib/data/locale";
-import { makeUI } from "@/lib/i18n";
+import { makeUI, type Locale } from "@/lib/i18n";
+import { seedNames } from "@/lib/person-name";
 import { notifyNewProjectForModeration } from "@/lib/mail";
 import { notifyRoles } from "@/lib/data/notifications";
 import { addStreamingSources } from "@/lib/actions/streaming-sources";
@@ -252,17 +253,34 @@ function parseActorRows(fd: FormData) {
    themselves: the Person is created together with the project and goes through
    the same moderation, with duplicate names cleaned up by hand in the
    directory. */
+type ResolvedActorRow = ReturnType<typeof parseActorRows>[number] & {
+  personId: number;
+  nameHy: string;
+  nameRu: string;
+  nameEn: string;
+};
+
 async function resolveActorPersonIds(
   tx: Prisma.TransactionClient,
   rows: ReturnType<typeof parseActorRows>,
-): Promise<(ReturnType<typeof parseActorRows>[number] & { personId: number })[]> {
+  /** The language the creator filled the form in — a name they typed is stored
+   *  as that locale's spelling (2026-07-27). Staff can add the other two later
+   *  in /admin/cast; until then pickPersonName falls back. */
+  locale: Locale,
+): Promise<ResolvedActorRow[]> {
   const resolved: (ReturnType<typeof parseActorRows>[number] & { personId: number })[] = [];
   for (const r of rows) {
     if (r.personId != null) {
       resolved.push({ ...r, personId: r.personId });
       continue;
     }
-    const existing = await tx.person.findFirst({ where: { name: r.name } });
+    // Match on ANY spelling: the form sends the name in the language it was
+    // showing, which is no longer necessarily the base column.
+    const existing = await tx.person.findFirst({
+      where: {
+        OR: [{ name: r.name }, { nameHy: r.name }, { nameRu: r.name }, { nameEn: r.name }],
+      },
+    });
     if (existing) {
       resolved.push({ ...r, personId: existing.id });
       continue;
@@ -270,6 +288,7 @@ async function resolveActorPersonIds(
     const created = await tx.person.create({
       data: {
         name: r.name,
+        ...seedNames(r.name, locale),
         role: r.role,
         kind: r.kind,
         // The headshot the creator uploaded on the row seeds the directory
@@ -280,7 +299,33 @@ async function resolveActorPersonIds(
     });
     resolved.push({ ...r, personId: created.id });
   }
-  return resolved;
+  return snapshotPersonNames(tx, resolved);
+}
+
+/** Mirror of the admin action's snapshotPersonNames: the directory owns the
+ *  spellings, the Actor row is a snapshot refreshed on every save. The form
+ *  only carries one name (the locale it was shown in), so it must not be
+ *  trusted for the name columns. */
+async function snapshotPersonNames(
+  tx: Prisma.TransactionClient,
+  rows: (ReturnType<typeof parseActorRows>[number] & { personId: number })[],
+): Promise<ResolvedActorRow[]> {
+  if (rows.length === 0) return [];
+  const persons = await tx.person.findMany({
+    where: { id: { in: [...new Set(rows.map((r) => r.personId))] } },
+    select: { id: true, name: true, nameHy: true, nameRu: true, nameEn: true },
+  });
+  const byId = new Map(persons.map((p) => [p.id, p]));
+  return rows.map((r) => {
+    const p = byId.get(r.personId);
+    return {
+      ...r,
+      name: p?.name || r.name,
+      nameHy: p?.nameHy ?? "",
+      nameRu: p?.nameRu ?? "",
+      nameEn: p?.nameEn ?? "",
+    };
+  });
 }
 
 /** Rows for prisma.sponsorshipTier.createMany (projectId added by the caller). */
@@ -430,7 +475,7 @@ export async function createCreatorProject(
       const created = await prisma.$transaction(async (tx) => {
         const project = await tx.project.create({ data: { ...projectData, code } });
         if (actorRows.length) {
-          const resolvedActors = await resolveActorPersonIds(tx, actorRows);
+          const resolvedActors = await resolveActorPersonIds(tx, actorRows, locale);
           await tx.actor.createMany({
             data: resolvedActors.map((r) => ({ ...r, projectId: project.id })),
           });
@@ -567,7 +612,7 @@ export async function updateCreatorProject(
       });
       await tx.actor.deleteMany({ where: { projectId: id } });
       if (actorRows.length) {
-        const resolvedActors = await resolveActorPersonIds(tx, actorRows);
+        const resolvedActors = await resolveActorPersonIds(tx, actorRows, locale);
         await tx.actor.createMany({ data: resolvedActors.map((r) => ({ ...r, projectId: id })) });
       }
       await saveTierRows(tx, id, tierRows);

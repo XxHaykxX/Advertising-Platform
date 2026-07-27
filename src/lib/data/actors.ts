@@ -1,16 +1,21 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import type { ActorDTO } from "@/lib/types";
+import { DEFAULT_LOCALE, type Locale } from "@/lib/i18n";
+import { pickPersonName } from "@/lib/person-name";
 import { parseRolesInput } from "@/app/admin/(panel)/projects/form-shared";
 
-export async function listActorsByProject(projectId: number): Promise<ActorDTO[]> {
+export async function listActorsByProject(
+  projectId: number,
+  locale: Locale = DEFAULT_LOCALE,
+): Promise<ActorDTO[]> {
   const rows = await prisma.actor.findMany({
     where: { projectId },
     orderBy: { sortOrder: "asc" },
   });
   return rows.map((a) => ({
     id: a.id,
-    name: a.name,
+    name: pickPersonName(locale, a, a.name),
     role: a.role,
     roles: parseRolesInput(a.roles, a.role),
     kind: a.kind,
@@ -23,7 +28,20 @@ export async function listActorsByProject(projectId: number): Promise<ActorDTO[]
  *  directory (Ф3, getPersonDirectory below), whose rows carry a real `id` —
  *  optional here so the legacy Actor-derived getKnownPeople/dedupePeople path
  *  (below, kept for its unit tests) still satisfies the type without one. */
-export type PersonSuggestion = { id?: number; name: string; role: string; kind: string; photo: string };
+export type PersonSuggestion = {
+  id?: number;
+  /** Legacy base spelling. */
+  name: string;
+  /** Per-locale spellings (2026-07-27) — the picker shows the one matching the
+   *  form's language and searches across all of them. Empty on the legacy
+   *  Actor-derived path below, which has no directory row behind it. */
+  nameHy?: string;
+  nameRu?: string;
+  nameEn?: string;
+  role: string;
+  kind: string;
+  photo: string;
+};
 
 /** Distinct people across every project, deduped by name (case-insensitive).
  *  Newest row wins per name (orderBy id desc + first-occurrence dedupe), so
@@ -61,7 +79,25 @@ export function dedupePeople(
 export async function getPersonDirectory(): Promise<PersonSuggestion[]> {
   const rows = await prisma.person.findMany({
     orderBy: [{ sortOrder: "asc" }, { id: "asc" }],
-    select: { id: true, name: true, role: true, kind: true, photo: true },
+    select: {
+      id: true,
+      name: true,
+      nameHy: true,
+      nameRu: true,
+      nameEn: true,
+      role: true,
+      kind: true,
+      photo: true,
+    },
   });
-  return rows.map((p) => ({ id: p.id, name: p.name, role: p.role, kind: p.kind, photo: p.photo ?? "" }));
+  return rows.map((p) => ({
+    id: p.id,
+    name: p.name,
+    nameHy: p.nameHy,
+    nameRu: p.nameRu,
+    nameEn: p.nameEn,
+    role: p.role,
+    kind: p.kind,
+    photo: p.photo ?? "",
+  }));
 }

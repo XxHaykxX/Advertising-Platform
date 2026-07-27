@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import type { ProjectListDTO, ProjectDetailDTO } from "@/lib/types";
 import type { Locale } from "@/lib/i18n";
 import { formatMoney } from "@/lib/currency";
+import { pickPersonName } from "@/lib/person-name";
 import { getRates } from "@/lib/currency/rates";
 import type { CurrencyCode } from "@/lib/currency";
 import {
@@ -230,7 +231,9 @@ const getProjectCached = unstable_cache(
     placementType: p.placementType,
     actors: p.actors.map((a) => ({
       id: a.id,
-      name: a.name,
+      // Names are transliterated per locale (Արամ / Арам / Aram), snapshotted
+      // from the Person directory — see src/lib/person-name.ts.
+      name: pickPersonName(locale, a, a.name),
       role: a.role,
       roles: parseRolesInput(a.roles, a.role),
       kind: a.kind,

@@ -24,9 +24,10 @@ import { MediaPicker, type MediaPickerScope } from "@/components/media-picker";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { ROLE_VALUES, kindForRole } from "./form-shared";
 import type { PersonSuggestion } from "@/lib/data/actors";
-import { matchesNameQuery } from "@/lib/translit";
+import { allSpellings, pickPersonName } from "@/lib/person-name";
+import { matchesAnyNameQuery } from "@/lib/translit";
 import { cn } from "@/lib/utils";
-import type { makeUI, Locale } from "@/lib/i18n";
+import { DEFAULT_LOCALE, type makeUI, type Locale } from "@/lib/i18n";
 
 // Controlled cast/crew section (#20²). Rows are owned by the parent ProjectForm —
 // cast/crew save together with the main project in a single submit; the parent
@@ -62,10 +63,17 @@ export function ActorsSection({
   t,
   scope = "staff",
   pickerLocale,
+  nameLocale = DEFAULT_LOCALE,
 }: {
   value: ActorRow[];
   onChange: (rows: ActorRow[]) => void;
   scope?: MediaPickerScope;
+  /** Which spelling of a person's name to show and store on the row — the
+   *  form's own language ("en" in admin, the creator's locale otherwise). The
+   *  three spellings live on the Person directory; the server re-snapshots
+   *  them onto the Actor row on save, so what the row carries here is only
+   *  what the editor displays. */
+  nameLocale?: Locale;
   /** Language for the media dialog — members see it in their own (audit 4.5). */
   pickerLocale?: Locale;
   /** The Person directory (Ф3) — backs a searchable dropdown on the Name
@@ -123,7 +131,11 @@ export function ActorsSection({
   // Name PICKED from the Person directory dropdown — fills name/photo/personId,
   // and (only if this row has no roles yet) prefills their default role.
   function selectPerson(i: number, p: PersonSuggestion) {
-    const patch: Partial<ActorRow> = { name: p.name, photo: p.photo, personId: p.id ?? null };
+    const patch: Partial<ActorRow> = {
+      name: pickPersonName(nameLocale, p, p.name),
+      photo: p.photo,
+      personId: p.id ?? null,
+    };
     if (value[i].roles.length === 0 && (ROLE_VALUES as readonly string[]).includes(p.role)) {
       patch.roles = [p.role];
       patch.kind = kindForRole(p.role);
@@ -206,6 +218,7 @@ export function ActorsSection({
                     row={r}
                     t={t}
                     knownPeople={knownPeople}
+                    nameLocale={nameLocale}
                     onName={(name) => updateName(i, name)}
                     onSelectPerson={(p) => selectPerson(i, p)}
                     onRoles={(roles) => update(i, { roles, kind: kindForRole(roles[0] ?? "") })}
@@ -247,6 +260,7 @@ export function ActorsSection({
 function PersonNameField({
   value,
   knownPeople,
+  nameLocale,
   onChangeName,
   onSelectPerson,
   placeholder,
@@ -256,6 +270,7 @@ function PersonNameField({
 }: {
   value: string;
   knownPeople: PersonSuggestion[];
+  nameLocale: Locale;
   onChangeName: (name: string) => void;
   onSelectPerson: (p: PersonSuggestion) => void;
   placeholder: string;
@@ -270,7 +285,9 @@ function PersonNameField({
   const rootRef = useRef<HTMLDivElement>(null);
 
   const filtered = useMemo(
-    () => knownPeople.filter((p) => matchesNameQuery(p.name, value)).slice(0, 20),
+    // Search every spelling, not just the displayed one: typing "Арам" must
+    // find the person while the form is showing "Aram".
+    () => knownPeople.filter((p) => matchesAnyNameQuery(allSpellings(p, p.name), value)).slice(0, 20),
     [knownPeople, value],
   );
 
@@ -360,7 +377,9 @@ function PersonNameField({
                     </span>
                   )}
                 </span>
-                <span className="min-w-0 flex-1 truncate text-foreground">{p.name}</span>
+                <span className="min-w-0 flex-1 truncate text-foreground">
+                  {pickPersonName(nameLocale, p, p.name)}
+                </span>
                 {p.role && <span className="shrink-0 truncate text-xs text-muted-foreground">{p.role}</span>}
               </button>
             </li>
@@ -376,6 +395,7 @@ function ActorTableRow({
   row: r,
   t,
   knownPeople,
+  nameLocale,
   onName,
   onSelectPerson,
   onRoles,
@@ -388,6 +408,7 @@ function ActorTableRow({
   row: ActorRow;
   t: ReturnType<typeof makeUI>;
   knownPeople: PersonSuggestion[];
+  nameLocale: Locale;
   onName: (name: string) => void;
   onSelectPerson: (p: PersonSuggestion) => void;
   onRoles: (roles: string[]) => void;
@@ -460,6 +481,7 @@ function ActorTableRow({
         <PersonNameField
           value={r.name}
           knownPeople={knownPeople}
+          nameLocale={nameLocale}
           onChangeName={onName}
           onSelectPerson={onSelectPerson}
           placeholder={t("projectForm.cast.name")}

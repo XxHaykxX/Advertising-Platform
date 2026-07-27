@@ -949,7 +949,15 @@ export function ProjectForm({
           {/* ── Cast & crew (inline, #20²) ── */}
           <section id="sec-cast" className="scroll-mt-24 space-y-3 rounded-xl border border-border bg-card p-4">
             <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">{t("projectForm.section.castCrew")}</h2>
-            <ActorsSection value={actors} onChange={setActors} knownPeople={knownPeople} t={t} scope={uploaderScope} pickerLocale={locale} />
+            <ActorsSection
+              value={actors}
+              onChange={setActors}
+              knownPeople={knownPeople}
+              t={t}
+              scope={uploaderScope}
+              pickerLocale={locale}
+              nameLocale={mode === "creator" ? locale : "en"}
+            />
           </section>
 
           {/* ── Placement(s) (was "Sponsorship tiers") ── */}

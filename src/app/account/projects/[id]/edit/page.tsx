@@ -6,6 +6,7 @@ import { requireMember } from "@/lib/auth/require";
 import { prisma } from "@/lib/prisma";
 import { getLocale } from "@/lib/data/locale";
 import { getPersonDirectory } from "@/lib/data/actors";
+import { pickPersonName } from "@/lib/person-name";
 import { getStreamingSources } from "@/lib/data/streaming-sources";
 import { makeUI } from "@/lib/i18n";
 import {
@@ -134,7 +135,9 @@ export default async function EditCreatorProjectPage({
           action={action}
           initial={initial}
           initialActors={p.actors.map((a) => ({
-            name: a.name,
+            // Shown in the member's own language; the server re-snapshots every
+            // spelling from the Person directory on save.
+            name: pickPersonName(locale, a, a.name),
             roles: parseRolesInput(a.roles, a.role),
             kind: a.kind,
             photo: a.photo ?? "",

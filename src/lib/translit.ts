@@ -28,3 +28,11 @@ export function matchesNameQuery(name: string, query: string): boolean {
   if (!q) return true;
   return name.toLowerCase().includes(q) || romanizeArmenian(name).includes(q);
 }
+
+/** Same test across every spelling a person carries (hy/ru/en + the legacy
+ *  base) — searching the directory for "Арам" must find them even while the
+ *  editor is showing the Armenian column. */
+export function matchesAnyNameQuery(names: string[], query: string): boolean {
+  if (!query.trim()) return true;
+  return names.some((n) => matchesNameQuery(n, query));
+}

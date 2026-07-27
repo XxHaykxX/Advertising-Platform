@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireContentEditor } from "@/lib/auth/require";
 import { getPersonDirectory } from "@/lib/data/actors";
+import { pickPersonName } from "@/lib/person-name";
 import { getStreamingSources } from "@/lib/data/streaming-sources";
 import { updateProject } from "../../actions";
 import {
@@ -116,7 +117,9 @@ export default async function EditProjectPage({
         action={action}
         initial={initial}
         initialActors={p.actors.map((a) => ({
-          name: a.name,
+          // The admin form is English-only, so show the English spelling —
+          // the server re-snapshots all three from the directory on save.
+          name: pickPersonName("en", a, a.name),
           roles: parseRolesInput(a.roles, a.role),
           kind: a.kind,
           photo: a.photo ?? "",

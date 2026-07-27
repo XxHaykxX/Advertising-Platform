@@ -245,7 +245,14 @@ model Actor {
   id        Int    @id @default(autoincrement())
   projectId Int
   personId  Int? // link to the global Person directory (Ф3); null for legacy rows until backfilled
-  name      String
+  name      String // legacy base — the ultimate fallback, same role as Project.title
+  // Per-locale spellings, snapshotted from the linked Person on every project
+  // save (2026-07-27). A name is a proper noun, so this is transliteration, not
+  // translation: Արամ / Арам / Aram. Empty -> pickPersonName falls back to en,
+  // then to `name`, so a half-filled directory still renders.
+  nameHy    String @default("")
+  nameRu    String @default("")
+  nameEn    String @default("")
   role      String // legacy single role — kept as fallback; new code reads `roles`
   roles     String? @db.Text // JSON string[] of roles (Ф3 multi-role): one person can be Actor+Producer+…
   kind      String @default("CAST") // CAST | CREW — press-kits often list crew, not cast
@@ -276,7 +283,12 @@ model StreamingSource {
 
 model Person {
   id        Int      @id @default(autoincrement())
-  name      String
+  name      String // legacy base — kept as the ultimate fallback (see pickPersonName)
+  // The directory is the single source of truth for how a person is spelled in
+  // each locale; project Actor rows snapshot these three on save.
+  nameHy    String   @default("")
+  nameRu    String   @default("")
+  nameEn    String   @default("")
   role      String   @default("") // default/typical role
   kind      String   @default("CAST") // CAST | CREW
   photo     String? // "/uploads/…" headshot; null -> initials avatar

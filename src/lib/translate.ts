@@ -233,3 +233,105 @@ export async function translateFields(args: {
   }
   return out;
 }
+
+// ── cast & crew names (2026-07-27) ────────────────────────────────────────
+// A person's name is transliterated, not translated, and translateFields()
+// above is explicitly told to leave proper nouns alone — so names need their
+// own call. One request returns all three spellings (cheaper and more
+// self-consistent than two independent translations of the same name).
+
+/** The three spellings of one person's name. */
+export type NameSpellings = { hy: string; ru: string; en: string };
+
+function parseNameJson(raw: string): NameSpellings {
+  const fenced = raw.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+  const text = (fenced ? fenced[1] : raw).trim();
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    console.error("[translit] response was not valid JSON:", text.slice(0, 500));
+    throw new TranslateError("genericError", "Name response was not valid JSON.");
+  }
+  const obj = parsed as Record<string, unknown>;
+  const pick = (k: string) => (typeof obj?.[k] === "string" ? (obj[k] as string).trim() : "");
+  const out = { hy: pick("hy"), ru: pick("ru"), en: pick("en") };
+  if (!out.hy && !out.ru && !out.en) {
+    console.error("[translit] response had no spellings:", text.slice(0, 500));
+    throw new TranslateError("genericError", "Name response is missing every spelling.");
+  }
+  return out;
+}
+
+async function transliterateOnce(name: string, sourceLang: TranslateLang, model: string): Promise<NameSpellings> {
+  const url = `${API_BASE}/${model}:generateContent?key=${apiKey()}`;
+  const prompt =
+    `Transliterate the personal name below (it is written in ${LANG_NAMES[sourceLang]}) into all three scripts: ` +
+    `Armenian, Russian (Cyrillic) and English (Latin). This is a person, so do NOT translate the meaning — ` +
+    `write the same name the way it is conventionally spelled in each language in Armenia. ` +
+    `Use the standard Armenian surname endings (-յան / -ян / -yan). Keep the given-name + surname order. ` +
+    `Return strictly a JSON object shaped {"hy": "...", "ru": "...", "en": "..."} with no commentary or markdown.\n\n` +
+    `Name: ${name}`;
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      signal: controller.signal,
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { responseMimeType: "application/json" },
+      }),
+    });
+  } catch (e) {
+    if (e instanceof Error && e.name === "AbortError") {
+      throw new TranslateError("timeout", "Name transliteration timed out.");
+    }
+    console.error("[translit] network error:", e);
+    throw new TranslateError("network", "Name transliteration failed: network error.");
+  } finally {
+    clearTimeout(timer);
+  }
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    console.error(`[translit] HTTP ${res.status}:`, body.slice(0, 1000));
+    const overloaded = res.status === 503 || /UNAVAILABLE|high demand/i.test(body);
+    const code: TranslateErrorCode = overloaded ? "busy" : res.status === 429 ? "rateLimited" : "genericError";
+    throw new TranslateError(code, `Name transliteration failed (HTTP ${res.status}).`);
+  }
+
+  const json = await res.json().catch(() => null);
+  const text: string | undefined = json?.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!text) {
+    console.error("[translit] no content in response:", json);
+    throw new TranslateError("genericError", "Name transliteration returned no content.");
+  }
+  return parseNameJson(text);
+}
+
+/** Spell one person's name in all three site locales. Same model-sweep
+ *  resilience as translateOneRobust: a transient failure moves to the next
+ *  model rather than waiting on an overloaded one. */
+export async function transliterateName(name: string, sourceLang: TranslateLang): Promise<NameSpellings> {
+  if (!name.trim()) {
+    throw new TranslateError("emptyFields", "Nothing to transliterate — type the name first.");
+  }
+  const modelList = models();
+  let lastErr: unknown;
+  for (let round = 0; round < MAX_ROUNDS; round++) {
+    for (const model of modelList) {
+      try {
+        return await transliterateOnce(name.trim(), sourceLang, model);
+      } catch (e) {
+        lastErr = e;
+        if (e instanceof TranslateError && e.code === "notConfigured") throw e;
+      }
+    }
+    if (round < MAX_ROUNDS - 1) await sleep(ROUND_PAUSE_MS);
+  }
+  throw lastErr;
+}
