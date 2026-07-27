@@ -117,7 +117,7 @@ export const UI: Record<string, Dict> = {
   "hero.titleHighlight": {
     ru: "Брендированный плейсмент",
     en: "Brand Placement",
-    hy: "Հարթակ բրենդների և մեդիա արտադրողների համար",
+    hy: "Բրենդների և մեդիա արտադրողների համար",
   },
   "hero.subtitle": {
     ru: "Соединяем бренды с кино- и сериальными продакшенами через посценовые отчёты о плейсменте.",
@@ -427,19 +427,19 @@ export const UI: Record<string, Dict> = {
   "stats.brandRecallRate": { ru: "Уровень запоминаемости бренда", en: "Brand Recall Rate", hy: "Բրենդի հիշարժանության մակարդակ" },
 
   // ── trust section ─────────────────────────────
-  "trust.scriptsAnalyzedNumber": { ru: "100 000+", en: "100,000+", hy: "1.0" },
-  "trust.scriptsAnalyzedTitle": { ru: "сценариев проанализировано", en: "scripts analyzed", hy: "Ապահով գործարք" },
+  "trust.scriptsAnalyzedNumber": { ru: "100 000+", en: "100,000+", hy: "100%" },
+  "trust.scriptsAnalyzedTitle": { ru: "сценариев проанализировано", en: "scripts analyzed", hy: "ապահով գործարք" },
   "trust.scriptsAnalyzedCaption": {
     ru: "с полной аналитикой по бренду",
     en: "with comprehensive brand intelligence",
-    hy: "Երաշխավորված վճարումներ և իրավական պաշտպանվածություն:",
+    hy: "Երաշխավորված վճարումներ և իրավական պաշտպանվածություն",
   },
-  "trust.countriesNumber": { ru: "100+", en: "100+", hy: "100+" },
-  "trust.countriesTitle": { ru: "стран охвачено", en: "countries covered", hy: "երկիր ընդգրկված" },
+  "trust.countriesNumber": { ru: "100+", en: "100+", hy: "50+" },
+  "trust.countriesTitle": { ru: "стран охвачено", en: "countries covered", hy: "Վստահելի գործընկերներ" },
   "trust.countriesCaption": {
     ru: "доступно на крупнейших рынках мира",
     en: "available in major markets worldwide",
-    hy: "Հասանելի է աշխարհի խոշոր շուկաներում",
+    hy: "Համագործակցություններ ստուգված մեդիա նախագծերի հեղինակների hետ։",
   },
 
   // ── featured productions ──────────────────────
