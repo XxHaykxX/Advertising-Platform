@@ -326,6 +326,22 @@ export const UI: Record<string, Dict> = {
   "role.Actor": { ru: "Актёр", en: "Actor", hy: "Դերասան" },
   "role.Cinematographer": { ru: "Оператор", en: "Cinematographer", hy: "Օպերատոր" },
   "role.Composer": { ru: "Композитор", en: "Composer", hy: "Կոմպոզիտոր" },
+  // The rest of ROLE_VALUES (form-shared.ts). Without these the report page
+  // printed the raw English value — a project credited "Music" and "Voice
+  // Actor" in the middle of an otherwise Russian or Armenian cast list.
+  "role.Music": { ru: "Композитор", en: "Music", hy: "Կոմպոզիտոր" },
+  "role.Voice Actor": { ru: "Актёр озвучки", en: "Voice Actor", hy: "Դերասան-դուբլյոր" },
+  "role.Animator": { ru: "Аниматор", en: "Animator", hy: "Անիմատոր" },
+  "role.Show Host": { ru: "Ведущий шоу", en: "Show Host", hy: "Շոուի հաղորդավար" },
+  "role.Showrunner": { ru: "Шоураннер", en: "Showrunner", hy: "Շոուռաններ" },
+  "role.General Producer": { ru: "Генеральный продюсер", en: "General Producer", hy: "Գլխավոր պրոդյուսեր" },
+  "role.Line Producer": { ru: "Линейный продюсер", en: "Line Producer", hy: "Գծային պրոդյուսեր" },
+  "role.Creative Producer": { ru: "Креативный продюсер", en: "Creative Producer", hy: "Կրեատիվ պրոդյուսեր" },
+  "role.Singer": { ru: "Певец", en: "Singer", hy: "Երգիչ" },
+  "role.Performer": { ru: "Артист", en: "Performer", hy: "Կատարող" },
+  "role.Stand-up Comedian": { ru: "Стендап-комик", en: "Stand-up Comedian", hy: "Սթենդափ կատակերգու" },
+  "role.Host": { ru: "Ведущий", en: "Host", hy: "Հաղորդավար" },
+  "role.Guest": { ru: "Гость", en: "Guest", hy: "Հյուր" },
   "formatCategory.FEATURE": { ru: "Полнометражный фильм", en: "Feature film", hy: "Լիամետրաժ ֆիլմ" },
   "formatCategory.SERIES": { ru: "Сериал", en: "Series", hy: "Սերիալ" },
   "formatCategory.MINISERIES": { ru: "Мини-сериал", en: "Mini-series", hy: "Մինի սերիալ" },
