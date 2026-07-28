@@ -138,7 +138,7 @@ export const UI: Record<string, Dict> = {
     en: "Sign in to express interest",
     hy: "Մուտք գործեք հայտ ուղարկելու համար",
   },
-  "btn.browseProjects": { ru: "Смотреть проекты", en: "Browse Projects", hy: "Դիտել նախագծերը" },
+  "btn.browseProjects": { ru: "Смотреть проекты", en: "Browse Projects", hy: "Տեսնել նախագծերը" },
   "btn.viewAll": { ru: "Смотреть все", en: "View All", hy: "Դիտել բոլորը" },
   "btn.listProject": { ru: "Разместить проект", en: "List Your Project", hy: "Ավելացնել նախագիծ" },
   "btn.send": { ru: "Отправить", en: "Send", hy: "Ուղարկել" },
@@ -231,15 +231,19 @@ export const UI: Record<string, Dict> = {
   "footer.rights": { ru: "Все права защищены.", en: "All rights reserved.", hy: "Բոլոր իրավունքները պաշտպանված են։" },
 
   // ── catalog / filters ───────────────────────
-  "catalog.heroTitle": { ru: "Каталог проектов", en: "Project Catalog", hy: "Ձեր բրենդը՝ ճիշտ գործընկերների կողքին" },
+  "catalog.heroTitle": {
+    ru: "Каталог проектов",
+    en: "Project Catalog",
+    hy: "Ձեր բրենդը՝\nճիշտ գործընկերների կողքին",
+  },
   "catalog.heroSubtitle": {
     ru: "Изучайте кино- и ТВ-проекты, открытые для размещения бренда — фильтруйте по жанру, категории продукта и статусу.",
     en: "Browse film and TV productions open for brand placement — filter by genre, product category, and status.",
-    hy: "Ընտրեք Ձեր բրենդին համապատասխան նախագիծ, ուղիղ կապ հաստատեք ստուգված արտադրողների հետ և իրականացրեք հաջողված բրենդային ինտեգրումներ։",
+    hy: "Ընտրե՛ք Ձեր բրենդին համապատասխան նախագիծ, կա՛պ հաստատեք ստուգված արտադրողների հետ և իրականացրե՛ք արդյունավետ ինտեգրումներ։",
   },
   "catalog.signIn": { ru: "Войти", en: "Sign In", hy: "Մուտք" },
   "catalog.register": { ru: "Регистрация", en: "Register", hy: "Գրանցում" },
-  "catalog.filters": { ru: "Фильтры", en: "Filters", hy: "ՖԻԼՏՐԵՐ" },
+  "catalog.filters": { ru: "Фильтры", en: "Filters", hy: "ՖԻԼՏՐՆԵՐ" },
   "catalog.genre": { ru: "Жанр", en: "Genre", hy: "Ժանր" },
   "catalog.targetAudience": { ru: "Целевая аудитория", en: "Target Audience", hy: "Թիրախային լսարան" },
   "catalog.gender": { ru: "Пол", en: "Gender", hy: "Սեռ" },
@@ -395,7 +399,7 @@ export const UI: Record<string, Dict> = {
   "catalog.noResults": {
     ru: "Нет проектов, соответствующих фильтрам.",
     en: "No projects match your filters.",
-    hy: "Համապատասխան նախագիծ չի գտնվել։ Փորձեք փոխել ֆիլտրերը։",
+    hy: "Համապատասխան նախագիծ չի գտնվել։ Փորձեք փոխել ֆիլտրները։",
   },
   "catalog.until": { ru: "До", en: "Until", hy: "Մինչև" },
 
@@ -548,57 +552,65 @@ export const UI: Record<string, Dict> = {
 
   // ── FAQ ────────────────────────────────────────
   "faq.title": { ru: "Часто задаваемые вопросы", en: "Frequently Asked Questions", hy: "Հաճախ տրվող հարցեր" },
-  "faq.q1.question": { ru: "Как формируется цена?", en: "How does pricing work?", hy: "Ինչպե՞ս է ձևավորվում գինը" },
+  "faq.q1.question": {
+    ru: "Как формируется цена?",
+    en: "How does pricing work?",
+    hy: "1. Ինչպե՞ս է աշխատում հարթակը։",
+  },
   "faq.q1.answer": {
     ru: "Плейсменты начинаются от $5000. Листинг и просмотр бесплатны — мы берём комиссию только когда сделка действительно закрывается, поэтому бренды и создатели никогда не платят за сорвавшиеся плейсменты.",
     en: "Placements start from $5K. Listing and browsing are free — we only take a fee when a deal actually closes, so brands and creators never pay for placements that fall through.",
-    hy: "Տեղադրումները սկսվում են $5000-ից։ Ցուցակագրումն ու դիտումն անվճար են․ մենք վճար ենք վերցնում միայն այն ժամանակ, երբ գործարքն իրականում կնքվում է, ուստի բրենդներն ու ստեղծագործողները երբեք չեն վճարում չկայացած տեղադրումների համար։",
+    hy: "Coming Soon...",
   },
   "faq.q3.question": {
     ru: "Как защищена конфиденциальность сторон?",
     en: "How is party privacy protected?",
-    hy: "Ինչպե՞ս է պաշտպանվում կողմերի գաղտնիությունը",
+    hy: "2. Ովքե՞ր կարող են օգտվել հարթակից։",
   },
   "faq.q3.answer": {
     ru: "Ваши контактные данные не отображаются в публичном каталоге. Личности сторон становятся известны участникам сделки, а первый контакт помогает организовать платформа iGovazd.",
     en: "Your contact details aren't shown in the public catalog. Party identities become known to those involved in a deal, and iGovazd helps arrange the first contact.",
-    hy: "Ձեր կոնտակտային տվյալները չեն ցուցադրվում հանրային կատալոգում։ Կողմերի ինքնությունը հայտնի է դառնում գործարքի մասնակիցներին, իսկ առաջին կապը կազմակերպելու հարցում օգնում է iGovazd հարթակը։",
+    hy: "Հարթակը նախատեսված է ինչպես խոշոր, միջին ու փոքր բրենդների, այնպես էլ անկախ կինոարտադրողների, պրոդյուսերական կենտրոնների և YouTube/մեդիա շոուների հեղինակների համար։",
   },
   "faq.q4.question": {
     ru: "Как создатели размещают проект?",
     en: "How do creators list a project?",
-    hy: "Ինչպե՞ս են ստեղծագործողները ցուցակագրում նախագիծը",
+    hy: "3. Ինչպե՞ս է իրականացվում պայմանագրի կնքումը և վճարումը։",
   },
   "faq.q4.answer": {
     ru: "Создатели загружают сценарий, и наша система автоматически анализирует его, чтобы выявить сцены, готовые к плейсменту. Затем проект появляется в каталоге, доступном брендам для просмотра.",
     en: "Creators upload their screenplay, and our system analyzes it automatically to surface placement-ready scenes. The project then appears in the catalog for brands to discover and review.",
-    hy: "Ստեղծագործողները վերբեռնում են սցենարը, և մեր համակարգը ինքնաշխատ վերլուծում է այն՝ բացահայտելու տեղադրման համար պատրաստ տեսարանները։ Այնուհետև նախագիծը հայտնվում է կատալոգում՝ բրենդների կողմից գտնվելու և վերանայվելու համար։",
+    hy: "Coming Soon...",
   },
   "faq.q5.question": {
     ru: "Какие стадии продакшена представлены?",
     en: "What production stages are listed?",
-    hy: "Ի՞նչ արտադրական փուլեր են ներկայացված",
+    hy: "4. Ի՞նչ երաշխիքներ են ստանում բրենդները։",
   },
   "faq.q5.answer": {
     ru: "Вы найдёте проекты на любой стадии — от сценариев, всё ещё находящихся в разработке, до пре-продакшена и финансирования, вплоть до тех, что уже активно снимаются.",
     en: "You'll find projects across every stage — from scripts still in development, to productions in pre-production and financing, through to those already in active filming.",
-    hy: "Դուք կգտնեք նախագծեր բոլոր փուլերում՝ դեռ մշակման փուլում գտնվող սցենարներից մինչև նախապատրաստական և ֆինանսավորման փուլում գտնվող արտադրություններ, ընդհուպ մինչև այն նախագծերը, որոնք արդեն ակտիվ նկարահանվում են։",
+    hy: "Coming Soon...",
   },
   "faq.q6.question": {
     ru: "Как работает подбор и переговоры?",
     en: "How does matching and negotiation work?",
-    hy: "Ինչպե՞ս է աշխատում համապատասխանեցումն ու բանակցությունը",
+    hy: "5.  Որքա՞ն միջնորդավճար է վերցնում հարթակը։",
   },
   "faq.q6.answer": {
     ru: "Наш подбор находит подходящие сцены на основе категории и целей вашего бренда. После этого вы можете напрямую написать продакшену и договориться об условиях прямо внутри платформы, без посредников.",
     en: "Our matching surfaces relevant scenes based on your brand's category and goals. From there, you can message the production directly and negotiate terms inside the platform, no middlemen required.",
-    hy: "Մեր համապատասխանեցումը բացահայտում է համապատասխան տեսարաններ՝ ելնելով ձեր բրենդի կատեգորիայից և նպատակներից։ Այնուհետև դուք կարող եք ուղղակիորեն գրել պրոդակշնին և բանակցել պայմանների շուրջ հենց հարթակի ներսում, առանց միջնորդների։",
+    hy: "Coming Soon...",
   },
-  "faq.q7.question": { ru: "Данные проверены?", en: "Is the data verified?", hy: "Տվյալնե՞րը ստուգված են" },
+  "faq.q7.question": {
+    ru: "Данные проверены?",
+    en: "Is the data verified?",
+    hy: "6. Արդյո՞ք հարթակում ներկայացված նախագծերը անցնում են նախնական ստուգման փուլով։",
+  },
   "faq.q7.answer": {
     ru: "Да. Детали продакшена, оценки просмотров и анализ сценария проверяются нашей командой перед публикацией проекта, поэтому каждая цифра в отчёте заслуживает доверия.",
     en: "Yes. Production details, viewership estimates, and script analysis are reviewed by our team before a project goes live, so every number you see in a report is trustworthy.",
-    hy: "Այո։ Արտադրության մանրամասները, դիտումների գնահատականները և սցենարի վերլուծությունը վերանայվում են մեր թիմի կողմից՝ նախքան նախագծի հրապարակումը, այնպես որ հաշվետվության մեջ տեսած յուրաքանչյուր թիվ արժանահավատ է։",
+    hy: "Coming Soon...",
   },
 
   // ── contact section (landing + page shared bits) ─
@@ -606,48 +618,68 @@ export const UI: Record<string, Dict> = {
   "contact.subtitle": {
     ru: "Есть проект или бренд на примете? Напишите нам, и мы скоро ответим.",
     en: "Have a project or a brand in mind? Send us a message and we'll follow up shortly.",
-    hy: "Ունե՞ք նախագիծ կամ բրենդ մտքում։ Ուղարկեք մեզ հաղորդագրություն, և մենք շուտով կպատասխանենք։",
+    hy: "Գրեք մեզ, և մեր թիմը կապ կհաստատի Ձեզ հետ՝ քննարկելու համագործակցության մանրամասները։",
   },
-  "contact.thanks": { ru: "Спасибо — мы скоро с вами свяжемся.", en: "Thanks — we'll get back to you shortly.", hy: "Շնորհակալություն․ մենք շուտով կկապվենք ձեզ հետ։" },
-  "contact.messagePlaceholder": { ru: "Расскажите о своём проекте или бренде…", en: "Tell us about your project or brand…", hy: "Պատմեք ձեր նախագծի կամ բրենդի մասին…" },
-  "contact.emailDirectly": { ru: "Или напишите нам напрямую:", en: "Or email us directly:", hy: "Կամ գրեք մեզ ուղղակիորեն." },
+  "contact.thanks": {
+    ru: "Спасибо — мы скоро с вами свяжемся.",
+    en: "Thanks — we'll get back to you shortly.",
+    hy: "Շնորհակալություն։ Մենք շուտով կապ կհաստատենք Ձեզ հետ։",
+  },
+  "contact.messagePlaceholder": {
+    ru: "Расскажите о своём проекте или бренде…",
+    en: "Tell us about your project or brand…",
+    hy: "Պատմեք Ձեր նախագծի կամ բրենդի մասին, կամ պարզապես հարցրեք այն, ինչ հետաքրքրում է Ձեզ։",
+  },
+  "contact.emailDirectly": {
+    ru: "Или напишите нам напрямую:",
+    en: "Or email us directly:",
+    hy: "Կարող եք նաև գրել մեզ՝ ",
+  },
 
   // ── contact page ──────────────────────────────
-  "contactPage.title": { ru: "Свяжитесь с нами", en: "Get in Touch", hy: "Կապվեք մեզ հետ" },
+  "contactPage.title": { ru: "Свяжитесь с нами", en: "Get in Touch", hy: "Միշտ կապի մեջ" },
   "contactPage.subtitle": {
     ru: "Есть проект или бренд на примете? Давайте обсудим ваши возможности для плейсмента.",
     en: "Have a project or brand in mind? Let's talk about your placement opportunities.",
-    hy: "Ունե՞ք նախագիծ կամ բրենդ մտքում։ Եկեք խոսենք ձեր տեղադրման հնարավորությունների մասին։",
+    hy: "Կապ հաստատեք մեզ հետ հարցերի, առաջարկների կամ համագործակցության համար։",
   },
-  "contactPage.methodsTitle": { ru: "Способы связи", en: "Contact Methods", hy: "Կապի եղանակներ" },
+  "contactPage.methodsTitle": { ru: "Способы связи", en: "Contact Methods", hy: "Ինչպես կապվել մեզ հետ" },
   "contactPage.methodsSubtitle": {
     ru: "Свяжитесь с нами по любому из этих каналов. Обычно мы отвечаем в течение 24 часов.",
     en: "Reach out to us through any of these channels. We typically respond within 24 hours.",
-    hy: "Կապվեք մեզ հետ այս ցանկացած ալիքով։ Սովորաբար պատասխանում ենք 24 ժամվա ընթացքում։",
+    hy: "Կա՛պ հաստատեք մեզ հետ նշված տարբերակներից ցանկացածով։ Կպատասխանենք Ձեզ առավելագույնը մեկ աշխատանքային օրվա ընթացքում։",
   },
-  "contactPage.methodEmail": { ru: "Email", en: "Email", hy: "Էլ. փոստ" },
-  "contactPage.methodPhone": { ru: "Телефон", en: "Phone", hy: "Հեռախոս" },
+  "contactPage.methodEmail": { ru: "Email", en: "Email", hy: "Էլփոստ" },
+  "contactPage.methodPhone": { ru: "Телефон", en: "Phone", hy: "Հեռախոսահամար" },
   "contactPage.methodTelegram": { ru: "Telegram", en: "Telegram", hy: "Telegram" },
   "contactPage.methodWhatsApp": { ru: "WhatsApp", en: "WhatsApp", hy: "WhatsApp" },
-  "contactPage.formTitle": { ru: "Отправьте нам сообщение", en: "Send us a Message", hy: "Ուղարկեք մեզ հաղորդագրություն" },
+  "contactPage.formTitle": { ru: "Отправьте нам сообщение", en: "Send us a Message", hy: "Գրե՛ք մեզ" },
   "contactPage.formSubtitle": {
     ru: "Расскажите о своём бренде и целях плейсмента. Мы рассмотрим и скоро свяжемся с вами.",
     en: "Tell us about your brand and placement goals. We'll review and get back to you shortly.",
-    hy: "Պատմեք ձեր բրենդի և տեղադրման նպատակների մասին։ Մենք կվերանայենք և շուտով կկապվենք ձեզ հետ։",
+    hy: "Պատմեք մեզ Ձեր նախագծի կամ բրենդի մասին։ Որքան մանրամասն նկարագրեք Ձեր նպատակները, այնքան արագ կառաջարկենք լավագույն լուծումը։",
   },
-  "contactPage.thanks": { ru: "Спасибо — мы скоро с вами свяжемся.", en: "Thanks — we'll get back to you shortly.", hy: "Շնորհակալություն․ մենք շուտով կկապվենք ձեզ հետ։" },
-  "contactPage.thanksSubtitle": { ru: "Проверьте почту для подтверждения.", en: "Check your email for confirmation.", hy: "Ստուգեք ձեր էլ. փոստը հաստատման համար։" },
-  "contactPage.projectOptional": { ru: "Проект (необязательно)", en: "Project (Optional)", hy: "Նախագիծ (կամընտիր)" },
-  "contactPage.selectProject": { ru: "Выберите проект…", en: "Select a project...", hy: "Ընտրեք նախագիծ…" },
+  "contactPage.thanks": {
+    ru: "Спасибо — мы скоро с вами свяжемся.",
+    en: "Thanks — we'll get back to you shortly.",
+    hy: "Շնորհակալություն։ Մենք շուտով կապ կհաստատենք Ձեզ հետ։",
+  },
+  "contactPage.thanksSubtitle": {
+    ru: "Проверьте почту для подтверждения.",
+    en: "Check your email for confirmation.",
+    hy: "Ստուգեք Ձեր էլփոստը հաստատման համար։",
+  },
+  "contactPage.projectOptional": { ru: "Проект (необязательно)", en: "Project (Optional)", hy: "Նախագծեր" },
+  "contactPage.selectProject": { ru: "Выберите проект…", en: "Select a project...", hy: "Ընտրել" },
   "contactPage.messagePlaceholder": {
     ru: "Расскажите о своём бренде, целях и конкретных проектах или плейсментах, которые вас интересуют…",
     en: "Tell us about your brand, goals, and any specific projects or placements you're interested in…",
-    hy: "Պատմեք ձեր բրենդի, նպատակների և ձեզ հետաքրքրող կոնկրետ նախագծերի կամ տեղադրումների մասին…",
+    hy: "Պատմեք Ձեր նախագծի կամ բրենդի մասին, կամ պարզապես հարցրեք այն, ինչ հետաքրքրում է Ձեզ։",
   },
   "contactPage.respondNote": {
     ru: "Мы рассмотрим ваше сообщение и ответим на вашу почту в течение 24 часов.",
     en: "We'll review your message and respond to your email within 24 hours.",
-    hy: "Մենք կվերանայենք ձեր հաղորդագրությունը և կպատասխանենք ձեր էլ. փոստին 24 ժամվա ընթացքում։",
+    hy: "Սովորաբար պատասխանում ենք մեկ աշխատանքային օրվա ընթացքում։",
   },
 
   // ── how it works (full page) ──────────────────
@@ -927,7 +959,7 @@ export const UI: Record<string, Dict> = {
   // ── login / register ───────────────────────────
   "login.title": { ru: "Вход", en: "Sign In", hy: "Մուտք" },
   "login.subtitle": { ru: "Войдите в аккаунт бренда или создателя.", en: "Sign in to your brand or creator account.", hy: "Մուտք գործեք ձեր բրենդի կամ ստեղծագործողի հաշիվ։" },
-  "login.emailPlaceholder": { ru: "you@brand.com", en: "you@brand.com", hy: "you@brand.com" },
+  "login.emailPlaceholder": { ru: "you@brand.com", en: "you@brand.com", hy: "you@company.com" },
   "login.password": { ru: "Пароль", en: "Password", hy: "Գաղտնաբառ" },
   "login.signIn": { ru: "Войти", en: "Sign In", hy: "Մուտք" },
   "login.notBrandYet": { ru: "Ещё нет бренд-аккаунта?", en: "Not a brand account yet?", hy: "Դեռ չունե՞ք բրենդային հաշիվ" },
@@ -944,8 +976,8 @@ export const UI: Record<string, Dict> = {
   "register.fullName": { ru: "Полное имя", en: "Full name", hy: "Լրիվ անուն" },
   "register.fullNamePlaceholder": { ru: "Иван Иванов", en: "Jane Doe", hy: "Անուն Ազգանուն" },
   "register.workEmail": { ru: "Рабочий email", en: "Work email", hy: "Աշխատանքային էլ. փոստ" },
-  "register.emailPlaceholderBrand": { ru: "you@brand.com", en: "you@brand.com", hy: "you@brand.com" },
-  "register.emailPlaceholderCreator": { ru: "you@studio.com", en: "you@studio.com", hy: "you@studio.com" },
+  "register.emailPlaceholderBrand": { ru: "you@brand.com", en: "you@brand.com", hy: "you@company.com" },
+  "register.emailPlaceholderCreator": { ru: "you@studio.com", en: "you@studio.com", hy: "you@company.com" },
   "register.companyPlaceholder": { ru: "Название компании", en: "Brand Inc.", hy: "Ընկերության անվանում" },
   "register.creatorOrg": { ru: "Студия / Псевдоним", en: "Studio / Alias", hy: "Ստուդիա / Կեղծանուն" },
   "register.creatorOrgPlaceholder": { ru: "Название студии или псевдоним", en: "Studio name or alias", hy: "Ստուդիայի անվանում կամ կեղծանուն" },
