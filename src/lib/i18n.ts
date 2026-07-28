@@ -1724,6 +1724,18 @@ export const UI: Record<string, Dict> = {
   "media.chooseVideo": { ru: "Выберите видео", en: "Choose video", hy: "Ընտրեք տեսանյութը" },
   "media.chooseFile": { ru: "Выберите файл", en: "Choose file", hy: "Ընտրեք ֆայլը" },
   "media.upload": { ru: "Загрузить с компьютера", en: "Upload from computer", hy: "Վերբեռնել համակարգչից" },
+  // Caption inside the image field's drop zone (2026-07-28) — until then the
+  // only way to add a file was to open the picker dialog first.
+  "media.dropHere": {
+    ru: "или перетащите файлы сюда",
+    en: "or drag files here",
+    hy: "կամ քաշեք ֆայլերն այստեղ",
+  },
+  "media.errTooLargeShort": {
+    ru: "Файл слишком большой",
+    en: "File is too large",
+    hy: "Ֆայլը չափազանց մեծ է",
+  },
   "media.close": { ru: "Закрыть", en: "Close", hy: "Փակել" },
   "media.all": { ru: "Все", en: "All", hy: "Բոլորը" },
   "media.download": { ru: "Скачать", en: "Download", hy: "Ներբեռնել" },

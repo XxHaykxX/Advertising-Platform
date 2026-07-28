@@ -904,6 +904,8 @@ export function ProjectForm({
                   scope={uploaderScope}
                   pickerLocale={locale}
                   browseLabel={t("btn.browse")}
+                dropLabel={t("media.dropHere")}
+                errTooLargeLabel={t("media.errTooLargeShort")}
                   initial={posterInitial}
                   label={t("projectForm.uploadPoster")}
                   removeLabel={t("ui.remove")}
@@ -945,6 +947,8 @@ export function ProjectForm({
                 scope={uploaderScope}
                   pickerLocale={locale}
                 browseLabel={t("btn.browse")}
+                dropLabel={t("media.dropHere")}
+                errTooLargeLabel={t("media.errTooLargeShort")}
                 initial={galleryInitial}
                 label={t("projectForm.uploadGalleryImages")}
                 removeLabel={t("ui.remove")}
@@ -954,13 +958,17 @@ export function ProjectForm({
                 never both — a tab picks the one active source; the inactive
                 field unmounts, so it's absent from the submit and the server
                 nulls that column. */}
-            <div className="flex gap-1 rounded-xl border border-border bg-background p-1">
+            {/* Sized to its labels, not to the form width: stretched across
+                1400px these two read as a pair of banners competing with the
+                section heading, when all they do is pick which of two inputs
+                shows. */}
+            <div className="inline-flex w-fit gap-1 rounded-lg border border-border bg-background p-0.5">
               {(["embed", "upload"] as const).map((tab) => (
                 <button
                   key={tab}
                   type="button"
                   onClick={() => setVideoTab(tab)}
-                  className={`flex-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                  className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
                     videoTab === tab ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
                   }`}
                 >

@@ -1,8 +1,8 @@
 "use client";
 
-import { forwardRef, useImperativeHandle, useState } from "react";
+import { forwardRef, useImperativeHandle, useState, useTransition } from "react";
 import Image from "next/image";
-import { ImageIcon, Trash2 } from "lucide-react";
+import { ImageIcon, Loader2, Trash2, Upload } from "lucide-react";
 import {
   DndContext,
   KeyboardSensor,
@@ -21,8 +21,15 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { MediaPicker, type MediaPickerScope } from "@/components/media-picker";
+import { uploadImage } from "@/lib/actions/uploads";
+import { uploadMemberImage } from "@/lib/actions/member-uploads";
 import type { Locale } from "@/lib/i18n";
 import { imageSizeHint } from "@/lib/images/size-hint";
+
+/** Mirrors MAX_BYTES in lib/actions/uploads.ts. Checked before the round trip:
+ *  past the framework body limit the request is cut off mid-flight and the
+ *  server's own message never gets a chance to run. */
+const MAX_IMAGE_MB = 8;
 
 /** Imperative handle (#26) — lets a sibling component (the "Generate poster"
  *  panel) push a freshly generated image path into an uncontrolled
@@ -47,6 +54,8 @@ export const ImageUploader = forwardRef<ImageUploaderHandle, {
   /** Language for the media dialog — members see it in their own (audit 4.5). */
   pickerLocale?: Locale;
   browseLabel?: string; // label for the picker button
+  dropLabel?: string; // caption inside the drop zone, localized by the caller
+  errTooLargeLabel?: string; // shown when a dropped file exceeds the size cap
 }>(function ImageUploader({
   name,
   dir,
@@ -58,8 +67,16 @@ export const ImageUploader = forwardRef<ImageUploaderHandle, {
   scope = "staff",
   pickerLocale,
   browseLabel = "Browse",
+  dropLabel = "Drag files here",
+  errTooLargeLabel = "File is too large",
 }, ref) {
   const [pickerOpen, setPickerOpen] = useState(false);
+  // Drag-and-drop upload straight onto the field. The picker dialog could
+  // always upload, but reaching a file meant opening a dialog first — there was
+  // nowhere on the form itself to drop one.
+  const [dragOver, setDragOver] = useState(false);
+  const [dropError, setDropError] = useState<string | null>(null);
+  const [uploading, startUpload] = useTransition();
   const [paths, setPaths] = useState<string[]>(
     initial ? initial.split("\n").map((s) => s.trim()).filter(Boolean) : [],
   );
@@ -93,6 +110,42 @@ export const ImageUploader = forwardRef<ImageUploaderHandle, {
     commit(next);
   }
 
+  /** Files dropped on the zone. Uploads them through the same server action
+   *  the picker uses, then appends the returned paths (a single-image field
+   *  keeps only the last one, matching what picking does). */
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setDragOver(false);
+    const files = Array.from(e.dataTransfer.files).filter((f) => f.type.startsWith("image/"));
+    if (!files.length) return;
+    setDropError(null);
+    const upload = scope === "member" ? uploadMemberImage : uploadImage;
+
+    startUpload(async () => {
+      const added: string[] = [];
+      for (const file of multiple ? files : files.slice(-1)) {
+        if (file.size > MAX_IMAGE_MB * 1024 * 1024) {
+          setDropError(`${errTooLargeLabel}: ${file.name}`);
+          continue;
+        }
+        const fd = new FormData();
+        fd.append("file", file);
+        fd.append("dir", dir);
+        fd.append("kind", "image");
+        // A rejected action (framework 413, a proxy cutting the request) would
+        // otherwise reject inside the transition with nothing on screen.
+        try {
+          const res = await upload(fd);
+          if (res.error) setDropError(res.error);
+          else if (res.path) added.push(res.path);
+        } catch {
+          setDropError(`${errTooLargeLabel}: ${file.name}`);
+        }
+      }
+      if (added.length) commit(multiple ? [...paths, ...added] : [added[added.length - 1]]);
+    });
+  }
+
   useImperativeHandle(ref, () => ({
     addPath(path: string) {
       commit(multiple ? [...paths, path] : [path]);
@@ -107,19 +160,41 @@ export const ImageUploader = forwardRef<ImageUploaderHandle, {
   return (
     <div className="space-y-3">
       {name ? <input type="hidden" name={name} value={hiddenValue} /> : null}
-      <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={() => setPickerOpen(true)}
-          className="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border border-border px-3 py-2 text-sm text-foreground hover:border-primary/40"
-        >
-          <ImageIcon className="h-4 w-4" />
-          {browseLabel}
-        </button>
-        {trailing}
+      {/* The drop zone IS the field: browse button, hint and target in one
+          box, so there is somewhere obvious to drag a file to. */}
+      <div
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragOver(true);
+        }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={handleDrop}
+        className={`rounded-xl border border-dashed p-3 transition-colors ${
+          dragOver ? "border-primary bg-primary/5" : "border-border"
+        }`}
+      >
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setPickerOpen(true)}
+            className="inline-flex items-center gap-2 whitespace-nowrap rounded-lg border border-border px-3 py-2 text-sm text-foreground hover:border-primary/40"
+          >
+            <ImageIcon className="h-4 w-4" />
+            {browseLabel}
+          </button>
+          <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+            {uploading ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Upload className="h-3.5 w-3.5" />
+            )}
+            {dropLabel}
+          </span>
+          {trailing}
+        </div>
+        <p className="mt-2 text-xs text-muted-foreground">{imageSizeHint(dir)}</p>
+        {dropError ? <p className="mt-1 text-xs text-danger">{dropError}</p> : null}
       </div>
-
-      <p className="text-xs text-muted-foreground">{imageSizeHint(dir)}</p>
 
       <MediaPicker
         open={pickerOpen}
