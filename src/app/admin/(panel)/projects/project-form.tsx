@@ -283,7 +283,35 @@ export function ProjectForm({
     setSaved(true);
     if (savedTimer.current) clearTimeout(savedTimer.current);
     savedTimer.current = setTimeout(() => setSaved(false), 3000);
-  }, [state.ok, state.redirect, isEdit]);
+    // Depends on `state` as a whole, NOT on state.ok/state.redirect: those two
+    // read identically on a second successful save in the same tab, so the
+    // effect never re-ran and everything below it silently stopped happening —
+    // "Save and leave" saved but never navigated, and the dirty flag stayed
+    // set. useActionState hands back a fresh object per dispatch, so the whole
+    // state is the only dependency that actually changes per save. Same trap as
+    // IA-15 (commit 364b8f9); it was fixed there on one <select> and left here.
+  }, [state, isEdit]);
+
+  // React 19 resets the <form> DOM once an action finishes. Plain fields keep
+  // what the user typed (React restores them) and the hidden JSON mirrors are
+  // fine, but a radio group whose only source of truth is `checked` snaps back
+  // to the markup's page-load state — and if the component doesn't re-render
+  // afterwards, nothing puts it right. That is why "Format: Series → Single,
+  // Save" looked correct, and a SECOND Save without touching anything flipped
+  // the dial back to Series: the first save re-rendered (state.ok false→true),
+  // the second had nothing to change. The DB was right the whole time; only the
+  // dial lied, which is worse — it invites you to "fix" a value that is already
+  // correct.
+  //
+  // Remounting the radios after every dispatch re-applies `checked` from state,
+  // whatever the reset did to the DOM.
+  const [formEpoch, setFormEpoch] = useState(0);
+  useEffect(() => {
+    // Skip the initial mount — useActionState starts at {} and no submit has
+    // happened yet.
+    if (!state.ok && !state.error) return;
+    setFormEpoch((n) => n + 1);
+  }, [state]);
 
   // ── Sticky Save bar dirty flag ── independent of the create-only draft
   // autosave above: works in both admin/creator and create/edit modes. Any
@@ -1027,6 +1055,10 @@ export function ProjectForm({
                 {KIND_VALUES.map((k) => (
                   <label key={k} className="inline-flex items-center gap-2 text-sm text-foreground">
                     <input
+                      // Keyed by the submit counter so the post-action form
+                      // reset can't leave the dial showing the page-load value
+                      // — see formEpoch above.
+                      key={`kind-${k}-${formEpoch}`}
                       type="radio"
                       name="kind"
                       value={k}

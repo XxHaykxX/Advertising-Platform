@@ -87,7 +87,10 @@ export const UI: Record<string, Dict> = {
     hy: "Փրոդակթ փլեյսմենթի շուկա",
   },
   "about.connectTitle": { ru: "Как мы соединяем", en: "How we connect", hy: "Ինչպես ենք կապում" },
-  "about.placementBadge": { ru: "Product placement", en: "Product placement", hy: "Փրոդակթ փլեյսմենթ" },
+  // IA-26: the ru value was the English phrase, so the badge stayed in Latin
+  // while everything around it on /about translated. Transliterated to match
+  // the Armenian value, which was already written that way.
+  "about.placementBadge": { ru: "Продакт-плейсмент", en: "Product placement", hy: "Փրոդակթ փլեյսմենթ" },
   "about.pillarsTitle": { ru: "Почему iGovazd", en: "Why iGovazd", hy: "Ինչու՞ iGovazd" },
   "about.pillar1Title": { ru: "Прозрачность", en: "Transparency", hy: "Թափանցիկություն" },
   "about.pillar1Body": {
