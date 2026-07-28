@@ -21,7 +21,6 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Plus, Trash2, User, X } from "lucide-react";
 import { MediaPicker, type MediaPickerScope } from "@/components/media-picker";
-import { MultiSelect } from "@/components/ui/multi-select";
 import { ROLE_VALUES, kindForRole } from "./form-shared";
 import type { PersonSuggestion } from "@/lib/data/actors";
 import { allSpellings, pickPersonName } from "@/lib/person-name";
@@ -190,7 +189,7 @@ export function ActorsSection({
         <p className="text-sm text-muted-foreground">{t("projectForm.cast.empty")}</p>
       ) : (
         <div className="rounded-xl border border-border bg-card">
-          {/* No `overflow-hidden` on this wrapper: the Role MultiSelect and the
+          {/* No `overflow-hidden` on this wrapper: the name suggestions and the
               Name autocomplete are absolutely-positioned dropdowns that must
               float OUT of the table (over the rows / next section). Clipping
               them cut the Role list and hid the name suggestions. Rounding is
@@ -491,12 +490,27 @@ function ActorTableRow({
         />
       </div>
       <div className="col-start-3 row-start-2 sm:col-start-4 sm:row-start-1">
-        <MultiSelect
-          options={ROLE_VALUES as unknown as string[]}
-          value={r.roles}
-          onChange={onRoles}
-          placeholder={t("projectForm.cast.role")}
-        />
+        {/* One role per person (owner request 2026-07-28). The column still
+            stores a string[] — the server, the DTO and the report page are
+            unchanged — it just never holds more than one entry now.
+            A value that isn't on the list (an older free-text role like
+            "Պրոդյուսեր") is offered as its own option, so opening a row that
+            has one and saving doesn't quietly blank it. */}
+        <select
+          value={r.roles[0] ?? ""}
+          onChange={(e) => onRoles(e.target.value ? [e.target.value] : [])}
+          className="w-full rounded-xl border border-border bg-card px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-primary"
+        >
+          <option value="">{t("projectForm.cast.role")}</option>
+          {r.roles[0] && !(ROLE_VALUES as readonly string[]).includes(r.roles[0]) ? (
+            <option value={r.roles[0]}>{r.roles[0]}</option>
+          ) : null}
+          {ROLE_VALUES.map((role) => (
+            <option key={role} value={role}>
+              {role}
+            </option>
+          ))}
+        </select>
       </div>
       <button
         type="button"
