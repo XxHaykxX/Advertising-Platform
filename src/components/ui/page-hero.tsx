@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { DEFAULT_LOCALE, type Locale } from "@/lib/i18n";
 
 /* Cinematic stills (served from /public/kino) shown as one tidy, contained
@@ -16,6 +17,19 @@ function frameSrc(n: number) {
 const EASE = [0.2, 0.8, 0.2, 1] as const;
 
 export type PageHeroCta = { label: string; href: string };
+
+/** Honour a line break the translator put in the dictionary value.
+ *  HTML collapses a newline into a space, so "Ձեր բրենդը՝\nճիշտ…" arrived as one
+ *  long line; and the i18n editor is a plain text box, so a writer reaching for
+ *  a break types <br> (or </br>) and gets the tag printed verbatim. Both mean
+ *  the same thing here, so both become a real newline, rendered by
+ *  `whitespace-pre-line` — the string stays plain text and no markup is ever
+ *  rendered. It has to stay ONE text node: the heading paints its gradient with
+ *  background-clip:text, and a nested <span> would inherit the transparent
+ *  colour without the background, i.e. show nothing at all. */
+function withLineBreaks(text: string) {
+  return text.replace(/<\s*\/?\s*br\s*\/?\s*>/gi, "\n");
+}
 
 export function PageHero({
   eyebrow,
@@ -70,13 +84,21 @@ export function PageHero({
           initial={{ opacity: 0, y: 22 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, ease: EASE, delay: 0.08 }}
-          className={
-            (eyebrow ? "mt-7" : "") +
-            " text-balance text-5xl font-extrabold leading-[1.04] tracking-tight text-white sm:text-6xl md:text-7xl"
-          }
+          className={cn(
+            eyebrow && "mt-7",
+            "text-balance font-extrabold tracking-tight text-white",
+            // Same scale on every page that isn't the /about hero. It used to
+            // be one size for both, so a section header ran at the full 72px
+            // of the landing treatment — enough for a long Armenian line to
+            // fill the screen. Leading is 1.15, not 1.04: Armenian letters
+            // descend below the baseline and were being clipped.
+            isHero
+              ? "text-5xl leading-[1.08] sm:text-6xl md:text-7xl"
+              : "text-4xl leading-[1.15] sm:text-5xl",
+          )}
         >
-          <span className="bg-gradient-to-r from-indigo-400 via-indigo-300 to-indigo-400 bg-clip-text text-transparent">
-            {title}
+          <span className="whitespace-pre-line bg-gradient-to-r from-indigo-400 via-indigo-300 to-indigo-400 bg-clip-text text-transparent">
+            {withLineBreaks(title)}
           </span>
         </motion.h1>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import Image from "next/image";
 import {
   AlertCircle,
@@ -15,12 +15,18 @@ import {
   Loader2,
   Search,
   Trash2,
-  Upload,
   X,
 } from "lucide-react";
 import { deleteUpload, saveVideoPoster, uploadImage, type MediaFile } from "@/lib/actions/uploads";
 import { captureVideoPoster, isPosterPath, posterPathFor } from "@/lib/video-poster";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { Dropzone, DropzoneEmptyState } from "@/components/ui/dropzone";
+
+/** Mirrors MAX_BYTES / MAX_BYTES_VIDEO in lib/actions/uploads.ts. Checked
+ *  before the round trip: past the framework body limit the request is cut
+ *  off mid-flight and the server's own "too large" message never runs — the
+ *  same pre-check the picker and the form fields already do. */
+const MAX_MB = { image: 8, video: 50 };
 
 // Folders that always appear (even when empty) so you can open one and upload
 // into it. `slug` is the on-disk subfolder under /uploads/ (uploadImage `dir`).
@@ -158,9 +164,9 @@ export function MediaManager({ files }: { files: MediaFile[] }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  // Drag-drop dropzone (#15) — highlighted while dragging over the folder
-  // view, and a per-file progress list shown while `uploadFiles` runs.
+  // Drag-drop anywhere on the folder view (#15), on top of the dedicated
+  // Dropzone below — highlights the whole view, and a per-file progress list
+  // is shown while `uploadFiles` runs.
   const [dropActive, setDropActive] = useState(false);
   const [uploadQueue, setUploadQueue] = useState<UploadQueueItem[]>([]);
 
@@ -202,10 +208,10 @@ export function MediaManager({ files }: { files: MediaFile[] }) {
     setLightboxIndex(null);
   }, [open, search]);
 
-  // Shared by the "Upload here" file input and the drag-drop dropzone — both
-  // just gather a File[] and hand it here. Uploads one at a time (uploadImage
-  // is still single-file) but tracks each file's own status in `uploadQueue`
-  // so the user sees per-file progress rather than one blanket spinner.
+  // Shared by the Dropzone below and the page-level drop target — both just
+  // gather a File[] and hand it here. Uploads one at a time (uploadImage is
+  // still single-file) but tracks each file's own status in `uploadQueue` so
+  // the user sees per-file progress rather than one blanket spinner.
   function uploadFiles(picked: File[]) {
     if (!picked.length || !open || open === ALL) return;
     const dir = open;
@@ -222,6 +228,17 @@ export function MediaManager({ files }: { files: MediaFile[] }) {
           const message = folderTakesVideo(dir)
             ? `“${file.name}” isn't a video — this folder only takes MP4 / WebM.`
             : `“${file.name}” is a video — upload it to the Videos folder.`;
+          setError(message);
+          setUploadQueue((q) => q.map((it, idx) => (idx === i ? { ...it, status: "error", error: message } : it)));
+          continue;
+        }
+        // The dedicated Dropzone below already screens this via its own
+        // `maxSize`, but a file dropped anywhere else on the page (the
+        // page-level target further down) skips that gate — check again here.
+        const maxMb = looksVideo ? MAX_MB.video : MAX_MB.image;
+        if (file.size > maxMb * 1024 * 1024) {
+          const mb = Math.round((file.size / (1024 * 1024)) * 10) / 10;
+          const message = `“${file.name}” is ${mb} MB — the limit is ${maxMb} MB.`;
           setError(message);
           setUploadQueue((q) => q.map((it, idx) => (idx === i ? { ...it, status: "error", error: message } : it)));
           continue;
@@ -299,12 +316,6 @@ export function MediaManager({ files }: { files: MediaFile[] }) {
     });
   }
 
-  function onPickFiles(e: React.ChangeEvent<HTMLInputElement>) {
-    const picked = Array.from(e.target.files || []);
-    e.target.value = "";
-    uploadFiles(picked);
-  }
-
   function onDragOver(e: React.DragEvent) {
     if (!open || open === ALL) return;
     e.preventDefault();
@@ -318,7 +329,13 @@ export function MediaManager({ files }: { files: MediaFile[] }) {
     if (!open || open === ALL) return;
     e.preventDefault();
     setDropActive(false);
-    uploadFiles(Array.from(e.dataTransfer.files || []).filter((f) => f.type.startsWith("image/")));
+    // Was hardcoded to "image/*", which silently dropped every video dragged
+    // onto the page outside the dedicated zone below — the Videos folder
+    // never accepted a page-level drop. Match whatever this folder takes.
+    const wantsVideo = folderTakesVideo(open);
+    uploadFiles(
+      Array.from(e.dataTransfer.files || []).filter((f) => f.type.startsWith(wantsVideo ? "video/" : "image/")),
+    );
   }
 
   // Deleting a file is irreversible and hits the disk — ask first (user
@@ -416,7 +433,10 @@ export function MediaManager({ files }: { files: MediaFile[] }) {
   const inFolder = open !== ALL;
   return (
     <div
-      className="space-y-4"
+      // The ring is the page-level target's own feedback (a drop landing
+      // outside the dedicated zone below still uploads) — distinct from the
+      // zone's own highlight so the two affordances don't look identical.
+      className={`space-y-4 rounded-2xl transition-shadow ${dropActive ? "ring-2 ring-primary/40" : ""}`}
       onDragOver={onDragOver}
       onDragLeave={onDragLeave}
       onDrop={onDrop}
@@ -453,66 +473,54 @@ export function MediaManager({ files }: { files: MediaFile[] }) {
               />
             </div>
           )}
-          {inFolder && (
-            <>
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={pending}
-                className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:opacity-90 disabled:opacity-60"
-              >
-                {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                {pending ? "Uploading…" : "Upload here"}
-              </button>
-              {missingPosters.length > 0 && (
-                <button
-                  type="button"
-                  onClick={backfillPosters}
-                  disabled={pending}
-                  className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm text-foreground transition-colors hover:border-primary/40 disabled:opacity-60"
-                  title="Generate a thumbnail for videos uploaded before previews existed"
-                >
-                  {backfilling ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      {backfilling.done}/{backfilling.total}
-                    </>
-                  ) : (
-                    <>
-                      <Images className="h-4 w-4" />
-                      Generate thumbnails ({missingPosters.length})
-                    </>
-                  )}
-                </button>
+          {inFolder && missingPosters.length > 0 && (
+            <button
+              type="button"
+              onClick={backfillPosters}
+              disabled={pending}
+              className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm text-foreground transition-colors hover:border-primary/40 disabled:opacity-60"
+              title="Generate a thumbnail for videos uploaded before previews existed"
+            >
+              {backfilling ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  {backfilling.done}/{backfilling.total}
+                </>
+              ) : (
+                <>
+                  <Images className="h-4 w-4" />
+                  Generate thumbnails ({missingPosters.length})
+                </>
               )}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept={folderTakesVideo(open) ? "video/mp4,video/webm" : "image/*"}
-                multiple
-                onChange={onPickFiles}
-                className="hidden"
-              />
-            </>
+            </button>
           )}
         </div>
       </div>
 
       {inFolder && (
-        <div
-          className={`flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed px-4 py-6 text-center transition-colors ${
-            dropActive ? "border-primary bg-primary/5" : "border-border"
-          }`}
-        >
-          <Upload className={`h-5 w-5 ${dropActive ? "text-primary" : "text-muted-foreground"}`} />
-          <p className="text-xs text-muted-foreground">
-            {dropActive
-              ? "Drop to upload"
-              : folderTakesVideo(open)
-                ? "Drag & drop videos here, or use “Upload here” above"
-                : "Drag & drop images here, or use “Upload here” above"}
-          </p>
-          <p className="text-xs text-muted-foreground">
+        <div className="space-y-2">
+          {/* Same shared zone every other upload surface on the site uses —
+              this page used to be the odd one out, with a page-wide drop
+              target but no visible, clickable zone of its own. */}
+          <Dropzone
+            accept={folderTakesVideo(open) ? { "video/mp4": [".mp4"], "video/webm": [".webm"] } : { "image/*": [] }}
+            multiple
+            maxFiles={0}
+            maxSize={(folderTakesVideo(open) ? MAX_MB.video : MAX_MB.image) * 1024 * 1024}
+            disabled={pending}
+            // Otherwise a drop landing on the zone would also bubble to the
+            // page-level onDrop above and upload every file twice.
+            noDragEventsBubbling
+            onDrop={uploadFiles}
+            onError={(e) => setError(e.message)}
+            labels={{
+              title: folderTakesVideo(open) ? "Upload videos" : "Upload images",
+              hint: "Drag and drop or click to upload",
+            }}
+          >
+            <DropzoneEmptyState />
+          </Dropzone>
+          <p className="text-center text-xs text-muted-foreground">
             {folderTakesVideo(open) ? "MP4 / WebM, up to 50 MB each" : "JPG / PNG / WebP, up to 8 MB each"}. Files go to{" "}
             <code>/uploads/{open}/</code>.
           </p>

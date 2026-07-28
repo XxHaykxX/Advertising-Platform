@@ -528,6 +528,7 @@ export function CatalogView({
       <Header user={user} locale={locale} currency={currency} />
 
       <PageHero
+        eyebrow={t("nav.catalog")}
         title={t("catalog.heroTitle")}
         subtitle={t("catalog.heroSubtitle")}
         locale={locale}

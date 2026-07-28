@@ -555,65 +555,70 @@ export const UI: Record<string, Dict> = {
 
   // ── FAQ ────────────────────────────────────────
   "faq.title": { ru: "Часто задаваемые вопросы", en: "Frequently Asked Questions", hy: "Հաճախ տրվող հարցեր" },
+  // Six questions, keys q1..q6 with NO gap. The old set ran q1,q3..q7 — the
+  // missing q2 is what made the content writer's numbered rows land on the
+  // wrong keys when her sheet was applied (2026-07-27). The numbering also
+  // left her question text ("1. Ինչպե՞ս…"); it's dropped here, since the
+  // accordion is the numbering.
   "faq.q1.question": {
-    ru: "Как формируется цена?",
-    en: "How does pricing work?",
-    hy: "1. Ինչպե՞ս է աշխատում հարթակը։",
+    ru: "Как работает платформа?",
+    en: "How does the platform work?",
+    hy: "Ինչպե՞ս է աշխատում հարթակը։",
   },
   "faq.q1.answer": {
-    ru: "Плейсменты начинаются от $5000. Листинг и просмотр бесплатны — мы берём комиссию только когда сделка действительно закрывается, поэтому бренды и создатели никогда не платят за сорвавшиеся плейсменты.",
-    en: "Placements start from $5K. Listing and browsing are free — we only take a fee when a deal actually closes, so brands and creators never pay for placements that fall through.",
-    hy: "Coming Soon...",
+    ru: "Создатели размещают проект вместе с пакетами плейсмента, бренды изучают каталог и посценовый отчёт. Бренд отправляет заявку с брифом и бюджетом, создатель принимает её или отклоняет, а условия обсуждаются внутри платформы — без посредников.",
+    en: "Creators list a project together with its placement packages, and brands explore the catalog and the scene-level report. A brand sends an application with its brief and budget, the creator accepts or declines it, and the terms are agreed inside the platform, with no middlemen.",
+    hy: "Ստեղծագործողներն ավելացնում են նախագիծը և տեղադրման փաթեթները, բրենդներն ուսումնասիրում են կատալոգը և տեսարան առ տեսարան հաշվետվությունը։ Բրենդն ուղարկում է հայտ՝ բրիֆով և բյուջեով, ստեղծագործողն ընդունում կամ մերժում է այն, իսկ պայմանները քննարկվում են հարթակի ներսում՝ առանց միջնորդների։",
   },
-  "faq.q3.question": {
-    ru: "Как защищена конфиденциальность сторон?",
-    en: "How is party privacy protected?",
-    hy: "2. Ովքե՞ր կարող են օգտվել հարթակից։",
+  "faq.q2.question": {
+    ru: "Кто может пользоваться платформой?",
+    en: "Who is the platform for?",
+    hy: "Ովքե՞ր կարող են օգտվել հարթակից։",
   },
-  "faq.q3.answer": {
-    ru: "Ваши контактные данные не отображаются в публичном каталоге. Личности сторон становятся известны участникам сделки, а первый контакт помогает организовать платформа iGovazd.",
-    en: "Your contact details aren't shown in the public catalog. Party identities become known to those involved in a deal, and iGovazd helps arrange the first contact.",
+  "faq.q2.answer": {
+    ru: "И крупные, средние и малые бренды, и независимые кинопроизводители, продюсерские центры и авторы YouTube- и медиашоу.",
+    en: "Brands large, mid-sized and small, as well as independent film producers, production houses, and the authors of YouTube and media shows.",
     hy: "Հարթակը նախատեսված է ինչպես խոշոր, միջին ու փոքր բրենդների, այնպես էլ անկախ կինոարտադրողների, պրոդյուսերական կենտրոնների և YouTube/մեդիա շոուների հեղինակների համար։",
   },
+  "faq.q3.question": {
+    ru: "Как заключается договор и как проходит оплата?",
+    en: "How are contracts signed and payments handled?",
+    hy: "Ինչպե՞ս է իրականացվում պայմանագրի կնքումը և վճարումը։",
+  },
+  "faq.q3.answer": {
+    ru: "В заявке бренда уже указано, что размещаем, в какие сроки и в какой форме идёт расчёт — оплатой или бартером. Когда обе стороны согласны, договор заключается напрямую между ними, а платформа хранит историю переписки и согласованные условия. Расчёты идут между брендом и продакшеном, платформа в них не встаёт.",
+    en: "A brand's application already states what is being placed, on what timeline, and in what form the settlement happens — payment or barter. Once both sides agree, the contract is signed directly between them, while the platform keeps the message history and the agreed terms. Money moves between the brand and the production; the platform does not sit in the middle.",
+    hy: "Բրենդի հայտում արդեն նշված են՝ ինչ ենք տեղադրում, ինչ ժամկետներում և ինչ ձևով է կատարվում հաշվարկը՝ վճարով, թե բարտերով։ Երբ երկու կողմերն էլ համաձայն են, պայմանագիրը կնքվում է ուղղակիորեն նրանց միջև, իսկ հարթակը պահպանում է նամակագրության պատմությունը և համաձայնեցված պայմանները։ Հաշվարկները կատարվում են բրենդի և արտադրողի միջև՝ առանց հարթակի միջնորդության։",
+  },
   "faq.q4.question": {
-    ru: "Как создатели размещают проект?",
-    en: "How do creators list a project?",
-    hy: "3. Ինչպե՞ս է իրականացվում պայմանագրի կնքումը և վճարումը։",
+    ru: "Какие гарантии получают бренды?",
+    en: "What guarantees do brands get?",
+    hy: "Ի՞նչ երաշխիքներ են ստանում բրենդները։",
   },
   "faq.q4.answer": {
-    ru: "Создатели загружают сценарий, и наша система автоматически анализирует его, чтобы выявить сцены, готовые к плейсменту. Затем проект появляется в каталоге, доступном брендам для просмотра.",
-    en: "Creators upload their screenplay, and our system analyzes it automatically to surface placement-ready scenes. The project then appears in the catalog for brands to discover and review.",
-    hy: "Coming Soon...",
+    ru: "Проекты проходят модерацию до публикации: команда проверяет данные продакшена, оценки аудитории и анализ сценария. Занятые слоты видны в пакете, поэтому эксклюзивное размещение не может быть продано дважды. Контакты сторон не показываются в открытом каталоге и раскрываются только участникам сделки.",
+    en: "Projects are moderated before they go live: the team checks the production details, the audience estimates and the script analysis. Taken slots are visible inside each package, so an exclusive placement cannot be sold twice. Contact details are never shown in the public catalog — they are revealed only to the parties in a deal.",
+    hy: "Նախագծերը հրապարակումից առաջ անցնում են մոդերացիա. թիմը ստուգում է արտադրության տվյալները, լսարանի գնահատականները և սցենարի վերլուծությունը։ Զբաղված տեղերը երևում են փաթեթում, ուստի բացառիկ տեղադրումը չի կարող վաճառվել երկու անգամ։ Կողմերի կոնտակտային տվյալները բաց կատալոգում չեն ցուցադրվում և բացվում են միայն գործարքի մասնակիցներին։",
   },
   "faq.q5.question": {
-    ru: "Какие стадии продакшена представлены?",
-    en: "What production stages are listed?",
-    hy: "4. Ի՞նչ երաշխիքներ են ստանում բրենդները։",
+    ru: "Какую комиссию берёт платформа?",
+    en: "What does the platform charge?",
+    hy: "Որքա՞ն միջնորդավճար է վերցնում հարթակը։",
   },
   "faq.q5.answer": {
-    ru: "Вы найдёте проекты на любой стадии — от сценариев, всё ещё находящихся в разработке, до пре-продакшена и финансирования, вплоть до тех, что уже активно снимаются.",
-    en: "You'll find projects across every stage — from scripts still in development, to productions in pre-production and financing, through to those already in active filming.",
-    hy: "Coming Soon...",
+    ru: "Размещение проекта и просмотр каталога бесплатны. Комиссия берётся только тогда, когда сделка действительно закрывается — предоплаты и скрытых платежей нет. Размер комиссии стороны узнают до подписания договора.",
+    en: "Listing a project and browsing the catalog are free. A fee applies only when a deal actually closes — there are no upfront or hidden costs, and both sides know the rate before the contract is signed.",
+    hy: "Նախագծի ավելացումը և կատալոգի դիտումն անվճար են։ Միջնորդավճարը վերցվում է միայն այն դեպքում, երբ գործարքն իրականում կնքվում է՝ առանց նախավճարի և թաքնված վճարների։ Միջնորդավճարի չափը կողմերին հայտնի է դառնում մինչև պայմանագրի կնքումը։",
   },
   "faq.q6.question": {
-    ru: "Как работает подбор и переговоры?",
-    en: "How does matching and negotiation work?",
-    hy: "5.  Որքա՞ն միջնորդավճար է վերցնում հարթակը։",
+    ru: "Проходят ли проекты проверку перед публикацией?",
+    en: "Are projects checked before they go live?",
+    hy: "Արդյո՞ք հարթակում ներկայացված նախագծերն անցնում են նախնական ստուգման փուլով։",
   },
   "faq.q6.answer": {
-    ru: "Наш подбор находит подходящие сцены на основе категории и целей вашего бренда. После этого вы можете напрямую написать продакшену и договориться об условиях прямо внутри платформы, без посредников.",
-    en: "Our matching surfaces relevant scenes based on your brand's category and goals. From there, you can message the production directly and negotiate terms inside the platform, no middlemen required.",
-    hy: "Coming Soon...",
-  },
-  "faq.q7.question": {
-    ru: "Данные проверены?",
-    en: "Is the data verified?",
-    hy: "6. Արդյո՞ք հարթակում ներկայացված նախագծերը անցնում են նախնական ստուգման փուլով։",
-  },
-  "faq.q7.answer": {
-    ru: "Да. Детали продакшена, оценки просмотров и анализ сценария проверяются нашей командой перед публикацией проекта, поэтому каждая цифра в отчёте заслуживает доверия.",
-    en: "Yes. Production details, viewership estimates, and script analysis are reviewed by our team before a project goes live, so every number you see in a report is trustworthy.",
-    hy: "Coming Soon...",
+    ru: "Да. Каждый проект проходит модерацию до появления в каталоге: данные продакшена, оценки просмотров и анализ сценария проверяет наша команда, поэтому цифрам в отчёте можно доверять.",
+    en: "Yes. Every project is moderated before it appears in the catalog: production details, viewership estimates and the script analysis are reviewed by our team, so the numbers in a report can be trusted.",
+    hy: "Այո։ Յուրաքանչյուր նախագիծ կատալոգում հայտնվելուց առաջ անցնում է մոդերացիա. արտադրության տվյալները, դիտումների գնահատականները և սցենարի վերլուծությունը ստուգում է մեր թիմը, ուստի հաշվետվության թվերին կարելի է վստահել։",
   },
 
   // ── contact section (landing + page shared bits) ─
@@ -686,6 +691,10 @@ export const UI: Record<string, Dict> = {
   },
 
   // ── how it works (full page) ──────────────────
+  // Eyebrow pill above the heading. /about and /portfolio had one and the other
+  // hero pages didn't, so the same band looked like two different components.
+  // Not nav.how here — the eyebrow would repeat the heading word for word.
+  "hiw.eyebrow": { ru: "Процесс", en: "Process", hy: "Գործընթաց" },
   "hiw.heroTitle": { ru: "Как это работает", en: "How It Works", hy: "Ինչպես է աշխատում" },
   "hiw.heroSubtitle": {
     ru: "iGovazd связывает бренды с создателями через прозрачный, честный процесс. Узнайте, как начать всего за четыре простых шага.",
@@ -949,6 +958,7 @@ export const UI: Record<string, Dict> = {
   "formErr.metricsNotJson": { ru: "Метрики: некорректный JSON.", en: "Metrics: invalid JSON.", hy: "Մետրիկաներ՝ անվավեր JSON։" },
 
   // ── legal pages ────────────────────────────────
+  "legal.eyebrow": { ru: "Документы", en: "Legal", hy: "Իրավական փաստաթղթեր" },
   "legal.privacyTitle": { ru: "Политика конфиденциальности", en: "Privacy Policy", hy: "Գաղտնիության քաղաքականություն" },
   "legal.termsTitle": { ru: "Условия использования", en: "Terms of Service", hy: "Ծառայության մատուցման պայմաններ" },
   "legal.updated": { ru: "Обновлено:", en: "Updated:", hy: "Թարմացվել է՝" },
@@ -1773,14 +1783,14 @@ export const UI: Record<string, Dict> = {
   "media.download": { ru: "Скачать", en: "Download", hy: "Ներբեռնել" },
   "media.loadError": { ru: "Не удалось загрузить медиатеку.", en: "Couldn't load the library.", hy: "Չհաջողվեց բեռնել գրադարանը։" },
   "media.emptyImages": {
-    ru: "Изображений пока нет — нажмите «Загрузить с компьютера».",
-    en: "No images yet — use “Upload from computer”.",
-    hy: "Պատկերներ դեռ չկան — սեղմեք «Վերբեռնել համակարգչից»։",
+    ru: "Изображений пока нет — перетащите файл выше или нажмите на зону загрузки.",
+    en: "No images yet — drag a file above, or click the drop zone.",
+    hy: "Պատկերներ դեռ չկան — քաշեք ֆայլը վերևում կամ սեղմեք բեռնման տիրույթի վրա։",
   },
   "media.emptyVideos": {
-    ru: "Видео пока нет — нажмите «Загрузить с компьютера».",
-    en: "No videos yet — use “Upload from computer”.",
-    hy: "Տեսանյութեր դեռ չկան — սեղմեք «Վերբեռնել համակարգչից»։",
+    ru: "Видео пока нет — перетащите файл выше или нажмите на зону загрузки.",
+    en: "No videos yet — drag a file above, or click the drop zone.",
+    hy: "Տեսանյութեր դեռ չկան — քաշեք ֆայլը վերևում կամ սեղմեք բեռնման տիրույթի վրա։",
   },
   "media.errTooLarge": {
     ru: "«{name}» весит {size} МБ — лимит {limit} МБ.",

@@ -24,7 +24,12 @@ export default async function ContactPage() {
     <>
       <SiteHeader />
 
-      <PageHero title={t("contactPage.title")} subtitle={t("contactPage.subtitle")} locale={locale} />
+      <PageHero
+        eyebrow={t("nav.contact")}
+        title={t("contactPage.title")}
+        subtitle={t("contactPage.subtitle")}
+        locale={locale}
+      />
 
       <main className="relative min-h-screen bg-background">
         {/* Subtle decorative background */}

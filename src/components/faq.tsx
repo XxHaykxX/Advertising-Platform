@@ -16,14 +16,12 @@ interface FaqItem {
 
 export default function Faq({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
   const t = makeUI(locale);
-  const items: FaqItem[] = [
-    { question: t("faq.q1.question"), answer: t("faq.q1.answer") },
-    { question: t("faq.q3.question"), answer: t("faq.q3.answer") },
-    { question: t("faq.q4.question"), answer: t("faq.q4.answer") },
-    { question: t("faq.q5.question"), answer: t("faq.q5.answer") },
-    { question: t("faq.q6.question"), answer: t("faq.q6.answer") },
-    { question: t("faq.q7.question"), answer: t("faq.q7.answer") },
-  ];
+  // q1..q6, no gap. The list used to skip q2 (q1, q3..q7), which is what sent
+  // the content writer's numbered rows one key off when her sheet was applied.
+  const items: FaqItem[] = [1, 2, 3, 4, 5, 6].map((n) => ({
+    question: t(`faq.q${n}.question` as Parameters<typeof t>[0]),
+    answer: t(`faq.q${n}.answer` as Parameters<typeof t>[0]),
+  }));
   const [openIndex, setOpenIndex] = useState<number | null>(0);
   const reducedMotion = useReducedMotion();
 

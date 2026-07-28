@@ -47,7 +47,12 @@ export default async function HowItWorksPage() {
     <>
       <SiteHeader />
 
-      <PageHero title={t("hiw.heroTitle")} subtitle={t("hiw.heroSubtitle")} locale={locale} />
+      <PageHero
+        eyebrow={t("hiw.eyebrow")}
+        title={t("hiw.heroTitle")}
+        subtitle={t("hiw.heroSubtitle")}
+        locale={locale}
+      />
 
       {/* Two-column steps section */}
       <Section>

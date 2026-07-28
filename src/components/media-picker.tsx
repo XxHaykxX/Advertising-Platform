@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import Image from "next/image";
-import { Download, Loader2, Upload, X } from "lucide-react";
+import { Download, Loader2, X } from "lucide-react";
 import { listUploads, uploadImage, type MediaFile } from "@/lib/actions/uploads";
 import { listMemberUploads, uploadMemberImage } from "@/lib/actions/member-uploads";
-import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
+import { makeUI, type Locale } from "@/lib/i18n";
 import { captureVideoPoster, isPosterPath, posterPathFor } from "@/lib/video-poster";
+import { Dropzone, DropzoneEmptyState } from "@/components/ui/dropzone";
 
 // Reusable image picker modal. Opens a library of existing uploads and lets you
 // either pick one or upload a new file from the computer — the chosen /uploads/…
@@ -36,7 +37,7 @@ export function MediaPicker({
   scope = "staff",
   uploadDir,
   accept = "image",
-  locale = DEFAULT_LOCALE,
+  locale = "en",
 }: {
   open: boolean;
   onClose: () => void;
@@ -49,9 +50,12 @@ export function MediaPicker({
    *  upload kind sent to the server, and which library items are shown. */
   accept?: MediaPickerAccept;
   /** Audit 4.5: this dialog was English-only for everyone, including members
-   *  whose whole cabinet is in Armenian or Russian. Admin callers can leave it
-   *  at the default (admin UI is pinned to "en"); member-side callers pass the
-   *  visitor's locale. */
+   *  whose whole cabinet is in Armenian or Russian. Member-side callers pass
+   *  the visitor's locale; admin callers omit it and get "en".
+   *
+   *  The default used to be DEFAULT_LOCALE, which is "hy" — so every admin
+   *  screen that opened this dialog (partners, portfolio, cast) showed it in
+   *  Armenian inside an otherwise English panel. */
   locale?: Locale;
 }) {
   const t = makeUI(locale);
@@ -60,7 +64,6 @@ export function MediaPicker({
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>("__all__");
   const [pending, startTransition] = useTransition();
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const list = scope === "member" ? listMemberUploads : listUploads;
   const upload = scope === "member" ? uploadMemberImage : uploadImage;
@@ -107,12 +110,19 @@ export function MediaPicker({
     return typed.filter((f) => folderOf(f.path) === filter);
   }, [typed, filter, scope]);
 
-  const inputAccept =
-    accept === "video" ? "video/mp4,video/webm" : accept === "any" ? "image/*,video/mp4,video/webm" : "image/*";
+  // Same shape as MediaField's acceptMap — filters both the OS picker's file
+  // dialog and which dragged files react-dropzone hands to handleFiles.
+  const acceptMap: Record<string, string[]> =
+    accept === "video"
+      ? { "video/mp4": [".mp4"], "video/webm": [".webm"] }
+      : accept === "any"
+        ? { "image/*": [], "video/mp4": [".mp4"], "video/webm": [".webm"] }
+        : { "image/*": [] };
 
-  function onPickFiles(e: React.ChangeEvent<HTMLInputElement>) {
-    const picked = Array.from(e.target.files || []);
-    e.target.value = "";
+  // Click-to-browse and drag-and-drop both land here — the dropzone below is
+  // the dialog's only upload affordance now (audit: "uploading is a button
+  // only, there is no drop zone at all").
+  function handleFiles(picked: File[]) {
     if (!picked.length) return;
     setError(null);
     startTransition(async () => {
@@ -184,23 +194,7 @@ export function MediaPicker({
                 : t("media.chooseImage")}
           </h2>
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={pending}
-              className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground transition-colors hover:opacity-90 disabled:opacity-60"
-            >
-              {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-              {t("media.upload")}
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept={inputAccept}
-              multiple
-              onChange={onPickFiles}
-              className="hidden"
-            />
+            {pending ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : null}
             <button
               type="button"
               onClick={onClose}
@@ -210,6 +204,23 @@ export function MediaPicker({
               <X className="h-5 w-5" />
             </button>
           </div>
+        </div>
+
+        {/* Same shared zone every other upload surface uses — this dialog used
+            to only offer a header button (audit 2026-07-28: "there is no drop
+            zone at all"). Pinned above the scrollable grid so it stays put. */}
+        <div className="border-b border-border px-5 py-4">
+          <Dropzone
+            accept={acceptMap}
+            multiple
+            maxFiles={0}
+            disabled={pending}
+            onDrop={handleFiles}
+            onError={(e) => setError(e.message)}
+            labels={{ title: t("media.dropTitleMany"), hint: t("media.dropHere") }}
+          >
+            <DropzoneEmptyState />
+          </Dropzone>
         </div>
 
         {folders.length > 1 && (

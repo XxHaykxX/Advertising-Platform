@@ -174,7 +174,7 @@ export default async function TermsPage() {
   return (
     <>
       <SiteHeader />
-      <PageHero title={t("legal.termsTitle")} locale={locale} />
+      <PageHero eyebrow={t("legal.eyebrow")} title={t("legal.termsTitle")} locale={locale} />
       <LegalPage
         updated={c.updated}
         intro={c.intro}

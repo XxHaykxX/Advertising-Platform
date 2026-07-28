@@ -174,7 +174,7 @@ export default async function PrivacyPage() {
   return (
     <>
       <SiteHeader />
-      <PageHero title={t("legal.privacyTitle")} locale={locale} />
+      <PageHero eyebrow={t("legal.eyebrow")} title={t("legal.privacyTitle")} locale={locale} />
       <LegalPage
         updated={c.updated}
         intro={c.intro}
