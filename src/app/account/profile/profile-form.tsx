@@ -68,7 +68,22 @@ export function ProfileForm({
           <div className="mt-4">
             <span className={labelClass}>{t("account.profile.avatar")}</span>
             <p className="mb-2 text-xs text-muted-foreground">{t("account.profile.avatarHint")}</p>
-            <MediaField name="avatar" initial={avatar} uploadDir="avatars" scope="member" label={t("btn.browse")} />
+            {/* Member-facing, so every caption is localized — the component's
+                English defaults would otherwise show through here. */}
+            <MediaField
+              name="avatar"
+              initial={avatar}
+              uploadDir="avatars"
+              scope="member"
+              label={t("btn.browse")}
+              previewShape="square"
+              dropTitle={t("media.dropTitleOne")}
+              dropLabel={t("media.dropHereOne")}
+              errTooLargeLabel={t("media.errTooLargeShort")}
+              replaceLabel={t("media.replace")}
+              removeLabel={t("ui.remove")}
+              dropReplaceLabel={t("media.dropToReplace")}
+            />
           </div>
 
           <label className="mt-4 block max-w-md">

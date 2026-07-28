@@ -2,12 +2,12 @@
 
 import { useState, useTransition } from "react";
 import Image from "next/image";
-import { FileVideo, ImageIcon, Loader2, X } from "lucide-react";
+import { FileVideo, ImageIcon, Loader2 } from "lucide-react";
 import { MediaPicker, isVideoPath, type MediaPickerAccept, type MediaPickerScope } from "@/components/media-picker";
 import { uploadImage } from "@/lib/actions/uploads";
 import { uploadMemberImage } from "@/lib/actions/member-uploads";
 import { captureVideoPoster } from "@/lib/video-poster";
-import { Dropzone, DropzoneEmptyState } from "@/components/ui/dropzone";
+import { Dropzone, DropzoneEmptyState, DropzonePreview } from "@/components/ui/dropzone";
 import type { Locale } from "@/lib/i18n";
 import { imageSizeHint } from "@/lib/images/size-hint";
 
@@ -34,6 +34,10 @@ export function MediaField({
   dropTitle = "Upload a file",
   dropLabel = "Drag and drop or click to upload",
   errTooLargeLabel = "File is too large",
+  replaceLabel = "Replace",
+  removeLabel = "Remove",
+  dropReplaceLabel = "Drop to replace",
+  previewShape = "video",
 }: {
   name: string;
   initial?: string;
@@ -53,6 +57,14 @@ export function MediaField({
   dropTitle?: string;
   dropLabel?: string;
   errTooLargeLabel?: string;
+  /** Overlay actions on the filled preview, localized by the caller. */
+  replaceLabel?: string;
+  removeLabel?: string;
+  /** Shown while a file hovers over an already filled field. */
+  dropReplaceLabel?: string;
+  /** Frame of the filled preview. "square" suits a portrait (an avatar), the
+   *  16:9 default suits stills, logos and video. */
+  previewShape?: "video" | "square";
 }) {
   const [value, setValue] = useState(initial);
   const [open, setOpen] = useState(false);
@@ -110,13 +122,39 @@ export function MediaField({
         ? { "image/*": [], "video/mp4": [".mp4"], "video/webm": [".webm"] }
         : { "image/*": [] };
 
+  // Filled → the file itself is the zone (replace by dropping on it or via the
+  // overlay); empty → the drop zone. The old layout showed both at once plus a
+  // 64px thumbnail underneath, which read as two separate targets.
+  const frame = previewShape === "square" ? "aspect-square w-40" : "aspect-video w-72";
+  const preview = value ? (
+    <DropzonePreview replaceLabel={replaceLabel} removeLabel={removeLabel} onRemove={() => setValue("")}>
+      <div className={`relative ${frame} max-w-full overflow-hidden bg-muted`}>
+        {isVideoPath(value) ? (
+          <span className="grid h-full w-full place-items-center gap-1 text-muted-foreground">
+            <FileVideo className="h-6 w-6" />
+            <span className="max-w-full truncate px-2 text-xs">{value.split("/").pop()}</span>
+          </span>
+        ) : (
+          <Image
+            src={value}
+            alt=""
+            fill
+            className={fit === "contain" ? "object-contain p-2" : "object-cover"}
+            sizes="288px"
+            unoptimized
+          />
+        )}
+      </div>
+    </DropzonePreview>
+  ) : undefined;
+
   return (
     <div className="space-y-3">
       <input type="hidden" name={name} value={value} />
 
-      {/* Click opens the OS picker, dragging a file onto it uploads. The media
-          LIBRARY button lives outside: the zone is a <button>, so nothing
-          focusable may be nested inside it. */}
+      {/* Empty: click opens the OS picker, dragging a file onto it uploads. The
+          media LIBRARY button lives outside: the empty zone is a <button>, so
+          nothing focusable may be nested inside it. */}
       <Dropzone
         accept={acceptMap}
         maxFiles={1}
@@ -124,54 +162,21 @@ export function MediaField({
         disabled={uploading}
         onDrop={(files) => handleDrop(files[0])}
         onError={(e) => setDropError(e.message)}
-        labels={{ title: dropTitle, hint: dropLabel }}
+        labels={{ title: dropTitle, hint: dropLabel, replaceHint: dropReplaceLabel }}
+        preview={preview}
       >
         <DropzoneEmptyState />
       </Dropzone>
 
       <div className="flex flex-wrap items-center gap-3">
-        {value ? (
-          <span className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-border bg-muted">
-            {isVideoPath(value) ? (
-              <span className="grid h-full w-full place-items-center text-muted-foreground">
-                <FileVideo className="h-5 w-5" />
-              </span>
-            ) : (
-              <Image
-                src={value}
-                alt=""
-                fill
-                className={fit === "contain" ? "object-contain p-1" : "object-cover"}
-                sizes="64px"
-                unoptimized
-              />
-            )}
-          </span>
-        ) : (
-          <span className="grid h-16 w-16 shrink-0 place-items-center rounded-lg border border-dashed border-border bg-muted text-muted-foreground">
-            <ImageIcon className="h-5 w-5" />
-          </span>
-        )}
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setOpen(true)}
-            className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm text-foreground hover:border-primary/40"
-          >
-            <ImageIcon className="h-4 w-4" />
-            {label}
-          </button>
-          {value && (
-            <button
-              type="button"
-              onClick={() => setValue("")}
-              className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-            >
-              <X className="h-3.5 w-3.5" />
-              Remove
-            </button>
-          )}
-        </div>
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm text-foreground hover:border-primary/40"
+        >
+          <ImageIcon className="h-4 w-4" />
+          {label}
+        </button>
         {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" /> : null}
       </div>
       {dropError ? <p className="text-xs text-danger">{dropError}</p> : null}

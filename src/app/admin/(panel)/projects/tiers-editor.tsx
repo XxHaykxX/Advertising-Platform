@@ -18,7 +18,8 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, Copy, GripVertical, Plus, Trash2 } from "lucide-react";
+import { groupDigits, withExclusive, withTotalSlots } from "./form-shared";
 import type { makeUI } from "@/lib/i18n";
 
 // Controlled sponsorship-tiers section (#20²). Same refactor as ActorsSection:
@@ -48,6 +49,10 @@ export type TierRow = {
   totalSlots: number | null;
 };
 
+/** A placement some other project already offers, ready to be added in one
+ *  click. Built server-side in lib/data/tier-templates.ts. */
+export type TierTemplate = { name: string; benefits: string; uses: number };
+
 export const EMPTY_TIER: TierRow = {
   name: "",
   priceAmd: 0,
@@ -57,19 +62,24 @@ export const EMPTY_TIER: TierRow = {
   totalSlots: null,
 };
 
+// Visible frame at rest. The borderless version read as a paragraph of text:
+// nothing said which parts were editable until you happened to click one.
 const cellCls =
-  "w-full rounded-lg border border-transparent bg-transparent px-2 py-1.5 text-sm text-foreground outline-none transition-colors focus:border-primary focus:bg-card";
+  "w-full rounded-lg border border-border bg-background px-2 py-1.5 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-primary focus:bg-card disabled:cursor-not-allowed disabled:opacity-60";
 
 export function TiersSection({
   value,
   onChange,
   t,
+  templates = [],
 }: {
   value: TierRow[];
   onChange: (rows: TierRow[]) => void;
   /** ProjectForm's own locale-aware translator (#15) — see ActorsSection's
    *  matching prop for the reasoning. */
   t: ReturnType<typeof makeUI>;
+  /** Placements already used on other projects, offered by the Add menu. */
+  templates?: TierTemplate[];
 }) {
   // Stable client-side ids parallel to `value` — see ActorsSection for why
   // index/object identity aren't safe keys and how the re-seed effect works.
@@ -90,9 +100,34 @@ export function TiersSection({
     onChange(value.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
   }
 
-  function addRow() {
+  const replaceAt = (rows: TierRow[], i: number, row: TierRow) =>
+    rows.map((r, idx) => (idx === i ? row : r));
+
+  function addRow(row: TierRow = EMPTY_TIER) {
     setIds((prev) => [...prev, uid.current++]);
-    onChange([...value, { ...EMPTY_TIER }]);
+    onChange([...value, { ...row }]);
+  }
+
+  const [menuOpen, setMenuOpen] = useState(false);
+  // Price is never templated — see lib/data/tier-templates.ts.
+  function addFromTemplate(tpl: TierTemplate) {
+    addRow({ ...EMPTY_TIER, name: tpl.name, benefits: tpl.benefits });
+    setMenuOpen(false);
+  }
+
+  /** Gold/Silver/Bronze differ by a price and a line or two, so copying beats
+   *  retyping. The clone drops dbId — otherwise the save would update the
+   *  source tier twice instead of inserting a new one. */
+  function duplicateRow(i: number) {
+    const src = value[i];
+    const copy: TierRow = {
+      ...src,
+      dbId: undefined,
+      name: src.name ? `${src.name} (${t("projectForm.tiers.copySuffix")})` : "",
+    };
+    const insert = <T,>(arr: T[], item: T) => [...arr.slice(0, i + 1), item, ...arr.slice(i + 1)];
+    setIds((prev) => insert(prev, uid.current++));
+    onChange(insert(value, copy));
   }
 
   function removeRow(i: number) {
@@ -122,20 +157,78 @@ export function TiersSection({
         <p className="text-sm text-muted-foreground">
           {value.length} {t(value.length === 1 ? "projectForm.tiers.tier" : "projectForm.tiers.tiers")}
         </p>
-        <button
-          type="button"
-          onClick={addRow}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs text-foreground hover:border-primary/40"
-        >
-          <Plus className="h-3.5 w-3.5" /> {t("projectForm.tiers.addTier")}
-        </button>
+        {/* Split button: the left half still adds a blank row, the chevron
+            offers placements other projects already use — the names repeat, so
+            retyping them (and their benefit lists) was the bulk of the work. */}
+        <div className="relative flex items-center">
+          <button
+            type="button"
+            onClick={() => addRow()}
+            className={`inline-flex items-center gap-1.5 border border-border px-3 py-1.5 text-xs text-foreground hover:border-primary/40 ${
+              templates.length ? "rounded-l-lg border-r-0" : "rounded-lg"
+            }`}
+          >
+            <Plus className="h-3.5 w-3.5" /> {t("projectForm.tiers.addTier")}
+          </button>
+          {templates.length ? (
+            <button
+              type="button"
+              onClick={() => setMenuOpen((v) => !v)}
+              aria-label={t("projectForm.tiers.templates")}
+              aria-expanded={menuOpen}
+              className="inline-flex items-center rounded-r-lg border border-border px-1.5 py-1.5 text-foreground hover:border-primary/40"
+            >
+              <ChevronDown className="h-3.5 w-3.5" />
+            </button>
+          ) : null}
+          {menuOpen ? (
+            <>
+              {/* Click-away catcher: a plain overlay beats a document listener
+                  that would also have to know about the button that opened it. */}
+              <button
+                type="button"
+                tabIndex={-1}
+                aria-hidden
+                onClick={() => setMenuOpen(false)}
+                className="fixed inset-0 z-10 cursor-default"
+              />
+              <div className="absolute right-0 top-full z-20 mt-1 w-72 overflow-hidden rounded-lg border border-border bg-card p-1 shadow-lg">
+                <p className="px-2 py-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                  {t("projectForm.tiers.templates")}
+                </p>
+                {templates.map((tpl) => (
+                  <button
+                    key={tpl.name}
+                    type="button"
+                    onClick={() => addFromTemplate(tpl)}
+                    className="block w-full rounded-md px-2 py-1.5 text-left hover:bg-muted"
+                  >
+                    <span className="block text-xs font-medium text-foreground">{tpl.name}</span>
+                    {tpl.benefits ? (
+                      <span className="block truncate text-[11px] text-muted-foreground">
+                        {tpl.benefits.split("\n").filter(Boolean).join(" · ")}
+                      </span>
+                    ) : null}
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : null}
+        </div>
       </div>
 
       {value.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("projectForm.tiers.empty")}</p>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-border bg-card">
-          <div className="hidden grid-cols-[24px_1fr_90px_70px_70px_90px_2fr_32px] items-center gap-2 border-b border-border bg-muted px-3 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground sm:grid">
+        // @container + @4xl: — the row switches to columns on the CARD's width,
+        // not the window's. This card sits in a ~640px form column on a 1280px
+        // screen, where the eight-column grid would squeeze Tier name down to
+        // ~30px; a viewport breakpoint can't see that.
+        <div className="@container overflow-hidden rounded-xl border border-border bg-card">
+          {/* Available/Total were 70px: their own placeholders were clipped to
+              "Availa"/"Total", so an empty pair of cells gave no clue which was
+              which. */}
+          <div className="hidden grid-cols-[24px_1fr_120px_92px_92px_104px_2fr_64px] items-center gap-2 border-b border-border bg-muted px-3 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground @4xl:grid">
             <span />
             <span>{t("projectForm.tiers.name")}</span>
             <span>{t("projectForm.tiers.price")}</span>
@@ -163,9 +256,10 @@ export function TiersSection({
                     onName={(name) => update(i, { name })}
                     onPrice={(priceAmd) => update(i, { priceAmd })}
                     onSlots={(availableSlots) => update(i, { availableSlots })}
-                    onTotalSlots={(totalSlots) => update(i, { totalSlots })}
-                    onExclusive={(isExclusive) => update(i, { isExclusive })}
+                    onTotalSlots={(totalSlots) => onChange(replaceAt(value, i, withTotalSlots(r, totalSlots)))}
+                    onExclusive={(isExclusive) => onChange(replaceAt(value, i, withExclusive(r, isExclusive)))}
                     onBenefits={(benefits) => update(i, { benefits })}
+                    onDuplicate={() => duplicateRow(i)}
                     onDelete={() => removeRow(i)}
                   />
                 ))}
@@ -175,6 +269,45 @@ export function TiersSection({
         </div>
       )}
     </div>
+  );
+}
+
+/** Digits only, grouped for reading while the field is idle. Kept as text
+ *  rather than <input type="number">: a number input can't show "1 500 000",
+ *  and its spinner is useless at this scale. The row still stores a number. */
+function PriceInput({
+  value,
+  onChange,
+  className,
+  placeholder,
+}: {
+  value: number;
+  onChange: (price: number) => void;
+  className: string;
+  placeholder: string;
+}) {
+  // Non-null only while the field is focused, so typing isn't fighting the
+  // regrouping — the separators land on blur.
+  const [draft, setDraft] = useState<string | null>(null);
+  const shown = draft ?? (value ? groupDigits(String(value)) : "");
+
+  return (
+    <input
+      type="text"
+      inputMode="numeric"
+      value={shown}
+      // Empty stays empty (placeholder "0" states the value) instead of the
+      // literal 0 that had to be deleted before every price entry.
+      onChange={(e) => {
+        const digits = e.target.value.replace(/\D/g, "");
+        setDraft(digits);
+        onChange(Number(digits || 0));
+      }}
+      onFocus={() => setDraft(value ? String(value) : "")}
+      onBlur={() => setDraft(null)}
+      placeholder={placeholder}
+      className={className}
+    />
   );
 }
 
@@ -188,6 +321,7 @@ function TierTableRow({
   onTotalSlots,
   onExclusive,
   onBenefits,
+  onDuplicate,
   onDelete,
 }: {
   id: number;
@@ -199,6 +333,7 @@ function TierTableRow({
   onTotalSlots: (slots: number | null) => void;
   onExclusive: (exclusive: boolean) => void;
   onBenefits: (benefits: string) => void;
+  onDuplicate: () => void;
   onDelete: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
@@ -228,7 +363,7 @@ function TierTableRow({
     <div
       ref={setNodeRef}
       style={style}
-      className={`grid grid-cols-[24px_1fr_32px] items-start gap-x-2 gap-y-1 px-3 py-1.5 sm:grid-cols-[24px_1fr_90px_70px_70px_90px_2fr_32px] sm:items-start ${
+      className={`grid grid-cols-[24px_1fr_64px] items-start gap-x-2 gap-y-1 px-3 py-1.5 @4xl:grid-cols-[24px_1fr_120px_92px_92px_104px_2fr_64px] @4xl:items-start ${
         isDragging ? "" : "hover:bg-muted/50"
       }`}
     >
@@ -236,7 +371,7 @@ function TierTableRow({
         type="button"
         {...attributes}
         {...listeners}
-        className="col-start-1 row-span-4 mt-1.5 cursor-grab touch-none self-start text-muted-foreground active:cursor-grabbing sm:row-span-1 sm:mt-1.5"
+        className="col-start-1 row-span-4 mt-1.5 cursor-grab touch-none self-start text-muted-foreground active:cursor-grabbing @4xl:row-span-1 @4xl:mt-1.5"
         aria-label={`${t("projectForm.remove")} — drag ${r.name || ""}`.trim()}
       >
         <GripVertical className="h-4 w-4" />
@@ -248,35 +383,37 @@ function TierTableRow({
         placeholder={t("projectForm.tiers.namePlaceholder")}
         className={`${cellCls} col-start-2 row-start-1`}
       />
-      <input
-        type="number"
-        min={0}
+      <PriceInput
         value={r.priceAmd}
-        onChange={(e) => onPrice(Number(e.target.value))}
-        placeholder={t("projectForm.tiers.price")}
-        className={`${cellCls} col-start-2 row-start-2 sm:col-start-3 sm:row-start-1`}
+        onChange={onPrice}
+        placeholder="0"
+        className={`${cellCls} col-start-2 row-start-2 tabular-nums @4xl:col-start-3 @4xl:row-start-1`}
       />
       {/* Available + Total + Exclusive share a row on mobile (a plain flex
           row); at sm+ the wrapper switches to `display: contents` so all
           children drop straight into the parent grid as their own columns. */}
-      <div className="col-start-2 row-start-3 flex items-center gap-3 sm:contents">
+      <div className="col-start-2 row-start-3 flex items-center gap-3 @4xl:contents">
         <input
           type="number"
           min={0}
           value={r.availableSlots ?? ""}
           onChange={(e) => onSlots(e.target.value === "" ? null : Number(e.target.value))}
           placeholder={t("projectForm.tiers.slots")}
-          className={`${cellCls} flex-1 sm:col-start-4 sm:row-start-1`}
+          className={`${cellCls} flex-1 @4xl:col-start-4 @4xl:row-start-1`}
         />
+        {/* Locked at 1 while Exclusive is on — the checkbox owns the number,
+            so leaving it editable would only let the two contradict. */}
         <input
           type="number"
           min={0}
           value={r.totalSlots ?? ""}
           onChange={(e) => onTotalSlots(e.target.value === "" ? null : Number(e.target.value))}
           placeholder={t("projectForm.tiers.totalSlots")}
-          className={`${cellCls} flex-1 sm:col-start-5 sm:row-start-1`}
+          disabled={r.isExclusive}
+          title={r.isExclusive ? t("projectForm.tiers.exclusiveHint") : undefined}
+          className={`${cellCls} flex-1 @4xl:col-start-5 @4xl:row-start-1`}
         />
-        <label className="flex shrink-0 items-center gap-1.5 text-xs text-foreground sm:col-start-6 sm:row-start-1">
+        <label className="flex shrink-0 items-center gap-1.5 text-xs text-foreground @4xl:col-start-6 @4xl:row-start-1">
           <input
             type="checkbox"
             checked={r.isExclusive}
@@ -295,17 +432,28 @@ function TierTableRow({
         onChange={(e) => onBenefits(e.target.value)}
         rows={2}
         placeholder={t("projectForm.tiers.benefitsPlaceholder")}
-        className={`${cellCls} col-span-2 col-start-2 row-start-4 resize-none overflow-hidden sm:col-span-1 sm:col-start-7 sm:row-start-1`}
+        className={`${cellCls} col-span-2 col-start-2 row-start-4 resize-none overflow-hidden @4xl:col-span-1 @4xl:col-start-7 @4xl:row-start-1`}
       />
 
-      <button
-        type="button"
-        onClick={onDelete}
-        className="col-start-3 row-start-1 mt-1 grid h-8 w-8 place-items-center justify-self-end self-start rounded-lg text-muted-foreground hover:bg-muted hover:text-primary sm:col-start-8 sm:justify-self-auto"
-        aria-label={t("projectForm.remove")}
-      >
-        <Trash2 className="h-4 w-4" />
-      </button>
+      <div className="col-start-3 row-start-1 mt-1 flex items-center justify-self-end self-start @4xl:col-start-8 @4xl:justify-self-auto">
+        <button
+          type="button"
+          onClick={onDuplicate}
+          className="grid h-8 w-8 place-items-center rounded-lg text-muted-foreground hover:bg-muted hover:text-primary"
+          aria-label={t("projectForm.tiers.duplicate")}
+          title={t("projectForm.tiers.duplicate")}
+        >
+          <Copy className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          onClick={onDelete}
+          className="grid h-8 w-8 place-items-center rounded-lg text-muted-foreground hover:bg-muted hover:text-primary"
+          aria-label={t("projectForm.remove")}
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
+      </div>
     </div>
   );
 }

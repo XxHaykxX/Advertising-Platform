@@ -1648,6 +1648,18 @@ export const UI: Record<string, Dict> = {
   "projectForm.tiers.slots": { ru: "Доступно", en: "Available", hy: "Հասանելի" },
   "projectForm.tiers.totalSlots": { ru: "Всего", en: "Total", hy: "Ընդամենը" },
   "projectForm.tiers.exclusive": { ru: "Эксклюзив", en: "Exclusive", hy: "Բացառիկ" },
+  "projectForm.tiers.exclusiveHint": {
+    ru: "Эксклюзивный плейсмент — всегда один слот",
+    en: "An exclusive placement is always a single slot",
+    hy: "Բացառիկ փլեյսմենթը միշտ մեկ տեղ է",
+  },
+  "projectForm.tiers.duplicate": { ru: "Дублировать", en: "Duplicate", hy: "Կրկնօրինակել" },
+  "projectForm.tiers.templates": {
+    ru: "Готовые плейсменты",
+    en: "Ready-made placements",
+    hy: "Պատրաստի փլեյսմենթներ",
+  },
+  "projectForm.tiers.copySuffix": { ru: "копия", en: "copy", hy: "կրկնօրինակ" },
   "projectForm.tiers.benefits": { ru: "Преимущества (по одному в строке)", en: "Benefits (one per line)", hy: "Առավելություններ (մեկը՝ մեկ տողում)" },
   "projectForm.tiers.benefitsPlaceholder": {
     ru: "Логотип на выбранных промо-материалах\nПродвижение в соцсетях\nБлагодарность в титрах\nПриглашения на премьеру",
@@ -1745,6 +1757,17 @@ export const UI: Record<string, Dict> = {
     en: "File is too large",
     hy: "Ֆայլը չափազանց մեծ է",
   },
+  // Names the zone instead of describing the action: two adjacent "Upload a
+  // file" rectangles (poster and gallery) gave no clue which was which.
+  "media.dropTitlePoster": { ru: "Загрузить постер", en: "Upload a poster", hy: "Վերբեռնել պաստառ" },
+  // Filled state: the file itself becomes the drop zone, these label its overlay.
+  "media.replace": { ru: "Заменить", en: "Replace", hy: "Փոխարինել" },
+  "media.dropToReplace": {
+    ru: "Отпустите, чтобы заменить",
+    en: "Drop to replace",
+    hy: "Բաց թողեք՝ փոխարինելու համար",
+  },
+  "media.addImage": { ru: "Добавить", en: "Add", hy: "Ավելացնել" },
   "media.close": { ru: "Закрыть", en: "Close", hy: "Փակել" },
   "media.all": { ru: "Все", en: "All", hy: "Բոլորը" },
   "media.download": { ru: "Скачать", en: "Download", hy: "Ներբեռնել" },

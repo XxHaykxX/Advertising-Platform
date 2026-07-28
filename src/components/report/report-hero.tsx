@@ -1,4 +1,4 @@
-import { Wallet } from "lucide-react";
+import { Building2, Clapperboard, Film, MapPin, Wallet } from "lucide-react";
 import { Reveal } from "@/components/ui/reveal";
 import { BackButton, PrintButton, ShareButton } from "@/components/report/report-actions";
 import { PosterSlider } from "@/components/report/poster-slider";
@@ -32,12 +32,14 @@ export function ReportHero({
   const videoSource =
     videoEmbed || project.videoFile ? { embed: videoEmbed, file: project.videoFile || null } : undefined;
 
+  // Same icon vocabulary as the catalog card (Clapperboard = format, MapPin =
+  // countries), so a project reads the same way in the list and on its page.
   const metaItems = [
-    localizeValue(locale, "genre", project.genre),
-    project.format,
-    project.studio,
-    countries,
-  ].filter(Boolean);
+    { icon: Film, value: localizeValue(locale, "genre", project.genre) },
+    { icon: Clapperboard, value: project.format },
+    { icon: Building2, value: project.studio },
+    { icon: MapPin, value: countries },
+  ].filter((m) => Boolean(m.value));
 
   return (
     <section className="pt-8 pb-4">
@@ -108,11 +110,13 @@ export function ReportHero({
         </Reveal>
 
         <Reveal delay={0.1}>
-          <p className="mt-6 flex flex-wrap gap-x-2 gap-y-1 text-sm text-muted-foreground">
-            {metaItems.map((item, idx) => (
+          {/* Icons replace the middot separators: each fact now carries its own
+              marker, so the dots would only add noise between them. */}
+          <p className="mt-6 flex flex-wrap gap-x-5 gap-y-1.5 text-sm text-muted-foreground">
+            {metaItems.map(({ icon: Icon, value }, idx) => (
               <span key={idx} className="inline-flex items-center gap-2">
-                {item}
-                {idx < metaItems.length - 1 ? <span aria-hidden>·</span> : null}
+                <Icon className="h-3.5 w-3.5 shrink-0" />
+                {value}
               </span>
             ))}
           </p>

@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, type ReactNode } from "react";
-import { Upload as UploadIcon } from "lucide-react";
+import { RefreshCw, Trash2, Upload as UploadIcon } from "lucide-react";
 import { useDropzone } from "react-dropzone";
 import type { DropEvent, DropzoneOptions, FileRejection } from "react-dropzone";
 import { Button } from "@/components/ui/button";
@@ -20,8 +20,14 @@ import { cn } from "@/lib/utils";
  *  - the caption strings are props, because the member-facing forms render in
  *    the visitor's language while the admin panel is pinned to English.
  *
- * The zone is a <button>, so nothing focusable may be nested inside it — put a
- * "browse the media library" action NEXT to it, never within.
+ * The EMPTY zone is a <button>, so nothing focusable may be nested inside it —
+ * put a "browse the media library" action NEXT to it, never within.
+ *
+ * Once a field holds something, pass that something as `preview` instead: the
+ * root becomes a plain <div> (so Replace/Remove buttons may live on top of the
+ * image) and clicking the zone itself no longer opens the OS picker. A field
+ * that keeps showing an empty zone next to its own filled preview reads as two
+ * separate drop targets — see DropzonePreview.
  */
 
 type DropzoneContextType = {
@@ -65,7 +71,16 @@ export type DropzoneProps = Omit<DropzoneOptions, "onDrop"> & {
   labels?: DropzoneLabels;
   onDrop?: (acceptedFiles: File[], fileRejections: FileRejection[], event: DropEvent) => void;
   children?: ReactNode;
+  /** What the field already holds (an image, a video card, a tile grid). When
+   *  set, this renders INSTEAD of the empty-state zone. */
+  preview?: ReactNode;
 };
+
+/** Opens the OS file picker from inside a `preview`, where the zone itself is
+ *  no longer clickable. Null outside a Dropzone so a preview can be rendered
+ *  standalone (e.g. in a story or a disabled state). */
+const DropzoneOpenContext = createContext<(() => void) | null>(null);
+export const useDropzoneOpen = () => useContext(DropzoneOpenContext);
 
 export const Dropzone = ({
   accept,
@@ -79,9 +94,14 @@ export const Dropzone = ({
   className,
   labels,
   children,
+  preview,
   ...props
 }: DropzoneProps) => {
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+  const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
+    // A preview holds its own buttons, so the zone must not also swallow
+    // clicks (or Enter/Space) and pop the OS picker on top of them.
+    noClick: !!preview,
+    noKeyboard: !!preview,
     accept,
     maxFiles,
     maxSize,
@@ -99,6 +119,37 @@ export const Dropzone = ({
     },
     ...props,
   });
+
+  if (preview) {
+    return (
+      <DropzoneContext.Provider
+        key={JSON.stringify(src)}
+        value={{ src, accept, maxSize, minSize, maxFiles, labels }}
+      >
+        <DropzoneOpenContext.Provider value={open}>
+          <div
+            {...getRootProps()}
+            className={cn(
+              "relative w-fit max-w-full rounded-xl transition-colors",
+              // Solid while filled, dashed only under a dragged file: a picture
+              // that already sits there doesn't need to look like a target.
+              "ring-1 ring-border",
+              isDragActive && "ring-2 ring-primary",
+              className,
+            )}
+          >
+            <input {...getInputProps()} disabled={disabled} />
+            {preview}
+            {isDragActive ? (
+              <div className="pointer-events-none absolute inset-0 grid place-items-center rounded-xl bg-primary/10 text-xs font-medium text-primary">
+                {labels?.replaceHint ?? "Drop to replace"}
+              </div>
+            ) : null}
+          </div>
+        </DropzoneOpenContext.Provider>
+      </DropzoneContext.Provider>
+    );
+  }
 
   return (
     <DropzoneContext.Provider
@@ -169,6 +220,50 @@ export const DropzoneContent = ({ children }: DropzoneContentProps) => {
         {labels?.replaceHint ?? "Drag and drop or click to replace"}
       </p>
     </>
+  );
+};
+
+/** The filled state of a single-value field: what's already there, with
+ *  Replace/Remove surfacing on hover or keyboard focus. Pass it to Dropzone's
+ *  `preview` — it needs that provider to reach the file picker. */
+export const DropzonePreview = ({
+  children,
+  replaceLabel,
+  removeLabel,
+  onRemove,
+}: {
+  children: ReactNode;
+  replaceLabel: string;
+  removeLabel?: string;
+  onRemove?: () => void;
+}) => {
+  const open = useDropzoneOpen();
+
+  return (
+    <div className="group relative overflow-hidden rounded-xl">
+      {children}
+      <div className="absolute inset-0 flex items-center justify-center gap-2 bg-background/70 opacity-0 backdrop-blur-[1px] transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+        <button
+          type="button"
+          onClick={() => open?.()}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs font-medium text-foreground shadow-sm hover:border-primary/40"
+        >
+          <RefreshCw className="h-3.5 w-3.5" />
+          {replaceLabel}
+        </button>
+        {onRemove && removeLabel ? (
+          <button
+            type="button"
+            onClick={onRemove}
+            aria-label={removeLabel}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs font-medium text-foreground shadow-sm hover:border-primary/40 hover:text-primary"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            {removeLabel}
+          </button>
+        ) : null}
+      </div>
+    </div>
   );
 };
 

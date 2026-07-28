@@ -18,7 +18,7 @@ import { deleteStudio } from "@/lib/actions/studios";
 import { ImageUploader, type ImageUploaderHandle } from "./image-uploader";
 import { ActorsSection, type ActorRow } from "./actors-editor";
 import type { PersonSuggestion } from "@/lib/data/actors";
-import { TiersSection, type TierRow } from "./tiers-editor";
+import { TiersSection, type TierRow, type TierTemplate } from "./tiers-editor";
 import { ReferencesSection } from "./references-editor";
 import { MilestonesSection } from "./milestones-editor";
 import { MultiSelect } from "@/components/ui/multi-select";
@@ -153,6 +153,7 @@ export function ProjectForm({
   initialMilestones = [],
   submitLabel,
   studios = [],
+  tierTemplates = [],
   streamingSources = [],
   countryOptions: countries0 = [],
   knownPeople = [],
@@ -180,6 +181,10 @@ export function ProjectForm({
    *  countryOptions (a typed-in studio persists for future projects, staff can
    *  delete one from the pool). */
   studios?: string[];
+  /** Placements already offered on other projects, ready to be added in one
+   *  click (see lib/data/tier-templates.ts). Empty is fine — the menu then
+   *  degrades to the plain "add a blank row" button. */
+  tierTemplates?: TierTemplate[];
   /** Global Streaming Source dictionary (Ф2/#25) — powers the Streaming
    *  Source MultiSelect's option list; custom additions persist here for
    *  future projects (see addStreamingSources in actions.ts). */
@@ -904,9 +909,11 @@ export function ProjectForm({
                   scope={uploaderScope}
                   pickerLocale={locale}
                   browseLabel={t("btn.browse")}
-                  dropTitle={t("media.dropTitleOne")}
+                  dropTitle={t("media.dropTitlePoster")}
                   dropLabel={t("media.dropHereOne")}
                   errTooLargeLabel={t("media.errTooLargeShort")}
+                  replaceLabel={t("media.replace")}
+                  dropReplaceLabel={t("media.dropToReplace")}
                   initial={posterInitial}
                   label={t("projectForm.uploadPoster")}
                   removeLabel={t("ui.remove")}
@@ -951,6 +958,8 @@ export function ProjectForm({
                 dropTitle={t("media.dropTitleMany")}
                 dropLabel={t("media.dropHere")}
                 errTooLargeLabel={t("media.errTooLargeShort")}
+                addLabel={t("media.addImage")}
+                dropReplaceLabel={t("media.dropToReplace")}
                 initial={galleryInitial}
                 label={t("projectForm.uploadGalleryImages")}
                 removeLabel={t("ui.remove")}
@@ -1001,6 +1010,9 @@ export function ProjectForm({
                   dropTitle={t("media.dropTitleOne")}
                   dropLabel={t("media.dropHereOne")}
                   errTooLargeLabel={t("media.errTooLargeShort")}
+                  replaceLabel={t("media.replace")}
+                  removeLabel={t("ui.remove")}
+                  dropReplaceLabel={t("media.dropToReplace")}
                 />
               </Field>
             )}
@@ -1023,7 +1035,7 @@ export function ProjectForm({
           {/* ── Placement(s) (was "Sponsorship tiers") ── */}
           <section id="sec-tiers" className="scroll-mt-24 space-y-3 rounded-xl border border-border bg-card p-4">
             <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">{t("projectForm.section.sponsorshipTiers")}</h2>
-            <TiersSection value={tiers} onChange={setTiers} t={t} />
+            <TiersSection value={tiers} onChange={setTiers} t={t} templates={tierTemplates} />
           </section>
 
           {/* ── Reference Projects (was the "Comparable titles" field inside

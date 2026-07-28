@@ -9,6 +9,7 @@ import { getPersonDirectory } from "@/lib/data/actors";
 import { getStreamingSources } from "@/lib/data/streaming-sources";
 import { getCountryOptions } from "@/lib/data/countries";
 import { getStudioOptions } from "@/lib/data/studios";
+import { getTierTemplates } from "@/lib/data/tier-templates";
 import { makeUI } from "@/lib/i18n";
 import { ProjectForm } from "@/app/admin/(panel)/projects/project-form";
 import { createCreatorProject } from "../actions";
@@ -30,6 +31,7 @@ export default async function NewProjectPage() {
 
   // Studio options — the shared dictionary, same as the admin form (2026-07-27).
   const studios = await getStudioOptions();
+  const tierTemplates = await getTierTemplates();
 
   // Person directory (Ф3), for the Cast & Crew name picker — same helper as
   // the admin new/page.tsx.
@@ -69,6 +71,7 @@ export default async function NewProjectPage() {
           posterAction={generateCreatorPosterAction}
           submitLabel={t("account.form.submit")}
           studios={studios}
+          tierTemplates={tierTemplates}
           streamingSources={streamingSources}
         countryOptions={countryOptions}
           knownPeople={knownPeople}

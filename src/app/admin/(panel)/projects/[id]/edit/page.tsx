@@ -8,6 +8,7 @@ import { pickPersonName } from "@/lib/person-name";
 import { getStreamingSources } from "@/lib/data/streaming-sources";
 import { getCountryOptions } from "@/lib/data/countries";
 import { getStudioOptions } from "@/lib/data/studios";
+import { getTierTemplates } from "@/lib/data/tier-templates";
 import { updateProject } from "../../actions";
 import {
   formatDateInput,
@@ -46,6 +47,7 @@ export default async function EditProjectPage({
 
   // Studio options — the dictionary, not distinct project values (2026-07-27).
   const studios = await getStudioOptions();
+  const tierTemplates = await getTierTemplates();
 
   // Person directory (Ф3), for the Cast & Crew name picker.
   const knownPeople = await getPersonDirectory();
@@ -139,6 +141,7 @@ export default async function EditProjectPage({
         }))}
         submitLabel="Save"
         studios={studios}
+          tierTemplates={tierTemplates}
         streamingSources={streamingSources}
         countryOptions={countryOptions}
         knownPeople={knownPeople}

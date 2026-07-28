@@ -2,7 +2,7 @@
 
 import { forwardRef, useImperativeHandle, useState, useTransition } from "react";
 import Image from "next/image";
-import { ImageIcon, Loader2, Trash2 } from "lucide-react";
+import { ImageIcon, Loader2, Plus, Trash2 } from "lucide-react";
 import {
   DndContext,
   KeyboardSensor,
@@ -21,7 +21,12 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { MediaPicker, type MediaPickerScope } from "@/components/media-picker";
-import { Dropzone, DropzoneEmptyState } from "@/components/ui/dropzone";
+import {
+  Dropzone,
+  DropzoneEmptyState,
+  DropzonePreview,
+  useDropzoneOpen,
+} from "@/components/ui/dropzone";
 import { uploadImage } from "@/lib/actions/uploads";
 import { uploadMemberImage } from "@/lib/actions/member-uploads";
 import type { Locale } from "@/lib/i18n";
@@ -58,6 +63,9 @@ export const ImageUploader = forwardRef<ImageUploaderHandle, {
   dropTitle?: string; // headline inside the drop zone, localized by the caller
   dropLabel?: string; // second line inside the drop zone, localized by the caller
   errTooLargeLabel?: string; // shown when a dropped file exceeds the size cap
+  replaceLabel?: string; // overlay action on the filled single-image preview
+  dropReplaceLabel?: string; // shown while a file hovers over a filled field
+  addLabel?: string; // caption of the "+" tile that ends the gallery grid
 }>(function ImageUploader({
   name,
   dir,
@@ -72,6 +80,9 @@ export const ImageUploader = forwardRef<ImageUploaderHandle, {
   dropTitle = "Upload files",
   dropLabel = "Drag and drop or click to upload",
   errTooLargeLabel = "File is too large",
+  replaceLabel = "Replace",
+  dropReplaceLabel = "Drop to replace",
+  addLabel = "Add",
 }, ref) {
   const [pickerOpen, setPickerOpen] = useState(false);
   // Drag-and-drop upload straight onto the field. The picker dialog could
@@ -156,12 +167,34 @@ export const ImageUploader = forwardRef<ImageUploaderHandle, {
   // meaningless there — only the multi-image gallery instance gets drag.
   const sortable = multiple && paths.length > 1;
 
+  // Filled fields show their content INSTEAD of an empty zone. Keeping both on
+  // screen (a big "Upload a file" rectangle above the picture it already holds)
+  // read as two competing drop targets — the single complaint behind this
+  // rewrite. Empty stays a zone: for adding files, lead with the target.
+  const preview = paths.length
+    ? multiple
+      ? <GalleryGrid
+          paths={paths}
+          sortable={sortable}
+          sensors={sensors}
+          onDragEnd={handleDragEnd}
+          onRemove={removeAt}
+          removeLabel={removeLabel}
+          addLabel={addLabel}
+        />
+      : <DropzonePreview replaceLabel={replaceLabel} removeLabel={removeLabel} onRemove={() => removeAt(0)}>
+          <div className="relative aspect-video w-72 max-w-full overflow-hidden bg-muted">
+            <Image src={paths[0]} alt="" fill className="object-cover" sizes="288px" unoptimized />
+          </div>
+        </DropzonePreview>
+    : undefined;
+
   return (
     <div className="space-y-3">
       {name ? <input type="hidden" name={name} value={hiddenValue} /> : null}
-      {/* Click opens the OS picker, dragging files onto it uploads them. The
-          media LIBRARY is a separate button below: the zone is a <button>, so
-          nothing focusable may be nested inside it. */}
+      {/* Empty: click opens the OS picker, dragging files onto it uploads them.
+          The media LIBRARY is a separate button below — the empty zone is a
+          <button>, so nothing focusable may be nested inside it. */}
       <Dropzone
         accept={{ "image/*": [] }}
         multiple={multiple}
@@ -170,7 +203,9 @@ export const ImageUploader = forwardRef<ImageUploaderHandle, {
         disabled={uploading}
         onDrop={handleFiles}
         onError={(e) => setDropError(e.message)}
-        labels={{ title: dropTitle, hint: dropLabel }}
+        labels={{ title: dropTitle, hint: dropLabel, replaceHint: dropReplaceLabel }}
+        preview={preview}
+        className={multiple && paths.length ? "w-full" : undefined}
       >
         <DropzoneEmptyState />
       </Dropzone>
@@ -203,34 +238,82 @@ export const ImageUploader = forwardRef<ImageUploaderHandle, {
         locale={pickerLocale}
       />
 
-      {paths.length > 0 && (
-        sortable ? (
-          <DndContext
-            id="gallery-images"
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            modifiers={[restrictToParentElement]}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext items={paths} strategy={rectSortingStrategy}>
-              <div className="flex flex-wrap gap-3">
-                {paths.map((p, i) => (
-                  <SortableThumbnail key={p} id={p} src={p} onRemove={() => removeAt(i)} removeLabel={removeLabel} />
-                ))}
-              </div>
-            </SortableContext>
-          </DndContext>
-        ) : (
-          <div className="flex flex-wrap gap-3">
-            {paths.map((p, i) => (
-              <Thumbnail key={p} src={p} onRemove={() => removeAt(i)} removeLabel={removeLabel} />
-            ))}
-          </div>
-        )
-      )}
     </div>
   );
 });
+
+/** The gallery's filled state: every image as a tile, an "add" tile closing the
+ *  row, and the whole grid acting as the drop target (it IS the Dropzone's
+ *  preview). Reordering by drag is unchanged — that's pointer-based dnd-kit,
+ *  independent of the browser's file-drag events the zone listens for. */
+function GalleryGrid({
+  paths,
+  sortable,
+  sensors,
+  onDragEnd,
+  onRemove,
+  removeLabel,
+  addLabel,
+}: {
+  paths: string[];
+  sortable: boolean;
+  sensors: ReturnType<typeof useSensors>;
+  onDragEnd: (event: DragEndEvent) => void;
+  onRemove: (i: number) => void;
+  removeLabel: string;
+  addLabel: string;
+}) {
+  const tiles = paths.map((p, i) =>
+    sortable ? (
+      <SortableThumbnail key={p} id={p} src={p} onRemove={() => onRemove(i)} removeLabel={removeLabel} />
+    ) : (
+      <Thumbnail key={p} src={p} onRemove={() => onRemove(i)} removeLabel={removeLabel} />
+    ),
+  );
+
+  return (
+    <div className="w-full p-2">
+      {sortable ? (
+        <DndContext
+          id="gallery-images"
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          modifiers={[restrictToParentElement]}
+          onDragEnd={onDragEnd}
+        >
+          <SortableContext items={paths} strategy={rectSortingStrategy}>
+            <div className="flex flex-wrap gap-3">
+              {tiles}
+              <AddTile label={addLabel} />
+            </div>
+          </SortableContext>
+        </DndContext>
+      ) : (
+        <div className="flex flex-wrap gap-3">
+          {tiles}
+          <AddTile label={addLabel} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Same footprint as a thumbnail so the grid keeps its rhythm — the "one more"
+ *  slot is where the eye already is, instead of a separate zone above. */
+function AddTile({ label }: { label: string }) {
+  const open = useDropzoneOpen();
+
+  return (
+    <button
+      type="button"
+      onClick={() => open?.()}
+      className="grid aspect-video w-56 place-items-center gap-1 rounded-lg border border-dashed border-border bg-background text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:bg-muted/60 hover:text-foreground"
+    >
+      <Plus className="h-5 w-5" />
+      {label}
+    </button>
+  );
+}
 
 /** Plain (non-draggable) thumbnail — used for the single-poster instance and
  *  for a gallery with only one image (nothing to reorder yet). */

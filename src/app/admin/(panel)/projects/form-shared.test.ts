@@ -4,6 +4,10 @@ import {
   kindForRole,
   publishBlockers,
   parseReferencesInput,
+  mergeTierTemplates,
+  groupDigits,
+  withExclusive,
+  withTotalSlots,
   FORMAT_CATEGORY_VALUES,
   ROLE_VALUES,
   type PublishCheckInput,
@@ -197,5 +201,106 @@ describe("parseReferencesInput", () => {
 
   it("returns nothing for empty input", () => {
     expect(parseReferencesInput("")).toEqual([]);
+  });
+});
+
+describe("groupDigits", () => {
+  it("groups an AMD price into thousands with a non-breaking space", () => {
+    expect(groupDigits("1500000")).toBe("1 500 000");
+  });
+
+  it("leaves short numbers and an empty string alone", () => {
+    expect(groupDigits("750")).toBe("750");
+    expect(groupDigits("")).toBe("");
+  });
+});
+
+describe("withTotalSlots", () => {
+  const fresh = { isExclusive: false, availableSlots: null, totalSlots: null };
+
+  it("fills Available from Total on a fresh tier", () => {
+    expect(withTotalSlots(fresh, 5)).toMatchObject({ totalSlots: 5, availableSlots: 5 });
+  });
+
+  it("keeps Available following Total while the two match", () => {
+    const row = { isExclusive: false, availableSlots: 5, totalSlots: 5 };
+    expect(withTotalSlots(row, 8)).toMatchObject({ totalSlots: 8, availableSlots: 8 });
+  });
+
+  it("leaves a diverged Available alone (slots are already sold)", () => {
+    const row = { isExclusive: false, availableSlots: 2, totalSlots: 5 };
+    expect(withTotalSlots(row, 6)).toMatchObject({ totalSlots: 6, availableSlots: 2 });
+  });
+});
+
+describe("withExclusive", () => {
+  it("pins Total to one slot", () => {
+    const row = { isExclusive: false, availableSlots: 5, totalSlots: 5 };
+    expect(withExclusive(row, true)).toMatchObject({
+      isExclusive: true,
+      totalSlots: 1,
+      availableSlots: 1,
+    });
+  });
+
+  it("never puts a sold-out slot back on sale", () => {
+    const row = { isExclusive: false, availableSlots: 0, totalSlots: 3 };
+    expect(withExclusive(row, true).availableSlots).toBe(0);
+  });
+
+  it("only clears the flag when unchecked, leaving the numbers", () => {
+    const row = { isExclusive: true, availableSlots: 1, totalSlots: 1 };
+    expect(withExclusive(row, false)).toEqual({
+      isExclusive: false,
+      availableSlots: 1,
+      totalSlots: 1,
+    });
+  });
+});
+
+describe("mergeTierTemplates", () => {
+  const json = (...lines: string[]) => JSON.stringify(lines);
+
+  it("offers one template per name, most used first", () => {
+    const merged = mergeTierTemplates([
+      { name: "Official Sponsor", benefits: json("Logo in credits") },
+      { name: "Product placement", benefits: json("In-scene product") },
+      { name: "Official Sponsor", benefits: json("Logo in credits") },
+    ]);
+    expect(merged.map((t) => [t.name, t.uses])).toEqual([
+      ["Official Sponsor", 2],
+      ["Product placement", 1],
+    ]);
+  });
+
+  it("treats a different casing as the same placement", () => {
+    const merged = mergeTierTemplates([
+      { name: "Official Sponsor", benefits: json("Logo") },
+      { name: "  official sponsor ", benefits: json("Logo") },
+    ]);
+    expect(merged).toHaveLength(1);
+    expect(merged[0].uses).toBe(2);
+  });
+
+  it("keeps the fuller benefits list of the variants", () => {
+    const merged = mergeTierTemplates([
+      { name: "Title Sponsor", benefits: json("Logo") },
+      { name: "Title Sponsor", benefits: json("Logo", "Premiere invitations", "Credits") },
+    ]);
+    expect(merged[0].benefits).toBe("Logo\nPremiere invitations\nCredits");
+  });
+
+  it("skips blank names and survives unparsable benefits", () => {
+    const merged = mergeTierTemplates([
+      { name: "   ", benefits: json("x") },
+      { name: "Partner", benefits: "not json" },
+      { name: "Partner", benefits: null },
+    ]);
+    expect(merged).toEqual([{ name: "Partner", benefits: "", uses: 2 }]);
+  });
+
+  it("caps the menu at the requested length", () => {
+    const rows = Array.from({ length: 20 }, (_, i) => ({ name: `Tier ${i}`, benefits: json("x") }));
+    expect(mergeTierTemplates(rows, 5)).toHaveLength(5);
   });
 });

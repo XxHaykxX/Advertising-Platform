@@ -277,6 +277,80 @@ export function parseGenresInput(json: string | null, legacyGenre: string): stri
   return legacyGenre ? [legacyGenre] : [];
 }
 
+/** Collapse the tiers stored across all projects into one offer per distinct
+   name, most-used first — the "ready-made placements" menu. Lives here (not in
+   lib/data) so the grouping rules are testable without a database.
+
+   Names match case-insensitively after trimming, because the same placement
+   arrives as "Official sponsor" and "Official Sponsor". Of two variants the
+   longer benefits list wins: a template with more lines is easier to trim than
+   an empty one is to write. */
+export function mergeTierTemplates(
+  rows: { name: string; benefits: string | null }[],
+  limit = 12,
+): { name: string; benefits: string; uses: number }[] {
+  const byName = new Map<string, { name: string; benefits: string; uses: number }>();
+
+  for (const row of rows) {
+    const name = (row.name || "").trim();
+    if (!name) continue;
+    const key = name.toLowerCase();
+    const benefits = parseBenefitsInput(row.benefits);
+    const seen = byName.get(key);
+
+    if (!seen) {
+      byName.set(key, { name, benefits, uses: 1 });
+      continue;
+    }
+
+    seen.uses += 1;
+    if (benefits.length > seen.benefits.length) seen.benefits = benefits;
+  }
+
+  return [...byName.values()]
+    .sort((a, b) => b.uses - a.uses || a.name.localeCompare(b.name))
+    .slice(0, limit);
+}
+
+/** Group a run of digits into thousands with a non-breaking space: an AMD
+   price runs to seven figures, and "1500000" can't be checked by eye. Only
+   used for DISPLAY — the row keeps a plain number. */
+export function groupDigits(digits: string): string {
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+}
+
+/** The slot columns of a sponsorship tier. Kept structural so these helpers
+   stay usable from the client editor without importing its TierRow type (that
+   module is "use client"). */
+type SlotRow = {
+  isExclusive: boolean;
+  availableSlots: number | null;
+  totalSlots: number | null;
+};
+
+/** Typing the total also fills Available, which is what a fresh tier always
+   wants — nothing is sold yet. Once the two differ (a slot got taken), the
+   entered Available is left alone. */
+export function withTotalSlots<T extends SlotRow>(row: T, totalSlots: number | null): T {
+  const diverged = row.availableSlots !== null && row.availableSlots !== row.totalSlots;
+  return { ...row, totalSlots, availableSlots: diverged ? row.availableSlots : totalSlots };
+}
+
+/** "Exclusive" means exactly one buyer, so it sets Total to 1 rather than
+   leaving a checkbox that contradicts a Total of 5. Available is clamped, not
+   raised: if the single slot is already taken (0), checking the box must not
+   put it back on sale. Unchecking leaves the numbers as they are — there's no
+   previous total to restore to. */
+export function withExclusive<T extends SlotRow>(row: T, isExclusive: boolean): T {
+  if (!isExclusive) return { ...row, isExclusive };
+  return {
+    ...row,
+    isExclusive,
+    totalSlots: 1,
+    availableSlots: row.availableSlots === null ? 1 : Math.min(row.availableSlots, 1),
+  };
+}
+
 /** Actor.roles multi-role JSON string[] (or null) -> string[], falling back to
    the legacy single `role` column when `roles` was never set (pre-Ф3 rows).
    Same "JSON-first, legacy-fallback" shape as parseGenresInput above. */
