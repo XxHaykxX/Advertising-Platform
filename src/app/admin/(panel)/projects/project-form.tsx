@@ -19,6 +19,7 @@ import { ImageUploader, type ImageUploaderHandle } from "./image-uploader";
 import { ActorsSection, type ActorRow } from "./actors-editor";
 import type { PersonSuggestion } from "@/lib/data/actors";
 import { TiersSection, type TierRow, type TierTemplate } from "./tiers-editor";
+import { PlacementsSection, type PlacementRow } from "./placements-editor";
 import { ReferencesSection } from "./references-editor";
 import { MilestonesSection } from "./milestones-editor";
 import { MultiSelect } from "@/components/ui/multi-select";
@@ -52,6 +53,7 @@ const CONTROLLED_NAMES = new Set([
   "kind",
   "actorsRows",
   "tiersRows",
+  "placementsRows",
   "references",
   "milestonesRows",
   "poster",
@@ -150,6 +152,7 @@ export function ProjectForm({
   initial,
   initialActors = [],
   initialTiers = [],
+  initialPlacements = [],
   initialMilestones = [],
   submitLabel,
   studios = [],
@@ -171,6 +174,9 @@ export function ProjectForm({
   initialActors?: ActorRow[];
   /** Sponsorship tier rows (#20²) — same story as initialActors. */
   initialTiers?: TierRow[];
+  /** Product placement rows (owner correction 2026-07-28) — same story as
+   *  initialTiers, a separate offer from the sponsorship tiers above. */
+  initialPlacements?: PlacementRow[];
   /** Production-timeline milestone rows (Ф4/#27) — admin-only section; same
    *  hidden-JSON-mirror pattern. Empty on create. */
   initialMilestones?: MilestoneRow[];
@@ -433,6 +439,9 @@ export function ProjectForm({
   // ── Cast/crew + sponsorship tiers, inline (#20²) ──
   const [actors, setActors] = useState<ActorRow[]>(() => initialActors);
   const [tiers, setTiers] = useState<TierRow[]>(() => initialTiers);
+  // ── Product placements (owner correction 2026-07-28): same "ride along as a
+  // hidden JSON input" pattern as tiers above, but a separate offer. ──
+  const [placements, setPlacements] = useState<PlacementRow[]>(() => initialPlacements);
   // ── Reference Projects (Ф2): repeatable {name,url} rows, same "ride along
   // as a hidden JSON input" pattern as actors/tiers above. ──
   const [references, setReferences] = useState<ReferenceRow[]>(() => parseReferencesInput(data.references));
@@ -618,6 +627,7 @@ export function ProjectForm({
     setLanguages(parseArr(obj.language));
     setActors(parseArr(obj.actorsRows) as unknown as ActorRow[]);
     setTiers(parseArr(obj.tiersRows) as unknown as TierRow[]);
+    setPlacements(parseArr(obj.placementsRows) as unknown as PlacementRow[]);
     setReferences(parseArr(obj.references) as unknown as ReferenceRow[]);
     setMilestones(parseArr(obj.milestonesRows) as unknown as MilestoneRow[]);
     // Image uploaders remount with the restored paths.
@@ -706,6 +716,7 @@ export function ProjectForm({
           the main form and parsed by create/updateProject (#20²). */}
       <input type="hidden" name="actorsRows" value={JSON.stringify(actors)} />
       <input type="hidden" name="tiersRows" value={JSON.stringify(tiers)} />
+      <input type="hidden" name="placementsRows" value={JSON.stringify(placements)} />
       {/* Reference Projects (Ф2): a repeatable {name,url} list, same "hidden
           JSON mirror" pattern as actorsRows/tiersRows above. */}
       <input type="hidden" name="references" value={JSON.stringify(references)} />
@@ -1032,7 +1043,15 @@ export function ProjectForm({
             />
           </section>
 
-          {/* ── Placement(s) (was "Sponsorship tiers") ── */}
+          {/* ── Product placements (owner correction 2026-07-28) — the brand
+              inside the story, sitting above Sponsors (the logo-on-materials
+              deal, which kept the old "Placement(s)" data/section id below). ── */}
+          <section id="sec-placements" className="scroll-mt-24 space-y-3 rounded-xl border border-border bg-card p-4">
+            <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">{t("projectForm.section.placements")}</h2>
+            <PlacementsSection value={placements} onChange={setPlacements} t={t} scope={uploaderScope} locale={locale} />
+          </section>
+
+          {/* ── Sponsors (was "Placement(s)"/"Sponsorship tiers") ── */}
           <section id="sec-tiers" className="scroll-mt-24 space-y-3 rounded-xl border border-border bg-card p-4">
             <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">{t("projectForm.section.sponsorshipTiers")}</h2>
             <TiersSection value={tiers} onChange={setTiers} t={t} templates={tierTemplates} />

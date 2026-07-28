@@ -137,7 +137,10 @@ const getProjectsCached = unstable_cache(
     const rows = await prisma.project.findMany({
     where: activeOnly ? { isActive: true, moderationStatus: "APPROVED" } : undefined,
     orderBy: { sortOrder: "asc" },
-    include: { tiers: { select: { availableSlots: true, totalSlots: true } } },
+    include: {
+      tiers: { select: { availableSlots: true, totalSlots: true } },
+      _count: { select: { placements: true } },
+    },
   });
   const rates = await getRates();
   return rows.map((p) => ({
@@ -161,6 +164,7 @@ const getProjectsCached = unstable_cache(
     platforms: p.platforms ?? "[]",
     slotsAvailable: p.tiers.reduce((sum, tier) => sum + (tier.availableSlots ?? 0), 0),
     slotsTotal: p.tiers.reduce((sum, tier) => sum + (tier.totalSlots ?? 0), 0),
+    placementsCount: p._count.placements,
   }));
   },
   ["projects-list"],
@@ -200,6 +204,7 @@ const getProjectCached = unstable_cache(
     include: {
       actors: { orderBy: { sortOrder: "asc" } },
       tiers: { orderBy: { sortOrder: "asc" } },
+      placements: { orderBy: { sortOrder: "asc" } },
       milestones: { orderBy: { sortOrder: "asc" } },
     },
   });
@@ -255,6 +260,17 @@ const getProjectCached = unstable_cache(
     })),
     slotsAvailable: p.tiers.reduce((sum, tier) => sum + (tier.availableSlots ?? 0), 0),
     slotsTotal: p.tiers.reduce((sum, tier) => sum + (tier.totalSlots ?? 0), 0),
+    placements: p.placements.map((pl) => ({
+      id: pl.id,
+      title: pl.title,
+      description: parseJsonList(pl.description),
+      image: pl.image ?? null,
+      priceAmd: pl.priceAmd,
+      priceDisplay: pl.priceAmd != null ? formatMoney(pl.priceAmd, currency, rates, locale) : null,
+      availableSlots: pl.availableSlots,
+      totalSlots: pl.totalSlots,
+    })),
+    placementsCount: p.placements.length,
     milestones: p.milestones.map((m) => ({
       id: m.id,
       label: m.label,

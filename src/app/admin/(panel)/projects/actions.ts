@@ -290,6 +290,15 @@ type TierInput = {
   totalSlots?: number | null;
 };
 type MilestoneInput = { label?: string; date?: string; note?: string; active?: boolean };
+type PlacementInput = {
+  dbId?: number; // existing Placement.id, absent for a newly added row
+  title?: string;
+  description?: string;
+  image?: string;
+  priceAmd?: number | null;
+  availableSlots?: number | null;
+  totalSlots?: number | null;
+};
 
 /** "line 1\nline 2" -> JSON string[] (trimmed, blanks dropped) for the
    benefits @db.Text column. */
@@ -454,6 +463,49 @@ async function saveTierRows(
   }
 }
 
+/** Rows for prisma.placement (projectId added by the caller). `dbId` marks a
+   row that already exists — see savePlacementRows for why that matters. Price
+   is optional (null -> "on request"), unlike a tier's priceAmd. */
+function parsePlacementRows(fd: FormData) {
+  return jsonArray<PlacementInput>(fd, "placementsRows")
+    .filter((r) => (r.title || "").trim())
+    .map((r, i) => ({
+      dbId: typeof r.dbId === "number" ? r.dbId : null,
+      title: (r.title || "").trim().slice(0, VARCHAR_MAX),
+      description: benefitsToJson(r.description || ""),
+      image: (r.image || "").trim() || null,
+      priceAmd: r.priceAmd == null ? null : Math.max(0, Number(r.priceAmd) || 0),
+      availableSlots: r.availableSlots == null ? null : Math.max(0, Number(r.availableSlots) || 0),
+      totalSlots: r.totalSlots == null ? null : Math.max(0, Number(r.totalSlots) || 0),
+      sortOrder: i,
+    }));
+}
+
+/** Persist the placement rows of one project inside an open transaction. Same
+   update-in-place-by-id shape as saveTierRows — not delete-all-then-insert —
+   so a future reference to a Placement row (the way Interest.tierId points at
+   a SponsorshipTier today) can't be silently detached by a routine save. */
+async function savePlacementRows(
+  tx: Prisma.TransactionClient,
+  projectId: number,
+  rows: ReturnType<typeof parsePlacementRows>,
+) {
+  const keptIds = rows.map((r) => r.dbId).filter((id): id is number => id != null);
+  await tx.placement.deleteMany({
+    where: { projectId, ...(keptIds.length ? { id: { notIn: keptIds } } : {}) },
+  });
+  for (const row of rows) {
+    const { dbId, ...data } = row;
+    if (dbId != null) {
+      // Scoped by projectId as well as id: a crafted payload must not be able
+      // to overwrite another project's placement.
+      await tx.placement.updateMany({ where: { id: dbId, projectId }, data });
+    } else {
+      await tx.placement.create({ data: { ...data, projectId } });
+    }
+  }
+}
+
 /** Rows for prisma.productionMilestone.createMany (projectId added by the
    caller). Blank-label rows are dropped; array order → sortOrder. `active` is
    single-select in the UI, but defend here too: keep only the FIRST active row
@@ -545,6 +597,7 @@ export async function createProject(
   const maxAttempts = autoCode ? 5 : 1;
   const actorRows = parseActorRows(fd);
   const tierRows = parseTierRows(fd);
+  const placementRows = parsePlacementRows(fd);
   const milestoneRows = parseMilestoneRows(fd);
 
   const blocked = await publishGate(data, tierRows);
@@ -601,6 +654,12 @@ export async function createProject(
           // dbId is a form-only marker (see saveTierRows) — never a column.
           await tx.sponsorshipTier.createMany({
             data: tierRows.map(({ dbId: _dbId, ...r }) => ({ ...r, projectId: created.id })),
+          });
+        }
+        if (placementRows.length) {
+          // dbId is a form-only marker (see savePlacementRows) — never a column.
+          await tx.placement.createMany({
+            data: placementRows.map(({ dbId: _dbId, ...r }) => ({ ...r, projectId: created.id })),
           });
         }
         if (milestoneRows.length) {
@@ -662,6 +721,7 @@ export async function updateProject(
 
   const actorRows = parseActorRows(fd);
   const tierRows = parseTierRows(fd);
+  const placementRows = parsePlacementRows(fd);
   const milestoneRows = parseMilestoneRows(fd);
 
   const blocked = await publishGate(data, tierRows, existing.isActive);
@@ -706,6 +766,7 @@ export async function updateProject(
         await tx.actor.createMany({ data: resolvedActors.map((r) => ({ ...r, projectId: id })) });
       }
       await saveTierRows(tx, id, tierRows);
+      await savePlacementRows(tx, id, placementRows);
       await tx.productionMilestone.deleteMany({ where: { projectId: id } });
       if (milestoneRows.length) {
         await tx.productionMilestone.createMany({ data: milestoneRows.map((r) => ({ ...r, projectId: id })) });
@@ -733,15 +794,17 @@ export async function deleteProject(id: number) {
       poster: true,
       gallery: true,
       actors: { select: { photo: true } },
+      placements: { select: { image: true } },
     },
   });
   if (!existing) return;
   if (user.role !== "SUPERADMIN" && existing.ownerId !== user.id) return;
 
   // Collect the project's own image paths BEFORE deleting, then delete the row
-  // (cascades to actors/tiers/interests/favorites via the schema), then remove
-  // the files. deleteUpload skips any file still referenced elsewhere (another
-  // project's gallery, a portfolio, an avatar), so shared images survive.
+  // (cascades to actors/tiers/placements/interests/favorites via the schema),
+  // then remove the files. deleteUpload skips any file still referenced
+  // elsewhere (another project's gallery, a portfolio, an avatar), so shared
+  // images survive.
   const imagePaths = collectProjectImagePaths(existing);
 
   await prisma.project.delete({ where: { id } });
@@ -763,6 +826,7 @@ function collectProjectImagePaths(p: {
   poster: string | null;
   gallery: string | null;
   actors: { photo: string | null }[];
+  placements: { image: string | null }[];
 }): string[] {
   const out: string[] = [];
   if (p.poster) out.push(p.poster);
@@ -775,6 +839,7 @@ function collectProjectImagePaths(p: {
     }
   }
   for (const a of p.actors) if (a.photo) out.push(a.photo);
+  for (const pl of p.placements) if (pl.image) out.push(pl.image);
   return [...new Set(out)].filter((x) => x.startsWith("/uploads/"));
 }
 
@@ -827,6 +892,7 @@ export async function duplicateProject(
     include: {
       actors: { orderBy: { sortOrder: "asc" } },
       tiers: { orderBy: { sortOrder: "asc" } },
+      placements: { orderBy: { sortOrder: "asc" } },
       milestones: { orderBy: { sortOrder: "asc" } },
     },
   });
@@ -842,6 +908,7 @@ export async function duplicateProject(
     createdAt: _createdAt,
     actors,
     tiers,
+    placements,
     milestones,
     ...scalars
   } = src;
@@ -889,6 +956,20 @@ export async function duplicateProject(
               isExclusive: tier.isExclusive,
               availableSlots: tier.availableSlots,
               totalSlots: tier.totalSlots,
+              sortOrder: i,
+            })),
+          });
+        }
+        if (placements.length) {
+          await tx.placement.createMany({
+            data: placements.map((pl, i) => ({
+              projectId: proj.id,
+              title: pl.title,
+              description: pl.description,
+              image: pl.image,
+              priceAmd: pl.priceAmd,
+              availableSlots: pl.availableSlots,
+              totalSlots: pl.totalSlots,
               sortOrder: i,
             })),
           });

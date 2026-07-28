@@ -198,6 +198,15 @@ type TierInput = {
   availableSlots?: number | null;
   totalSlots?: number | null;
 };
+type PlacementInput = {
+  dbId?: number; // existing Placement.id, absent for a newly added row
+  title?: string;
+  description?: string;
+  image?: string;
+  priceAmd?: number | null;
+  availableSlots?: number | null;
+  totalSlots?: number | null;
+};
 
 /** "line 1\nline 2" -> JSON string[] (trimmed, blanks dropped) for the
    benefits @db.Text column. */
@@ -371,6 +380,48 @@ async function saveTierRows(
   }
 }
 
+/** Rows for prisma.placement (projectId added by the caller). Price is
+   optional (null -> "on request"), unlike a tier's priceAmd. Deliberately
+   duplicated from admin/(panel)/projects/actions.ts, same trust-boundary
+   reason as parseTierRows/saveTierRows above. */
+function parsePlacementRows(fd: FormData) {
+  return jsonArray<PlacementInput>(fd, "placementsRows")
+    .filter((r) => (r.title || "").trim())
+    .map((r, i) => ({
+      dbId: typeof r.dbId === "number" ? r.dbId : null,
+      title: (r.title || "").trim().slice(0, VARCHAR_MAX),
+      description: benefitsToJson(r.description || ""),
+      image: (r.image || "").trim() || null,
+      priceAmd: r.priceAmd == null ? null : Math.max(0, Number(r.priceAmd) || 0),
+      availableSlots: r.availableSlots == null ? null : Math.max(0, Number(r.availableSlots) || 0),
+      totalSlots: r.totalSlots == null ? null : Math.max(0, Number(r.totalSlots) || 0),
+      sortOrder: i,
+    }));
+}
+
+/** Persist a project's placement rows inside an open transaction. Same
+   update-in-place-by-id shape as saveTierRows — see that function for why. */
+async function savePlacementRows(
+  tx: Prisma.TransactionClient,
+  projectId: number,
+  rows: ReturnType<typeof parsePlacementRows>,
+) {
+  const keptIds = rows.map((r) => r.dbId).filter((id): id is number => id != null);
+  await tx.placement.deleteMany({
+    where: { projectId, ...(keptIds.length ? { id: { notIn: keptIds } } : {}) },
+  });
+  for (const row of rows) {
+    const { dbId, ...data } = row;
+    if (dbId != null) {
+      // Scoped by projectId too — a crafted payload must not reach another
+      // project's placement.
+      await tx.placement.updateMany({ where: { id: dbId, projectId }, data });
+    } else {
+      await tx.placement.create({ data: { ...data, projectId } });
+    }
+  }
+}
+
 // ── Auto Code generation (#PP-YYYY-NNNN) ───────────────────────────────────
 // Deliberately duplicated from admin/(panel)/projects/actions.ts rather than
 // imported — that module is a different zone/trust boundary for this task.
@@ -436,6 +487,7 @@ export async function createCreatorProject(
   const maxAttempts = autoCode ? 5 : 1;
   const actorRows = parseActorRows(fd);
   const tierRows = parseTierRows(fd);
+  const placementRows = parsePlacementRows(fd);
 
   const blocked = submitGate(data, tierRows, t);
   if (blocked) return { error: blocked, values: data };
@@ -487,6 +539,12 @@ export async function createCreatorProject(
           // dbId is a form-only marker (see saveTierRows) — never a column.
           await tx.sponsorshipTier.createMany({
             data: tierRows.map(({ dbId: _dbId, ...r }) => ({ ...r, projectId: project.id })),
+          });
+        }
+        if (placementRows.length) {
+          // dbId is a form-only marker (see savePlacementRows) — never a column.
+          await tx.placement.createMany({
+            data: placementRows.map(({ dbId: _dbId, ...r }) => ({ ...r, projectId: project.id })),
           });
         }
         return project;
@@ -573,6 +631,7 @@ export async function updateCreatorProject(
 
   const actorRows = parseActorRows(fd);
   const tierRows = parseTierRows(fd);
+  const placementRows = parsePlacementRows(fd);
 
   const blocked = submitGate(data, tierRows, t);
   if (blocked) return { error: blocked, values: data };
@@ -622,6 +681,7 @@ export async function updateCreatorProject(
         await tx.actor.createMany({ data: resolvedActors.map((r) => ({ ...r, projectId: id })) });
       }
       await saveTierRows(tx, id, tierRows);
+      await savePlacementRows(tx, id, placementRows);
     }, { timeout: 15000 });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {

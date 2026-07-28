@@ -410,7 +410,11 @@ export const UI: Record<string, Dict> = {
   "card.projectedViews": { ru: "прогноз. просмотров", en: "projected views", hy: "կանխատեսվող դիտում" },
   "card.release": { ru: "Выход", en: "Release", hy: "Թողարկում" },
   "card.applicationsUntil": { ru: "Заявки до", en: "Applications until", hy: "Հայտեր՝ մինչև" },
-  "card.slotsAvailable": { ru: "мест доступно", en: "placements available", hy: "հասանելի տեղ" },
+  "card.slotsAvailable": { ru: "мест доступно", en: "slots available", hy: "հասանելի տեղ" },
+  // Owner request 2026-07-28: say on the card how many placement opportunities
+  // a project carries, the way the competing marketplaces do.
+  "card.placementsOne": { ru: "вариант размещения", en: "placement", hy: "փլեյսմենթ" },
+  "card.placementsMany": { ru: "варианта размещения", en: "placements", hy: "փլեյսմենթ" },
 
   // ── forms (shared) ──────────────────────────
   "form.name": { ru: "Имя", en: "Name", hy: "Անուն" },
@@ -822,6 +826,16 @@ export const UI: Record<string, Dict> = {
   "cast.castHeading": { ru: "Актёры", en: "Cast", hy: "Դերասաններ" },
   "keyFacts.cinemas": { ru: "Кинотеатры", en: "Cinemas", hy: "Կինոթատրոններ" },
   "keyFacts.comparableTo": { ru: "Сравнимо с", en: "Comparable to", hy: "Համեմատելի է" },
+  // Product placement, shown ABOVE the sponsorship packages on the report:
+  // the brand inside the story, with a still of the scene. A placement whose
+  // price the creator left empty says "on request" instead of a number.
+  "report.placementsTitle": { ru: "Продакт-плейсмент", en: "Product placement", hy: "Փրոդակթ փլեյսմենթ" },
+  "report.placementsSubtitle": {
+    ru: "Где бренд появляется в самой истории",
+    en: "Where the brand appears inside the story itself",
+    hy: "Որտեղ է բրենդը հայտնվում հենց պատմության մեջ",
+  },
+  "report.priceOnRequest": { ru: "Цена по запросу", en: "Price on request", hy: "Գինը՝ հարցումով" },
   "investment.sponsorsTitle": { ru: "Пакеты спонсорства", en: "Sponsorship Packages", hy: "Հովանավորության փաթեթներ" },
   "investment.sponsorsSubtitle": {
     ru: "Выберите уровень спонсорства проекта",
@@ -1357,13 +1371,13 @@ export const UI: Record<string, Dict> = {
     hy: "Սերիաների քանակը և սերիայի տևողությունը",
   },
   "publish.missing.tiers": {
-    ru: "Хотя бы один пакет размещения",
-    en: "At least one placement package",
-    hy: "Առնվազն մեկ տեղադրման փաթեթ",
+    ru: "Хотя бы один спонсорский пакет",
+    en: "At least one sponsorship package",
+    hy: "Առնվազն մեկ հովանավորության փաթեթ",
   },
   "publish.missing.tierBenefits": {
-    ru: "Описание (что входит) у каждого пакета размещения",
-    en: "A description of what's included for every placement package",
+    ru: "Описание (что входит) у каждого спонсорского пакета",
+    en: "A description of what's included for every sponsorship package",
     hy: "Յուրաքանչյուր փաթեթի նկարագրությունը (ինչ է ներառված)",
   },
   "account.form.errTitleRequired": {
@@ -1463,8 +1477,12 @@ export const UI: Record<string, Dict> = {
   // "Reference Projects" section).
   "projectForm.section.pressKit": { ru: "Дизайн", en: "Design", hy: "Դիզայն" },
   "projectForm.section.castCrew": { ru: "Актёры и съёмочная группа", en: "Cast & crew", hy: "Դերասաններ և թիմ" },
-  // Renamed from "Sponsorship tiers" — same editor, new label (phase 1).
-  "projectForm.section.sponsorshipTiers": { ru: "Размещение(я)", en: "Placement(s)", hy: "Տեղադրում(ներ)" },
+  // Two different things, and the form used to call the sponsorship one
+  // "Placement(s)" (owner correction 2026-07-28). Sponsorship sells the logo:
+  // promo materials, credits, premiere invitations. A placement puts the brand
+  // inside the story itself, and lives in its own section above sponsors.
+  "projectForm.section.sponsorshipTiers": { ru: "Спонсоры", en: "Sponsors", hy: "Հովանավորներ" },
+  "projectForm.section.placements": { ru: "Продакт-плейсмент", en: "Placements", hy: "Փլեյսմենթներ" },
   "projectForm.section.visibility": { ru: "Видимость", en: "Visibility", hy: "Տեսանելիություն" },
   // New sections (admin redesign phase 1): Production Info holds
   // status/timeline/where-it-plays fields moved out of the old Status&release
@@ -1648,11 +1666,11 @@ export const UI: Record<string, Dict> = {
   "projectForm.cast.photo": { ru: "Фото", en: "Photo", hy: "Լուսանկար" },
   "projectForm.cast.replacePhoto": { ru: "Заменить фото", en: "Replace photo", hy: "Փոխարինել լուսանկարը" },
   "projectForm.cast.uploadPhoto": { ru: "Загрузить фото", en: "Upload photo", hy: "Վերբեռնել լուսանկարը" },
-  "projectForm.tiers.tier": { ru: "уровень", en: "tier", hy: "մակարդակ" },
-  "projectForm.tiers.tiers": { ru: "уровня", en: "tiers", hy: "մակարդակ" },
-  "projectForm.tiers.addTier": { ru: "Добавить плейсмент", en: "Add Placement", hy: "Ավելացնել փլեյսմենթ" },
-  "projectForm.tiers.empty": { ru: "Пока нет уровней спонсорства.", en: "No sponsorship tiers.", hy: "Դեռ հովանավորության մակարդակներ չկան։" },
-  "projectForm.tiers.name": { ru: "Название уровня", en: "Tier name", hy: "Մակարդակի անվանում" },
+  "projectForm.tiers.tier": { ru: "пакет", en: "package", hy: "փաթեթ" },
+  "projectForm.tiers.tiers": { ru: "пакета", en: "packages", hy: "փաթեթ" },
+  "projectForm.tiers.addTier": { ru: "Добавить пакет", en: "Add package", hy: "Ավելացնել փաթեթ" },
+  "projectForm.tiers.empty": { ru: "Пока нет спонсорских пакетов.", en: "No sponsorship packages yet.", hy: "Դեռ հովանավորության փաթեթներ չկան։" },
+  "projectForm.tiers.name": { ru: "Название пакета", en: "Package name", hy: "Փաթեթի անվանում" },
   "projectForm.tiers.namePlaceholder": { ru: "Официальный спонсор", en: "Official Sponsor", hy: "Պաշտոնական հովանավոր" },
   "projectForm.tiers.price": { ru: "Цена (AMD)", en: "Price (AMD)", hy: "Գին (AMD)" },
   "projectForm.tiers.slots": { ru: "Доступно", en: "Available", hy: "Հասանելի" },
@@ -1665,12 +1683,48 @@ export const UI: Record<string, Dict> = {
   },
   "projectForm.tiers.duplicate": { ru: "Дублировать", en: "Duplicate", hy: "Կրկնօրինակել" },
   "projectForm.tiers.templates": {
-    ru: "Готовые плейсменты",
-    en: "Ready-made placements",
-    hy: "Պատրաստի փլեյսմենթներ",
+    ru: "Готовые пакеты",
+    en: "Ready-made packages",
+    hy: "Պատրաստի փաթեթներ",
   },
   "projectForm.tiers.copySuffix": { ru: "копия", en: "copy", hy: "կրկնօրինակ" },
   "projectForm.tiers.benefits": { ru: "Преимущества (по одному в строке)", en: "Benefits (one per line)", hy: "Առավելություններ (մեկը՝ մեկ տողում)" },
+  // ── product placement (the brand inside the story) ──
+  "projectForm.placements.one": { ru: "плейсмент", en: "placement", hy: "փլեյսմենթ" },
+  "projectForm.placements.many": { ru: "плейсмента", en: "placements", hy: "փլեյսմենթ" },
+  "projectForm.placements.add": { ru: "Добавить плейсмент", en: "Add placement", hy: "Ավելացնել փլեյսմենթ" },
+  "projectForm.placements.empty": {
+    ru: "Пока нет возможностей для плейсмента.",
+    en: "No placement opportunities yet.",
+    hy: "Դեռ փլեյսմենթի հնարավորություններ չկան։",
+  },
+  "projectForm.placements.title": { ru: "Название", en: "Title", hy: "Անվանում" },
+  "projectForm.placements.titlePlaceholder": {
+    ru: "Интеграция в сюжет",
+    en: "Integration into the story",
+    hy: "Ինտեգրում սյուժեի մեջ",
+  },
+  "projectForm.placements.description": {
+    ru: "Что получает бренд (по одному в строке)",
+    en: "What the brand gets (one per line)",
+    hy: "Ինչ է ստանում բրենդը (մեկը՝ մեկ տողում)",
+  },
+  "projectForm.placements.descriptionPlaceholder": {
+    ru: "Бренд в кадре не менее трёх раз\nУпоминание в диалоге\nКрупный план продукта",
+    en: "Brand on screen at least three times\nMentioned in dialogue\nClose-up of the product",
+    hy: "Բրենդը կադրում առնվազն երեք անգամ\nՀիշատակում երկխոսության մեջ\nԱպրանքի խոշոր պլան",
+  },
+  "projectForm.placements.image": { ru: "Кадр", en: "Still", hy: "Կադր" },
+  // Empty price is not zero — it means the creator hasn't priced this
+  // integration, and the storefront says "on request" instead of a number.
+  "projectForm.placements.price": { ru: "Цена (AMD)", en: "Price (AMD)", hy: "Գին (AMD)" },
+  "projectForm.placements.priceOnRequest": { ru: "По запросу", en: "On request", hy: "Հարցումով" },
+  "projectForm.placements.slots": { ru: "Доступно", en: "Available", hy: "Հասանելի" },
+  "projectForm.placements.totalSlots": { ru: "Всего", en: "Total", hy: "Ընդամենը" },
+  "projectForm.placements.duplicate": { ru: "Дублировать", en: "Duplicate", hy: "Կրկնօրինակել" },
+  "projectForm.placements.copySuffix": { ru: "копия", en: "copy", hy: "կրկնօրինակ" },
+  "projectForm.placements.remove": { ru: "Удалить", en: "Remove", hy: "Հեռացնել" },
+
   "projectForm.tiers.benefitsPlaceholder": {
     ru: "Логотип на выбранных промо-материалах\nПродвижение в соцсетях\nБлагодарность в титрах\nПриглашения на премьеру",
     en: "Logo on selected promo materials\nSocial promo presence\nSpecial thanks in the credits\nPremiere invitations",
@@ -1818,7 +1872,7 @@ export const UI: Record<string, Dict> = {
     en: "Unsupported type — use JPG, PNG, WebP, GIF or AVIF.",
     hy: "Չաջակցվող տեսակ — օգտագործեք JPG, PNG, WebP, GIF կամ AVIF։",
   },
-  "apply.tierLabel": { ru: "Пакет размещения", en: "Placement package", hy: "Տեղադրման փաթեթ" },
+  "apply.tierLabel": { ru: "Спонсорский пакет", en: "Sponsorship package", hy: "Հովանավորության փաթեթ" },
   "apply.tierNone": { ru: "Не выбран — обсудим", en: "Not selected — let's discuss", hy: "Ընտրված չէ — կքննարկենք" },
   "apply.tierSoldOut": { ru: "мест нет", en: "no slots left", hy: "տեղեր չկան" },
   "apply.contactPlaceholder": { ru: "Email или телефон", en: "Email or phone", hy: "Էլ. փոստ կամ հեռախոս" },

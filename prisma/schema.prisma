@@ -211,6 +211,7 @@ model Project {
   owner         User                   @relation(fields: [ownerId], references: [id])
   actors        Actor[]
   tiers         SponsorshipTier[]
+  placements    Placement[]
   milestones    ProductionMilestone[]
   interests     Interest[]
   favorites     Favorite[]
@@ -338,6 +339,31 @@ model SponsorshipTier {
 
   project   Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
   interests Interest[] // applications aimed at this package (audit 2.3)
+
+  @@index([projectId])
+}
+
+/// A product-placement opportunity inside a project — the brand appears in the
+/// story itself (owner decision 2026-07-28). Distinct from SponsorshipTier,
+/// which sells sponsorship (logo on promo materials, credits, premiere
+/// invitations) and is labelled "Sponsors" in the UI.
+///
+/// Same shape as a tier plus a still, with ONE difference: `priceAmd` is
+/// optional. A creator who hasn't priced an integration leaves it empty and the
+/// storefront shows "on request" — the brand asks and the terms are negotiated,
+/// rather than a made-up number being published.
+model Placement {
+  id          Int     @id @default(autoincrement())
+  projectId   Int
+  title       String // "Integration into the story", "Hero's car"
+  description String  @db.Text // what the brand gets, one item per line (JSON string[], same as tier benefits)
+  image       String? // still showing the scene/slot ("/uploads/…")
+  priceAmd    Int? // null -> "on request"; the creator prices it only if they want to
+  totalSlots     Int? // how many brands this opportunity can take
+  availableSlots Int? // still open; null -> unspecified, same contract as SponsorshipTier
+  sortOrder   Int     @default(0)
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
 }

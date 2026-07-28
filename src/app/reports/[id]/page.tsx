@@ -13,7 +13,8 @@ import { Footer } from "@/components/footer";
 import { ReportHero } from "@/components/report/report-hero";
 import { KeyFacts } from "@/components/report/key-facts";
 import { Cast } from "@/components/report/cast";
-import { Placements } from "@/components/report/placements";
+import { ProductPlacements } from "@/components/report/product-placements";
+import { Sponsors } from "@/components/report/sponsors";
 import { ProductionTimeline } from "@/components/report/production-timeline";
 import { ReportInterestProvider } from "@/components/report/report-interest-context";
 import { ViewPing } from "@/components/report/view-ping";
@@ -101,7 +102,10 @@ export default async function ReportPage({
       </div>
       <ProductionTimeline project={project} locale={locale} />
       <Cast project={project} locale={locale} />
-      <Placements project={project} locale={locale} />
+      {/* Product placement first — that's what a brand comes here for;
+          sponsorship (logo on promo, credits) is the second offer. */}
+      <ProductPlacements project={project} locale={locale} />
+      <Sponsors project={project} locale={locale} />
       <Footer locale={locale} currency={currency} />
     </ReportInterestProvider>
   );

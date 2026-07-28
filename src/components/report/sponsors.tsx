@@ -3,10 +3,10 @@ import { Reveal } from "@/components/ui/reveal";
 import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
 import type { ProjectDetailDTO } from "@/lib/types";
 
-// Sponsorship tiers (#20²) — priced packages a brand can buy into. Each tier
+// Sponsorship packages — priced tiers a brand can buy into. Each package
 // shows its price, its benefits list, and — when set on the tier — how many
 // placements are still open ("X / Y") plus an Exclusive badge (T23).
-export function Placements({
+export function Sponsors({
   project,
   locale = DEFAULT_LOCALE,
 }: {
@@ -17,7 +17,7 @@ export function Placements({
   const t = makeUI(locale);
 
   return (
-    <section id="placements" className="py-10">
+    <section id="sponsors" className="py-10">
       <div className="mx-auto w-full max-w-[1200px] px-6 max-sm:px-4">
         <Reveal>
           <h2 className="text-2xl font-bold text-foreground">{t("investment.sponsorsTitle")}</h2>

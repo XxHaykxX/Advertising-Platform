@@ -38,8 +38,13 @@ export function MediaField({
   removeLabel = "Remove",
   dropReplaceLabel = "Drop to replace",
   previewShape = "video",
+  compact = false,
+  onChange,
 }: {
-  name: string;
+  /** Omit to skip the hidden input — used inside a repeatable row list (e.g.
+   *  placements-editor.tsx), where the picked path is read back via `onChange`
+   *  into the parent's own row state/hidden JSON mirror instead. */
+  name?: string;
   initial?: string;
   label?: string;
   uploadDir: string;
@@ -65,6 +70,14 @@ export function MediaField({
   /** Frame of the filled preview. "square" suits a portrait (an avatar), the
    *  16:9 default suits stills, logos and video. */
   previewShape?: "video" | "square";
+  /** Row-in-a-table mode: smaller preview, one-line empty zone, no size hint.
+   *  A full-width field's three lines of copy get clipped mid-word in a 150px
+   *  column, and its size hint repeats on every row. */
+  compact?: boolean;
+  /** Fires on every value change (upload, picker select, remove) — the row-list
+   *  callers that have no hidden-input `name` need this to mirror the path into
+   *  their own controlled state. */
+  onChange?: (value: string) => void;
 }) {
   const [value, setValue] = useState(initial);
   const [open, setOpen] = useState(false);
@@ -73,6 +86,11 @@ export function MediaField({
   // on the video field, where the file is the whole point.
   const [dropError, setDropError] = useState<string | null>(null);
   const [uploading, startUpload] = useTransition();
+
+  function update(v: string) {
+    setValue(v);
+    onChange?.(v);
+  }
 
   async function handleDrop(file: File | undefined) {
     if (!file) return;
@@ -108,7 +126,7 @@ export function MediaField({
       try {
         const res = await upload(fd);
         if (res.error) setDropError(res.error);
-        else if (res.path) setValue(res.path);
+        else if (res.path) update(res.path);
       } catch {
         setDropError(`${errTooLargeLabel}: ${file.name}`);
       }
@@ -125,9 +143,13 @@ export function MediaField({
   // Filled → the file itself is the zone (replace by dropping on it or via the
   // overlay); empty → the drop zone. The old layout showed both at once plus a
   // 64px thumbnail underneath, which read as two separate targets.
-  const frame = previewShape === "square" ? "aspect-square w-40" : "aspect-video w-72";
+  const frame = compact
+    ? "aspect-video w-full"
+    : previewShape === "square"
+      ? "aspect-square w-40"
+      : "aspect-video w-72";
   const preview = value ? (
-    <DropzonePreview replaceLabel={replaceLabel} removeLabel={removeLabel} onRemove={() => setValue("")}>
+    <DropzonePreview replaceLabel={replaceLabel} removeLabel={removeLabel} onRemove={() => update("")}>
       <div className={`relative ${frame} max-w-full overflow-hidden bg-muted`}>
         {isVideoPath(value) ? (
           <span className="grid h-full w-full place-items-center gap-1 text-muted-foreground">
@@ -149,8 +171,8 @@ export function MediaField({
   ) : undefined;
 
   return (
-    <div className="space-y-3">
-      <input type="hidden" name={name} value={value} />
+    <div className={compact ? "space-y-1.5" : "space-y-3"}>
+      {name ? <input type="hidden" name={name} value={value} /> : null}
 
       {/* Empty: click opens the OS picker, dragging a file onto it uploads. The
           media LIBRARY button lives outside: the empty zone is a <button>, so
@@ -164,17 +186,36 @@ export function MediaField({
         onError={(e) => setDropError(e.message)}
         labels={{ title: dropTitle, hint: dropLabel, replaceHint: dropReplaceLabel }}
         preview={preview}
+        // Filled: the zone wraps the picture, and its default w-fit would
+        // collapse a w-full preview to nothing. Empty: tighter padding than the
+        // full-width field, which is sized for three lines of copy.
+        className={compact ? (value ? "w-full" : "w-full p-3") : undefined}
       >
-        <DropzoneEmptyState />
+        {/* In a table cell the standard three lines don't fit — they were being
+            clipped mid-word. Icon plus one word says the same thing. */}
+        {compact ? (
+          <DropzoneEmptyState>
+            <span className="flex flex-col items-center gap-1 text-xs text-muted-foreground">
+              <ImageIcon className="h-4 w-4" />
+              {dropTitle}
+            </span>
+          </DropzoneEmptyState>
+        ) : (
+          <DropzoneEmptyState />
+        )}
       </Dropzone>
 
       <div className="flex flex-wrap items-center gap-3">
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm text-foreground hover:border-primary/40"
+          className={
+            compact
+              ? "inline-flex items-center gap-1.5 rounded-lg border border-border px-2 py-1 text-xs text-foreground hover:border-primary/40"
+              : "inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm text-foreground hover:border-primary/40"
+          }
         >
-          <ImageIcon className="h-4 w-4" />
+          <ImageIcon className={compact ? "h-3.5 w-3.5" : "h-4 w-4"} />
           {label}
         </button>
         {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" /> : null}
@@ -183,15 +224,18 @@ export function MediaField({
 
       {/* Video fields state the format + the 50 MB per-file cap enforced by
           uploadImage (MAX_BYTES_VIDEO) — the old silent limit was half the
-          "MP4 upload doesn't work" confusion. */}
-      <p className="text-xs text-muted-foreground">
-        {accept === "video" ? "MP4 / WebM · ≤50 MB" : imageSizeHint(uploadDir)}
-      </p>
+          "MP4 upload doesn't work" confusion. Repeated once per row it is just
+          noise, so a compact field leaves it to the section. */}
+      {compact ? null : (
+        <p className="text-xs text-muted-foreground">
+          {accept === "video" ? "MP4 / WebM · ≤50 MB" : imageSizeHint(uploadDir)}
+        </p>
+      )}
 
       <MediaPicker
         open={open}
         onClose={() => setOpen(false)}
-        onSelect={(path) => setValue(path)}
+        onSelect={(path) => update(path)}
         scope={scope}
         uploadDir={uploadDir}
         accept={accept}

@@ -30,6 +30,10 @@ export interface ProjectListDTO {
   // slotsTotal === 0 means no tier has a total set, i.e. hide the indicator.
   slotsAvailable: number;
   slotsTotal: number;
+  // How many product placement rows the project has (owner request
+  // 2026-07-28) — powers the "N placements" badge on the catalog card.
+  // Counted from real rows, so a project with none renders nothing.
+  placementsCount: number;
 }
 
 export interface ProjectDetailDTO extends ProjectListDTO {
@@ -48,6 +52,10 @@ export interface ProjectDetailDTO extends ProjectListDTO {
   // boxOfficeDisplay (gross receipts) — owner decision C.3. "" when unset.
   productionBudgetDisplay: string;
   tiers: TierDTO[]; // sponsorship packages (the productised offer)
+  // Product placement (owner correction 2026-07-28) — the brand INSIDE the
+  // story, distinct from the sponsorship tiers above (a logo-on-materials
+  // deal). Rendered above them on the report (sortOrder asc).
+  placements: PlacementDTO[];
   milestones: MilestoneDTO[]; // Ф4/#27 production-timeline nodes (sortOrder asc)
   // ── Video (#10) — rendered near the top of the report page ──
   videoEmbedUrl: string; // YouTube/Vimeo URL; "" when unset
@@ -78,6 +86,17 @@ export interface TierDTO {
   availableSlots: number | null; // null -> unspecified, don't render a count
   totalSlots: number | null;
 }
+
+export type PlacementDTO = {
+  id: number;
+  title: string;
+  description: string[]; // parsed from the JSON description column, one item per line — same convention as TierDTO.benefits
+  image: string | null; // uploaded still path ("/uploads/…"), null when none
+  priceAmd: number | null; // raw AMD; null when the creator left it empty ("on request")
+  priceDisplay: string | null; // preformatted in the visitor's currency, same as TierDTO.priceDisplay; null when priceAmd is null
+  availableSlots: number | null; // null -> unspecified, don't render a count
+  totalSlots: number | null;
+};
 
 export interface MilestoneDTO {
   id: number;

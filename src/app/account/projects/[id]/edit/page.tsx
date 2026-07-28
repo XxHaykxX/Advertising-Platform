@@ -50,6 +50,7 @@ export default async function EditCreatorProjectPage({
     include: {
       actors: { orderBy: { sortOrder: "asc" } },
       tiers: { orderBy: { sortOrder: "asc" } },
+      placements: { orderBy: { sortOrder: "asc" } },
       owner: { select: { avatar: true } },
     },
   });
@@ -150,6 +151,16 @@ export default async function EditCreatorProjectPage({
             isExclusive: tier.isExclusive,
             availableSlots: tier.availableSlots,
             totalSlots: tier.totalSlots,
+          }))}
+          initialPlacements={p.placements.map((pl) => ({
+            // Same "carry the id" reasoning as initialTiers above.
+            dbId: pl.id,
+            title: pl.title,
+            description: parseBenefitsInput(pl.description),
+            image: pl.image ?? "",
+            priceAmd: pl.priceAmd,
+            availableSlots: pl.availableSlots,
+            totalSlots: pl.totalSlots,
           }))}
           mode="creator"
           locale={locale}

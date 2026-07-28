@@ -98,6 +98,15 @@ export function ProjectCard({
               {project.slotsAvailable} / {project.slotsTotal} {t("card.slotsAvailable")}
             </GenreBadge>
           ) : null}
+          {/* How many product placements the project offers (owner request
+              2026-07-28). Counted from real rows, so a project with none says
+              nothing rather than printing a zero. */}
+          {project.placementsCount > 0 ? (
+            <GenreBadge>
+              {project.placementsCount}{" "}
+              {t(project.placementsCount === 1 ? "card.placementsOne" : "card.placementsMany")}
+            </GenreBadge>
+          ) : null}
         </div>
         <div className="mt-4 flex flex-col gap-2 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
