@@ -1731,6 +1731,13 @@ export const UI: Record<string, Dict> = {
     en: "or drag files here",
     hy: "կամ քաշեք ֆայլերն այստեղ",
   },
+  // Singular twin of media.dropHere, for the fields that hold exactly one file
+  // (project trailer, partner logo, portfolio image).
+  "media.dropHereOne": {
+    ru: "или перетащите файл сюда",
+    en: "or drag a file here",
+    hy: "կամ քաշեք ֆայլն այստեղ",
+  },
   "media.errTooLargeShort": {
     ru: "Файл слишком большой",
     en: "File is too large",

@@ -1,11 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import Image from "next/image";
-import { FileVideo, ImageIcon, X } from "lucide-react";
+import { FileVideo, ImageIcon, Loader2, Upload, X } from "lucide-react";
 import { MediaPicker, isVideoPath, type MediaPickerAccept, type MediaPickerScope } from "@/components/media-picker";
+import { uploadImage } from "@/lib/actions/uploads";
+import { uploadMemberImage } from "@/lib/actions/member-uploads";
+import { captureVideoPoster } from "@/lib/video-poster";
 import type { Locale } from "@/lib/i18n";
 import { imageSizeHint } from "@/lib/images/size-hint";
+
+/** Mirror of MAX_BYTES / MAX_BYTES_VIDEO in lib/actions/uploads.ts. Checked
+ *  before the round trip: past the framework body limit the request is cut off
+ *  mid-flight and the server's own "too large" message never runs. */
+const MAX_MB = { image: 8, video: 50 };
 
 // Drop-in replacement for the old "<input> a URL" image fields (partner logo,
 // portfolio image, …). Mirrors the chosen /uploads/… path into a hidden input
@@ -22,6 +30,8 @@ export function MediaField({
   accept = "image",
   fit = "cover",
   locale,
+  dropLabel = "or drag a file here",
+  errTooLargeLabel = "File is too large",
 }: {
   name: string;
   initial?: string;
@@ -36,14 +46,78 @@ export function MediaField({
   /** Passed through to the picker so a member sees it in their own language
    *  (audit 4.5). Admin callers omit it — the admin UI is pinned to English. */
   locale?: Locale;
+  /** Caption inside the drop zone and the too-large message, localized by the
+   *  caller. Admin callers can leave the English defaults. */
+  dropLabel?: string;
+  errTooLargeLabel?: string;
 }) {
   const [value, setValue] = useState(initial);
   const [open, setOpen] = useState(false);
+  // Same reasoning as ImageUploader's drop zone: the picker dialog could always
+  // upload, but the form itself had no target to drag a file onto — most of all
+  // on the video field, where the file is the whole point.
+  const [dragOver, setDragOver] = useState(false);
+  const [dropError, setDropError] = useState<string | null>(null);
+  const [uploading, startUpload] = useTransition();
+
+  async function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setDragOver(false);
+    const file = Array.from(e.dataTransfer.files)[0];
+    if (!file) return;
+
+    const isVideo = file.type.startsWith("video/");
+    const kind: "image" | "video" =
+      accept === "video" ? "video" : accept === "any" ? (isVideo ? "video" : "image") : "image";
+    // Refuse a mismatch outright rather than uploading a picture into the
+    // trailer slot: the field decides what it accepts, not the file.
+    if (accept === "video" && !isVideo) return;
+    if (accept === "image" && isVideo) return;
+
+    setDropError(null);
+    const max = MAX_MB[kind];
+    if (file.size > max * 1024 * 1024) {
+      const mb = Math.round((file.size / (1024 * 1024)) * 10) / 10;
+      setDropError(`${errTooLargeLabel}: ${file.name} (${mb} MB > ${max} MB)`);
+      return;
+    }
+
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("dir", uploadDir);
+    fd.append("kind", kind);
+    if (kind === "video") {
+      // Grab the still here, while the file is in memory — see lib/video-poster.
+      const poster = await captureVideoPoster(file);
+      if (poster) fd.append("poster", poster);
+    }
+
+    const upload = scope === "member" ? uploadMemberImage : uploadImage;
+    startUpload(async () => {
+      try {
+        const res = await upload(fd);
+        if (res.error) setDropError(res.error);
+        else if (res.path) setValue(res.path);
+      } catch {
+        setDropError(`${errTooLargeLabel}: ${file.name}`);
+      }
+    });
+  }
 
   return (
-    <div className="space-y-3">
+    <div
+      onDragOver={(e) => {
+        e.preventDefault();
+        setDragOver(true);
+      }}
+      onDragLeave={() => setDragOver(false)}
+      onDrop={handleDrop}
+      className={`space-y-3 rounded-xl border border-dashed p-3 transition-colors ${
+        dragOver ? "border-primary bg-primary/5" : "border-border"
+      }`}
+    >
       <input type="hidden" name={name} value={value} />
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         {value ? (
           <span className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-border bg-muted">
             {isVideoPath(value) ? (
@@ -86,7 +160,16 @@ export function MediaField({
             </button>
           )}
         </div>
+        <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+          {uploading ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Upload className="h-3.5 w-3.5" />
+          )}
+          {dropLabel}
+        </span>
       </div>
+      {dropError ? <p className="text-xs text-danger">{dropError}</p> : null}
 
       {/* Video fields state the format + the 50 MB per-file cap enforced by
           uploadImage (MAX_BYTES_VIDEO) — the old silent limit was half the

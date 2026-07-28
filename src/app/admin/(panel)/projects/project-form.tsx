@@ -996,6 +996,8 @@ export function ProjectForm({
                   accept="video"
                   scope={uploaderScope}
                   locale={locale}
+                  dropLabel={t("media.dropHereOne")}
+                  errTooLargeLabel={t("media.errTooLargeShort")}
                 />
               </Field>
             )}
