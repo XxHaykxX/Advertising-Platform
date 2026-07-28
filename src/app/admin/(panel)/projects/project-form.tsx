@@ -904,8 +904,9 @@ export function ProjectForm({
                   scope={uploaderScope}
                   pickerLocale={locale}
                   browseLabel={t("btn.browse")}
-                dropLabel={t("media.dropHere")}
-                errTooLargeLabel={t("media.errTooLargeShort")}
+                  dropTitle={t("media.dropTitleOne")}
+                  dropLabel={t("media.dropHereOne")}
+                  errTooLargeLabel={t("media.errTooLargeShort")}
                   initial={posterInitial}
                   label={t("projectForm.uploadPoster")}
                   removeLabel={t("ui.remove")}
@@ -947,6 +948,7 @@ export function ProjectForm({
                 scope={uploaderScope}
                   pickerLocale={locale}
                 browseLabel={t("btn.browse")}
+                dropTitle={t("media.dropTitleMany")}
                 dropLabel={t("media.dropHere")}
                 errTooLargeLabel={t("media.errTooLargeShort")}
                 initial={galleryInitial}
@@ -996,6 +998,7 @@ export function ProjectForm({
                   accept="video"
                   scope={uploaderScope}
                   locale={locale}
+                  dropTitle={t("media.dropTitleOne")}
                   dropLabel={t("media.dropHereOne")}
                   errTooLargeLabel={t("media.errTooLargeShort")}
                 />

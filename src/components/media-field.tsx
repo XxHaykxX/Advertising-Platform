@@ -2,11 +2,12 @@
 
 import { useState, useTransition } from "react";
 import Image from "next/image";
-import { FileVideo, ImageIcon, Loader2, Upload, X } from "lucide-react";
+import { FileVideo, ImageIcon, Loader2, X } from "lucide-react";
 import { MediaPicker, isVideoPath, type MediaPickerAccept, type MediaPickerScope } from "@/components/media-picker";
 import { uploadImage } from "@/lib/actions/uploads";
 import { uploadMemberImage } from "@/lib/actions/member-uploads";
 import { captureVideoPoster } from "@/lib/video-poster";
+import { Dropzone, DropzoneEmptyState } from "@/components/ui/dropzone";
 import type { Locale } from "@/lib/i18n";
 import { imageSizeHint } from "@/lib/images/size-hint";
 
@@ -30,7 +31,8 @@ export function MediaField({
   accept = "image",
   fit = "cover",
   locale,
-  dropLabel = "or drag a file here",
+  dropTitle = "Upload a file",
+  dropLabel = "Drag and drop or click to upload",
   errTooLargeLabel = "File is too large",
 }: {
   name: string;
@@ -48,6 +50,7 @@ export function MediaField({
   locale?: Locale;
   /** Caption inside the drop zone and the too-large message, localized by the
    *  caller. Admin callers can leave the English defaults. */
+  dropTitle?: string;
   dropLabel?: string;
   errTooLargeLabel?: string;
 }) {
@@ -56,14 +59,10 @@ export function MediaField({
   // Same reasoning as ImageUploader's drop zone: the picker dialog could always
   // upload, but the form itself had no target to drag a file onto — most of all
   // on the video field, where the file is the whole point.
-  const [dragOver, setDragOver] = useState(false);
   const [dropError, setDropError] = useState<string | null>(null);
   const [uploading, startUpload] = useTransition();
 
-  async function handleDrop(e: React.DragEvent) {
-    e.preventDefault();
-    setDragOver(false);
-    const file = Array.from(e.dataTransfer.files)[0];
+  async function handleDrop(file: File | undefined) {
     if (!file) return;
 
     const isVideo = file.type.startsWith("video/");
@@ -104,19 +103,32 @@ export function MediaField({
     });
   }
 
+  const acceptMap: Record<string, string[]> =
+    accept === "video"
+      ? { "video/mp4": [".mp4"], "video/webm": [".webm"] }
+      : accept === "any"
+        ? { "image/*": [], "video/mp4": [".mp4"], "video/webm": [".webm"] }
+        : { "image/*": [] };
+
   return (
-    <div
-      onDragOver={(e) => {
-        e.preventDefault();
-        setDragOver(true);
-      }}
-      onDragLeave={() => setDragOver(false)}
-      onDrop={handleDrop}
-      className={`space-y-3 rounded-xl border border-dashed p-3 transition-colors ${
-        dragOver ? "border-primary bg-primary/5" : "border-border"
-      }`}
-    >
+    <div className="space-y-3">
       <input type="hidden" name={name} value={value} />
+
+      {/* Click opens the OS picker, dragging a file onto it uploads. The media
+          LIBRARY button lives outside: the zone is a <button>, so nothing
+          focusable may be nested inside it. */}
+      <Dropzone
+        accept={acceptMap}
+        maxFiles={1}
+        maxSize={(accept === "video" ? MAX_MB.video : MAX_MB.image) * 1024 * 1024}
+        disabled={uploading}
+        onDrop={(files) => handleDrop(files[0])}
+        onError={(e) => setDropError(e.message)}
+        labels={{ title: dropTitle, hint: dropLabel }}
+      >
+        <DropzoneEmptyState />
+      </Dropzone>
+
       <div className="flex flex-wrap items-center gap-3">
         {value ? (
           <span className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-border bg-muted">
@@ -160,14 +172,7 @@ export function MediaField({
             </button>
           )}
         </div>
-        <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-          {uploading ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : (
-            <Upload className="h-3.5 w-3.5" />
-          )}
-          {dropLabel}
-        </span>
+        {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" /> : null}
       </div>
       {dropError ? <p className="text-xs text-danger">{dropError}</p> : null}
 

@@ -1727,16 +1727,18 @@ export const UI: Record<string, Dict> = {
   // Caption inside the image field's drop zone (2026-07-28) — until then the
   // only way to add a file was to open the picker dialog first.
   "media.dropHere": {
-    ru: "или перетащите файлы сюда",
-    en: "or drag files here",
-    hy: "կամ քաշեք ֆայլերն այստեղ",
+    ru: "Перетащите файлы или нажмите, чтобы выбрать",
+    en: "Drag and drop or click to upload",
+    hy: "Քաշեք ֆայլերը կամ սեղմեք՝ ընտրելու համար",
   },
+  "media.dropTitleMany": { ru: "Загрузить файлы", en: "Upload files", hy: "Վերբեռնել ֆայլեր" },
+  "media.dropTitleOne": { ru: "Загрузить файл", en: "Upload a file", hy: "Վերբեռնել ֆայլ" },
   // Singular twin of media.dropHere, for the fields that hold exactly one file
   // (project trailer, partner logo, portfolio image).
   "media.dropHereOne": {
-    ru: "или перетащите файл сюда",
-    en: "or drag a file here",
-    hy: "կամ քաշեք ֆայլն այստեղ",
+    ru: "Перетащите файл или нажмите, чтобы выбрать",
+    en: "Drag and drop or click to upload",
+    hy: "Քաշեք ֆայլը կամ սեղմեք՝ ընտրելու համար",
   },
   "media.errTooLargeShort": {
     ru: "Файл слишком большой",
