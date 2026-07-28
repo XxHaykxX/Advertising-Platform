@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MultiSelect } from "@/components/ui/multi-select";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { BRAND_CATEGORIES, BUDGET_RANGES } from "@/lib/brand-categories";
 import { localizeValue, makeUI, type Locale } from "@/lib/i18n";
 import { updateBrandProfile, type BrandProfileFormState } from "../actions";
@@ -29,6 +30,7 @@ export function ProfileForm({ profile, locale }: { profile: BrandProfileDTO; loc
   // server action — an uncontrolled defaultValue reverts to the (stale) prop
   // until the page refreshes (IA-15).
   const [budgetRange, setBudgetRange] = useState(profile.budgetRange);
+  const [phone, setPhone] = useState(profile.phone);
   // Transient "Saved" confirmation — auto-hides a few seconds after each save
   // instead of lingering forever (IA-28). Kept separate from `state.ok` (which
   // stays true) so it can be re-shown and re-timed on every consecutive save.
@@ -90,6 +92,15 @@ export function ProfileForm({ profile, locale }: { profile: BrandProfileDTO; loc
                 className={fieldClass}
               />
             </label>
+            <div className="block">
+              <span className={labelClass}>{t("account.profile.phone")}</span>
+              {/* The number the seller calls back on. It was only ever
+                  collected by the application popup, so a brand had no way to
+                  add or correct it here — and the popup then asked again on
+                  every application. */}
+              <PhoneInput value={phone} onChange={setPhone} />
+              <input type="hidden" name="phone" value={phone} />
+            </div>
           </div>
         </div>
 

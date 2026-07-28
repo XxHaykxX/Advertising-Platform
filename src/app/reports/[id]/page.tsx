@@ -75,13 +75,30 @@ export default async function ReportPage({
     <ReportInterestProvider
       projectId={project.id}
       initialStatus={interestStatus}
-      // The application popup asks which package the brand wants (audit 2.3).
-      tiers={project.tiers.map((tier) => ({
-        id: tier.id,
-        name: tier.name,
-        priceDisplay: tier.priceDisplay,
-        availableSlots: tier.availableSlots,
-      }))}
+      // The application popup asks what the brand wants (audit 2.3). Product
+      // placements lead the list — that is the offer a brand comes here for;
+      // sponsorship follows. Prices go in as AMD, the currency the creator set:
+      // applying "for €5 988" would name a figure that reads differently
+      // tomorrow. The converted amount rides along as an aside, and only when
+      // the visitor is actually browsing in something else.
+      offers={[
+        ...project.placements.map((p) => ({
+          id: p.id,
+          kind: "PLACEMENT" as const,
+          name: p.title,
+          priceNative: p.priceNative,
+          priceConverted: currency === "AMD" ? null : p.priceDisplay,
+          availableSlots: p.availableSlots,
+        })),
+        ...project.tiers.map((tier) => ({
+          id: tier.id,
+          kind: "TIER" as const,
+          name: tier.name,
+          priceNative: tier.priceNative,
+          priceConverted: currency === "AMD" ? null : tier.priceDisplay,
+          availableSlots: tier.availableSlots,
+        })),
+      ]}
       locale={locale}
       brandPhone={brandPhone}
       // Past its placement deadline the project is archived: it drops out of

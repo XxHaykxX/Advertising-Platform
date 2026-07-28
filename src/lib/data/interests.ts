@@ -22,6 +22,10 @@ export type InterestEventDTO = {
   status: InterestStatus | null;
   body: string;
   contact: string;
+  // What the brand offered to pay in AMD in THIS round (2026-07-29) — see
+  // Interest.offerAmountAmd below. Null on RESPONSE rows and on any round sent
+  // before the field existed.
+  offerAmountAmd: number | null;
   createdAt: string;
 };
 
@@ -39,6 +43,10 @@ export type InterestInboxDTO = {
   productInfo: string;
   desiredTiming: string;
   dealType: string;
+  // What the brand offers to pay, in AMD (2026-07-29) — null when unset, same
+  // as tierId/placementId below (applications sent before the field existed,
+  // or one where the brand left the sum for negotiation).
+  offerAmountAmd: number | null;
   brand: {
     id: number;
     name: string;
@@ -65,6 +73,17 @@ export type InterestInboxDTO = {
     name: string;
     priceAmd: number;
     isExclusive: boolean;
+    availableSlots: number | null;
+    totalSlots: number | null;
+  } | null;
+  // Product placement the brand applied for (2026-07-29) — mutually exclusive
+  // with tier above in practice (one picker over both lists). priceAmd is
+  // nullable here (unlike tier's): a creator can list a placement "on
+  // request".
+  placement: {
+    id: number;
+    title: string;
+    priceAmd: number | null;
     availableSlots: number | null;
     totalSlots: number | null;
   } | null;
@@ -109,6 +128,7 @@ const INTEREST_INCLUDE = {
     },
   },
   tier: { select: { id: true, name: true, priceAmd: true, isExclusive: true, availableSlots: true, totalSlots: true } },
+  placement: { select: { id: true, title: true, priceAmd: true, availableSlots: true, totalSlots: true } },
   events: { orderBy: { createdAt: "asc" } },
 } as const;
 
@@ -128,6 +148,7 @@ function toDTO(locale: Locale, r: InterestRow): InterestInboxDTO {
     productInfo: r.productInfo ?? "",
     desiredTiming: r.desiredTiming ?? "",
     dealType: r.dealType ?? "",
+    offerAmountAmd: r.offerAmountAmd ?? null,
     brand: {
       id: r.brand.id,
       name: r.brand.name,
@@ -155,12 +176,22 @@ function toDTO(locale: Locale, r: InterestRow): InterestInboxDTO {
           totalSlots: r.tier.totalSlots,
         }
       : null,
+    placement: r.placement
+      ? {
+          id: r.placement.id,
+          title: r.placement.title,
+          priceAmd: r.placement.priceAmd,
+          availableSlots: r.placement.availableSlots,
+          totalSlots: r.placement.totalSlots,
+        }
+      : null,
     events: r.events.map((e) => ({
       id: e.id,
       kind: e.kind,
       status: e.status,
       body: e.body ?? "",
       contact: e.contact ?? "",
+      offerAmountAmd: e.offerAmountAmd ?? null,
       createdAt: e.createdAt.toISOString(),
     })),
   };

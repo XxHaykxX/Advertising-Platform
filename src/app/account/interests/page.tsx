@@ -176,9 +176,24 @@ export default async function AccountInterestsPage() {
                   </div>
                   <div>
                     <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                      {t("interests.package")}
+                      {/* An application names EITHER a placement OR a tier — never
+                          both — so the label says which one this is (2026-07-29). */}
+                      {interest.placement
+                        ? t("interests.packagePlacement")
+                        : interest.tier
+                          ? t("interests.packageSponsorship")
+                          : t("interests.package")}
                     </p>
-                    {interest.tier ? (
+                    {interest.placement ? (
+                      <>
+                        <p className="mt-1 text-sm font-medium text-foreground">{interest.placement.title}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {interest.placement.priceAmd != null
+                            ? formatMoney(interest.placement.priceAmd, "AMD", AMD_ONLY, locale)
+                            : t("report.priceOnRequest")}
+                        </p>
+                      </>
+                    ) : interest.tier ? (
                       <>
                         <p className="mt-1 text-sm font-medium text-foreground">{interest.tier.name}</p>
                         <p className="text-xs text-muted-foreground">
@@ -188,6 +203,17 @@ export default async function AccountInterestsPage() {
                     ) : (
                       <p className="mt-1 text-sm text-muted-foreground">{t("interests.noPackage")}</p>
                     )}
+                    {/* The sum the brand offers to pay (2026-07-29) — always in
+                        AMD, the currency the seller priced in, never converted
+                        to the reader's currency (that drift was the bug). */}
+                    {interest.offerAmountAmd != null ? (
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        {t("interests.offerAmount")}:{" "}
+                        <span className="font-medium text-foreground">
+                          {formatMoney(interest.offerAmountAmd, "AMD", AMD_ONLY, locale)}
+                        </span>
+                      </p>
+                    ) : null}
                   </div>
                 </div>
 
@@ -253,6 +279,12 @@ export default async function AccountInterestsPage() {
                             {event.kind === "APPLICATION" ? t("interests.eventApplication") : t("interests.eventResponse")}
                           </span>{" "}
                           · {formatFullDate(event.createdAt, intlLocale(locale))}
+                          {event.offerAmountAmd != null ? (
+                            <>
+                              {" "}
+                              · {t("interests.offerAmount")}: {formatMoney(event.offerAmountAmd, "AMD", AMD_ONLY, locale)}
+                            </>
+                          ) : null}
                           {event.body ? (
                             <p className="mt-0.5 whitespace-pre-wrap text-foreground">{event.body}</p>
                           ) : null}

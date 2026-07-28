@@ -72,7 +72,16 @@ export type ApplicationBrief = {
   dealType?: string;
   /** Required since 2026-07-26 — the seller must be able to call back. */
   phone?: string;
+  /** What the brand offers to pay, in AMD (2026-07-29). Optional, and the
+   *  only way to make an offer at all on a placement the creator priced "on
+   *  request". */
+  offerAmountAmd?: number | null;
 };
+
+/** Which of the two things on sale the application is for. Product placement
+ *  and sponsorship are separate rows in separate tables, so the id alone would
+ *  be ambiguous. */
+export type ApplicationOfferRef = { kind: "PLACEMENT" | "TIER"; id: number };
 
 const DEAL_TYPES = ["CASH", "BARTER", "BOTH"];
 
@@ -98,7 +107,7 @@ export async function submitApplication(
   projectId: number,
   message: string,
   contact: string,
-  tierId?: number | null,
+  offer?: ApplicationOfferRef | null,
   brief?: ApplicationBrief,
 ): Promise<ExpressInterestResult> {
   const user = await requireMember();
@@ -123,11 +132,11 @@ export async function submitApplication(
 
   const trimmedMessage = message.trim().slice(0, 2000) || null;
   const trimmedContact = contact.trim().slice(0, 191) || null;
-  // Message is required (the popup enforces it client-side too) — reject an
-  // empty application submitted via a direct POST. Since 2026-07-26 it must
-  // also actually say something: a one-word "hi" is not an application the
-  // seller can answer.
-  if (!trimmedMessage || trimmedMessage.length < MIN_MESSAGE) {
+  // The free-text message is optional since 2026-07-29 — what is being placed
+  // (below) is the fact the seller cannot answer without, and requiring both
+  // only pushed brands into padding a box. A message that IS written still has
+  // to say something: a one-word "hi" is not an application anyone can answer.
+  if (trimmedMessage && trimmedMessage.length < MIN_MESSAGE) {
     return { ok: false, error: t("account.brand.applyTooShort") };
   }
 
@@ -135,20 +144,44 @@ export async function submitApplication(
   if (!isValidPhone(phone)) return { ok: false, error: t("account.brand.applyPhoneRequired") };
 
   const productInfo = (brief?.productInfo ?? "").trim().slice(0, 2000) || null;
+  // Required as of 2026-07-29 (it swapped places with the message). Rejected
+  // here too, not only in the popup, so a direct POST can't produce a lead
+  // that says nothing about the product.
+  if (!productInfo) return { ok: false, error: t("account.brand.applyProductRequired") };
   const desiredTiming = (brief?.desiredTiming ?? "").trim().slice(0, 191) || null;
   const dealTypeRaw = (brief?.dealType ?? "").trim();
   const dealType = DEAL_TYPES.includes(dealTypeRaw) ? dealTypeRaw : null;
 
-  // The package the brand is applying for (audit 2.3 — an application used to
-  // say nothing about which placement or price it was about). Verified to
-  // belong to this project so a crafted POST can't attach someone else's tier.
+  // What the brand offers to pay for THIS deal. Digits only, and capped well
+  // under the Int column: a number typed with an extra zero row is a data
+  // error, not a bid.
+  const rawOffer = brief?.offerAmountAmd;
+  const offerAmountAmd =
+    typeof rawOffer === "number" && Number.isInteger(rawOffer) && rawOffer > 0 && rawOffer <= 2_000_000_000
+      ? rawOffer
+      : null;
+
+  // What the brand is applying for (audit 2.3 — an application used to say
+  // nothing about which placement or price it was about). Since 2026-07-29
+  // that is either a product placement or a sponsorship package; both are
+  // verified to belong to THIS project, so a crafted POST can't attach a row
+  // from someone else's listing.
   let resolvedTierId: number | null = null;
-  if (tierId != null && Number.isInteger(tierId)) {
-    const tier = await prisma.sponsorshipTier.findFirst({
-      where: { id: tierId, projectId },
-      select: { id: true },
-    });
-    resolvedTierId = tier?.id ?? null;
+  let resolvedPlacementId: number | null = null;
+  if (offer && Number.isInteger(offer.id)) {
+    if (offer.kind === "TIER") {
+      const tier = await prisma.sponsorshipTier.findFirst({
+        where: { id: offer.id, projectId },
+        select: { id: true },
+      });
+      resolvedTierId = tier?.id ?? null;
+    } else if (offer.kind === "PLACEMENT") {
+      const placement = await prisma.placement.findFirst({
+        where: { id: offer.id, projectId },
+        select: { id: true },
+      });
+      resolvedPlacementId = placement?.id ?? null;
+    }
   }
 
   // Snapshot the application as it stands BEFORE the upsert overwrites it:
@@ -171,9 +204,11 @@ export async function submitApplication(
         message: trimmedMessage,
         contact: trimmedContact,
         tierId: resolvedTierId,
+        placementId: resolvedPlacementId,
         productInfo,
         desiredTiming,
         dealType,
+        offerAmountAmd,
       },
       // A resend reopens the conversation: back to SENT, new message, and any
       // slot the previous answer had taken is released below.
@@ -182,9 +217,11 @@ export async function submitApplication(
         message: trimmedMessage,
         contact: trimmedContact,
         tierId: resolvedTierId,
+        placementId: resolvedPlacementId,
         productInfo,
         desiredTiming,
         dealType,
+        offerAmountAmd,
         respondedAt: null,
         responseNote: null,
       },
@@ -211,6 +248,7 @@ export async function submitApplication(
         productInfo,
         desiredTiming,
         dealType,
+        offerAmountAmd,
         authorId: user.id,
       },
     });
@@ -262,6 +300,12 @@ export async function submitApplication(
       const tierName = resolvedTierId
         ? (await prisma.sponsorshipTier.findUnique({ where: { id: resolvedTierId }, select: { name: true } }))?.name
         : undefined;
+      // The placement is the other half of the offer since 2026-07-29 — an
+      // e-mail naming only the sponsorship package would silently drop the
+      // very thing most brands apply for.
+      const placementName = resolvedPlacementId
+        ? (await prisma.placement.findUnique({ where: { id: resolvedPlacementId }, select: { title: true } }))?.title
+        : undefined;
       // The brand's own budget bracket, resolved to its label here: the email
       // is tri-lingual and has no locale to localize with. Read from the DB —
       // AuthedUser carries only id/email/role/name/isActive.
@@ -278,6 +322,8 @@ export async function submitApplication(
           projectTitle: project.title,
           brandName: user.name,
           tierName,
+          placementName,
+          offerAmountAmd: offerAmountAmd ?? undefined,
           message: trimmedMessage ?? undefined,
           contact: trimmedContact ?? user.email,
           productInfo: productInfo ?? undefined,
@@ -334,12 +380,24 @@ export async function updateBrandProfile(
   const categories = jsonArray(fd, "brandCategories").filter((c) => BRAND_CATEGORIES.includes(c));
   const budgetRangeRaw = String(fd.get("budgetRange") || "");
   const budgetRange = BUDGET_VALUES.includes(budgetRangeRaw) ? budgetRangeRaw : null;
+  // The callback number, editable here since 2026-07-29. Optional in the
+  // profile (an application still demands one), but a number that IS given has
+  // to be a real one — the same rule the popup applies, so the two can't
+  // disagree about what a valid number is.
+  // The country picker seeds the field with a bare dial code ("+374"), so an
+  // untouched field arrives as that rather than empty — treated as "no number
+  // given", otherwise saving the company name would fail on a phone the brand
+  // never typed.
+  const phoneRaw = String(fd.get("phone") || "").trim().slice(0, 32);
+  const phone = /^\+\d{1,4}$/.test(phoneRaw) ? "" : phoneRaw;
+  if (phone && !isValidPhone(phone)) return { error: t("account.brand.applyPhoneRequired") };
 
   await prisma.user.update({
     where: { id: user.id },
     data: {
       company: company || null,
       website: website || null,
+      phone: phone || null,
       brandCategories: JSON.stringify(categories),
       budgetRange,
     },

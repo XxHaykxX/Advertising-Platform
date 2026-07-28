@@ -3,7 +3,7 @@
 import { createContext, useContext, useState } from "react";
 import type { InterestStatus } from "@prisma/client";
 import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
-import { ApplicationDialog, type ApplicationTier } from "@/components/report/application-dialog";
+import { ApplicationDialog, type ApplicationOffer } from "@/components/report/application-dialog";
 
 /** Shared Express Interest state for the report page (#23) — the page renders
  *  TWO buttons (key-facts up top, the ROI banner further down) that must
@@ -33,7 +33,7 @@ const ReportInterestContext = createContext<ReportInterestContextValue | null>(n
 export function ReportInterestProvider({
   projectId,
   initialStatus,
-  tiers = [],
+  offers = [],
   locale = DEFAULT_LOCALE,
   brandPhone = "",
   archived = false,
@@ -43,8 +43,9 @@ export function ReportInterestProvider({
   initialStatus: InterestStatus | null;
   /** Placement deadline is behind us (see isArchived) — offers are closed. */
   archived?: boolean;
-  /** Passed straight through to the popup's package picker (audit 2.3). */
-  tiers?: ApplicationTier[];
+  /** Passed straight through to the popup's picker (audit 2.3) — product
+   *  placements and sponsorship packages in one list since 2026-07-29. */
+  offers?: ApplicationOffer[];
   locale?: Locale;
   /** The brand's phone from its profile, seeding the popup's required phone
    *  field so a returning buyer doesn't retype it. */
@@ -76,7 +77,7 @@ export function ReportInterestProvider({
       {isOpen ? (
         <ApplicationDialog
           projectId={projectId}
-          tiers={tiers}
+          offers={offers}
           brandPhone={brandPhone}
           t={t}
           onClose={() => setIsOpen(false)}

@@ -38,7 +38,11 @@ export async function updateCreatorProfile(
 
   const name = String(formData.get("name") ?? "").trim();
   const rawAvatar = String(formData.get("avatar") ?? "").trim();
-  const phone = String(formData.get("phone") ?? "").trim();
+  // The country picker seeds the field with a bare dial code ("+374"), so an
+  // untouched field arrives as that rather than empty — stored as no number,
+  // not as a "+374" that nobody can call.
+  const rawPhone = String(formData.get("phone") ?? "").trim();
+  const phone = /^\+\d{1,4}$/.test(rawPhone) ? "" : rawPhone;
   const website = String(formData.get("website") ?? "").trim();
 
   if (!name) return { error: t("account.profile.nameRequired") };

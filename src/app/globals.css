@@ -113,3 +113,48 @@ html { scrollbar-gutter: stable; }
   body { background: #fff !important; }
 }
 
+
+/* International phone field (src/components/ui/phone-input.tsx). The library
+   ships a light-theme look of its own; the site is dark by default, so its
+   own custom properties are pointed at our tokens instead of overriding its
+   rules one by one. Sizing matches the plain inputs next to it (rounded-lg,
+   px-3 py-2, text-sm). */
+.igv-phone {
+  --react-international-phone-height: 38px;
+  --react-international-phone-font-size: 14px;
+  --react-international-phone-border-radius: 0.5rem;
+  --react-international-phone-border-color: var(--border);
+  --react-international-phone-background-color: var(--background);
+  --react-international-phone-text-color: var(--foreground);
+  --react-international-phone-country-selector-background-color: var(--background);
+  --react-international-phone-country-selector-background-color-hover: var(--muted);
+  --react-international-phone-country-selector-border-color: var(--border);
+  --react-international-phone-country-selector-arrow-color: var(--muted-foreground);
+  --react-international-phone-dropdown-item-background-color: var(--card);
+  --react-international-phone-dropdown-item-text-color: var(--foreground);
+  --react-international-phone-dropdown-item-dial-code-color: var(--muted-foreground);
+  --react-international-phone-selected-dropdown-item-background-color: var(--muted);
+  --react-international-phone-selected-dropdown-item-text-color: var(--foreground);
+  --react-international-phone-selected-dropdown-item-dial-code-color: var(--muted-foreground);
+  --react-international-phone-dropdown-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  --react-international-phone-disabled-background-color: var(--muted);
+  --react-international-phone-disabled-text-color: var(--muted-foreground);
+}
+.igv-phone .react-international-phone-input-container .react-international-phone-input {
+  width: 100%;
+  padding-left: 0.75rem;
+}
+/* The two halves are one control: the frame lights up as a whole on focus,
+   the way every other field on the form does. */
+.igv-phone .react-international-phone-input-container:focus-within .react-international-phone-input,
+.igv-phone .react-international-phone-input-container:focus-within .react-international-phone-country-selector-button {
+  border-color: var(--primary);
+  outline: none;
+}
+/* The dropdown is a floating list over dark page chrome — it needs its own
+   border, which the library only gives the closed control. */
+.igv-phone .react-international-phone-country-selector-dropdown {
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  z-index: 60;
+}

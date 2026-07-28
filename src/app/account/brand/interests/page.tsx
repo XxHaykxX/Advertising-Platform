@@ -8,6 +8,7 @@ import { requireMember } from "@/lib/auth/require";
 import { getLocale } from "@/lib/data/locale";
 import { getBrandInterests } from "@/lib/data/brand-interests";
 import { formatFullDate } from "@/lib/data/format";
+import { formatMoney } from "@/lib/currency";
 import { intlLocale, localizeValue, makeUI } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import type { InterestStatus } from "@prisma/client";
@@ -18,6 +19,10 @@ const STATUS_PILL: Record<InterestStatus, string> = {
   MUTUAL: "border-success/30 bg-success/10 text-success",
   DECLINED: "border-danger/30 bg-danger/10 text-danger",
 };
+
+// The offer is what the brand itself typed in AMD — never converted to a
+// browsing currency, same convention as account/interests/page.tsx.
+const AMD_ONLY = { AMD: 1, USD: 1, EUR: 1, RUB: 1 };
 
 /** "My Interests" — every project this BRAND member has expressed interest
  *  in (#23). MUTUAL is reserved for a future two-sided reveal (the creator
@@ -93,7 +98,16 @@ export default async function BrandInterestsPage() {
                   {t("account.brand.interestedOn", {
                     date: formatFullDate(interest.createdAt, intlLocale(locale)),
                   })}
-                  {interest.tierName ? ` · ${interest.tierName}` : ""}
+                  {/* An application names EITHER a placement OR a tier — never
+                      both — so the label says which one this is (2026-07-29). */}
+                  {interest.placementTitle
+                    ? ` · ${t("interests.packagePlacement")}: ${interest.placementTitle}`
+                    : interest.tierName
+                      ? ` · ${t("interests.packageSponsorship")}: ${interest.tierName}`
+                      : ""}
+                  {interest.offerAmountAmd != null
+                    ? ` · ${t("interests.offerAmount")}: ${formatMoney(interest.offerAmountAmd, "AMD", AMD_ONLY, locale)}`
+                    : ""}
                 </p>
                 {/* What this brand itself sent (2026-07-26). Without it the
                     cabinet showed a status pill over a project title and no

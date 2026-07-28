@@ -363,7 +363,8 @@ model Placement {
   availableSlots Int? // still open; null -> unspecified, same contract as SponsorshipTier
   sortOrder   Int     @default(0)
 
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project   Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  interests Interest[]
 
   @@index([projectId])
 }
@@ -424,6 +425,12 @@ model Interest {
   // before this existed (and any sent from a project with no packages) carry
   // none. Answers audit 2.3 — "неизвестно, на какой пакет и сумму отклик".
   tierId       Int?
+  // Which product placement the brand applied for (2026-07-29). Until now the
+  // picker offered sponsorship packages only, so a brand that came for an
+  // in-story integration — the thing the catalog advertises first — had no way
+  // to name it and had to describe it in prose. Mutually exclusive with tierId
+  // in practice: the popup is one picker over both lists.
+  placementId  Int?
   // True while this application holds one of that package's availableSlots.
   // Set when a creator accepts, released when they decline or the brand
   // withdraws — so two brands can no longer both "take" one exclusive slot.
@@ -442,15 +449,22 @@ model Interest {
   productInfo   String? @db.Text // what is being placed (product / service)
   desiredTiming String? // when the brand wants the placement, free text
   dealType      String? // CASH | BARTER | BOTH — how the brand intends to pay
+  // What the brand is prepared to pay, in AMD — the currency the seller priced
+  // in. Added 2026-07-29: the brief carried the brand's budget range from its
+  // profile but no sum for THIS deal, which left a placement priced "on
+  // request" with nowhere to make an offer at all.
+  offerAmountAmd Int?
 
-  brand    User              @relation(fields: [brandId], references: [id], onDelete: Cascade)
-  project  Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  tier     SponsorshipTier?  @relation(fields: [tierId], references: [id], onDelete: SetNull)
-  events   InterestEvent[]
+  brand     User             @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  project   Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tier      SponsorshipTier? @relation(fields: [tierId], references: [id], onDelete: SetNull)
+  placement Placement?       @relation(fields: [placementId], references: [id], onDelete: SetNull)
+  events    InterestEvent[]
 
   @@unique([brandId, projectId])
   @@index([projectId])
   @@index([tierId])
+  @@index([placementId])
 }
 
 /// One entry in an application's history. The Interest row above stays the
@@ -472,6 +486,7 @@ model InterestEvent {
   productInfo   String? @db.Text
   desiredTiming String?
   dealType      String?
+  offerAmountAmd Int?
   authorId   Int? // who wrote it; null if that account was deleted
   createdAt  DateTime        @default(now())
 

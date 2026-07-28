@@ -18,7 +18,10 @@ export type BrandInterestDTO = {
   // reply existed anywhere (audit 2.2).
   respondedAt: string | null;
   responseNote: string;
-  tierName: string; // the package applied for, "" when none was picked
+  tierName: string; // the sponsorship package applied for, "" when none was picked
+  // The product placement applied for (2026-07-29), "" when none was picked.
+  // Mutually exclusive with tierName in practice — one picker over both lists.
+  placementTitle: string;
   // What the brand itself sent (2026-07-26). It used to be write-only in both
   // directions: the seller couldn't read it, and neither could the brand —
   // its own cabinet showed a status pill and nothing about what was asked for.
@@ -26,6 +29,10 @@ export type BrandInterestDTO = {
   productInfo: string;
   desiredTiming: string;
   dealType: string;
+  // What the brand offered to pay, in AMD (2026-07-29) — null when the brand
+  // left the sum for negotiation, or on an application sent before the field
+  // existed.
+  offerAmountAmd: number | null;
   project: {
     id: number;
     title: string;
@@ -51,7 +58,11 @@ function pickTitle(
 export async function getBrandInterests(brandId: number, locale: Locale): Promise<BrandInterestDTO[]> {
   const rows = await prisma.interest.findMany({
     where: { brandId },
-    include: { project: true, tier: { select: { name: true } } },
+    include: {
+      project: true,
+      tier: { select: { name: true } },
+      placement: { select: { title: true } },
+    },
     orderBy: { createdAt: "desc" },
   });
   return rows.map((r) => ({
@@ -61,10 +72,12 @@ export async function getBrandInterests(brandId: number, locale: Locale): Promis
     respondedAt: r.respondedAt?.toISOString() ?? null,
     responseNote: r.responseNote ?? "",
     tierName: r.tier?.name ?? "",
+    placementTitle: r.placement?.title ?? "",
     message: r.message ?? "",
     productInfo: r.productInfo ?? "",
     desiredTiming: r.desiredTiming ?? "",
     dealType: r.dealType ?? "",
+    offerAmountAmd: r.offerAmountAmd ?? null,
     project: {
       id: r.project.id,
       title: pickTitle(locale, r.project),

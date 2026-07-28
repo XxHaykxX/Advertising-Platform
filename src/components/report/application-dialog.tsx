@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { submitApplication } from "@/app/account/brand/actions";
 import type { makeUI } from "@/lib/i18n";
 
@@ -13,17 +14,29 @@ import type { makeUI } from "@/lib/i18n";
  *  timer) and calls onSubmitted so the caller can flip the button to its
  *  "already applied" state right away — the dialog itself only closes when
  *  the brand dismisses it. */
-/** The packages a brand can apply for, as shown in the picker. */
-export type ApplicationTier = {
+/** One thing a brand can apply for. Since 2026-07-29 that is EITHER a product
+ *  placement (the brand inside the story) or a sponsorship package (logo,
+ *  credits, premiere) — the picker used to list packages only, so a brand that
+ *  came for a placement, which is what the catalog advertises first, could
+ *  only describe it in prose and the seller had to guess which scene and at
+ *  what price. */
+export type ApplicationOffer = {
   id: number;
+  kind: "PLACEMENT" | "TIER";
   name: string;
-  priceDisplay: string;
+  /** Formatted in AMD — the currency the creator priced in. Null for a
+   *  placement left unpriced, which the picker shows as "on request". */
+  priceNative: string | null;
+  /** The same price in the visitor's currency, or null when they are already
+   *  browsing in AMD (nothing to convert) or the price is on request. Shown as
+   *  an aside, never as the sum being applied for. */
+  priceConverted: string | null;
   availableSlots: number | null;
 };
 
-/** Shortest application the seller is asked to answer. Enforced server-side
- *  too (submitApplication) — this constant only drives the hint and the
- *  disabled submit button. */
+/** Shortest application the seller is asked to answer, when one is written at
+ *  all. Enforced server-side too (submitApplication) — this constant only
+ *  drives the hint and the disabled submit button. */
 const MIN_MESSAGE = 20;
 
 /** Armenia — the marketplace's home country, so an empty phone field starts
@@ -47,9 +60,35 @@ export function isValidPhone(value: string): boolean {
   return cleaned.length >= 8 && cleaned.length <= 16;
 }
 
+/** The picker holds two kinds of row in one list, so the option value has to
+ *  carry which list it came from — an id alone is ambiguous (placement 3 and
+ *  tier 3 both exist). Parsed back server-side, where the row is re-checked
+ *  against the project anyway. */
+export function offerValue(offer: Pick<ApplicationOffer, "id" | "kind">): string {
+  return `${offer.kind === "PLACEMENT" ? "P" : "T"}:${offer.id}`;
+}
+
+export function parseOfferValue(value: string): { kind: "PLACEMENT" | "TIER"; id: number } | null {
+  const [prefix, rawId] = value.split(":");
+  const id = Number(rawId);
+  if (!Number.isInteger(id) || id <= 0) return null;
+  if (prefix === "P") return { kind: "PLACEMENT", id };
+  if (prefix === "T") return { kind: "TIER", id };
+  return null;
+}
+
+/** Digits only, grouped in threes with a non-breaking space — 2 500 000 reads
+ *  as a price, 2500000 reads as a serial number. Same treatment the admin
+ *  price fields got (form-shared.groupDigits); duplicated rather than imported
+ *  so the public bundle doesn't pull in an admin module. */
+function formatAmount(digits: string): string {
+  // NBSP, not a plain space — a price must not wrap mid-number.
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, "\u00A0");
+}
+
 export function ApplicationDialog({
   projectId,
-  tiers = [],
+  offers = [],
   brandPhone = "",
   t,
   onClose,
@@ -58,12 +97,12 @@ export function ApplicationDialog({
   projectId: number;
   /** Seeds the required phone field from the brand's profile. */
   brandPhone?: string;
-  /** Sponsorship packages of this project — audit 2.3: an application used to
-   *  carry no package at all, so nobody knew which placement (or price) it was
-   *  about, and two brands could each be told the same exclusive slot was
-   *  theirs. Empty list → the picker is hidden and the application is sent
-   *  without one, exactly as before. */
-  tiers?: ApplicationTier[];
+  /** What this project sells — placements first, then sponsorship packages.
+   *  Audit 2.3: an application used to carry no offer at all, so nobody knew
+   *  which placement (or price) it was about, and two brands could each be
+   *  told the same exclusive slot was theirs. Empty list → the picker is
+   *  hidden and the application is sent without one, exactly as before. */
+  offers?: ApplicationOffer[];
   t: ReturnType<typeof makeUI>;
   onClose: () => void;
   onSubmitted: () => void;
@@ -76,18 +115,31 @@ export function ApplicationDialog({
   const hasProfilePhone = isValidPhone(brandPhone);
   const [phone, setPhone] = useState(hasProfilePhone ? brandPhone : DEFAULT_DIAL_CODE);
   // The brief (2026-07-26): what is being placed, when, and how the brand
-  // intends to pay. Optional — a brand that writes it all in the message still
-  // gets through — but asked for explicitly, because the seller was otherwise
-  // answering a package worth millions off one paragraph of prose.
+  // intends to pay. "What is being placed" is the one the seller cannot work
+  // without, so since 2026-07-29 it is the required field and the free-text
+  // message is the optional one — it used to be the other way round.
   const [productInfo, setProductInfo] = useState("");
   const [desiredTiming, setDesiredTiming] = useState("");
   const [dealType, setDealType] = useState("");
-  // Preselect when there is only one package — a single-option dropdown is
-  // just a click that can only go one way.
-  const [tierId, setTierId] = useState<string>(tiers.length === 1 ? String(tiers[0].id) : "");
+  // What the brand is prepared to pay, digits only, in AMD. Kept as a string
+  // so the field can be genuinely empty ("didn't say") rather than 0.
+  const [offerAmount, setOfferAmount] = useState("");
+  const placements = useMemo(() => offers.filter((o) => o.kind === "PLACEMENT"), [offers]);
+  const tiers = useMemo(() => offers.filter((o) => o.kind === "TIER"), [offers]);
+  // Preselect when there is only one thing on sale — a single-option dropdown
+  // is just a click that can only go one way.
+  const [selected, setSelected] = useState<string>(offers.length === 1 ? offerValue(offers[0]) : "");
+  const selectedOffer = offers.find((o) => offerValue(o) === selected) ?? null;
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
+
+  const trimmedProduct = productInfo.trim();
+  const trimmedMessage = message.trim();
+  const canSubmit =
+    trimmedProduct.length > 0 &&
+    (trimmedMessage.length === 0 || trimmedMessage.length >= MIN_MESSAGE) &&
+    isValidPhone(phone);
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -101,11 +153,12 @@ export function ApplicationDialog({
     e.preventDefault();
     setError(null);
     startTransition(async () => {
-      const res = await submitApplication(projectId, message, phone, tierId ? Number(tierId) : null, {
+      const res = await submitApplication(projectId, message, phone, parseOfferValue(selected), {
         productInfo,
         desiredTiming,
         dealType,
         phone,
+        offerAmountAmd: offerAmount ? Number(offerAmount) : null,
       });
       if (!res.ok) {
         setError(res.error ?? t("apply.error"));
@@ -115,6 +168,19 @@ export function ApplicationDialog({
       setSent(true);
     });
   }
+
+  /** "Package · 2 500 000 ֏", or the on-request wording for an unpriced
+   *  placement. The converted figure deliberately stays out of the option
+   *  label: it belongs under the picker, marked as a rate that moves. */
+  function optionLabel(offer: ApplicationOffer): string {
+    const price = offer.priceNative ?? t("report.priceOnRequest");
+    const soldOut = offer.availableSlots === 0 ? ` · ${t("apply.tierSoldOut")}` : "";
+    return `${offer.name} · ${price}${soldOut}`;
+  }
+
+  const inputClass =
+    "mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary";
+  const labelClass = "text-xs font-semibold uppercase tracking-wide text-muted-foreground";
 
   return (
     <div
@@ -139,84 +205,107 @@ export function ApplicationDialog({
             </div>
           </>
         ) : (
-          <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-4">
-            {tiers.length > 0 ? (
+          <form onSubmit={handleSubmit} className="mt-4 flex max-h-[70vh] flex-col gap-4 overflow-y-auto">
+            {offers.length > 0 ? (
               <div>
-                <label
-                  htmlFor="apply-tier"
-                  className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                >
-                  {t("apply.tierLabel")}
+                <label htmlFor="apply-offer" className={labelClass}>
+                  {t("apply.offerLabel")}
                 </label>
                 <select
-                  id="apply-tier"
-                  value={tierId}
-                  onChange={(e) => setTierId(e.target.value)}
-                  className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+                  id="apply-offer"
+                  value={selected}
+                  onChange={(e) => setSelected(e.target.value)}
+                  className={inputClass}
                 >
                   <option value="">{t("apply.tierNone")}</option>
-                  {tiers.map((tier) => (
-                    <option
-                      key={tier.id}
-                      value={tier.id}
-                      // A package with every slot taken can still be picked —
-                      // the seller may free one up — but say so plainly.
-                      disabled={tier.availableSlots === 0}
-                    >
-                      {tier.name} · {tier.priceDisplay}
-                      {tier.availableSlots === 0 ? ` · ${t("apply.tierSoldOut")}` : ""}
-                    </option>
-                  ))}
+                  {/* Placements lead: an in-story integration is what most
+                      brands arrive for, sponsorship is the second offer. The
+                      groups are labelled because the two are priced and
+                      delivered differently. */}
+                  {placements.length > 0 ? (
+                    <optgroup label={t("apply.offerGroupPlacements")}>
+                      {placements.map((offer) => (
+                        <option
+                          key={offerValue(offer)}
+                          value={offerValue(offer)}
+                          // A sold-out row can still be picked — the seller may
+                          // free a slot up — but say so plainly.
+                          disabled={offer.availableSlots === 0}
+                        >
+                          {optionLabel(offer)}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ) : null}
+                  {tiers.length > 0 ? (
+                    <optgroup label={t("apply.offerGroupTiers")}>
+                      {tiers.map((offer) => (
+                        <option
+                          key={offerValue(offer)}
+                          value={offerValue(offer)}
+                          disabled={offer.availableSlots === 0}
+                        >
+                          {optionLabel(offer)}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ) : null}
                 </select>
+                {/* The visitor may be browsing in EUR while the seller prices
+                    in AMD. Show the conversion, but as an approximation tied to
+                    today's rate — the deal is the AMD figure above. */}
+                {selectedOffer?.priceConverted ? (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {t("apply.approxRate").replace("{x}", selectedOffer.priceConverted)}
+                  </p>
+                ) : null}
               </div>
             ) : null}
 
             <div>
-              <label
-                htmlFor="apply-product"
-                className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-              >
+              <label htmlFor="apply-product" className={labelClass}>
                 {t("apply.productLabel")}
               </label>
               <input
                 id="apply-product"
                 type="text"
+                required
                 value={productInfo}
                 onChange={(e) => setProductInfo(e.target.value)}
                 placeholder={t("apply.productPlaceholder")}
-                className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+                className={inputClass}
               />
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <label
-                  htmlFor="apply-timing"
-                  className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                >
-                  {t("apply.timingLabel")}
+                <label htmlFor="apply-offer-amount" className={labelClass}>
+                  {t("apply.offerAmountLabel")}
                 </label>
                 <input
-                  id="apply-timing"
+                  id="apply-offer-amount"
                   type="text"
-                  value={desiredTiming}
-                  onChange={(e) => setDesiredTiming(e.target.value)}
-                  placeholder={t("apply.timingPlaceholder")}
-                  className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+                  inputMode="numeric"
+                  value={formatAmount(offerAmount)}
+                  // Digits only: the grouping spaces are display, and a stray
+                  // letter would reach the server as NaN.
+                  onChange={(e) => setOfferAmount(e.target.value.replace(/\D/g, "").slice(0, 12))}
+                  placeholder="0"
+                  className={inputClass}
                 />
+                {/* The reason this field exists: a placement priced "on
+                    request" is an invitation for the brand to name a sum. */}
+                <p className="mt-1 text-xs text-muted-foreground">{t("apply.offerAmountHint")}</p>
               </div>
               <div>
-                <label
-                  htmlFor="apply-deal"
-                  className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                >
+                <label htmlFor="apply-deal" className={labelClass}>
                   {t("apply.dealLabel")}
                 </label>
                 <select
                   id="apply-deal"
                   value={dealType}
                   onChange={(e) => setDealType(e.target.value)}
-                  className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+                  className={inputClass}
                 >
                   <option value="">{t("apply.dealUnset")}</option>
                   <option value="CASH">{t("apply.dealCash")}</option>
@@ -227,21 +316,34 @@ export function ApplicationDialog({
             </div>
 
             <div>
-              <label htmlFor="apply-message" className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <label htmlFor="apply-timing" className={labelClass}>
+                {t("apply.timingLabel")}
+              </label>
+              <input
+                id="apply-timing"
+                type="text"
+                value={desiredTiming}
+                onChange={(e) => setDesiredTiming(e.target.value)}
+                placeholder={t("apply.timingPlaceholder")}
+                className={inputClass}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="apply-message" className={labelClass}>
                 {t("apply.messageLabel")}
               </label>
               <textarea
                 id="apply-message"
-                required
-                rows={4}
+                rows={3}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder={t("apply.messagePlaceholder")}
-                className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
+                className={inputClass}
               />
-              {/* A one-word "hi" used to be a valid application. The seller has
-                  to answer it, so it has to say something. */}
-              {message.trim().length > 0 && message.trim().length < MIN_MESSAGE ? (
+              {/* Optional, but a one-word "hi" is not worth the seller reading:
+                  once something is typed it has to say something. */}
+              {trimmedMessage.length > 0 && trimmedMessage.length < MIN_MESSAGE ? (
                 <p className="mt-1 text-xs text-muted-foreground">
                   {t("apply.messageTooShort").replace("{n}", String(MIN_MESSAGE))}
                 </p>
@@ -257,22 +359,14 @@ export function ApplicationDialog({
               </p>
             ) : (
               <div>
-                <label
-                  htmlFor="apply-phone"
-                  className="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                >
+                <label htmlFor="apply-phone" className={labelClass}>
                   {t("apply.phoneLabel")}
                 </label>
-                <input
-                  id="apply-phone"
-                  type="tel"
-                  required
-                  inputMode="tel"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder={t("apply.phonePlaceholder")}
-                  className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none focus:border-primary"
-                />
+                {/* Country picker with the flag and dial code (2026-07-29) —
+                    the field used to be a bare text box where the whole
+                    "+374 …" had to be typed, and a number without a country
+                    code is a lead nobody can call. */}
+                <PhoneInput id="apply-phone" required value={phone} onChange={setPhone} />
                 {phone.trim() !== "" && phone.trim() !== DEFAULT_DIAL_CODE && !isValidPhone(phone) ? (
                   <p className="mt-1 text-xs text-muted-foreground">{t("apply.phoneInvalid")}</p>
                 ) : null}
@@ -290,12 +384,7 @@ export function ApplicationDialog({
               <Button type="button" variant="secondary" className="flex-1" onClick={onClose} disabled={pending}>
                 {t("apply.cancel")}
               </Button>
-              <Button
-                type="submit"
-                variant="primary"
-                className="flex-1"
-                disabled={pending || message.trim().length < MIN_MESSAGE || !isValidPhone(phone)}
-              >
+              <Button type="submit" variant="primary" className="flex-1" disabled={pending || !canSubmit}>
                 {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : t("apply.submit")}
               </Button>
             </div>

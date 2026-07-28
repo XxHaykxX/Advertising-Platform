@@ -1,9 +1,10 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MediaField } from "@/components/media-field";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { makeUI, type Locale } from "@/lib/i18n";
 import { updateCreatorProfile, type CreatorProfileFormState } from "../actions";
 
@@ -33,6 +34,7 @@ export function ProfileForm({
   locale: Locale;
 }) {
   const t = makeUI(locale);
+  const [phoneValue, setPhoneValue] = useState(phone);
   const [state, formAction, pending] = useActionState<CreatorProfileFormState, FormData>(
     updateCreatorProfile,
     initialState,
@@ -86,16 +88,15 @@ export function ProfileForm({
             />
           </div>
 
-          <label className="mt-4 block max-w-md">
+          <div className="mt-4 block max-w-md">
             <span className={labelClass}>{t("account.profile.phone")}</span>
-            <input
-              name="phone"
-              type="tel"
-              defaultValue={phone}
-              placeholder={t("account.profile.phone")}
-              className={fieldClass}
-            />
-          </label>
+            {/* Country picker with the flag and dial code (2026-07-29). The
+                visible field is controlled by the component, so the value the
+                action reads travels in a hidden input — always E.164, never
+                the masked string with spaces in it. */}
+            <PhoneInput value={phoneValue} onChange={setPhoneValue} />
+            <input type="hidden" name="phone" value={phoneValue} />
+          </div>
 
           <label className="mt-4 block max-w-md">
             <span className={labelClass}>{t("account.profile.website")}</span>

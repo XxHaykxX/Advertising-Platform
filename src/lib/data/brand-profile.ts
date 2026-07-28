@@ -12,6 +12,11 @@ export type BrandProfileDTO = {
   name: string;
   company: string;
   website: string;
+  /** The callback number the seller gets with every application. Editable here
+   *  since 2026-07-29 — until then the only way a brand's phone was ever set
+   *  was the popup asking for it, so a brand that had answered once still
+   *  couldn't correct a typo, and one that hadn't was asked every time. */
+  phone: string;
   brandCategories: string[];
   budgetRange: string;
 };
@@ -25,6 +30,7 @@ export async function getBrandProfile(userId: number): Promise<BrandProfileDTO |
       name: true,
       company: true,
       website: true,
+      phone: true,
       brandCategories: true,
       budgetRange: true,
     },
@@ -36,6 +42,7 @@ export async function getBrandProfile(userId: number): Promise<BrandProfileDTO |
     name: user.name,
     company: user.company ?? "",
     website: user.website ?? "",
+    phone: user.phone ?? "",
     brandCategories: parseStringArray(user.brandCategories),
     budgetRange: user.budgetRange ?? "",
   };

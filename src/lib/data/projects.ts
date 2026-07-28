@@ -253,6 +253,8 @@ const getProjectCached = unstable_cache(
       id: tier.id,
       name: tier.name,
       priceDisplay: formatMoney(tier.priceAmd, currency, rates, locale),
+      // The deal currency, for the application popup — see TierDTO.priceNative.
+      priceNative: formatMoney(tier.priceAmd, "AMD", rates, locale),
       benefits: parseJsonList(tier.benefits),
       isExclusive: tier.isExclusive,
       availableSlots: tier.availableSlots,
@@ -267,6 +269,7 @@ const getProjectCached = unstable_cache(
       image: pl.image ?? null,
       priceAmd: pl.priceAmd,
       priceDisplay: pl.priceAmd != null ? formatMoney(pl.priceAmd, currency, rates, locale) : null,
+      priceNative: pl.priceAmd != null ? formatMoney(pl.priceAmd, "AMD", rates, locale) : null,
       availableSlots: pl.availableSlots,
       totalSlots: pl.totalSlots,
     })),

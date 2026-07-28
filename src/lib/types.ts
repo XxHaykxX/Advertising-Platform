@@ -81,6 +81,11 @@ export interface TierDTO {
   id: number;
   name: string;
   priceDisplay: string; // preformatted in the visitor's currency
+  // The same price in AMD — the currency the creator actually set. The
+  // converted figure is fine for browsing, but an application is a commitment,
+  // so the popup quotes the deal currency (2 500 000 ֏, not €5 988, a number
+  // that would read differently tomorrow).
+  priceNative: string;
   benefits: string[]; // parsed from the JSON benefits column
   isExclusive: boolean;
   availableSlots: number | null; // null -> unspecified, don't render a count
@@ -94,6 +99,7 @@ export type PlacementDTO = {
   image: string | null; // uploaded still path ("/uploads/…"), null when none
   priceAmd: number | null; // raw AMD; null when the creator left it empty ("on request")
   priceDisplay: string | null; // preformatted in the visitor's currency, same as TierDTO.priceDisplay; null when priceAmd is null
+  priceNative: string | null; // in AMD, the currency the creator set — see TierDTO.priceNative; null when priceAmd is null
   availableSlots: number | null; // null -> unspecified, don't render a count
   totalSlots: number | null;
 };

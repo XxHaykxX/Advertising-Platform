@@ -1278,6 +1278,13 @@ export const UI: Record<string, Dict> = {
   },
   "interests.cancel": { ru: "Отмена", en: "Cancel", hy: "Չեղարկել" },
   "interests.eventResponse": { ru: "Ответ", en: "Answer", hy: "Պատասխան" },
+  // Which of the two an application names (2026-07-29) — Interest can carry a
+  // placementId OR a tierId, never neither's label at once; wording matches
+  // report.placementsTitle / apply.tierLabel so the same offer reads the same
+  // everywhere.
+  "interests.packagePlacement": { ru: "Продакт-плейсмент", en: "Product placement", hy: "Փրոդակթ փլեյսմենթ" },
+  "interests.packageSponsorship": { ru: "Спонсорский пакет", en: "Sponsorship package", hy: "Հովանավորության փաթեթ" },
+  "interests.offerAmount": { ru: "Предложенная сумма", en: "Offered amount", hy: "Առաջարկվող գումարը" },
   "account.brandOnlyNotice": {
     ru: "Подача проектов доступна только для аккаунтов создателей.",
     en: "Submitting projects is only available for creator accounts.",
@@ -1808,7 +1815,7 @@ export const UI: Record<string, Dict> = {
   "favorite.addAria": { ru: "Добавить в избранное", en: "Add to favorites", hy: "Ավելացնել ընտրյալում" },
   "favorite.removeAria": { ru: "Убрать из избранного", en: "Remove from favorites", hy: "Հեռացնել ընտրյալից" },
   "apply.title": { ru: "Отправить предложение", en: "Send an offer", hy: "Ուղարկել առաջարկ" },
-  "apply.messageLabel": { ru: "Сообщение", en: "Message", hy: "Հաղորդագրություն" },
+  "apply.messageLabel": { ru: "Сообщение (необязательно)", en: "Message (optional)", hy: "Հաղորդագրություն (ըստ ցանկության)" },
   "apply.messagePlaceholder": { ru: "Расскажите о вашем интересе к размещению…", en: "Tell us about your placement interest…", hy: "Պատմեք ձեր տեղադրման հետաքրքրության մասին…" },
   "apply.contactLabel": { ru: "Контакт (необязательно)", en: "Contact (optional)", hy: "Կոնտակտ (ըստ ցանկության)" },
   // ── Media picker (audit 4.5: the dialog was English-only for members) ──
@@ -1891,8 +1898,27 @@ export const UI: Record<string, Dict> = {
   "apply.tierLabel": { ru: "Спонсорский пакет", en: "Sponsorship package", hy: "Հովանավորության փաթեթ" },
   "apply.tierNone": { ru: "Не выбран — обсудим", en: "Not selected — let's discuss", hy: "Ընտրված չէ — կքննարկենք" },
   "apply.tierSoldOut": { ru: "мест нет", en: "no slots left", hy: "տեղեր չկան" },
+  // The picker covers BOTH offers since 2026-07-29 — it used to list
+  // sponsorship packages only, so a brand that came for an in-story placement
+  // had to describe it in prose and the seller had to guess the price.
+  "apply.offerLabel": { ru: "На что подаёте заявку", en: "What you are applying for", hy: "Ինչի՞ համար եք դիմում" },
+  "apply.offerGroupPlacements": { ru: "Продакт-плейсмент", en: "Product placement", hy: "Փրոդակթ փլեյսմենթ" },
+  "apply.offerGroupTiers": { ru: "Спонсорские пакеты", en: "Sponsorship packages", hy: "Հովանավորության փաթեթներ" },
+  // Prices in the popup are quoted in the deal currency (AMD). The visitor's
+  // own currency is shown as an aside, marked as a rate that moves, so nobody
+  // reads "€5 988" as the sum being agreed.
+  "apply.approxRate": { ru: "≈ {x} по курсу на сегодня", en: "≈ {x} at today's rate", hy: "≈ {x}՝ այսօրվա փոխարժեքով" },
+  "apply.offerAmountLabel": { ru: "Ваша цена, ֏", en: "Your price, ֏", hy: "Ձեր գինը, ֏" },
+  "apply.offerAmountHint": {
+    ru: "Если цена «по запросу» — назовите свою сумму",
+    en: "If the price is on request, name your own",
+    hy: "Եթե գինը «հարցումով» է, նշեք ձերը",
+  },
   "apply.contactPlaceholder": { ru: "Email или телефон", en: "Email or phone", hy: "Էլ. փոստ կամ հեռախոս" },
-  "apply.productLabel": { ru: "Что размещаем (необязательно)", en: "What is being placed (optional)", hy: "Ի՞նչ ենք տեղադրում (ըստ ցանկության)" },
+  // Required since 2026-07-29 (it was the optional one, with the free-text
+  // message mandatory — inverted: without the product the seller cannot tell
+  // what the offer is even about).
+  "apply.productLabel": { ru: "Что размещаем", en: "What is being placed", hy: "Ի՞նչ ենք տեղադրում" },
   "apply.productPlaceholder": { ru: "Товар, услуга или бренд для размещения", en: "Product, service or brand to place", hy: "Ապրանք, ծառայություն կամ բրենդ տեղադրման համար" },
   "apply.timingLabel": { ru: "Желаемые сроки", en: "Preferred timing", hy: "Ցանկալի ժամկետները" },
   "apply.timingPlaceholder": { ru: "Например: осень 2026", en: "For example: autumn 2026", hy: "Օրինակ՝ 2026-ի աշուն" },
@@ -2002,6 +2028,11 @@ export const UI: Record<string, Dict> = {
     ru: "Опишите запрос подробнее — минимум 20 символов.",
     en: "Please describe your request in more detail — at least 20 characters.",
     hy: "Նկարագրեք հարցումն ավելի մանրամասն՝ նվազագույնը 20 նիշ։",
+  },
+  "account.brand.applyProductRequired": {
+    ru: "Укажите, что размещаем — товар, услугу или бренд.",
+    en: "Say what is being placed — the product, service or brand.",
+    hy: "Նշեք, թե ինչ ենք տեղադրում՝ ապրանք, ծառայություն կամ բրենդ։",
   },
 
   // ── browse filters (4.4) ──

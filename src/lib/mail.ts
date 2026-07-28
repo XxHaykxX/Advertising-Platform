@@ -252,6 +252,9 @@ type InterestMailInput = {
   projectTitle: string;
   brandName: string;
   tierName?: string;
+  // The product placement applied for (2026-07-29), mutually exclusive with
+  // tierName in practice — one picker over both lists.
+  placementName?: string;
   message?: string;
   contact?: string;
   note?: string;
@@ -261,10 +264,23 @@ type InterestMailInput = {
   productInfo?: string;
   desiredTiming?: string;
   dealType?: string;
+  // What the brand offers to pay, in AMD (2026-07-29) — the currency the
+  // seller priced in. The email is tri-lingual with no visitor-currency
+  // context, so it is never converted (same reason as every AMD-only render
+  // in the cabinets).
+  offerAmountAmd?: number;
   /** Budget bracket + categories from the brand's profile, already formatted
    *  by the caller — the email is tri-lingual and has no locale of its own. */
   brandBudget?: string;
 };
+
+/** "2500000" → "2,500,000 ֏". Mirrors src/lib/currency's AMD suffix; the mail
+ *  templates have no reader locale to pick a grouping convention with, so
+ *  this pins one (en-US grouping) rather than importing the locale-aware
+ *  formatter. */
+function formatAmdPlain(amd: number): string {
+  return `${new Intl.NumberFormat("en-US").format(amd)} ֏`;
+}
 
 export function newInterestTemplate(input: InterestMailInput, base: string = siteUrl()) {
   const url = `${base}/account/interests`;
@@ -277,10 +293,19 @@ export function newInterestTemplate(input: InterestMailInput, base: string = sit
     BOTH: "Վճարում + բարտեր / Оплата + бартер / Cash + barter",
   };
   const details = [
-    input.tierName ? `<br/><strong>${escapeHtml(input.tierName)}</strong>` : "",
+    // An application names EITHER a placement OR a tier — never both. The two
+    // are labelled (the way DEAL_LABEL is) because the names alone don't say
+    // which offer this is, and they are sold and priced differently.
+    input.placementName
+      ? `<br/>Փլեյսմենթ / Плейсмент / Placement: <strong>${escapeHtml(input.placementName)}</strong>`
+      : "",
+    input.tierName
+      ? `<br/>Հովանավորություն / Спонсорство / Sponsorship: <strong>${escapeHtml(input.tierName)}</strong>`
+      : "",
     input.productInfo ? `<br/>${escapeHtml(input.productInfo)}` : "",
     input.desiredTiming ? `<br/>${escapeHtml(input.desiredTiming)}` : "",
     input.dealType && DEAL_LABEL[input.dealType] ? `<br/>${DEAL_LABEL[input.dealType]}` : "",
+    input.offerAmountAmd != null ? `<br/>${formatAmdPlain(input.offerAmountAmd)}` : "",
     input.brandBudget ? `<br/>${escapeHtml(input.brandBudget)}` : "",
     input.message ? `<br/>${escapeHtml(input.message)}` : "",
     input.contact ? `<br/>${escapeHtml(input.contact)}` : "",
