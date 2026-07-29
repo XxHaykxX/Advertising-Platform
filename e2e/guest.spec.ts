@@ -12,12 +12,11 @@ test.describe("guest — public catalog", () => {
     await page.goto("/catalog");
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 
-    // Format filter (V2) exists, and the Country facet keeps the parenthesised
-    // group intact (splitCountries fix) instead of splitting on the inner comma.
+    // Format filter (V2) exists. The parenthesised-country rule it used to
+    // check here ("Diaspora (US, France)" must not split on the inner comma)
+    // depended on one seeded project and went vacuous when the local dataset
+    // changed — it lives in src/lib/data/split-countries.test.ts now.
     await expect(page.getByRole("button", { name: "Ձևաչափ" })).toBeVisible();
-    await expect(
-      page.getByRole("checkbox", { name: "Diaspora (US, France)" }),
-    ).toBeVisible();
 
     const firstReport = page.locator('a[href^="/reports/"]').first();
     await expect(firstReport).toBeVisible();

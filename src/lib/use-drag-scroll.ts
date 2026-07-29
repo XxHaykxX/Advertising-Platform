@@ -45,6 +45,11 @@ export function useDragScroll(ref: RefObject<HTMLElement | null>) {
       } catch {
         // Not capturable — the drag still works while the cursor stays inside.
       }
+      // The strip carries `scroll-smooth` for the arrow buttons, and that CSS
+      // also animates a plain `scrollLeft =` assignment — under the cursor it
+      // reads as the strip lagging a moving target. Direct writes go instant
+      // for the duration of the drag; `stop` hands the class back.
+      el.style.scrollBehavior = "auto";
       el.classList.add("is-dragging");
     }
 
@@ -62,12 +67,23 @@ export function useDragScroll(ref: RefObject<HTMLElement | null>) {
     function stop(e: PointerEvent) {
       if (!el || pointerId !== e.pointerId) return;
       pointerId = null;
+      el.style.scrollBehavior = "";
       el.classList.remove("is-dragging");
       try {
         if (el.hasPointerCapture(e.pointerId)) el.releasePointerCapture(e.pointerId);
       } catch {
         // Already released — nothing to undo.
       }
+    }
+
+    // Images and links are natively draggable, so pressing on a card photo and
+    // moving started an HTML5 drag of that image: the browser then stops
+    // sending pointermove/pointerup entirely and the strip never scrolls — the
+    // grab silently did nothing on every card that has a headshot. Nothing
+    // inside a scroll strip is meant to be dragged out of the page, so refuse
+    // the native drag outright.
+    function onDragStart(e: DragEvent) {
+      e.preventDefault();
     }
 
     // Capture phase: the click has to be swallowed before it reaches whatever
@@ -83,12 +99,14 @@ export function useDragScroll(ref: RefObject<HTMLElement | null>) {
     el.addEventListener("pointermove", onPointerMove);
     el.addEventListener("pointerup", stop);
     el.addEventListener("pointercancel", stop);
+    el.addEventListener("dragstart", onDragStart);
     el.addEventListener("click", onClick, true);
     return () => {
       el.removeEventListener("pointerdown", onPointerDown);
       el.removeEventListener("pointermove", onPointerMove);
       el.removeEventListener("pointerup", stop);
       el.removeEventListener("pointercancel", stop);
+      el.removeEventListener("dragstart", onDragStart);
       el.removeEventListener("click", onClick, true);
     };
   }, [ref]);

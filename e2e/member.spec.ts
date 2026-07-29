@@ -13,6 +13,16 @@ async function fillCommon(page: import("@playwright/test").Page, name: string, e
   await page.fill('input[name="password"]', "e2e-pass-1234");
 }
 
+// The phone field is react-international-phone (2026-07-29): it keeps its own
+// formatted state, so `fill()` is swallowed and the box stays on the bare
+// "+374 " dial code — which is not a number, so submit stays disabled and the
+// spec looks like a product bug. Type the national digits like a person would.
+async function typePhone(scope: import("@playwright/test").Locator) {
+  const field = scope.locator("#apply-phone");
+  await field.click();
+  await field.pressSequentially("91234567", { delay: 20 });
+}
+
 test.describe("member registration + role routing", () => {
   test("BRAND registers → lands in the brand cabinet (/account/brand)", async ({ page }) => {
     await page.goto("/register"); // default account type = brand
@@ -50,7 +60,9 @@ test.describe("brand — sends an offer (V8)", () => {
     const href = await firstReport.getAttribute("href");
     await page.goto(href!);
 
-    await page.getByRole("button", { name: "Ցուցաբերել հետաքրքրություն" }).first().click();
+    // One short CTA everywhere since 2026-07-29 ("report.offerBarCta") — the
+    // old "Ցուցաբերել հետաքրքրություն" wording is gone from the page.
+    await page.getByRole("button", { name: "Ներկայացնել հայտ" }).first().click();
 
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible({ timeout: 10000 });
@@ -62,7 +74,7 @@ test.describe("brand — sends an offer (V8)", () => {
     await dialog.locator("#apply-deal").selectOption("CASH");
     // A fresh account has no phone on file, so the field is asked for and
     // starts on the +374 dial code alone — which isn't a number yet.
-    await dialog.locator("#apply-phone").fill("+374 91 234 567");
+    await typePhone(dialog);
     // Must clear the 20-character minimum, otherwise submit stays disabled.
     await dialog
       .locator("#apply-message")
@@ -89,11 +101,13 @@ test.describe("brand — sends an offer (V8)", () => {
     await expect(firstReport).toBeVisible({ timeout: 15000 });
     await page.goto((await firstReport.getAttribute("href"))!);
 
-    await page.getByRole("button", { name: "Ցուցաբերել հետաքրքրություն" }).first().click();
+    // One short CTA everywhere since 2026-07-29 ("report.offerBarCta") — the
+    // old "Ցուցաբերել հետաքրքրություն" wording is gone from the page.
+    await page.getByRole("button", { name: "Ներկայացնել հայտ" }).first().click();
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible({ timeout: 10000 });
 
-    await dialog.locator("#apply-phone").fill("+374 91 234 567");
+    await typePhone(dialog);
     await dialog.locator("#apply-message").fill("привет");
     await expect(dialog.getByRole("button", { name: "Ուղարկել առաջարկը" })).toBeDisabled();
   });
@@ -109,18 +123,24 @@ test.describe("brand — sends an offer (V8)", () => {
     await expect(firstReport).toBeVisible({ timeout: 15000 });
     await page.goto((await firstReport.getAttribute("href"))!);
 
-    await page.getByRole("button", { name: "Ցուցաբերել հետաքրքրություն" }).first().click();
+    // One short CTA everywhere since 2026-07-29 ("report.offerBarCta") — the
+    // old "Ցուցաբերել հետաքրքրություն" wording is gone from the page.
+    await page.getByRole("button", { name: "Ներկայացնել հայտ" }).first().click();
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible({ timeout: 10000 });
 
     const submit = dialog.getByRole("button", { name: "Ուղարկել առաջարկը" });
+    // "What is being placed" became the required field on 2026-07-29 and the
+    // free-text message the optional one — fill it so this test is held up by
+    // the phone alone, which is what it is about.
+    await dialog.locator("#apply-product").fill("E2E тестовый продукт");
     await dialog
       .locator("#apply-message")
       .fill("E2E: сообщение достаточной длины, но телефон не дописан.");
     // The field is seeded with the dial code alone — that must not pass.
     await expect(submit).toBeDisabled();
 
-    await dialog.locator("#apply-phone").fill("+374 91 234 567");
+    await typePhone(dialog);
     await expect(submit).toBeEnabled();
   });
 });
