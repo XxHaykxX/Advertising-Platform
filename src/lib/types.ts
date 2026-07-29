@@ -80,6 +80,7 @@ export interface ActorDTO {
 export interface TierDTO {
   id: number;
   name: string;
+  priceAmd: number; // raw AMD — lets the offer summary compare tiers with placements
   priceDisplay: string; // preformatted in the visitor's currency
   // The same price in AMD — the currency the creator actually set. The
   // converted figure is fine for browsing, but an application is a commitment,
@@ -87,6 +88,7 @@ export interface TierDTO {
   // that would read differently tomorrow).
   priceNative: string;
   benefits: string[]; // parsed from the JSON benefits column
+  image: string | null; // uploaded still path ("/uploads/…"), same contract as PlacementDTO.image; null when none
   isExclusive: boolean;
   availableSlots: number | null; // null -> unspecified, don't render a count
   totalSlots: number | null;

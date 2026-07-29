@@ -1,5 +1,6 @@
-import { Building2, Clapperboard, Film, MapPin, Wallet } from "lucide-react";
+import { Building2, Clapperboard, Film, MapPin } from "lucide-react";
 import { Reveal } from "@/components/ui/reveal";
+import { DealCard } from "@/components/report/deal-card";
 import { BackButton, PrintButton, ShareButton } from "@/components/report/report-actions";
 import { PosterSlider } from "@/components/report/poster-slider";
 import { toEmbedUrl } from "@/components/report/report-video";
@@ -9,11 +10,24 @@ import { parseStringArray, splitCountries } from "@/lib/data/format";
 import { DEFAULT_LOCALE, localizeValue, makeUI, type Locale } from "@/lib/i18n";
 import type { ProjectDetailDTO } from "@/lib/types";
 
+/** Offer summary for the hero's deal card. Computed in page.tsx (it is the
+ *  same summary the sticky bar shows) rather than here, so the two can never
+ *  disagree and the deadline countdown stays outside the cached queries. */
+export type HeroDeal = {
+  /** Cheapest offer on the page, preformatted; null when none has a price. */
+  fromPrice: string | null;
+  slotsFree: number;
+  slotsTotal: number;
+  daysLeft: number | null;
+};
+
 export function ReportHero({
   project,
+  deal,
   locale = DEFAULT_LOCALE,
 }: {
   project: ProjectDetailDTO;
+  deal: HeroDeal;
   locale?: Locale;
 }) {
   const t = makeUI(locale);
@@ -92,20 +106,21 @@ export function ReportHero({
               ) : null}
             </div>
 
-            <div className="grid grid-cols-2 gap-2 sm:gap-3">
-              {/* Two separate figures (owner decision C.3): production budget
-                  is what the CSV schema calls "Budget", box office is gross
-                  receipts. Either may be unset. */}
-              {project.productionBudgetDisplay ? (
-                <div className="rounded-xl border border-border bg-card p-3 sm:p-4">
-                  <Wallet className="h-4 w-4 text-primary" />
-                  <div className="mt-2 break-words text-base font-bold text-foreground sm:text-lg">
-                    {project.productionBudgetDisplay}
-                  </div>
-                  <div className="text-xs text-muted-foreground">{t("report.productionBudget")}</div>
-                </div>
-              ) : null}
-            </div>
+            {/* The production budget used to sit here alone in a half-width
+                box, leaving the rest of the column empty. It is now the top
+                tier of the deal card, which fills the column with the offer
+                itself and ends in the apply button (owner decision
+                2026-07-29). On a phone the columns collapse in source order,
+                so the card lands right under the video. */}
+            <DealCard
+              budgetDisplay={project.productionBudgetDisplay || null}
+              fromPrice={deal.fromPrice}
+              slotsFree={deal.slotsFree}
+              slotsTotal={deal.slotsTotal}
+              applicationDeadline={project.applicationDeadline}
+              daysLeft={deal.daysLeft}
+              locale={locale}
+            />
           </div>
         </Reveal>
 

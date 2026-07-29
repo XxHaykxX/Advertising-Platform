@@ -7,6 +7,7 @@ import { Container } from "@/components/ui/container";
 import { Reveal } from "@/components/ui/reveal";
 import { Button } from "@/components/ui/button";
 import { PageHero } from "@/components/ui/page-hero";
+import { HowItWorksFlow } from "@/components/how-it-works-flow";
 import { getLocale } from "@/lib/data/locale";
 import { getCurrency } from "@/lib/data/currency";
 import { makeUI } from "@/lib/i18n";
@@ -53,6 +54,10 @@ export default async function HowItWorksPage() {
         subtitle={t("hiw.heroSubtitle")}
         locale={locale}
       />
+
+      {/* Converging-flows diagram (audit E1) — shows the two sides actually
+          meet before the reader gets to the detailed per-side steps below. */}
+      <HowItWorksFlow locale={locale} />
 
       {/* Two-column steps section */}
       <Section>

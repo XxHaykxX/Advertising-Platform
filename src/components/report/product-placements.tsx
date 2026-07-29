@@ -1,6 +1,8 @@
 import Image from "next/image";
 import { Reveal } from "@/components/ui/reveal";
 import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
+import { OfferApplyButton } from "@/components/report/offer-apply-button";
+import { offerValue } from "@/lib/offer-value";
 import type { ProjectDetailDTO } from "@/lib/types";
 
 /**
@@ -71,6 +73,20 @@ export function ProductPlacements({
                       ))}
                     </ul>
                   ) : null}
+                  {/* Pinned to the card's bottom (mt-auto) so every card in a
+                      row lines its button up on one edge regardless of how
+                      long its bullet list is. */}
+                  <div className="mt-auto pt-4">
+                    <OfferApplyButton
+                      offer={offerValue({ id: p.id, kind: "PLACEMENT" })}
+                      // Same short wording as the sticky bar and the facts
+                      // block: three different names for one action read as
+                      // three different actions (owner decision 2026-07-29).
+                      // The card the button sits in already says which offer
+                      // it is about.
+                      label={t("report.offerBarCta")}
+                    />
+                  </div>
                 </div>
               </div>
             </Reveal>

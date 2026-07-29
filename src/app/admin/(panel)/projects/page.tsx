@@ -3,6 +3,7 @@ import { Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireContentEditor } from "@/lib/auth/require";
 import { isArchived } from "@/lib/data/format";
+import { missingCount, projectCompleteness } from "@/lib/project-completeness";
 import { PlainProjectsTable, ReorderableProjectsTable, type ProjectRow } from "./reorder-list";
 
 export default async function ProjectsAdminPage() {
@@ -28,6 +29,12 @@ export default async function ProjectsAdminPage() {
     orderBy: { sortOrder: "asc" },
     include: {
       owner: { select: { name: true } },
+      // Counts feed the "Incomplete: N" badge — see projectCompleteness. Rows
+      // themselves aren't needed, only whether each block has any; packages
+      // are the exception, since a package without a benefits list doesn't
+      // count as filled (it can't be published either).
+      _count: { select: { actors: true, milestones: true, placements: true } },
+      tiers: { select: { benefits: true } },
     },
   });
 
@@ -49,6 +56,31 @@ export default async function ProjectsAdminPage() {
     // Derived here rather than queried: the archive is "the placement deadline
     // is behind us", with no column and no cron job to keep in sync.
     archived: isArchived(p.applicationDeadline?.toISOString() ?? null),
+    incomplete: missingCount(
+      projectCompleteness({
+        tagline: p.tagline ?? "",
+        poster: p.poster,
+        videoEmbedUrl: p.videoEmbedUrl,
+        videoFile: p.videoFile,
+        gallery: p.gallery,
+        castCount: p._count.actors,
+        milestonesCount: p._count.milestones,
+        placementsCount: p._count.placements,
+        tiers: p.tiers,
+        studio: p.studio,
+        kind: p.kind,
+        episodes: p.episodes,
+        episodeMinutes: p.episodeMinutes,
+        durationMinutes: p.durationMinutes,
+        references: p.references,
+        applicationDeadline: p.applicationDeadline,
+        releaseDate: p.releaseDate,
+        platforms: p.platforms,
+        cinemas: p.cinemas,
+        productionBudgetAmd: p.productionBudgetAmd,
+        ageRating: p.ageRating,
+      }),
+    ),
   }));
 
   const archivedCount = rows.filter((r) => r.archived).length;

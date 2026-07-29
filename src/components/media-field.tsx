@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import Image from "next/image";
 import { FileVideo, ImageIcon, Loader2 } from "lucide-react";
 import { MediaPicker, isVideoPath, type MediaPickerAccept, type MediaPickerScope } from "@/components/media-picker";
+import { MediaCropDialog } from "@/components/media-crop-dialog";
 import { uploadImage } from "@/lib/actions/uploads";
 import { uploadMemberImage } from "@/lib/actions/member-uploads";
 import { captureVideoPoster } from "@/lib/video-poster";
@@ -40,6 +41,8 @@ export function MediaField({
   previewShape = "video",
   compact = false,
   onChange,
+  cropAspect,
+  cropLabels,
 }: {
   /** Omit to skip the hidden input — used inside a repeatable row list (e.g.
    *  placements-editor.tsx), where the picked path is read back via `onChange`
@@ -78,9 +81,21 @@ export function MediaField({
    *  callers that have no hidden-input `name` need this to mirror the path into
    *  their own controlled state. */
   onChange?: (value: string) => void;
+  /** Opts this field into the crop step (task #2): a freshly dropped/picked
+   *  image is cropped to this w/h ratio before it's uploaded. Undefined (the
+   *  default) leaves every existing caller's behaviour untouched — only
+   *  `accept === "image"` fields honour it; video is never cropped, and a
+   *  file already in the media library isn't re-cropped either. */
+  cropAspect?: number;
+  /** Crop dialog copy, localized by the caller. Omit to keep MediaCropDialog's
+   *  own English defaults. */
+  cropLabels?: { title: string; zoom: string; cancel: string; apply: string; hint?: string };
 }) {
   const [value, setValue] = useState(initial);
   const [open, setOpen] = useState(false);
+  // A file that's mid-crop — set by handleDrop instead of uploading straight
+  // away, cleared once MediaCropDialog cancels or hands back the result.
+  const [cropFile, setCropFile] = useState<File | null>(null);
   // Same reasoning as ImageUploader's drop zone: the picker dialog could always
   // upload, but the form itself had no target to drag a file onto — most of all
   // on the video field, where the file is the whole point.
@@ -92,17 +107,9 @@ export function MediaField({
     onChange?.(v);
   }
 
-  async function handleDrop(file: File | undefined) {
-    if (!file) return;
-
-    const isVideo = file.type.startsWith("video/");
-    const kind: "image" | "video" =
-      accept === "video" ? "video" : accept === "any" ? (isVideo ? "video" : "image") : "image";
-    // Refuse a mismatch outright rather than uploading a picture into the
-    // trailer slot: the field decides what it accepts, not the file.
-    if (accept === "video" && !isVideo) return;
-    if (accept === "image" && isVideo) return;
-
+  // The actual round trip — shared by a plain drop and by MediaCropDialog's
+  // onDone, which hands back a cropped File to go through the same checks.
+  async function uploadFile(file: File, kind: "image" | "video") {
     setDropError(null);
     const max = MAX_MB[kind];
     if (file.size > max * 1024 * 1024) {
@@ -131,6 +138,29 @@ export function MediaField({
         setDropError(`${errTooLargeLabel}: ${file.name}`);
       }
     });
+  }
+
+  async function handleDrop(file: File | undefined) {
+    if (!file) return;
+
+    const isVideo = file.type.startsWith("video/");
+    const kind: "image" | "video" =
+      accept === "video" ? "video" : accept === "any" ? (isVideo ? "video" : "image") : "image";
+    // Refuse a mismatch outright rather than uploading a picture into the
+    // trailer slot: the field decides what it accepts, not the file.
+    if (accept === "video" && !isVideo) return;
+    if (accept === "image" && isVideo) return;
+
+    // A fresh upload on a cropAspect field goes through the crop dialog first
+    // — uploadFile only runs once MediaCropDialog hands back the result.
+    // A file picked from the library (already on the server) skips this: it
+    // never reaches handleDrop, only MediaPicker's own onSelect does.
+    if (cropAspect && accept === "image") {
+      setCropFile(file);
+      return;
+    }
+
+    await uploadFile(file, kind);
   }
 
   const acceptMap: Record<string, string[]> =
@@ -241,6 +271,20 @@ export function MediaField({
         accept={accept}
         locale={locale}
       />
+
+      {cropAspect ? (
+        <MediaCropDialog
+          file={cropFile}
+          aspect={cropAspect}
+          locale={locale}
+          labels={cropLabels}
+          onCancel={() => setCropFile(null)}
+          onDone={(cropped) => {
+            setCropFile(null);
+            void uploadFile(cropped, "image");
+          }}
+        />
+      ) : null}
     </div>
   );
 }

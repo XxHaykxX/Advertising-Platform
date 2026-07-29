@@ -13,6 +13,15 @@ import {
 } from "@/lib/auth/permissions";
 import type { Role } from "@prisma/client";
 
+/* A rejected session is sent through the signout route, not straight to the
+   login page. Straight to /login is what caused ERR_TOO_MANY_REDIRECTS for a
+   member blocked mid-session: the cookie is still validly signed, so proxy.ts
+   reads it as "a member" and bounces back into the cabinet, which lands here
+   again. Only clearing the cookie ends that, and a server component can't —
+   see src/app/api/auth/signout/route.ts. */
+const SIGNOUT_MEMBER = "/api/auth/signout";
+const SIGNOUT_STAFF = "/api/auth/signout?to=staff";
+
 export type AuthedUser = {
   id: number;
   email: string;
@@ -80,8 +89,8 @@ function isStaffRole(role: Role): boolean {
    can never reach the admin panel even with a valid member session. */
 export async function requireUser(): Promise<AuthedUser> {
   const user = await loadCurrentUser();
-  if (!user) redirect("/admin/login");
-  if (!isStaffRole(user.role)) redirect("/admin/login");
+  if (!user) redirect(SIGNOUT_STAFF);
+  if (!isStaffRole(user.role)) redirect(SIGNOUT_STAFF);
   return user;
 }
 
@@ -89,7 +98,7 @@ export async function requireUser(): Promise<AuthedUser> {
    otherwise (unauthenticated, staff, or not-yet-approved / blocked). */
 export async function requireMember(): Promise<AuthedUser> {
   const user = await loadCurrentMember();
-  if (!user) redirect("/login");
+  if (!user) redirect(SIGNOUT_MEMBER);
   return user;
 }
 

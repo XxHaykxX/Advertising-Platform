@@ -44,7 +44,14 @@ export default async function LoginPage({
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
             {t("login.noAccount")}{" "}
-            <Link href="/register" className="font-medium text-primary hover:underline">
+            {/* Carry ?from= into sign-up too: a guest who clicked Apply on an
+                offer card has no account yet more often than not, and this
+                link used to drop their destination on the floor — they
+                registered and landed in the cabinet with the offer lost. */}
+            <Link
+              href={from ? `/register?from=${encodeURIComponent(from)}` : "/register"}
+              className="font-medium text-primary hover:underline"
+            >
               {t("login.registerLink")}
             </Link>
           </p>

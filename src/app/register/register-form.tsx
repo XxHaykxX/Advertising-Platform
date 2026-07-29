@@ -13,9 +13,16 @@ export function RegisterForm({
   locale,
   googleEnabled,
   initialType = "brand",
+  from,
 }: {
   locale: Locale;
   googleEnabled?: boolean;
+  /** Where the visitor was headed before the sign-up wall — a guest who
+   *  clicked Apply on an offer card arrives with
+   *  `/reports/34?offer=P:5` and must land back on that card, popup open,
+   *  rather than in the cabinet with the intent lost. Re-validated
+   *  server-side (safeMemberRedirect). */
+  from?: string;
   /** Which side of the marketplace to preselect. The "List your project" CTA
    *  on the landing page is aimed at creators, so it arrives with
    *  ?role=creator instead of dropping them on the brand tab (audit 5.9). */
@@ -62,6 +69,7 @@ export function RegisterForm({
       )}
       <form action={formAction} className={cn("space-y-5", googleEnabled ? "mt-4" : "mt-8")}>
       <input type="hidden" name="type" value={type} />
+      {from && <input type="hidden" name="from" value={from} />}
 
       <div>
         <span className="mb-1.5 block text-sm font-semibold text-foreground">

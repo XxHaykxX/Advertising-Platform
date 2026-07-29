@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import type { InterestStatus } from "@prisma/client";
 import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
 import { ApplicationDialog, type ApplicationOffer } from "@/components/report/application-dialog";
@@ -23,10 +23,31 @@ type ReportInterestContextValue = {
   /** Localized copy for the disabled button, resolved here so the button stays
    *  free of the report page's translation plumbing. */
   archivedLabel: string;
-  openDialog: () => void;
+  /** Who is looking. Every offer card now carries its own apply button, and
+   *  what that button is depends on the viewer: a brand opens the popup, a
+   *  guest is sent to sign in and brought back, and a creator or staff member
+   *  — who cannot apply to anything — is shown nothing at all. */
+  viewer: ReportViewer;
+  /** Where a guest goes to sign in, with this page as the return target. The
+   *  offer they clicked rides along so the popup reopens on it. */
+  loginHref: (offer?: string) => string;
+  /** `offer` is an offerValue ("P:5" / "T:3") — the card the visitor clicked,
+   *  preselected in the popup's picker. Omitted by the page-level buttons,
+   *  which open the popup with nothing chosen. */
+  openDialog: (offer?: string) => void;
   closeDialog: () => void;
   markApplied: () => void;
 };
+
+/** The three states an offer card's button can be in. Anything that is not a
+ *  brand or a guest ("none") gets no button: a creator looking at their own
+ *  project, or staff previewing it, have nothing to apply for. */
+export type ReportViewer = "brand" | "guest" | "none";
+
+/** Query parameter that survives the sign-in round trip: /reports/34?offer=P:5
+ *  reopens the popup on placement 5 the moment the brand lands back here, so
+ *  the intent isn't lost at the login wall (owner decision 2026-07-29). */
+export const OFFER_QUERY_PARAM = "offer";
 
 const ReportInterestContext = createContext<ReportInterestContextValue | null>(null);
 
@@ -37,10 +58,13 @@ export function ReportInterestProvider({
   locale = DEFAULT_LOCALE,
   brandPhone = "",
   archived = false,
+  viewer = "none",
   children,
 }: {
   projectId: number;
   initialStatus: InterestStatus | null;
+  /** Resolved on the server from the session — see ReportViewer. */
+  viewer?: ReportViewer;
   /** Placement deadline is behind us (see isArchived) — offers are closed. */
   archived?: boolean;
   /** Passed straight through to the popup's picker (audit 2.3) — product
@@ -54,17 +78,49 @@ export function ReportInterestProvider({
 }) {
   const [applied, setApplied] = useState(initialStatus !== null);
   const [isOpen, setIsOpen] = useState(false);
+  /** offerValue the popup should open on, or "" for "let them choose". */
+  const [preselected, setPreselected] = useState("");
   const t = makeUI(locale);
+
+  // Coming back from the login wall: /reports/34?offer=P:5 reopens the popup
+  // on the card the guest clicked before signing in. The parameter is wiped
+  // from the URL right away so a reload — or a shared link — doesn't reopen
+  // it, and so the address bar stays clean.
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const wanted = url.searchParams.get(OFFER_QUERY_PARAM);
+    if (!wanted) return;
+    // Stripped for everyone, not just the brand it was meant for: a guest or a
+    // creator who follows such a link would otherwise keep the parameter in
+    // the address bar and pass it on when sharing.
+    url.searchParams.delete(OFFER_QUERY_PARAM);
+    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+    if (archived || viewer !== "brand") return;
+    // Only an offer this project actually sells — a hand-typed id must not
+    // open a popup preselected on somebody else's placement.
+    if (!offers.some((o) => `${o.kind === "PLACEMENT" ? "P" : "T"}:${o.id}` === wanted)) return;
+    setPreselected(wanted);
+    setIsOpen(true);
+    // offers is a fresh array on every render; the effect is meant to run once
+    // on mount, when the URL is read.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [archived, viewer]);
 
   const value: ReportInterestContextValue = {
     applied,
     isOpen,
     archived,
     archivedLabel: t("report.offersClosed"),
+    viewer,
+    loginHref: (offer) =>
+      `/login?from=${encodeURIComponent(
+        offer ? `/reports/${projectId}?${OFFER_QUERY_PARAM}=${offer}` : `/reports/${projectId}`,
+      )}`,
     // Guarded as well as disabled in the UI: the popup must not be reachable
     // for a project that has stopped taking offers.
-    openDialog: () => {
+    openDialog: (offer) => {
       if (archived) return;
+      setPreselected(offer ?? "");
       setIsOpen(true);
     },
     closeDialog: () => setIsOpen(false),
@@ -78,6 +134,8 @@ export function ReportInterestProvider({
         <ApplicationDialog
           projectId={projectId}
           offers={offers}
+          initialOffer={preselected}
+          alreadyApplied={applied}
           brandPhone={brandPhone}
           t={t}
           onClose={() => setIsOpen(false)}

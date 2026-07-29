@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { getLocale } from "@/lib/data/locale";
 import { isArchived } from "@/lib/data/format";
 import { makeUI } from "@/lib/i18n";
+import { missingCount, projectCompleteness } from "@/lib/project-completeness";
 import type { ModerationStatus } from "@prisma/client";
 
 const STATUS_PILL: Record<ModerationStatus, string> = {
@@ -31,10 +32,55 @@ export default async function MyProjectsPage() {
       // Audit 4.8: the creator had no numbers about their own listing at all.
       // Only counts are exposed — WHICH brands shortlisted a project stays
       // private to those brands (that is what Favorite is for).
-      include: { _count: { select: { favorites: true, interests: true } } },
+      include: {
+        _count: {
+          select: {
+            favorites: true,
+            interests: true,
+            // Feed the "profile incomplete" badge (audit B8) — an empty block
+            // is invisible on the public page, so this list was the last place
+            // a creator could notice one before a brand didn't.
+            actors: true,
+            milestones: true,
+            placements: true,
+          },
+        },
+        // Not a count: a package with no benefits list isn't publishable, so
+        // it must not read as a filled section either.
+        tiers: { select: { benefits: true } },
+      },
     }),
   ]);
   const t = makeUI(locale);
+
+  /** Empty report-page blocks for one listing — see projectCompleteness. */
+  function incompleteCount(p: (typeof projects)[number]): number {
+    return missingCount(
+      projectCompleteness({
+        tagline: p.tagline ?? "",
+        poster: p.poster,
+        videoEmbedUrl: p.videoEmbedUrl,
+        videoFile: p.videoFile,
+        gallery: p.gallery,
+        castCount: p._count.actors,
+        milestonesCount: p._count.milestones,
+        placementsCount: p._count.placements,
+        tiers: p.tiers,
+        studio: p.studio,
+        kind: p.kind,
+        episodes: p.episodes,
+        episodeMinutes: p.episodeMinutes,
+        durationMinutes: p.durationMinutes,
+        references: p.references,
+        applicationDeadline: p.applicationDeadline,
+        releaseDate: p.releaseDate,
+        platforms: p.platforms,
+        cinemas: p.cinemas,
+        productionBudgetAmd: p.productionBudgetAmd,
+        ageRating: p.ageRating,
+      }),
+    );
+  }
 
   const STATUS_LABEL: Record<ModerationStatus, string> = {
     DRAFT: t("account.status.draft"),
@@ -111,6 +157,17 @@ export default async function MyProjectsPage() {
                     {isArchived(p.applicationDeadline?.toISOString() ?? null) ? (
                       <span className="ml-2 inline-block rounded-full border border-border bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
                         {t("account.status.archived")}
+                      </span>
+                    ) : null}
+                    {/* How many report-page blocks are still empty. They don't
+                        render at all for a brand, so nothing else on this card
+                        would show that the listing is half-built. */}
+                    {incompleteCount(p) > 0 ? (
+                      <span
+                        title={t("completeness.badgeTitle", { n: incompleteCount(p) })}
+                        className="ml-2 inline-block rounded-full border border-warn/30 bg-warn/10 px-2.5 py-1 text-xs font-medium text-warn"
+                      >
+                        {t("completeness.badge", { n: incompleteCount(p) })}
                       </span>
                     ) : null}
                     <h3 className="mt-2 truncate font-semibold text-foreground">{p.title}</h3>

@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { getProject, getProjectIds } from "@/lib/data/projects";
 import { getLocale } from "@/lib/data/locale";
 import { getCurrency } from "@/lib/data/currency";
-import { isArchived } from "@/lib/data/format";
+import { daysUntil, isArchived } from "@/lib/data/format";
 import { getSiteHeaderUser } from "@/lib/data/site-header-user";
 import { getBrandInterestStatus } from "@/lib/data/brand-interests";
 import { prisma } from "@/lib/prisma";
@@ -16,8 +16,13 @@ import { Cast } from "@/components/report/cast";
 import { ProductPlacements } from "@/components/report/product-placements";
 import { Sponsors } from "@/components/report/sponsors";
 import { ProductionTimeline } from "@/components/report/production-timeline";
-import { ReportInterestProvider } from "@/components/report/report-interest-context";
+import {
+  ReportInterestProvider,
+  type ReportViewer,
+} from "@/components/report/report-interest-context";
+import { StickyOfferBar } from "@/components/report/sticky-offer-bar";
 import { ViewPing } from "@/components/report/view-ping";
+import { makeUI } from "@/lib/i18n";
 import { ReportTabs } from "./report-tabs";
 
 export async function generateStaticParams() {
@@ -71,10 +76,57 @@ export default async function ReportPage({
       ? ((await prisma.user.findUnique({ where: { id: authed.id }, select: { phone: true } }))?.phone ?? "")
       : "";
 
+  const t = makeUI(locale);
+
+  // Who is looking decides what every offer card's button is: a brand opens
+  // the application popup, a guest is sent to sign in and brought back to the
+  // same card, and a creator or staff member — who has nothing to apply for —
+  // is shown no button at all.
+  const viewer: ReportViewer =
+    authed == null ? "guest" : authed.role === "BRAND" ? "brand" : "none";
+
+  // Summary for the sticky bar (audit C3): a brand shouldn't have to read nine
+  // cards to learn the entry price and what is still free. Placements and
+  // packages are summed together — both are "a placement in this project" from
+  // the buyer's side. Deliberately no view or application counts: on a young
+  // marketplace small numbers argue against the seller (owner decision).
+  const pricedOffers = [
+    ...project.placements
+      .filter((p) => p.priceAmd != null && p.priceAmd > 0 && p.priceDisplay != null)
+      .map((p) => ({ amd: p.priceAmd as number, display: p.priceDisplay as string })),
+    ...project.tiers
+      .filter((tier) => tier.priceAmd > 0)
+      .map((tier) => ({ amd: tier.priceAmd, display: tier.priceDisplay })),
+  ];
+  const cheapestOffer = pricedOffers.reduce<{ amd: number; display: string } | null>(
+    (min, offer) => (min == null || offer.amd < min.amd ? offer : min),
+    null,
+  );
+  const allOffers = [...project.placements, ...project.tiers];
+  // Only rows where the creator actually set a total count toward the summary;
+  // an unspecified slot count is not "zero free".
+  const slotsTotal = allOffers.reduce((sum, o) => sum + (o.totalSlots ?? 0), 0);
+  const slotsFree = allOffers.reduce(
+    (sum, o) =>
+      sum +
+      // Clamped to the total: the editors don't tie availableSlots to
+      // totalSlots, so a row saved as "14 free of 11" would otherwise print
+      // more free slots than exist.
+      (o.totalSlots != null && o.totalSlots > 0
+        ? Math.min(o.availableSlots ?? 0, o.totalSlots)
+        : 0),
+    0,
+  );
+
+  const hasOffer = allOffers.length > 0;
+  const hasProduction = project.milestones.length > 0;
+  const hasCast = project.actors.length > 0;
+
   return (
     <ReportInterestProvider
       projectId={project.id}
       initialStatus={interestStatus}
+      viewer={viewer}
       // The application popup asks what the brand wants (audit 2.3). Product
       // placements lead the list — that is the offer a brand comes here for;
       // sponsorship follows. Prices go in as AMD, the currency the creator set:
@@ -109,20 +161,68 @@ export default async function ReportPage({
       {/* Counts this visit for the owner's stats — see the component. */}
       <ViewPing projectId={project.id} />
       <Header user={user} locale={locale} currency={currency} />
-      <ReportTabs hasCast={project.actors.length > 0} locale={locale} />
-      <div id="overview">
-        <ReportHero project={project} locale={locale} />
+      <ReportTabs
+        hasProduction={hasProduction}
+        hasCast={hasCast}
+        hasOffer={hasOffer}
+        locale={locale}
+      />
+      {/* Anchor targets for the tab bar. `scroll-mt` is what keeps a clicked
+          tab from parking the section heading underneath the fixed chrome:
+          the site header is 64px (the tab bar's own `top-16`) and the tab bar
+          about 52px on top of that, so anything less hides the heading — and
+          on the offer section, the apply buttons with it (audit A3). Wrapper
+          ids are used rather than the sections' own (`#placements`,
+          `#sponsors`, `#cast`) so the two offer sections can share one
+          target and no id is defined twice. */}
+      <div id="overview" className="scroll-mt-[7.5rem]">
+        <ReportHero
+          project={project}
+          // The same summary the sticky bar gets — the hero's deal card is
+          // what a brand sees before either of them scrolls into view.
+          deal={{
+            fromPrice: cheapestOffer?.display ?? null,
+            slotsFree,
+            slotsTotal,
+            daysLeft: daysUntil(project.applicationDeadline),
+          }}
+          locale={locale}
+        />
         {/* The video now leads the hero slider (first slide) — see ReportHero /
             PosterSlider. The standalone ReportVideo section was removed so it
             isn't shown twice (user request 2026-07-25). */}
         <KeyFacts project={project} locale={locale} user={user} />
       </div>
-      <ProductionTimeline project={project} locale={locale} />
-      <Cast project={project} locale={locale} />
-      {/* Product placement first — that's what a brand comes here for;
-          sponsorship (logo on promo, credits) is the second offer. */}
-      <ProductPlacements project={project} locale={locale} />
-      <Sponsors project={project} locale={locale} />
+      <div id="production" className="scroll-mt-[7.5rem]">
+        <ProductionTimeline project={project} locale={locale} />
+      </div>
+      <div id="team" className="scroll-mt-[7.5rem]">
+        <Cast project={project} locale={locale} />
+      </div>
+      {/* pb: the sticky bar is fixed to the viewport bottom, so without room
+          reserved under the last section it covers ~73px of it — on a phone
+          that is the top of an offer card, which reads as content cut off.
+          --offer-bar-h is published by the bar itself and is 0px whenever it
+          is hidden, so nothing is reserved when nothing is there. */}
+      <div id="offer" className="scroll-mt-[7.5rem] pb-[var(--offer-bar-h,0px)]">
+        {/* Product placement first — that's what a brand comes here for;
+            sponsorship (logo on promo, credits) is the second offer. */}
+        <ProductPlacements project={project} locale={locale} />
+        <Sponsors project={project} locale={locale} />
+      </div>
+      {hasOffer ? (
+        <StickyOfferBar
+          fromLabel={
+            cheapestOffer ? t("report.offerBarFrom", { price: cheapestOffer.display }) : null
+          }
+          slotsLabel={
+            slotsTotal > 0
+              ? t("report.offerBarSlots", { free: slotsFree, total: slotsTotal })
+              : null
+          }
+          ctaLabel={t("report.offerBarCta")}
+        />
+      ) : null}
       <Footer locale={locale} currency={currency} />
     </ReportInterestProvider>
   );

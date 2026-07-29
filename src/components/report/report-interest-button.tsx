@@ -12,6 +12,13 @@ import { useReportInterest } from "@/components/report/report-interest-context";
  *  message. The open/applied state is shared between this page's two
  *  instances (key-facts + the ROI banner) so both reflect the same outcome
  *  and open the same popup. */
+/** min-h-12, not the min-h-9 this started at: `h-auto` drops the lg variant's
+ *  own height, and at min-h-9 the button came out a third shorter than every
+ *  other lg button on the page. h-auto still lets a wrapped label push it
+ *  taller. */
+const BUTTON_CLASS =
+  "h-auto min-h-12 w-full min-w-0 max-w-full whitespace-normal break-words py-2 text-center leading-tight lg:w-auto";
+
 export function ReportInterestButton({
   labelIdle,
   labelSent,
@@ -31,7 +38,7 @@ export function ReportInterestButton({
           variant="secondary"
           size="lg"
           disabled
-          className="h-auto min-h-9 w-full min-w-0 max-w-full whitespace-normal break-words py-2 text-center leading-tight lg:w-auto"
+          className={BUTTON_CLASS}
         >
           {archivedLabel}
         </Button>
@@ -45,11 +52,11 @@ export function ReportInterestButton({
         type="button"
         variant={applied ? "secondary" : "primary"}
         size="lg"
-        className={cn(
-          "h-auto min-h-9 w-full min-w-0 max-w-full whitespace-normal break-words py-2 text-center leading-tight lg:w-auto",
-          "gap-1.5",
-        )}
-        onClick={openDialog}
+        className={cn(BUTTON_CLASS, "gap-1.5")}
+        // Wrapped: openDialog now takes an optional offer to preselect, and the
+        // click event must not be passed as one. This page-level button names
+        // no particular card, so the popup opens with nothing chosen.
+        onClick={() => openDialog()}
       >
         {applied ? <Check className="h-3.5 w-3.5" /> : <Heart className="h-3.5 w-3.5" />}
         {applied ? labelSent : labelIdle}

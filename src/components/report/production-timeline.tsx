@@ -1,4 +1,5 @@
 import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
+import { TimelineScroller, type TimelineDot } from "@/components/report/timeline-scroller";
 import type { ProjectDetailDTO } from "@/lib/types";
 
 /** ISO date -> "DD.MM.YYYY" (locale-neutral) for the milestone card. */
@@ -32,31 +33,48 @@ export function ProductionTimeline({
   // Progress rail fills to the CENTER of the active node (activeIndex/(n-1)).
   const progress =
     activeIndex < 0 ? 0 : n === 1 ? (activeIndex === 0 ? 100 : 0) : (activeIndex / (n - 1)) * 100;
-  // Give each node ~200px of horizontal room; the section scrolls sideways when
-  // the timeline is wider than the viewport (many stages).
-  const minWidth = Math.max(n * 200, 720);
+  // Give each node 240px of horizontal room. It used to be 200px, which is
+  // less than the 220px a card can take — so on a ten-stage project neighbours
+  // all but touched and the outer cards were clipped by the scroller (audit
+  // B1). 240 leaves a 20px gutter between cards.
+  const minWidth = Math.max(n * 240, 720);
+
+  const stageState = (i: number): TimelineDot["state"] =>
+    activeIndex < 0 ? "upcoming" : i < activeIndex ? "done" : i === activeIndex ? "active" : "upcoming";
+  const dots: TimelineDot[] = milestones.map((m, i) => ({
+    id: m.id,
+    label: m.label,
+    state: stageState(i),
+  }));
 
   return (
     <section className="ptl-band">
       <div className="mx-auto w-full max-w-[1200px] px-6 max-sm:px-4">
-        <p className="ptl-eyebrow">{t("report.milestones.title")}</p>
+        {/* h2, not p: this was the one section on the page with no heading in
+            the document outline — invisible to a screen reader's landmarks
+            list and to anything that builds a table of contents, even though
+            the "Production" tab points straight at it (audit P8). */}
+        <h2 className="ptl-eyebrow">{t("report.milestones.title")}</h2>
 
-        <div className="ptl-scroller mt-6">
+        <TimelineScroller dots={dots}>
           <div className="ptl-timeline" style={{ ["--nodes" as string]: String(n), ["--progress" as string]: `${progress}%`, minWidth }}>
             <div className="ptl-rail" />
             {milestones.map((m, i) => {
-              const state = activeIndex < 0 ? "upcoming" : i < activeIndex ? "done" : i === activeIndex ? "active" : "upcoming";
+              const state = stageState(i);
               return (
                 <span
                   key={m.id}
                   className={`ptl-node ptl-node--${state}`}
                   style={{ gridColumn: i + 1 }}
+                  // Read by TimelineScroller to centre the current stage on
+                  // load and to work out which dot is lit.
+                  data-node-index={i}
                   aria-hidden="true"
                 />
               );
             })}
             {milestones.map((m, i) => {
-              const state = activeIndex < 0 ? "upcoming" : i < activeIndex ? "done" : i === activeIndex ? "active" : "upcoming";
+              const state = stageState(i);
               const place = i % 2 === 0 ? "above" : "below";
               const filled = state !== "upcoming";
               return (
@@ -72,7 +90,7 @@ export function ProductionTimeline({
               );
             })}
           </div>
-        </div>
+        </TimelineScroller>
 
         <div className="ptl-legend mt-6">
           <span><i className="ptl-dot ptl-dot--done" /> {t("report.milestones.done")}</span>
@@ -105,8 +123,99 @@ const PTL_CSS = `
 }
 /* Horizontal scroll for wide timelines. overflow-x:auto also clips vertical
    overflow, so the top/bottom padding gives the hover-lift + card shadow room
-   instead of getting cut off. */
-.ptl-scroller { overflow-x: auto; padding: 1.75rem 0.25rem; }
+   instead of getting cut off. The inline padding is what keeps the first and
+   last card off the scroller's edges — at 0.25rem they were being shaved
+   (audit B1) — and scroll-padding keeps a snapped stage clear of the fades. */
+.ptl-scrollwrap { position: relative; margin-top: 1.5rem; }
+.ptl-scroller {
+  overflow-x: auto;
+  padding: 1.75rem 1.5rem;
+  scroll-padding-inline: 1.5rem;
+  /* The native bar sits under the rail and reads as a stray line; the edge
+     fades and the dots are the affordance instead. */
+  scrollbar-width: none;
+  /* The rail is draggable with a mouse (useDragScroll) — the hand is what
+     says so, since there is no scrollbar left to hint at it. */
+  cursor: grab;
+}
+.ptl-scroller.is-dragging {
+  cursor: grabbing;
+  /* Text picked up mid-drag would fight the drag and leave a blue smear. */
+  user-select: none;
+}
+.ptl-scroller::-webkit-scrollbar { display: none; }
+
+/* Lit only while there is more timeline in that direction — a fade at an edge
+   with nothing behind it would be a lie about where the content is. */
+.ptl-fade {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 3rem;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.ptl-fade.is-on { opacity: 1; }
+.ptl-fade--left {
+  left: 0;
+  background: linear-gradient(90deg, var(--section), color-mix(in srgb, var(--section) 0%, transparent));
+}
+.ptl-fade--right {
+  right: 0;
+  background: linear-gradient(270deg, var(--section), color-mix(in srgb, var(--section) 0%, transparent));
+}
+
+/* Phone only: one stage fills the rail there, so the dots are what say how
+   many stages exist and which one you are on. */
+.ptl-dots { display: none; }
+@media (max-width: 767px) {
+  .ptl-scroller { scroll-snap-type: x mandatory; }
+  .ptl-node { scroll-snap-align: center; }
+  .ptl-dots {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    /* 1rem, not the 0.5rem this started at: the gap is what the tap targets
+       below are made of. At 0.5rem the pitch is 17px and any usable target
+       overlaps its neighbours, so a tap near the edge activates the wrong
+       stage — worse than a small target. At 1rem the pitch is 25px and the
+       targets sit edge to edge with no overlap; ten dots still come to 234px,
+       inside a 390px screen. */
+    gap: 1rem;
+    margin-top: 0.75rem;
+  }
+  .ptl-dot-btn {
+    position: relative; /* anchors the ::after tap-target below */
+    width: 9px;
+    height: 9px;
+    padding: 0;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    background: var(--card);
+    cursor: pointer;
+    transition: transform 0.2s, background 0.2s, border-color 0.2s;
+  }
+  /* The visible dot stays 9px (its look is not the problem), but a 9px button
+     is far under the touch target a thumb needs. ::after grows the hit area
+     to 25px — the full 44px would be three times the 25px pitch and every
+     dot would swallow both its neighbours, which is worse than a small
+     target: the tap would land on the wrong stage. */
+  .ptl-dot-btn::after {
+    content: "";
+    position: absolute;
+    inset: -8px;
+  }
+  .ptl-dot-btn--done { background: color-mix(in srgb, var(--primary) 45%, transparent); border-color: transparent; }
+  .ptl-dot-btn--active { background: var(--primary); border-color: transparent; }
+  .ptl-dot-btn.is-current { transform: scale(1.5); border-color: var(--primary); }
+  /* transform: scale() on the button scales its ::after right along with it,
+     so without this the current dot's tap zone would balloon to 37px and eat
+     into its neighbours'. Scaling the pseudo-element back down by the inverse
+     factor (1/1.5) cancels that out, holding it at the same 25px every other
+     dot gets. */
+  .ptl-dot-btn.is-current::after { transform: scale(0.6667); }
+}
 .ptl-timeline {
   display: grid;
   grid-template-columns: repeat(var(--nodes), 1fr);
@@ -230,5 +339,16 @@ const PTL_CSS = `
 @media (prefers-reduced-motion: reduce) {
   .ptl-node--active::after { animation: none; }
   .ptl-card { transition: none; }
+  .ptl-fade { transition: none; }
+  .ptl-dot-btn { transition: none; }
+}
+/* The dots live in TimelineScroller, a child component we don't own, so
+   there's no className to hang the project's usual no-print class on —
+   this reaches the same result from here instead. On paper they're just
+   dead circles with no click to give, and the edge fades are a hint to keep
+   scrolling that means nothing on a fixed page, so both go (audit P7b). */
+@media print {
+  .ptl-dots { display: none !important; }
+  .ptl-fade { display: none !important; }
 }
 `;

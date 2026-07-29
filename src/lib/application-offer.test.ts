@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { offerValue, parseOfferValue } from "@/components/report/application-dialog";
+import { offerValue, parseOfferValue } from "@/lib/offer-value";
 
 /* The application picker holds two different tables in one <select> (product
    placements and sponsorship packages), so the option value has to carry which

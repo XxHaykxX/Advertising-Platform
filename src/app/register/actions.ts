@@ -3,6 +3,7 @@
 import { cookies } from "next/headers";
 import { createMember } from "@/lib/auth/members";
 import { SESSION_COOKIE, createSessionToken, sessionCookieOptions } from "@/lib/auth/session";
+import { safeMemberRedirect } from "@/lib/auth/member-paths";
 import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
 
@@ -72,5 +73,11 @@ export async function register(
   // action response before the cookie is visible to the auth gate — a
   // nested redirect there crashes the flight tree into global-error. Instead
   // report success and let the client navigate with a fresh full request.
-  return { ok: true, redirect: "/account" };
+  //
+  // ?from= carries the page the visitor was on when they hit the sign-up wall
+  // — since 2026-07-29 that is usually an offer card they clicked Apply on,
+  // and dropping them in the cabinet instead loses the intent. Re-validated
+  // here, never trusted from the form.
+  const from = safeMemberRedirect(String(formData.get("from") ?? "") || null);
+  return { ok: true, redirect: from ?? "/account" };
 }

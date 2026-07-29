@@ -205,7 +205,7 @@ export function KeyFacts({
                 </Button>
               ) : user.role === "BRAND" ? (
                 <ReportInterestButton
-                  labelIdle={t("btn.expressInterest")}
+                  labelIdle={t("report.offerBarCta")}
                   labelSent={t("account.brand.alreadyInterested")}
                 />
               ) : null}

@@ -1,100 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import { ChevronDown, ChevronRight, Clock, Film, MapPin, Search, Sparkles, SlidersHorizontal } from "lucide-react";
+import { ChevronDown, ChevronRight, Search, Sparkles, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { GenreBadge } from "@/components/ui/badge";
-import { FavoriteHeart } from "@/components/favorite-heart";
-import { daysUntil, formatFullDate, splitCountries } from "@/lib/data/format";
+import { ProjectCard } from "@/components/project-card";
+import { splitCountries } from "@/lib/data/format";
 import { FORMAT_CATEGORY_VALUES } from "@/app/admin/(panel)/projects/form-shared";
-import { cn } from "@/lib/utils";
-import { DEFAULT_LOCALE, intlLocale, localizeValue, makeUI, type Locale } from "@/lib/i18n";
+import { DEFAULT_LOCALE, localizeValue, makeUI, type Locale } from "@/lib/i18n";
 import type { ProjectListDTO } from "@/lib/types";
-
-function BrowseCard({
-  project,
-  favorited,
-  locale,
-  onRequestLabel,
-  favoriteAddAria,
-  favoriteRemoveAria,
-  untilLabel,
-}: {
-  project: ProjectListDTO;
-  favorited: boolean;
-  locale: Locale;
-  onRequestLabel: string;
-  favoriteAddAria: string;
-  favoriteRemoveAria: string;
-  untilLabel: string;
-}) {
-  const countries = splitCountries(project.countries);
-  const deadlineDays = daysUntil(project.applicationDeadline);
-  const deadlineUrgent = deadlineDays !== null && deadlineDays <= 45;
-
-  return (
-    <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card card-lift">
-      <div className="relative aspect-video shrink-0">
-        {project.poster ? (
-          <Image
-            src={project.poster}
-            alt={project.title}
-            fill
-            className="object-cover"
-            sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
-            <Film className="h-10 w-10 text-primary/40" />
-          </div>
-        )}
-        <div className="absolute left-3 top-3">
-          <GenreBadge>{localizeValue(locale, "genre", project.genre)}</GenreBadge>
-        </div>
-        <FavoriteHeart
-          projectId={project.id}
-          initialFavorite={favorited}
-          canFavorite
-          signedIn
-          addAria={favoriteAddAria}
-          removeAria={favoriteRemoveAria}
-        />
-      </div>
-
-      <div className="flex flex-1 flex-col p-5">
-        <h3 className="text-base font-semibold text-foreground">{project.title}</h3>
-
-        <div className="mt-3 flex flex-col gap-1.5 text-xs text-muted-foreground">
-          <span>{project.format}</span>
-          <div className="flex items-center gap-1.5">
-            <MapPin className="h-3.5 w-3.5 shrink-0" />
-            <span>{countries.slice(0, 3).join(", ")}</span>
-          </div>
-          {/* 4.4 — application deadline, absent from the old brand browse card
-              even though the public catalog has always shown it. Same urgent
-              (<=45 days) highlight as catalog's ProjectRow. */}
-          {project.applicationDeadline ? (
-            <div className={cn("flex items-center gap-1.5", deadlineUrgent ? "text-warn" : undefined)}>
-              <Clock className="h-3.5 w-3.5 shrink-0" />
-              <span>
-                {untilLabel} {formatFullDate(project.applicationDeadline, intlLocale(locale))}
-              </span>
-            </div>
-          ) : null}
-        </div>
-
-
-        <div className="mt-auto pt-5">
-          <Button asChild variant="ghost" size="sm" className="w-full">
-            <Link href={`/reports/${project.id}`}>{onRequestLabel}</Link>
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 /** One checkbox facet group — shared by every filter below (4.4). Simplified
  *  copy of catalog-view.tsx's CheckboxFilter (not imported: that component is
@@ -305,16 +218,24 @@ export function BrowseView({
         </div>
       ) : (
         <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+          {/* The very same card the public catalog uses. The cabinet had its
+              own stripped copy — title, format, countries, deadline and a
+              text-looking ghost link — so a brand browsing from inside its
+              account saw less about a project than a stranger does on the
+              storefront: no extra genres, no free-slot count, no placement
+              count, no release date, no platforms, and no whole-card click
+              target. Sharing the component is also what keeps the two from
+              drifting apart again. */}
           {filtered.map((project) => (
-            <BrowseCard
+            <ProjectCard
               key={project.id}
               project={project}
-              favorited={favorites.has(project.id)}
               locale={locale}
-              onRequestLabel={t("btn.viewReport")}
-              favoriteAddAria={t("favorite.addAria")}
-              favoriteRemoveAria={t("favorite.removeAria")}
-              untilLabel={t("catalog.until")}
+              favorited={favorites.has(project.id)}
+              // A brand is signed in by definition here — the heart is live,
+              // never the "sign in to save" stub.
+              canFavorite
+              signedIn
             />
           ))}
         </div>

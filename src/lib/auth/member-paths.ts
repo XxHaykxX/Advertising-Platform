@@ -22,3 +22,23 @@ export function isMemberReachablePath(pathname: string): boolean {
     MEMBER_ALLOWED_PUBLIC_PREFIXES.some((prefix) => hasPrefix(pathname, prefix))
   );
 }
+
+/** Audit 4.3: a guest bounced to /login while looking at, say, a catalog
+   listing used to always land back in the cabinet after signing in, losing
+   their place. Only accept a same-origin, path-only ?from= — no protocol-
+   relative ("//evil.com") or backslash tricks that some browsers still treat
+   as a host separator, and no "..", which the browser normalises away and
+   which would otherwise walk out of the allow-list ("/reports/../admin/i18n")
+   — and only if a signed-in member could actually reach it (same allow-list
+   the proxy confinement enforces), so this can't be used to redirect into
+   /admin or another guest-only flow.
+
+   Shared by the login and register actions: since 2026-07-29 a guest who
+   clicks Apply on an offer card carries `?from=/reports/34?offer=P:5` all the
+   way through sign-up, not just sign-in. */
+export function safeMemberRedirect(from: string | null): string | null {
+  if (!from) return null;
+  if (!from.startsWith("/") || from.startsWith("//") || from.includes("\\")) return null;
+  if (from.includes("..")) return null;
+  return isMemberReachablePath(from) ? from : null;
+}

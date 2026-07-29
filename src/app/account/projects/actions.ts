@@ -194,6 +194,7 @@ type TierInput = {
   name?: string;
   priceAmd?: number;
   benefits?: string;
+  image?: string;
   isExclusive?: boolean;
   availableSlots?: number | null;
   totalSlots?: number | null;
@@ -346,6 +347,7 @@ function parseTierRows(fd: FormData) {
       name: (r.name || "").trim().slice(0, VARCHAR_MAX),
       priceAmd: Math.max(0, Number(r.priceAmd) || 0),
       benefits: benefitsToJson(r.benefits || ""),
+      image: (r.image || "").trim() || null,
       isExclusive: !!r.isExclusive,
       availableSlots: r.availableSlots == null ? null : Math.max(0, Number(r.availableSlots) || 0),
       totalSlots: r.totalSlots == null ? null : Math.max(0, Number(r.totalSlots) || 0),

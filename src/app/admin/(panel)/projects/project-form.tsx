@@ -25,6 +25,8 @@ import { MilestonesSection } from "./milestones-editor";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { MediaField } from "@/components/media-field";
 import { PosterGenerator, type PosterGenerateInput, type PosterGenerateResult } from "@/components/poster-generator";
+import { ProjectCompletenessChecklist } from "@/components/project-completeness-checklist";
+import type { CompletenessItem } from "@/lib/project-completeness";
 import { GENRES } from "@/lib/genres";
 import { type ProjectFormState, type ProjectFormValues } from "./actions";
 import { translateProjectAction, type TranslateProjectState } from "./translate-action";
@@ -166,6 +168,7 @@ export function ProjectForm({
   locale = "en",
   translateAction = translateProjectAction,
   posterAction,
+  completeness,
 }: {
   action: (prev: ProjectFormState, fd: FormData) => Promise<ProjectFormState>;
   initial?: ProjectFormInitial;
@@ -233,6 +236,10 @@ export function ProjectForm({
    *  generatePosterAction (wrapped below to forward projectId); the creator
    *  form passes its own member-gated twin (see account/projects/poster-action.ts). */
   posterAction?: (input: PosterGenerateInput) => Promise<PosterGenerateResult>;
+  /** "What a brand sees" checklist (audit B8) — computed by the edit page from
+   *  the SAVED row (see src/lib/project-completeness.ts). Unset on create:
+   *  there's nothing saved yet to check, so the panel doesn't render at all. */
+  completeness?: CompletenessItem[];
 }) {
   // Admin panel chrome stays English-only (#21/#15) — mode="creator" is the
   // only side that follows the caller's locale; admin ignores it entirely so
@@ -1054,7 +1061,14 @@ export function ProjectForm({
           {/* ── Sponsors (was "Placement(s)"/"Sponsorship tiers") ── */}
           <section id="sec-tiers" className="scroll-mt-24 space-y-3 rounded-xl border border-border bg-card p-4">
             <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">{t("projectForm.section.sponsorshipTiers")}</h2>
-            <TiersSection value={tiers} onChange={setTiers} t={t} templates={tierTemplates} />
+            <TiersSection
+              value={tiers}
+              onChange={setTiers}
+              t={t}
+              templates={tierTemplates}
+              scope={uploaderScope}
+              locale={locale}
+            />
           </section>
 
           {/* ── Reference Projects (was the "Comparable titles" field inside
@@ -1318,6 +1332,14 @@ export function ProjectForm({
                 {t("projectForm.activeCheckbox")}
               </label>
             </section>
+          )}
+
+          {/* ── "What a brand sees" (audit B8) ── right above the Save button,
+              same sidebar the Visibility toggle sits in: the last thing a
+              creator/admin checks before hitting Save. Unset on create (no
+              saved row yet to check against), so nothing renders there. */}
+          {completeness && (
+            <ProjectCompletenessChecklist items={completeness} locale={mode === "creator" ? locale : "en"} />
           )}
         </div>
       </div>

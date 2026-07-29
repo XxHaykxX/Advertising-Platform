@@ -9,6 +9,7 @@ import { getStreamingSources } from "@/lib/data/streaming-sources";
 import { getCountryOptions } from "@/lib/data/countries";
 import { getStudioOptions } from "@/lib/data/studios";
 import { getTierTemplates } from "@/lib/data/tier-templates";
+import { projectCompleteness } from "@/lib/project-completeness";
 import { updateProject } from "../../actions";
 import {
   formatDateInput,
@@ -98,6 +99,33 @@ export default async function EditProjectPage({
     videoFile: p.videoFile ?? "",
   };
 
+  // "What a brand sees" (audit B8) — computed from the SAVED row (`p`), which
+  // already carries every relation this needs (actors/tiers/placements/
+  // milestones counts).
+  const completeness = projectCompleteness({
+    tagline: p.tagline ?? "",
+    poster: p.poster,
+    videoEmbedUrl: p.videoEmbedUrl,
+    videoFile: p.videoFile,
+    gallery: p.gallery,
+    castCount: p.actors.length,
+    milestonesCount: p.milestones.length,
+    placementsCount: p.placements.length,
+    tiers: p.tiers,
+    studio: p.studio,
+    kind: p.kind,
+    episodes: p.episodes,
+    episodeMinutes: p.episodeMinutes,
+    durationMinutes: p.durationMinutes,
+    references: p.references,
+    applicationDeadline: p.applicationDeadline,
+    releaseDate: p.releaseDate,
+    platforms: p.platforms,
+    cinemas: p.cinemas,
+    productionBudgetAmd: p.productionBudgetAmd,
+    ageRating: p.ageRating,
+  });
+
   const action = updateProject.bind(null, pid);
 
   return (
@@ -130,6 +158,7 @@ export default async function EditProjectPage({
           name: tier.name,
           priceAmd: tier.priceAmd,
           benefits: parseBenefitsInput(tier.benefits),
+          image: tier.image ?? "",
           isExclusive: tier.isExclusive,
           availableSlots: tier.availableSlots,
           totalSlots: tier.totalSlots,
@@ -158,6 +187,7 @@ export default async function EditProjectPage({
         knownPeople={knownPeople}
         projectId={pid}
         ownerHasAvatar={!!p.owner.avatar}
+        completeness={completeness}
       />
     </div>
   );

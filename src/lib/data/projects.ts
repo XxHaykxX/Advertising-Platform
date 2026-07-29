@@ -2,7 +2,7 @@ import "server-only";
 import { unstable_cache } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import type { ProjectListDTO, ProjectDetailDTO } from "@/lib/types";
-import type { Locale } from "@/lib/i18n";
+import { makeUI, type Locale } from "@/lib/i18n";
 import { formatMoney } from "@/lib/currency";
 import { localizeCountryList } from "@/lib/countries";
 import { pickPersonName } from "@/lib/person-name";
@@ -68,14 +68,17 @@ function effectiveFormat(
     durationMinutes?: number | null;
   },
 ): string {
+  const t = makeUI(locale);
   if (p.kind === "SERIAL" && p.episodes && p.episodeMinutes) {
-    return `${p.episodeMinutes}m/${p.episodes}episodes`;
+    // Was a hardcoded English "11m/12episodes" — no space, no translation —
+    // printed verbatim on the Armenian and Russian pages (audit A4).
+    return t("format.serialEpisodes", { n: p.episodes, m: p.episodeMinutes });
   }
   // Single with a runtime: same treatment as the SERIAL branch. The admin form
   // has no free-text `format` field any more (2026-07-26), so Duration is the
   // only thing a new Single carries — without this its chip would be blank.
   if (p.kind === "FILM" && p.durationMinutes) {
-    return `${p.durationMinutes}m`;
+    return t("format.filmMinutes", { m: p.durationMinutes });
   }
   return localizeFormat(locale, p.format);
 }
@@ -252,10 +255,15 @@ const getProjectCached = unstable_cache(
     tiers: p.tiers.map((tier) => ({
       id: tier.id,
       name: tier.name,
+      // Raw AMD alongside the formatted strings: the sticky offer bar has to
+      // compare packages and placements to name the cheapest one, and it
+      // cannot do that on "2 500 000 ֏".
+      priceAmd: tier.priceAmd,
       priceDisplay: formatMoney(tier.priceAmd, currency, rates, locale),
       // The deal currency, for the application popup — see TierDTO.priceNative.
       priceNative: formatMoney(tier.priceAmd, "AMD", rates, locale),
       benefits: parseJsonList(tier.benefits),
+      image: tier.image ?? null,
       isExclusive: tier.isExclusive,
       availableSlots: tier.availableSlots,
       totalSlots: tier.totalSlots,

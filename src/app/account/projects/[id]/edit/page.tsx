@@ -11,6 +11,7 @@ import { getStreamingSources } from "@/lib/data/streaming-sources";
 import { getCountryOptions } from "@/lib/data/countries";
 import { getStudioOptions } from "@/lib/data/studios";
 import { getTierTemplates } from "@/lib/data/tier-templates";
+import { projectCompleteness } from "@/lib/project-completeness";
 import { makeUI } from "@/lib/i18n";
 import {
   formatDateInput,
@@ -52,6 +53,10 @@ export default async function EditCreatorProjectPage({
       tiers: { orderBy: { sortOrder: "asc" } },
       placements: { orderBy: { sortOrder: "asc" } },
       owner: { select: { avatar: true } },
+      // Milestones are admin-only (the form has no section for them here —
+      // see project-form.tsx), so only the count is needed: the completeness
+      // checklist below still has to know whether an admin already added any.
+      _count: { select: { milestones: true } },
     },
   });
   // 404 for "doesn't exist", "not a CREATOR" and "not yours" alike — a member
@@ -109,6 +114,31 @@ export default async function EditCreatorProjectPage({
     videoFile: p.videoFile ?? "",
   };
 
+  // "What a brand sees" (audit B8) — same computation as the admin edit page.
+  const completeness = projectCompleteness({
+    tagline: p.tagline ?? "",
+    poster: p.poster,
+    videoEmbedUrl: p.videoEmbedUrl,
+    videoFile: p.videoFile,
+    gallery: p.gallery,
+    castCount: p.actors.length,
+    milestonesCount: p._count.milestones,
+    placementsCount: p.placements.length,
+    tiers: p.tiers,
+    studio: p.studio,
+    kind: p.kind,
+    episodes: p.episodes,
+    episodeMinutes: p.episodeMinutes,
+    durationMinutes: p.durationMinutes,
+    references: p.references,
+    applicationDeadline: p.applicationDeadline,
+    releaseDate: p.releaseDate,
+    platforms: p.platforms,
+    cinemas: p.cinemas,
+    productionBudgetAmd: p.productionBudgetAmd,
+    ageRating: p.ageRating,
+  });
+
   const action = updateCreatorProject.bind(null, pid);
 
   return (
@@ -148,6 +178,7 @@ export default async function EditCreatorProjectPage({
             name: tier.name,
             priceAmd: tier.priceAmd,
             benefits: parseBenefitsInput(tier.benefits),
+            image: tier.image ?? "",
             isExclusive: tier.isExclusive,
             availableSlots: tier.availableSlots,
             totalSlots: tier.totalSlots,
@@ -174,6 +205,7 @@ export default async function EditCreatorProjectPage({
           knownPeople={knownPeople}
           projectId={pid}
           ownerHasAvatar={!!p.owner.avatar}
+          completeness={completeness}
         />
       </Reveal>
     </>

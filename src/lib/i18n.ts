@@ -133,7 +133,6 @@ export const UI: Record<string, Dict> = {
   "btn.getStarted": { ru: "Начать", en: "Get Started", hy: "Սկսել" },
   "btn.viewReport": { ru: "Подробнее", en: "Learn More", hy: "Տեսնել ավելին" },
   "btn.requestDetails": { ru: "Связаться", en: "Contact us", hy: "Կապվել" },
-  "btn.expressInterest": { ru: "Проявить интерес", en: "Express Interest", hy: "Ցուցաբերել հետաքրքրություն" },
   "btn.removeInterest": { ru: "Убрать из интересов", en: "Remove from Interests", hy: "Հանել հետաքրքրություններից" },
   "btn.removeFavorite": { ru: "Убрать", en: "Remove", hy: "Հեռացնել" },
   "cta.loginToApply": {
@@ -873,9 +872,170 @@ export const UI: Record<string, Dict> = {
     hy: "Առաջարկների ընդունումը փակ է",
   },
   "report.tabs.overview": { ru: "Обзор", en: "Overview", hy: "Ընդհանուր տեսք" },
-  "report.tabs.cast": { ru: "Актёры", en: "Cast", hy: "Դերասաններ" },
+  // The cast section carries crew as well ("Cast & Creators"), so the tab that
+  // points at it is "Team" — owner decision 2026-07-29, four tabs.
+  "report.tabs.cast": { ru: "Команда", en: "Team", hy: "Թիմ" },
+  "report.tabs.production": { ru: "Производство", en: "Production", hy: "Արտադրություն" },
+  // The commercial section (placements + sponsorship) had no tab at all and
+  // sat ~3500px down the page. It is the reason a brand is here, so it gets
+  // the last tab and is highlighted as the primary one.
+  "report.tabs.offer": { ru: "Предложение брендам", en: "For brands", hy: "Առաջարկ բրենդներին" },
   "report.tabs.investment": { ru: "Инвестиции", en: "Investment", hy: "Ներդրում" },
   "report.tabs.more": { ru: "Ещё", en: "More", hy: "Ավելին" },
+
+  // Sticky bar at the bottom of the report: the offer in one line, always
+  // within reach. Social proof stays limited to free slots — view and
+  // application counts are deliberately not shown (owner decision).
+  "report.offerBarFrom": { ru: "Размещение от {price}", en: "Placements from {price}", hy: "Տեղադրումը՝ {price}-ից" },
+  "report.offerBarSlots": {
+    ru: "{free} из {total} размещений свободно",
+    en: "{free} of {total} placements available",
+    hy: "{total}-ից {free} տեղադրում ազատ է",
+  },
+  // The one name for the action, used by every apply button on the report:
+  // the offer cards, the facts block and the sticky bar. Three different
+  // wordings for one thing read as three different things, and the card a
+  // button sits in already says which offer it belongs to (owner decision
+  // 2026-07-29).
+  "report.offerBarCta": { ru: "Подать заявку", en: "Apply", hy: "Ներկայացնել հայտ" },
+
+  // ── Deal card in the hero (owner decision 2026-07-29) ─────────────────────
+  // The right column of the hero used to hold the production budget and ~280px
+  // of nothing, while the first screen carried no way to act at all: the
+  // sticky bar only appears once the overview (1648px tall) is scrolled past.
+  // The card puts the whole offer — budget, entry price, free slots, deadline
+  // — where the eye already is, and ends in the apply button.
+  "report.deal.deadline": {
+    ru: "Заявки до {date}",
+    en: "Applications until {date}",
+    hy: "Հայտերը՝ մինչև {date}",
+  },
+  // Three keys instead of one plural: ru has three forms for "день" and the
+  // count is a live number. "дн." is the same trick format.serialEpisodes
+  // uses — an abbreviation agrees with anything.
+  "report.deal.daysLeft": { ru: "осталось {n} дн.", en: "{n} days left", hy: "մնաց {n} օր" },
+  "report.deal.oneDayLeft": { ru: "остался 1 день", en: "1 day left", hy: "մնաց 1 օր" },
+  "report.deal.lastDay": {
+    ru: "сегодня последний день",
+    en: "last day today",
+    hy: "այսօր վերջին օրն է",
+  },
+
+  // ── "What a brand sees" checklist (audit B8) ──────────────────────────────
+  // Every one of these blocks silently disappears from the public page when
+  // it is empty, so a creator who left the placements out sees a page that
+  // looks finished and never learns the main thing they are selling isn't on
+  // it. The checklist names the blocks and says which ones also block
+  // publication.
+  "completeness.title": { ru: "Что увидит бренд", en: "What a brand sees", hy: "Ինչ է տեսնում բրենդը" },
+  "completeness.hint": {
+    ru: "Пустые разделы на странице проекта просто не показываются — бренд не узнает, что они есть.",
+    en: "Empty sections are simply not rendered on the project page — a brand never learns they exist.",
+    hy: "Դատարկ բաժինները նախագծի էջում պարզապես չեն ցուցադրվում — բրենդը չի իմանա դրանց մասին։",
+  },
+  "completeness.blocks": {
+    ru: "Без этого нельзя опубликовать",
+    en: "Required to publish",
+    hy: "Առանց սրա հրապարակել հնարավոր չէ",
+  },
+  "completeness.allFilled": {
+    ru: "Все разделы заполнены",
+    en: "Every section is filled in",
+    hy: "Բոլոր բաժինները լրացված են",
+  },
+  // Badge in the project lists (admin + creator cabinet).
+  "completeness.badge": {
+    ru: "Профиль неполный: {n}",
+    en: "Incomplete: {n}",
+    hy: "Թերի պրոֆիլ՝ {n}",
+  },
+  "completeness.badgeTitle": {
+    ru: "Незаполненных разделов: {n}. Бренды их не видят.",
+    en: "{n} sections are empty. Brands don't see them.",
+    hy: "{n} բաժին դատարկ է։ Բրենդները դրանք չեն տեսնում։",
+  },
+  "completeness.item.tagline": { ru: "Логлайн", en: "Logline", hy: "Լոգլայն" },
+  "completeness.item.studio": { ru: "Студия", en: "Studio", hy: "Ստուդիա" },
+  "completeness.item.runtime": {
+    ru: "Хронометраж (серии или фильма)",
+    en: "Runtime (episodes or film)",
+    hy: "Տևողություն (դրվագների կամ ֆիլմի)",
+  },
+  "completeness.item.poster": { ru: "Постер", en: "Poster", hy: "Պաստառ" },
+  "completeness.item.video": { ru: "Видео или трейлер", en: "Video or trailer", hy: "Վիդեո կամ թրեյլեր" },
+  "completeness.item.gallery": { ru: "Галерея кадров", en: "Stills gallery", hy: "Կադրերի պատկերասրահ" },
+  "completeness.item.cast": { ru: "Актёры и создатели", en: "Cast & creators", hy: "Դերասաններ և ստեղծագործողներ" },
+  "completeness.item.milestones": { ru: "Этапы производства", en: "Production stages", hy: "Արտադրության փուլեր" },
+  "completeness.item.placements": { ru: "Продакт-плейсмент", en: "Product placement", hy: "Փրոդակթ փլեյսմենթ" },
+  "completeness.item.tiers": { ru: "Пакеты спонсорства", en: "Sponsorship packages", hy: "Հովանավորության փաթեթներ" },
+  "completeness.item.references": { ru: "Похожие проекты", en: "Comparable titles", hy: "Համեմատելի նախագծեր" },
+  "completeness.item.deadline": { ru: "Дедлайн заявок", en: "Application deadline", hy: "Հայտերի վերջնաժամկետ" },
+  "completeness.item.releaseDate": { ru: "Дата премьеры", en: "Release date", hy: "Թողարկման ամսաթիվ" },
+  "completeness.item.platforms": { ru: "Площадки показа", en: "Platforms", hy: "Ցուցադրման հարթակներ" },
+  "completeness.item.cinemas": { ru: "Кинотеатры", en: "Cinemas", hy: "Կինոթատրոններ" },
+  "completeness.item.budget": { ru: "Бюджет производства", en: "Production budget", hy: "Արտադրության բյուջե" },
+  "completeness.item.ageRating": { ru: "Возрастной рейтинг", en: "Age rating", hy: "Տարիքային սահմանափակում" },
+
+  // ── "How it works" — converging flows (audit E1) ──────────────────────────
+  // The page used to be two independent columns, so nothing on it showed that
+  // the two sides ever meet. This diagram runs both branches inward into one
+  // node — the application — and one arrow down from it to the deal.
+  "hiw.flowTitle": {
+    ru: "Как две стороны встречаются",
+    en: "How the two sides meet",
+    hy: "Ինչպես են երկու կողմերը հանդիպում",
+  },
+  "hiw.flowSubtitle": {
+    ru: "Бренд идёт с одной стороны, создатель — с другой. Сходятся они на заявке.",
+    en: "The brand comes from one side, the creator from the other. They meet at the application.",
+    hy: "Բրենդը գալիս է մի կողմից, ստեղծագործողը՝ մյուսից։ Նրանք հանդիպում են հայտի վրա։",
+  },
+  "hiw.flow.brand": { ru: "Бренд", en: "Brand", hy: "Բրենդ" },
+  "hiw.flow.brandDesc": {
+    ru: "Ищет, где показать продукт",
+    en: "Looking for a place to show its product",
+    hy: "Փնտրում է, թե որտեղ ցուցադրի իր ապրանքը",
+  },
+  "hiw.flow.register": { ru: "Регистрация", en: "Sign-up", hy: "Գրանցում" },
+  "hiw.flow.registerDesc": {
+    ru: "Профиль бренда, бюджет и категории",
+    en: "Brand profile, budget and categories",
+    hy: "Բրենդի պրոֆիլ, բյուջե և կատեգորիաներ",
+  },
+  "hiw.flow.creator": { ru: "Создатель", en: "Creator", hy: "Ստեղծագործող" },
+  "hiw.flow.creatorDesc": {
+    ru: "Снимает фильм или сериал",
+    en: "Making a film or a series",
+    hy: "Նկարահանում է ֆիլմ կամ սերիալ",
+  },
+  "hiw.flow.project": { ru: "Проект с размещениями", en: "Project with placements", hy: "Նախագիծ՝ տեղադրումներով" },
+  "hiw.flow.projectDesc": {
+    ru: "Сцены, пакеты и цены",
+    en: "Scenes, packages and prices",
+    hy: "Տեսարաններ, փաթեթներ և գներ",
+  },
+  "hiw.flow.hub": { ru: "Заявка и согласование", en: "Application & approval", hy: "Հայտ և համաձայնեցում" },
+  "hiw.flow.hubDesc": {
+    ru: "Бренд подаёт заявку, создатель отвечает",
+    en: "The brand applies, the creator answers",
+    hy: "Բրենդը ներկայացնում է հայտ, ստեղծագործողը պատասխանում է",
+  },
+  "hiw.flow.deal": { ru: "Сделка", en: "Deal", hy: "Գործարք" },
+  "hiw.flow.dealDesc": {
+    ru: "Условия зафиксированы, размещение в работе",
+    en: "Terms agreed, the placement goes into production",
+    hy: "Պայմանները ամրագրված են, տեղադրումն ընթացքի մեջ է",
+  },
+
+  // Serial / single runtime chip. Was a hardcoded English "11m/12episodes"
+  // with no space, printed on the Armenian and Russian pages alike.
+  // "эп.", not "серий": the chip prints a bare number, and a Russian plural
+  // would have to agree with it ("1 серий", "3 серий" are both wrong). The
+  // abbreviation sidesteps the declension and matches what FORMAT_TOKENS
+  // already renders for free-text formats ("ep" -> "эп"), so a serial with
+  // episode data and one without read the same.
+  "format.serialEpisodes": { ru: "{n} эп. × {m} мин", en: "{n} ep × {m} min", hy: "{n} դրվագ × {m} րոպե" },
+  "format.filmMinutes": { ru: "{m} мин", en: "{m} min", hy: "{m} րոպե" },
 
   "cast.title": { ru: "Актёры и создатели", en: "Cast & Creators", hy: "Դերասաններ և ստեղծագործողներ" },
   "cast.subtitle": { ru: "Актёры и создатели, задействованные в проекте", en: "Actors and creators attached to this project", hy: "Այս նախագծին կցված դերասաններ և ստեղծագործողներ" },
@@ -1748,6 +1908,62 @@ export const UI: Record<string, Dict> = {
   "projectForm.placements.copySuffix": { ru: "копия", en: "copy", hy: "կրկնօրինակ" },
   "projectForm.placements.remove": { ru: "Удалить", en: "Remove", hy: "Հեռացնել" },
 
+  // ── the offer card editor, shared by placements and sponsorship packages ──
+  // Both sections used to be spreadsheet rows; they are now one card per offer,
+  // laid out like the card a brand sees on the report page.
+  "projectForm.offer.expand": { ru: "Развернуть", en: "Expand", hy: "Բացել" },
+  "projectForm.offer.collapse": { ru: "Свернуть", en: "Collapse", hy: "Ծալել" },
+  "projectForm.offer.untitled": { ru: "Без названия", en: "Untitled", hy: "Առանց անվան" },
+  "projectForm.offer.preview": { ru: "Как на сайте", en: "Site preview", hy: "Ինչպես կայքում" },
+  "projectForm.offer.previewHint": {
+    ru: "Так эти карточки увидит бренд на странице проекта.",
+    en: "This is how a brand sees these cards on the project page.",
+    hy: "Այսպես է բրենդը տեսնում այս քարտերը նախագծի էջում։",
+  },
+  "projectForm.offer.deleteTitle": { ru: "Удалить «{name}»?", en: "Delete “{name}”?", hy: "Ջնջե՞լ «{name}»-ը" },
+  "projectForm.offer.deleteMessage": {
+    ru: "Заполненные поля и загруженный кадр будут потеряны. Отменить нельзя.",
+    en: "The filled fields and the uploaded still will be lost. This cannot be undone.",
+    hy: "Լրացված դաշտերը և վերբեռնված կադրը կկորչեն։ Հետարկել հնարավոր չէ։",
+  },
+  // Price is a two-state field, not an empty box: "on request" is a deliberate
+  // offer, and it used to be indistinguishable from a price nobody typed yet.
+  "projectForm.offer.priceFixed": { ru: "Указать цену", en: "Set a price", hy: "Նշել գինը" },
+  "projectForm.offer.addBullet": { ru: "Добавить пункт", en: "Add item", hy: "Ավելացնել կետ" },
+  "projectForm.offer.bulletPlaceholder": {
+    ru: "Что получает бренд",
+    en: "What the brand gets",
+    hy: "Ինչ է ստանում բրենդը",
+  },
+  "projectForm.offer.bulletEmpty": {
+    ru: "Ни одного пункта — бренд не увидит, что входит в предложение.",
+    en: "No items yet — the brand can't see what the offer includes.",
+    hy: "Դեռ կետեր չկան․ բրենդը չի տեսնի, թե ինչ է ներառում առաջարկը։",
+  },
+  "projectForm.offer.removeBullet": { ru: "Удалить пункт", en: "Remove item", hy: "Հեռացնել կետը" },
+  "projectForm.offer.moveUp": { ru: "Выше", en: "Move up", hy: "Վերև" },
+  "projectForm.offer.moveDown": { ru: "Ниже", en: "Move down", hy: "Ներքև" },
+  "projectForm.offer.imageHint": {
+    ru: "16:9 · рекомендуем 1600×900",
+    en: "16:9 · 1600×900 recommended",
+    hy: "16:9 · խորհուրդ է տրվում 1600×900",
+  },
+  "projectForm.offer.noImage": {
+    ru: "Без кадра карточка на сайте выглядит пустой",
+    en: "Without a still the card on the site looks empty",
+    hy: "Առանց կադրի քարտը կայքում դատարկ է թվում",
+  },
+  "projectForm.offer.crop.title": { ru: "Кадрирование 16:9", en: "Crop to 16:9", hy: "Կադրում 16:9" },
+  "projectForm.offer.crop.zoom": { ru: "Масштаб", en: "Zoom", hy: "Մասշտաբ" },
+  "projectForm.offer.crop.apply": { ru: "Применить", en: "Apply", hy: "Կիրառել" },
+  "projectForm.offer.crop.cancel": { ru: "Отмена", en: "Cancel", hy: "Չեղարկել" },
+  "projectForm.offer.crop.hint": {
+    ru: "Тяните картинку, колесо — масштаб. В рамку попадёт то, что увидит бренд.",
+    en: "Drag the image, scroll to zoom. What's inside the frame is what the brand sees.",
+    hy: "Քաշեք նկարը, պտտեք՝ մասշտաբի համար։ Շրջանակի ներսինը տեսնում է բրենդը։",
+  },
+  "projectForm.tiers.image": { ru: "Кадр пакета", en: "Package still", hy: "Փաթեթի կադր" },
+
   "projectForm.tiers.benefitsPlaceholder": {
     ru: "Логотип на выбранных промо-материалах\nПродвижение в соцсетях\nБлагодарность в титрах\nПриглашения на премьеру",
     en: "Logo on selected promo materials\nSocial promo presence\nSpecial thanks in the credits\nPremiere invitations",
@@ -1894,6 +2110,16 @@ export const UI: Record<string, Dict> = {
     ru: "Неподдерживаемый тип — используйте JPG, PNG, WebP, GIF или AVIF.",
     en: "Unsupported type — use JPG, PNG, WebP, GIF or AVIF.",
     hy: "Չաջակցվող տեսակ — օգտագործեք JPG, PNG, WebP, GIF կամ AVIF։",
+  },
+  // One application per brand per project (Interest is unique on that pair), so
+  // sending a second one REPLACES the first — including its answer and any slot
+  // it had reserved. Harmless while the page had a single apply button; since
+  // every offer card got its own (2026-07-29) clicking a second card is the
+  // natural gesture, so the popup has to say what it is about to do.
+  "apply.replaceWarning": {
+    ru: "По этому проекту у вас уже есть заявка. Отправка заменит её — прежний выбор и ответ создателя не сохранятся.",
+    en: "You already have an application for this project. Sending will replace it — the previous choice and the creator's answer will not be kept.",
+    hy: "Այս նախագծի համար դուք արդեն ունեք հայտ։ Ուղարկելը կփոխարինի այն — նախորդ ընտրությունը և ստեղծագործողի պատասխանը չեն պահպանվի։",
   },
   "apply.tierLabel": { ru: "Спонсорский пакет", en: "Sponsorship package", hy: "Հովանավորության փաթեթ" },
   "apply.tierNone": { ru: "Не выбран — обсудим", en: "Not selected — let's discuss", hy: "Ընտրված չէ — կքննարկենք" },

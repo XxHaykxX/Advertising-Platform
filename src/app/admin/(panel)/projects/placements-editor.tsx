@@ -1,43 +1,40 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import {
-  DndContext,
-  KeyboardSensor,
-  PointerSensor,
-  closestCenter,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-} from "@dnd-kit/core";
-import { restrictToVerticalAxis, restrictToParentElement } from "@dnd-kit/modifiers";
-import {
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import { Copy, GripVertical, Plus, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { Eye, Plus } from "lucide-react";
 import { groupDigits } from "./form-shared";
-import { MediaField } from "@/components/media-field";
+import {
+  OfferBullets,
+  OfferCard,
+  OfferCardBody,
+  OfferDndContext,
+  OfferNumbersRow,
+  OfferPreviewDialog,
+  OfferPriceField,
+  OfferSlotsField,
+  OfferStill,
+  OfferTitleInput,
+  useCollapsed,
+  useSortableRows,
+} from "./offer-card";
 import type { MediaPickerScope } from "@/components/media-picker";
 import type { makeUI, Locale } from "@/lib/i18n";
 
 // Controlled Product Placements section (owner correction 2026-07-28): the
 // brand appearing INSIDE the story (a scene, a prop, the hero's car) — a
 // separate thing from Sponsors (the logo-on-materials deal in
-// tiers-editor.tsx), which it sits above in the form. Same shape/contract as
-// TiersSection: rows are owned by the parent ProjectForm, mirrored into a
-// hidden `placementsRows` input, and persisted by create/updateProject in the
-// same transaction as the project (array order → sortOrder). dbId is carried
-// so a save updates a row in place instead of delete+reinsert — see
-// TierRow.dbId for why that matters (it silently detached brand applications
-// last time this shortcut was taken).
+// tiers-editor.tsx), which it sits above in the form. Rows are owned by the
+// parent ProjectForm, mirrored into a hidden `placementsRows` input, and
+// persisted by create/updateProject in the same transaction as the project
+// (array order → sortOrder). dbId is carried so a save updates a row in place
+// instead of delete+reinsert — see TierRow.dbId for why that matters (it
+// silently detached brand applications last time this shortcut was taken).
 //
-// Two differences from the tier editor: each row carries an image (a still of
-// the scene/slot), and price is OPTIONAL — empty means "on request" and the
-// row stores `null`, never a literal 0.
+// Redesigned 2026-07-29 (owner: "заполнять это очень трудно и неудобно") from a
+// spreadsheet row into one card per placement, shaped like the card the brand
+// actually sees. The shared parts live in offer-card.tsx; the row type, the
+// JSON mirror and the server contract are untouched.
 export type PlacementRow = {
   /** Placement.id for a row that already exists in the DB; undefined for a
    *  row the editor just added — see TierRow.dbId in tiers-editor.tsx. */
@@ -59,10 +56,6 @@ export const EMPTY_PLACEMENT: PlacementRow = {
   totalSlots: null,
 };
 
-// Visible frame at rest — same reasoning as tiers-editor's cellCls.
-const cellCls =
-  "w-full rounded-lg border border-border bg-background px-2 py-1.5 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-primary focus:bg-card disabled:cursor-not-allowed disabled:opacity-60";
-
 export function PlacementsSection({
   value,
   onChange,
@@ -81,47 +74,27 @@ export function PlacementsSection({
   /** Language for the media dialog (audit 4.5). */
   locale?: Locale;
 }) {
-  // Stable client-side ids parallel to `value` — see TiersSection for why
-  // index/object identity aren't safe keys and how the re-seed effect works.
-  const uid = useRef(0);
-  const makeIds = (n: number) => Array.from({ length: n }, () => uid.current++);
-  const [ids, setIds] = useState<number[]>(() => makeIds(value.length));
-  useEffect(() => {
-    if (ids.length !== value.length) setIds(makeIds(value.length));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value.length]);
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  );
-
-  function update(i: number, patch: Partial<PlacementRow>) {
-    onChange(value.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
-  }
+  const rows = useSortableRows(value, onChange);
+  const { isCollapsed, toggle, expand } = useCollapsed(rows.ids, (i) => {
+    const r = value[i];
+    return !!r?.title.trim() && !!r?.image;
+  });
+  const [previewing, setPreviewing] = useState(false);
 
   function addRow() {
-    setIds((prev) => [...prev, uid.current++]);
-    onChange([...value, { ...EMPTY_PLACEMENT }]);
+    rows.append({ ...EMPTY_PLACEMENT });
   }
 
   /** Clone drops dbId — otherwise the save would update the source row twice
    *  instead of inserting a new one (see TiersSection.duplicateRow). */
   function duplicateRow(i: number) {
     const src = value[i];
-    const copy: PlacementRow = {
+    const id = rows.insertAfter(i, {
       ...src,
       dbId: undefined,
       title: src.title ? `${src.title} (${t("projectForm.placements.copySuffix")})` : "",
-    };
-    const insert = <T,>(arr: T[], item: T) => [...arr.slice(0, i + 1), item, ...arr.slice(i + 1)];
-    setIds((prev) => insert(prev, uid.current++));
-    onChange(insert(value, copy));
-  }
-
-  function removeRow(i: number) {
-    setIds((prev) => prev.filter((_, idx) => idx !== i));
-    onChange(value.filter((_, idx) => idx !== i));
+    });
+    expand(id);
   }
 
   /** Typing Total also fills Available when the two haven't diverged yet — a
@@ -129,292 +102,126 @@ export function PlacementsSection({
    *  form-shared's withTotalSlots, but inlined: that helper requires an
    *  `isExclusive` field placements don't have. */
   function onTotalSlots(i: number, totalSlots: number | null) {
-    onChange(
-      value.map((r, idx) => {
-        if (idx !== i) return r;
-        const diverged = r.availableSlots !== null && r.availableSlots !== r.totalSlots;
-        return { ...r, totalSlots, availableSlots: diverged ? r.availableSlots : totalSlots };
-      }),
-    );
+    const r = value[i];
+    const diverged = r.availableSlots !== null && r.availableSlots !== r.totalSlots;
+    rows.patchAt(i, { totalSlots, availableSlots: diverged ? r.availableSlots : totalSlots });
   }
 
-  function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-    const from = ids.indexOf(active.id as number);
-    const to = ids.indexOf(over.id as number);
-    if (from === -1 || to === -1) return;
-    const moveArr = <T,>(arr: T[]) => {
-      const next = [...arr];
-      const [m] = next.splice(from, 1);
-      next.splice(to, 0, m);
-      return next;
-    };
-    setIds((prev) => moveArr(prev));
-    onChange(moveArr(value));
-  }
+  const priceLabel = (r: PlacementRow) =>
+    r.priceAmd == null ? t("projectForm.placements.priceOnRequest") : `${groupDigits(String(r.priceAmd))} AMD`;
+  const slotsLabel = (r: PlacementRow) =>
+    r.totalSlots != null && r.totalSlots > 0 ? `${r.availableSlots ?? 0} / ${r.totalSlots}` : "";
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <p className="text-sm text-muted-foreground">
           {value.length} {t(value.length === 1 ? "projectForm.placements.one" : "projectForm.placements.many")}
         </p>
-        <button
-          type="button"
-          onClick={addRow}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs text-foreground hover:border-primary/40"
-        >
-          <Plus className="h-3.5 w-3.5" /> {t("projectForm.placements.add")}
-        </button>
+        <div className="flex items-center gap-2">
+          {value.length ? (
+            <button
+              type="button"
+              onClick={() => setPreviewing(true)}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs text-foreground hover:border-primary/40"
+            >
+              <Eye className="h-3.5 w-3.5" /> {t("projectForm.offer.preview")}
+            </button>
+          ) : null}
+          <button
+            type="button"
+            onClick={addRow}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs text-foreground hover:border-primary/40"
+          >
+            <Plus className="h-3.5 w-3.5" /> {t("projectForm.placements.add")}
+          </button>
+        </div>
       </div>
 
       {value.length === 0 ? (
         <p className="text-sm text-muted-foreground">{t("projectForm.placements.empty")}</p>
       ) : (
-        // @container + @4xl: — same reasoning as TiersSection: the row reacts
-        // to the CARD's width (~640px in this form column), not the viewport.
-        <div className="@container overflow-hidden rounded-xl border border-border bg-card">
-          <div className="hidden grid-cols-[24px_150px_1fr_110px_90px_90px_2fr_64px] items-center gap-2 border-b border-border bg-muted px-3 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground @4xl:grid">
-            <span />
-            <span>{t("projectForm.placements.image")}</span>
-            <span>{t("projectForm.placements.title")}</span>
-            <span>{t("projectForm.placements.price")}</span>
-            <span>{t("projectForm.placements.slots")}</span>
-            <span>{t("projectForm.placements.totalSlots")}</span>
-            <span>{t("projectForm.placements.description")}</span>
-            <span />
-          </div>
-          <DndContext
-            id="placement-rows"
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            modifiers={[restrictToVerticalAxis, restrictToParentElement]}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext items={ids} strategy={verticalListSortingStrategy}>
-              <div className="divide-y divide-border">
-                {value.map((r, i) => (
-                  <PlacementTableRow
-                    key={ids[i]}
-                    id={ids[i]}
-                    row={r}
-                    t={t}
-                    scope={scope}
-                    locale={locale}
-                    onImage={(image) => update(i, { image })}
-                    onTitle={(title) => update(i, { title })}
-                    onPrice={(priceAmd) => update(i, { priceAmd })}
-                    onSlots={(availableSlots) => update(i, { availableSlots })}
-                    onTotalSlots={(totalSlots) => onTotalSlots(i, totalSlots)}
-                    onDescription={(description) => update(i, { description })}
-                    onDuplicate={() => duplicateRow(i)}
-                    onDelete={() => removeRow(i)}
-                  />
-                ))}
-              </div>
-            </SortableContext>
-          </DndContext>
-        </div>
+        <OfferDndContext id="placement-rows" sensors={rows.sensors} onDragEnd={rows.handleDragEnd}>
+          <SortableContext items={rows.ids} strategy={verticalListSortingStrategy}>
+            <div className="space-y-2">
+              {value.map((r, i) => (
+                <OfferCard
+                  key={rows.ids[i]}
+                  id={rows.ids[i]}
+                  t={t}
+                  collapsed={isCollapsed(rows.ids[i])}
+                  onToggle={() => toggle(rows.ids[i])}
+                  onDuplicate={() => duplicateRow(i)}
+                  onDelete={() => rows.removeAt(i)}
+                  summary={{
+                    image: r.image,
+                    title: r.title,
+                    price: priceLabel(r),
+                    slots: slotsLabel(r),
+                  }}
+                  header={
+                    <OfferTitleInput
+                      value={r.title}
+                      onChange={(title) => rows.patchAt(i, { title })}
+                      placeholder={t("projectForm.placements.titlePlaceholder")}
+                    />
+                  }
+                >
+                  <OfferCardBody
+                    still={
+                      <OfferStill
+                        value={r.image}
+                        onChange={(image) => rows.patchAt(i, { image })}
+                        t={t}
+                        scope={scope}
+                        locale={locale}
+                        label={t("projectForm.placements.image")}
+                      />
+                    }
+                  >
+                    <OfferNumbersRow>
+                      <OfferPriceField
+                        value={r.priceAmd}
+                        onChange={(priceAmd) => rows.patchAt(i, { priceAmd })}
+                        label={t("projectForm.placements.price")}
+                        t={t}
+                        allowOnRequest
+                      />
+                      <OfferSlotsField
+                        available={r.availableSlots}
+                        total={r.totalSlots}
+                        onAvailable={(availableSlots) => rows.patchAt(i, { availableSlots })}
+                        onTotal={(totalSlots) => onTotalSlots(i, totalSlots)}
+                        t={t}
+                      />
+                    </OfferNumbersRow>
+                    <OfferBullets
+                      value={r.description}
+                      onChange={(description) => rows.patchAt(i, { description })}
+                      label={t("projectForm.placements.description")}
+                      t={t}
+                    />
+                  </OfferCardBody>
+                </OfferCard>
+              ))}
+            </div>
+          </SortableContext>
+        </OfferDndContext>
       )}
-    </div>
-  );
-}
 
-/** Digits only, grouped for reading while idle — same as tiers-editor's
- *  PriceInput, except empty stores `null` ("on request") instead of a literal
- *  0: this row's price is genuinely optional. */
-function PriceInput({
-  value,
-  onChange,
-  className,
-  placeholder,
-}: {
-  value: number | null;
-  onChange: (price: number | null) => void;
-  className: string;
-  placeholder: string;
-}) {
-  // Non-null only while the field is focused, so typing isn't fighting the
-  // regrouping — the separators land on blur.
-  const [draft, setDraft] = useState<string | null>(null);
-  const shown = draft ?? (value ? groupDigits(String(value)) : "");
-
-  return (
-    <input
-      type="text"
-      inputMode="numeric"
-      value={shown}
-      onChange={(e) => {
-        const digits = e.target.value.replace(/\D/g, "");
-        setDraft(digits);
-        onChange(digits === "" ? null : Number(digits));
-      }}
-      onFocus={() => setDraft(value ? String(value) : "")}
-      onBlur={() => setDraft(null)}
-      placeholder={placeholder}
-      className={className}
-    />
-  );
-}
-
-function PlacementTableRow({
-  id,
-  row: r,
-  t,
-  scope,
-  locale,
-  onImage,
-  onTitle,
-  onPrice,
-  onSlots,
-  onTotalSlots,
-  onDescription,
-  onDuplicate,
-  onDelete,
-}: {
-  id: number;
-  row: PlacementRow;
-  t: ReturnType<typeof makeUI>;
-  scope: MediaPickerScope;
-  locale?: Locale;
-  onImage: (image: string) => void;
-  onTitle: (title: string) => void;
-  onPrice: (price: number | null) => void;
-  onSlots: (slots: number | null) => void;
-  onTotalSlots: (slots: number | null) => void;
-  onDescription: (description: string) => void;
-  onDuplicate: () => void;
-  onDelete: () => void;
-}) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
-
-  // Auto-grow the description textarea to fit its content — same as
-  // TiersSection's benefits field.
-  const descRef = useRef<HTMLTextAreaElement>(null);
-  useEffect(() => {
-    const ta = descRef.current;
-    if (!ta) return;
-    ta.style.height = "auto";
-    ta.style.height = `${ta.scrollHeight}px`;
-  }, [r.description]);
-
-  const style: React.CSSProperties = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    position: "relative",
-    zIndex: isDragging ? 10 : undefined,
-    backgroundColor: isDragging ? "var(--card)" : undefined,
-    boxShadow: isDragging ? "0 8px 24px -8px rgb(0 0 0 / 0.35)" : undefined,
-  };
-
-  // Desktop: one 8-column grid row. Mobile (<@4xl): image / title / price /
-  // slots+total / description stack to five lines beside the handle, actions
-  // pinned top-right — same pattern as TiersSection's mobile stack, one row
-  // longer for the image.
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={`grid grid-cols-[24px_1fr_64px] items-start gap-x-2 gap-y-2 px-3 py-2 @4xl:grid-cols-[24px_150px_1fr_110px_90px_90px_2fr_64px] @4xl:items-start ${
-        isDragging ? "" : "hover:bg-muted/50"
-      }`}
-    >
-      <button
-        type="button"
-        {...attributes}
-        {...listeners}
-        className="col-start-1 row-span-5 mt-1.5 cursor-grab touch-none self-start text-muted-foreground active:cursor-grabbing @4xl:row-span-1 @4xl:mt-1.5"
-        aria-label={`${t("projectForm.placements.remove")} — drag ${r.title || ""}`.trim()}
-      >
-        <GripVertical className="h-4 w-4" />
-      </button>
-
-      {/* No `name` — this row list mirrors into the parent's `placementsRows`
-          hidden input itself, so the picked path only needs to reach
-          onImage, not a hidden input of its own (see media-field.tsx). */}
-      <div className="col-start-2 row-start-1 @4xl:col-start-2">
-        <MediaField
-          initial={r.image}
-          onChange={onImage}
-          label={t("btn.browse")}
-          uploadDir="projects"
-          scope={scope}
-          locale={locale}
-          compact
-          dropTitle={t("projectForm.placements.image")}
-          dropLabel={t("media.dropHereOne")}
-          errTooLargeLabel={t("media.errTooLargeShort")}
-          replaceLabel={t("media.replace")}
-          removeLabel={t("ui.remove")}
-          dropReplaceLabel={t("media.dropToReplace")}
-        />
-      </div>
-
-      <input
-        value={r.title}
-        onChange={(e) => onTitle(e.target.value)}
-        placeholder={t("projectForm.placements.titlePlaceholder")}
-        className={`${cellCls} col-start-2 row-start-2 @4xl:col-start-3 @4xl:row-start-1`}
+      <OfferPreviewDialog
+        open={previewing}
+        onClose={() => setPreviewing(false)}
+        title={t("projectForm.offer.preview")}
+        t={t}
+        items={value.map((r) => ({
+          image: r.image,
+          title: r.title,
+          price: priceLabel(r),
+          slots: slotsLabel(r) ? `${slotsLabel(r)} ${t("report.slotsAvailable")}` : "",
+          bullets: r.description.split("\n").map((s) => s.trim()).filter(Boolean),
+        }))}
       />
-      <PriceInput
-        value={r.priceAmd}
-        onChange={onPrice}
-        placeholder={t("projectForm.placements.priceOnRequest")}
-        className={`${cellCls} col-start-2 row-start-3 tabular-nums @4xl:col-start-4 @4xl:row-start-1`}
-      />
-      {/* Available + Total share a row on mobile (a plain flex row); at @4xl
-          the wrapper switches to `display: contents` so both children drop
-          straight into the parent grid as their own columns — same trick as
-          TiersSection. */}
-      <div className="col-start-2 row-start-4 flex items-center gap-3 @4xl:contents">
-        <input
-          type="number"
-          min={0}
-          value={r.availableSlots ?? ""}
-          onChange={(e) => onSlots(e.target.value === "" ? null : Number(e.target.value))}
-          placeholder={t("projectForm.placements.slots")}
-          className={`${cellCls} flex-1 @4xl:col-start-5 @4xl:row-start-1`}
-        />
-        <input
-          type="number"
-          min={0}
-          value={r.totalSlots ?? ""}
-          onChange={(e) => onTotalSlots(e.target.value === "" ? null : Number(e.target.value))}
-          placeholder={t("projectForm.placements.totalSlots")}
-          className={`${cellCls} flex-1 @4xl:col-start-6 @4xl:row-start-1`}
-        />
-      </div>
-      {/* Auto-height (ref + effect above): show every description line at
-          rest, including soft-wrapped ones — no collapse-until-focus. */}
-      <textarea
-        ref={descRef}
-        value={r.description}
-        onChange={(e) => onDescription(e.target.value)}
-        rows={2}
-        placeholder={t("projectForm.placements.descriptionPlaceholder")}
-        className={`${cellCls} col-span-2 col-start-2 row-start-5 resize-none overflow-hidden @4xl:col-span-1 @4xl:col-start-7 @4xl:row-start-1`}
-      />
-
-      <div className="col-start-3 row-start-1 mt-1 flex items-center justify-self-end self-start @4xl:col-start-8 @4xl:justify-self-auto">
-        <button
-          type="button"
-          onClick={onDuplicate}
-          className="grid h-8 w-8 place-items-center rounded-lg text-muted-foreground hover:bg-muted hover:text-primary"
-          aria-label={t("projectForm.placements.duplicate")}
-          title={t("projectForm.placements.duplicate")}
-        >
-          <Copy className="h-4 w-4" />
-        </button>
-        <button
-          type="button"
-          onClick={onDelete}
-          className="grid h-8 w-8 place-items-center rounded-lg text-muted-foreground hover:bg-muted hover:text-primary"
-          aria-label={t("projectForm.placements.remove")}
-        >
-          <Trash2 className="h-4 w-4" />
-        </button>
-      </div>
     </div>
   );
 }

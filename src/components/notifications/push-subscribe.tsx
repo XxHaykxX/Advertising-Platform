@@ -112,7 +112,7 @@ export function PushSubscribe({ locale, vapidPublicKey }: { locale: Locale; vapi
   // account (staff, brands, creators), so say what's wrong.
   if (status === "denied") {
     return (
-      <div className="fixed bottom-4 right-4 z-50 flex max-w-[calc(100vw-2rem)] items-start gap-3 rounded-2xl border border-warn/40 bg-card p-3 pr-2 shadow-lg shadow-black/10">
+      <div className="fixed bottom-[calc(1rem+var(--offer-bar-h,0px))] right-4 z-50 flex max-w-[calc(100vw-2rem)] items-start gap-3 rounded-2xl border border-warn/40 bg-card p-3 pr-2 shadow-lg shadow-black/10">
         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-warn/10 text-warn">
           <BellRing className="h-5 w-5" />
         </span>
@@ -135,7 +135,7 @@ export function PushSubscribe({ locale, vapidPublicKey }: { locale: Locale; vapi
   if (status !== "prompt") return null;
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 flex max-w-[calc(100vw-2rem)] items-center gap-3 rounded-2xl border border-border bg-card p-3 pr-2 shadow-lg shadow-black/10">
+    <div className="fixed bottom-[calc(1rem+var(--offer-bar-h,0px))] right-4 z-50 flex max-w-[calc(100vw-2rem)] items-center gap-3 rounded-2xl border border-border bg-card p-3 pr-2 shadow-lg shadow-black/10">
       <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
         <BellRing className="h-5 w-5" />
       </span>

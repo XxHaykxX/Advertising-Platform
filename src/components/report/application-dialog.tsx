@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PhoneInput } from "@/components/ui/phone-input";
+import { useModalDialog } from "@/lib/use-modal-dialog";
 import { submitApplication } from "@/app/account/brand/actions";
 import type { makeUI } from "@/lib/i18n";
+import { offerValue, parseOfferValue } from "@/lib/offer-value";
 
 /** Application popup (#23) for the report page's Express Interest button —
  *  same accessible-overlay shape as LogoutConfirmDialog (logout-button.tsx):
@@ -60,23 +62,6 @@ export function isValidPhone(value: string): boolean {
   return cleaned.length >= 8 && cleaned.length <= 16;
 }
 
-/** The picker holds two kinds of row in one list, so the option value has to
- *  carry which list it came from — an id alone is ambiguous (placement 3 and
- *  tier 3 both exist). Parsed back server-side, where the row is re-checked
- *  against the project anyway. */
-export function offerValue(offer: Pick<ApplicationOffer, "id" | "kind">): string {
-  return `${offer.kind === "PLACEMENT" ? "P" : "T"}:${offer.id}`;
-}
-
-export function parseOfferValue(value: string): { kind: "PLACEMENT" | "TIER"; id: number } | null {
-  const [prefix, rawId] = value.split(":");
-  const id = Number(rawId);
-  if (!Number.isInteger(id) || id <= 0) return null;
-  if (prefix === "P") return { kind: "PLACEMENT", id };
-  if (prefix === "T") return { kind: "TIER", id };
-  return null;
-}
-
 /** Digits only, grouped in threes with a non-breaking space — 2 500 000 reads
  *  as a price, 2500000 reads as a serial number. Same treatment the admin
  *  price fields got (form-shared.groupDigits); duplicated rather than imported
@@ -89,12 +74,20 @@ function formatAmount(digits: string): string {
 export function ApplicationDialog({
   projectId,
   offers = [],
+  initialOffer = "",
+  alreadyApplied = false,
   brandPhone = "",
   t,
   onClose,
   onSubmitted,
 }: {
   projectId: number;
+  /** offerValue of the card the visitor clicked ("P:5"), preselected in the
+   *  picker. Empty when the popup was opened from a page-level button, which
+   *  names no particular offer. */
+  initialOffer?: string;
+  /** An application for this project already exists — sending replaces it. */
+  alreadyApplied?: boolean;
   /** Seeds the required phone field from the brand's profile. */
   brandPhone?: string;
   /** What this project sells — placements first, then sponsorship packages.
@@ -126,10 +119,17 @@ export function ApplicationDialog({
   const [offerAmount, setOfferAmount] = useState("");
   const placements = useMemo(() => offers.filter((o) => o.kind === "PLACEMENT"), [offers]);
   const tiers = useMemo(() => offers.filter((o) => o.kind === "TIER"), [offers]);
-  // Preselect when there is only one thing on sale — a single-option dropdown
-  // is just a click that can only go one way.
-  const [selected, setSelected] = useState<string>(offers.length === 1 ? offerValue(offers[0]) : "");
+  // Preselected by the card the visitor clicked; failing that, when there is
+  // only one thing on sale — a single-option dropdown is just a click that can
+  // only go one way.
+  const [selected, setSelected] = useState<string>(
+    initialOffer || (offers.length === 1 ? offerValue(offers[0]) : ""),
+  );
   const selectedOffer = offers.find((o) => offerValue(o) === selected) ?? null;
+  // Focus into the dialog, Tab kept inside it, focus back on the trigger when
+  // it closes, and the page behind frozen while it is open — see the hook.
+  const panelRef = useRef<HTMLDivElement>(null);
+  useModalDialog(panelRef);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
@@ -184,13 +184,24 @@ export function ApplicationDialog({
 
   return (
     <div
+      // data-lenis-prevent: the public side runs Lenis, which owns the wheel
+      // globally and preventDefault()s it. Without this a wheel anywhere over
+      // the popup — including its own scrollable form, which is taller than
+      // 70vh on a phone — scrolls the report underneath instead.
+      data-lenis-prevent
       className="fixed inset-0 z-[100] grid place-items-center p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="apply-dialog-title"
     >
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl">
+      <div
+        ref={panelRef}
+        // tabIndex -1: something for the focus trap to fall back on before the
+        // form's own fields (or after they are replaced by the success text).
+        tabIndex={-1}
+        className="relative w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl outline-none"
+      >
         <h2 id="apply-dialog-title" className="text-base font-bold text-foreground">
           {t("apply.title")}
         </h2>
@@ -206,6 +217,15 @@ export function ApplicationDialog({
           </>
         ) : (
           <form onSubmit={handleSubmit} className="mt-4 flex max-h-[70vh] flex-col gap-4 overflow-y-auto">
+            {/* A project takes ONE application per brand (Interest is unique on
+                brand+project), so a second send overwrites the first. With an
+                apply button on every offer card this is now one click away —
+                say it before they send, not after. */}
+            {alreadyApplied ? (
+              <p className="rounded-lg border border-warn/40 bg-warn/10 px-3 py-2 text-xs text-warn">
+                {t("apply.replaceWarning")}
+              </p>
+            ) : null}
             {offers.length > 0 ? (
               <div>
                 <label htmlFor="apply-offer" className={labelClass}>

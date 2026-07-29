@@ -332,6 +332,7 @@ model SponsorshipTier {
   name      String // "Official Sponsor" | "General Sponsor" (+ per-locale later)
   priceAmd  Int // 20000000 / 30000000 / 40000000
   benefits  String  @db.Text // JSON string[] — the included-benefits bullet list
+  image     String? // 16:9 still shown atop the card, same contract as Placement.image
   isExclusive Boolean @default(false) // shared (non-competing brands only) vs exclusive placement (CSV "Is Exclusive")
   totalSlots     Int? // total capacity of this placement (the "Y" in "3 of 10" on catalog cards)
   availableSlots Int? // still-open slots (CSV "Available Slots"); the "X" in "3 of 10"; null -> unspecified

@@ -20,6 +20,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { ChevronDown, ChevronUp, GripVertical, Loader2, Search, X } from "lucide-react";
+import { makeUI } from "@/lib/i18n";
 import { ActiveToggle, DeleteButton } from "./row-actions";
 import { reorderProjects } from "./actions";
 
@@ -34,6 +35,12 @@ export type ProjectRow = {
    *  applicationDeadline (see isArchived in src/lib/data/format.ts), never
    *  stored, so it is always in sync with the date on the form. */
   archived: boolean;
+  /** How many of the report page's blocks this project leaves empty (audit
+   *  B8). An empty block doesn't render at all on the public page, so from
+   *  this list a half-filled project is indistinguishable from a finished
+   *  one — the badge is the only place the gap shows up before somebody opens
+   *  the form. */
+  incomplete: number;
 };
 
 // --- Client-side filtering (redesign §3.4) -------------------------------
@@ -63,6 +70,22 @@ function ArchivedBadge() {
   return (
     <span className="ml-2 inline-block rounded-full bg-muted px-2 py-0.5 align-middle text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
       Archived
+    </span>
+  );
+}
+
+// English, like the rest of the admin panel — but read from the dictionary
+// rather than typed out here: the creator's list shows the same two strings,
+// and a hardcoded copy would drift the moment they are edited in /admin/i18n.
+const tEn = makeUI("en");
+
+function IncompleteBadge({ n }: { n: number }) {
+  return (
+    <span
+      title={tEn("completeness.badgeTitle", { n })}
+      className="ml-2 inline-block rounded-full bg-warn/10 px-2 py-0.5 align-middle text-[10px] font-semibold uppercase tracking-wide text-warn"
+    >
+      {tEn("completeness.badge", { n })}
     </span>
   );
 }
@@ -372,6 +395,7 @@ function SortableRow({
           {p.title}
         </Link>
         {p.archived && <ArchivedBadge />}
+        {p.incomplete > 0 && <IncompleteBadge n={p.incomplete} />}
         <Link
           href={`/admin/projects/${p.id}/edit`}
           className="mt-0.5 block text-xs text-muted-foreground hover:text-primary"
@@ -443,6 +467,7 @@ export function PlainProjectsTable({ projects }: { projects: ProjectRow[] }) {
                       {p.title}
                     </Link>
                     {p.archived && <ArchivedBadge />}
+        {p.incomplete > 0 && <IncompleteBadge n={p.incomplete} />}
                     <Link
                       href={`/admin/projects/${p.id}/edit`}
                       className="mt-0.5 block text-xs text-muted-foreground hover:text-primary"
