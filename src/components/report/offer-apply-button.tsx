@@ -14,8 +14,20 @@ import { useReportInterest } from "@/components/report/report-interest-context";
  *  What renders depends on who is looking (ReportViewer): a creator or staff
  *  member previewing their own project has nothing to apply for, a guest is
  *  sent to sign in and back, and a brand gets the popup directly. */
-export function OfferApplyButton({ offer, label }: { offer: string; label: string }) {
-  const { archived, viewer, loginHref, openDialog } = useReportInterest();
+export function OfferApplyButton({
+  offer,
+  label,
+  sentLabel,
+}: {
+  offer: string;
+  label: string;
+  /** Shown once this particular offer has an application. Only this card
+   *  changes — applying for one placement must not read as all nine being
+   *  taken. The button stays live: re-sending is how a brand revises its own
+   *  terms, and the popup warns that it replaces the previous round. */
+  sentLabel: string;
+}) {
+  const { archived, viewer, appliedTo, loginHref, openDialog } = useReportInterest();
 
   // The facts block up top already says offers are closed; nine more
   // disabled buttons repeating that on every card would just be noise.
@@ -42,11 +54,19 @@ export function OfferApplyButton({ offer, label }: { offer: string; label: strin
     );
   }
 
-  // viewer === "brand" — the button stays the same even after an application
-  // exists: applying for one placement must not read as "all nine are taken".
+  // viewer === "brand". A card the brand has already applied for says so and
+  // steps back to the quieter variant, so the offers still open keep the loud
+  // one — but it stays clickable, because re-sending is how a brand revises
+  // its terms.
+  const sent = appliedTo(offer);
   return (
-    <Button type="button" variant="primary" className={className} onClick={() => openDialog(offer)}>
-      {label}
+    <Button
+      type="button"
+      variant={sent ? "secondary" : "primary"}
+      className={className}
+      onClick={() => openDialog(offer)}
+    >
+      {sent ? sentLabel : label}
     </Button>
   );
 }

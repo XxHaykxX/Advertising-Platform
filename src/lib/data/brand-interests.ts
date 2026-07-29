@@ -88,16 +88,6 @@ export async function getBrandInterests(brandId: number, locale: Locale): Promis
   }));
 }
 
-/** projectId -> Interest, for the Browse grid (disables/relabels the
- *  "Express Interest" button on projects the brand already signalled). */
-export async function getBrandInterestMap(brandId: number): Promise<Map<number, BrandInterestDTO["status"]>> {
-  const rows = await prisma.interest.findMany({
-    where: { brandId },
-    select: { projectId: true, status: true },
-  });
-  return new Map(rows.map((r) => [r.projectId, r.status]));
-}
-
 /** Live count of the current brand's expressed interests — drives the
  *  sidebar badge (#24), same "small, low-traffic, skip unstable_cache"
  *  reasoning as the rest of this file. */
@@ -105,16 +95,22 @@ export async function getBrandInterestCount(brandId: number): Promise<number> {
   return prisma.interest.count({ where: { brandId } });
 }
 
-/** Single project's interest status for one brand — feeds the report page's
- *  Express Interest button (IA-6) so it opens already reflecting SENT/MUTUAL/
- *  DECLINED instead of always starting from scratch. */
-export async function getBrandInterestStatus(
+/** What this brand has already applied for on one project, keyed by offer
+ *  ("P:5" / "T:3", or "-" for an application that named nothing).
+ *
+ *  Feeds the report page (IA-6): the apply buttons open already reflecting
+ *  SENT / MUTUAL / DECLINED instead of starting from scratch, and the popup
+ *  only warns about replacing an application when the offer being applied for
+ *  is one the brand already sent. It used to be a single status for the whole
+ *  project, which is no longer a question with an answer — a brand can hold an
+ *  accepted deal on one placement and a pending application on another. */
+export async function getBrandInterestOffers(
   brandId: number,
   projectId: number,
-): Promise<InterestStatus | null> {
-  const row = await prisma.interest.findUnique({
-    where: { brandId_projectId: { brandId, projectId } },
-    select: { status: true },
+): Promise<Record<string, InterestStatus>> {
+  const rows = await prisma.interest.findMany({
+    where: { brandId, projectId },
+    select: { offerKey: true, status: true },
   });
-  return row?.status ?? null;
+  return Object.fromEntries(rows.map((r) => [r.offerKey, r.status]));
 }

@@ -69,6 +69,11 @@ export async function respondToInterest(
       project: { select: { id: true, title: true, ownerId: true } },
       brand: { select: { id: true, email: true, name: true } },
       tier: { select: { id: true, name: true, availableSlots: true } },
+      // A brand can name a product placement instead of a package (2026-07-29,
+      // see the Interest model comment) — slots for those need the same
+      // bookkeeping below, tier and placement being mutually exclusive on an
+      // application in practice.
+      placement: { select: { id: true, title: true, availableSlots: true } },
     },
   });
   if (!interest) return { ok: false, error: t("interests.errNotFound") };
@@ -88,11 +93,14 @@ export async function respondToInterest(
 
   // Slot bookkeeping runs in the same transaction as the status change, so an
   // accepted application can never end up holding a slot that wasn't taken (or
-  // a declined one keep holding it).
-  const reserveSlot = accept && !interest.slotReserved && interest.tier != null;
-  const releaseSlot = !accept && interest.slotReserved && interest.tier != null;
+  // a declined one keep holding it). The application names either a package or
+  // a placement, never both, so whichever one is set is the thing whose slot
+  // count moves.
+  const offer = interest.tier ?? interest.placement;
+  const reserveSlot = accept && !interest.slotReserved && offer != null;
+  const releaseSlot = !accept && interest.slotReserved && offer != null;
 
-  if (reserveSlot && interest.tier!.availableSlots != null && interest.tier!.availableSlots <= 0) {
+  if (reserveSlot && offer!.availableSlots != null && offer!.availableSlots <= 0) {
     return { ok: false, error: t("interests.errNoSlots") };
   }
 
@@ -117,17 +125,16 @@ export async function respondToInterest(
         authorId: responder.id,
       },
     });
-    if (reserveSlot && interest.tier!.availableSlots != null) {
-      await tx.sponsorshipTier.update({
-        where: { id: interest.tier!.id },
-        data: { availableSlots: { decrement: 1 } },
-      });
-    }
-    if (releaseSlot && interest.tier!.availableSlots != null) {
-      await tx.sponsorshipTier.update({
-        where: { id: interest.tier!.id },
-        data: { availableSlots: { increment: 1 } },
-      });
+    // null availableSlots means "capacity not tracked" for this offer — leave
+    // it alone, since incrementing/decrementing a NULL column stays NULL in
+    // MySQL and would silently do nothing useful anyway.
+    if (offer != null && offer.availableSlots != null && (reserveSlot || releaseSlot)) {
+      const data = { availableSlots: { [reserveSlot ? "decrement" : "increment"]: 1 } };
+      if (interest.tier != null) {
+        await tx.sponsorshipTier.update({ where: { id: interest.tier.id }, data });
+      } else if (interest.placement != null) {
+        await tx.placement.update({ where: { id: interest.placement.id }, data });
+      }
     }
   });
 
@@ -152,7 +159,10 @@ export async function respondToInterest(
         projectId: interest.project.id,
         projectTitle: interest.project.title,
         brandName: interest.brand.name,
-        tierName: interest.tier?.name,
+        // notifyInterestAnswered only knows "tierName" — reuse it for a
+        // placement's title too (they're mutually exclusive on one
+        // application) rather than change a signature owned by mail.ts.
+        tierName: interest.tier?.name ?? interest.placement?.title,
         note: trimmedNote,
         accepted: accept,
       },

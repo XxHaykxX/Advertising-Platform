@@ -7,7 +7,7 @@ import { PhoneInput } from "@/components/ui/phone-input";
 import { useModalDialog } from "@/lib/use-modal-dialog";
 import { submitApplication } from "@/app/account/brand/actions";
 import type { makeUI } from "@/lib/i18n";
-import { offerValue, parseOfferValue } from "@/lib/offer-value";
+import { NO_OFFER_KEY, offerValue, parseOfferValue } from "@/lib/offer-value";
 
 /** Application popup (#23) for the report page's Express Interest button —
  *  same accessible-overlay shape as LogoutConfirmDialog (logout-button.tsx):
@@ -75,7 +75,7 @@ export function ApplicationDialog({
   projectId,
   offers = [],
   initialOffer = "",
-  alreadyApplied = false,
+  appliedOffers,
   brandPhone = "",
   t,
   onClose,
@@ -86,8 +86,11 @@ export function ApplicationDialog({
    *  picker. Empty when the popup was opened from a page-level button, which
    *  names no particular offer. */
   initialOffer?: string;
-  /** An application for this project already exists — sending replaces it. */
-  alreadyApplied?: boolean;
+  /** offerKeys this brand has already applied for on this project. Sending
+   *  replaces an application only when the picked offer is one of them —
+   *  applying for a second placement now creates a second application rather
+   *  than overwriting the first (owner decision 2026-07-29). */
+  appliedOffers?: ReadonlySet<string>;
   /** Seeds the required phone field from the brand's profile. */
   brandPhone?: string;
   /** What this project sells — placements first, then sponsorship packages.
@@ -98,7 +101,9 @@ export function ApplicationDialog({
   offers?: ApplicationOffer[];
   t: ReturnType<typeof makeUI>;
   onClose: () => void;
-  onSubmitted: () => void;
+  /** Reports the offerKey the application was sent for, so the page can flip
+   *  that one card — and only that one — to "already sent". */
+  onSubmitted: (offer: string) => void;
 }) {
   const [message, setMessage] = useState("");
   // Required since 2026-07-26: the seller has to be able to call the buyer
@@ -134,6 +139,11 @@ export function ApplicationDialog({
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
 
+  // Sending now would overwrite an application that already exists for the
+  // offer currently picked. "" (nothing picked) is its own slot — a brand can
+  // hold one unattached application per project, and re-sending replaces that.
+  const replaces = (appliedOffers ?? new Set<string>()).has(selected || NO_OFFER_KEY);
+
   const trimmedProduct = productInfo.trim();
   const trimmedMessage = message.trim();
   const canSubmit =
@@ -164,7 +174,7 @@ export function ApplicationDialog({
         setError(res.error ?? t("apply.error"));
         return;
       }
-      onSubmitted();
+      onSubmitted(selected || NO_OFFER_KEY);
       setSent(true);
     });
   }
@@ -217,11 +227,12 @@ export function ApplicationDialog({
           </>
         ) : (
           <form onSubmit={handleSubmit} className="mt-4 flex max-h-[70vh] flex-col gap-4 overflow-y-auto">
-            {/* A project takes ONE application per brand (Interest is unique on
-                brand+project), so a second send overwrites the first. With an
-                apply button on every offer card this is now one click away —
-                say it before they send, not after. */}
-            {alreadyApplied ? (
+            {/* An application belongs to ONE offer, and re-sending for that
+                same offer replaces it — including an answer the creator has
+                already given. Picking a different offer creates a second
+                application and leaves the first alone, so the warning follows
+                the picker rather than sitting there for the whole project. */}
+            {replaces ? (
               <p className="rounded-lg border border-warn/40 bg-warn/10 px-3 py-2 text-xs text-warn">
                 {t("apply.replaceWarning")}
               </p>

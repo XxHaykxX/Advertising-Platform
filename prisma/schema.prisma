@@ -432,6 +432,14 @@ model Interest {
   // to name it and had to describe it in prose. Mutually exclusive with tierId
   // in practice: the popup is one picker over both lists.
   placementId  Int?
+  // Which offer this application is FOR, as one comparable value: "P:5" for a
+  // placement, "T:3" for a sponsorship package, "-" when the brand named
+  // nothing. It exists only to be part of the uniqueness rule below — a
+  // composite unique over (tierId, placementId) would not work, because MySQL
+  // lets NULL repeat, so every "no offer named" application would count as
+  // distinct and the same brand could pile up dozens of them on one project.
+  // Always derived from the two ids above, never entered by hand.
+  offerKey     String @default("-") @db.VarChar(24)
   // True while this application holds one of that package's availableSlots.
   // Set when a creator accepts, released when they decline or the brand
   // withdraws — so two brands can no longer both "take" one exclusive slot.
@@ -462,7 +470,14 @@ model Interest {
   placement Placement?       @relation(fields: [placementId], references: [id], onDelete: SetNull)
   events    InterestEvent[]
 
-  @@unique([brandId, projectId])
+  // One application per brand per OFFER, not per project (owner decision
+  // 2026-07-29). It used to be @@unique([brandId, projectId]) with an upsert on
+  // top, so a brand that applied for a second placement silently overwrote its
+  // first application — including one the creator had already accepted, whose
+  // reserved slot went back on sale with nobody told. The page now carries an
+  // apply button on every offer card, which made that one click away.
+  @@unique([brandId, projectId, offerKey])
+  @@index([brandId, projectId])
   @@index([projectId])
   @@index([tierId])
   @@index([placementId])

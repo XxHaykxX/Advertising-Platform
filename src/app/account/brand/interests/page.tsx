@@ -153,7 +153,7 @@ export default async function BrandInterestsPage() {
                   <Link href={`/reports/${interest.project.id}`}>{t("btn.viewReport")}</Link>
                 </Button>
                 <RemoveInterestButton
-                  projectId={interest.project.id}
+                  interestId={interest.id}
                   label={t("btn.removeInterest")}
                   errorMessage={t("account.brand.expressInterestError")}
                 />

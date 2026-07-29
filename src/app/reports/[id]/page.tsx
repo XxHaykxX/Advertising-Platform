@@ -4,7 +4,7 @@ import { getLocale } from "@/lib/data/locale";
 import { getCurrency } from "@/lib/data/currency";
 import { daysUntil, isArchived } from "@/lib/data/format";
 import { getSiteHeaderUser } from "@/lib/data/site-header-user";
-import { getBrandInterestStatus } from "@/lib/data/brand-interests";
+import { getBrandInterestOffers } from "@/lib/data/brand-interests";
 import { prisma } from "@/lib/prisma";
 import { loadCurrentUser } from "@/lib/auth/require";
 import { isStaff } from "@/lib/auth/permissions";
@@ -66,8 +66,12 @@ export default async function ReportPage({
   const project = await getProject(pid, locale, currency, !canPreviewUnapproved);
   if (!project) notFound();
 
-  const interestStatus =
-    authed?.role === "BRAND" ? await getBrandInterestStatus(authed.id, pid) : null;
+  // Offer -> status for everything this brand has already applied for here.
+  // Per offer, not per project: a brand can hold an accepted deal on one
+  // placement and a fresh application on another, so "have you applied?" only
+  // has an answer once you say what for.
+  const appliedOffers =
+    authed?.role === "BRAND" ? await getBrandInterestOffers(authed.id, pid) : {};
   // The application now requires a phone number (owner decision 2026-07-26 —
   // the seller has to be able to call back). Seeded from the brand's profile
   // so a returning buyer doesn't retype it.
@@ -125,7 +129,7 @@ export default async function ReportPage({
   return (
     <ReportInterestProvider
       projectId={project.id}
-      initialStatus={interestStatus}
+      appliedOffers={appliedOffers}
       viewer={viewer}
       // The application popup asks what the brand wants (audit 2.3). Product
       // placements lead the list — that is the offer a brand comes here for;

@@ -85,6 +85,7 @@ export function ProductPlacements({
                       // The card the button sits in already says which offer
                       // it is about.
                       label={t("report.offerBarCta")}
+                      sentLabel={t("report.offerApplied")}
                     />
                   </div>
                 </div>

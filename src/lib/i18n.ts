@@ -898,6 +898,11 @@ export const UI: Record<string, Dict> = {
   // button sits in already says which offer it belongs to (owner decision
   // 2026-07-29).
   "report.offerBarCta": { ru: "Подать заявку", en: "Apply", hy: "Ներկայացնել հայտ" },
+  // Same button on a card the brand has already applied for. An application
+  // belongs to one offer since 2026-07-29, so this marks that card alone —
+  // its neighbours still say "apply" — and the button stays live, because
+  // re-sending with new terms is how a brand revises its own offer.
+  "report.offerApplied": { ru: "Заявка отправлена", en: "Application sent", hy: "Հայտն ուղարկված է" },
 
   // ── Deal card in the hero (owner decision 2026-07-29) ─────────────────────
   // The right column of the hero used to hold the production budget and ~280px
@@ -2116,10 +2121,15 @@ export const UI: Record<string, Dict> = {
   // it had reserved. Harmless while the page had a single apply button; since
   // every offer card got its own (2026-07-29) clicking a second card is the
   // natural gesture, so the popup has to say what it is about to do.
+  // Shown only when the offer currently picked already carries an application
+  // of this brand's. Since 2026-07-29 an application belongs to ONE offer, so
+  // choosing a different placement or package sends a second application and
+  // leaves the first alone — the warning follows the picker rather than the
+  // project, and says so.
   "apply.replaceWarning": {
-    ru: "По этому проекту у вас уже есть заявка. Отправка заменит её — прежний выбор и ответ создателя не сохранятся.",
-    en: "You already have an application for this project. Sending will replace it — the previous choice and the creator's answer will not be kept.",
-    hy: "Այս նախագծի համար դուք արդեն ունեք հայտ։ Ուղարկելը կփոխարինի այն — նախորդ ընտրությունը և ստեղծագործողի պատասխանը չեն պահպանվի։",
+    ru: "На это предложение у вас уже есть заявка. Отправка обновит её — ответ создателя не сохранится. Чтобы подать ещё одну заявку, выберите другое предложение.",
+    en: "You already have an application for this offer. Sending will update it — the creator's answer will not be kept. To send a separate application, pick a different offer.",
+    hy: "Այս առաջարկի համար դուք արդեն ունեք հայտ։ Ուղարկելը կթարմացնի այն — ստեղծագործողի պատասխանը չի պահպանվի։ Առանձին հայտ ներկայացնելու համար ընտրեք այլ առաջարկ։",
   },
   "apply.tierLabel": { ru: "Спонсорский пакет", en: "Sponsorship package", hy: "Հովանավորության փաթեթ" },
   "apply.tierNone": { ru: "Не выбран — обсудим", en: "Not selected — let's discuss", hy: "Ընտրված չէ — կքննարկենք" },

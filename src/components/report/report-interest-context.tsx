@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import type { InterestStatus } from "@prisma/client";
 import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
 import { ApplicationDialog, type ApplicationOffer } from "@/components/report/application-dialog";
+import { NO_OFFER_KEY } from "@/lib/offer-value";
 
 /** Shared Express Interest state for the report page (#23) — the page renders
  *  TWO buttons (key-facts up top, the ROI banner further down) that must
@@ -14,7 +15,13 @@ import { ApplicationDialog, type ApplicationOffer } from "@/components/report/ap
  *  succeeds — the dialog itself is mounted once, here, so either button's
  *  openDialog() opens the one instance. */
 type ReportInterestContextValue = {
+  /** The brand has applied for something on this project. */
   applied: boolean;
+  /** …and specifically for this offer ("P:5" / "T:3"). Since 2026-07-29 an
+   *  application belongs to one offer, so a card can say "sent" while its
+   *  neighbours still say "apply", and the popup only warns about replacing
+   *  what is actually going to be replaced. */
+  appliedTo: (offer: string) => boolean;
   isOpen: boolean;
   /** The placement deadline has passed, so the project no longer takes offers.
    *  The report page itself stays reachable by direct link — only the action
@@ -36,7 +43,9 @@ type ReportInterestContextValue = {
    *  which open the popup with nothing chosen. */
   openDialog: (offer?: string) => void;
   closeDialog: () => void;
-  markApplied: () => void;
+  /** Records that an application now exists for `offer` (default: the
+   *  "no particular offer" slot). */
+  markApplied: (offer?: string) => void;
 };
 
 /** The three states an offer card's button can be in. Anything that is not a
@@ -53,7 +62,7 @@ const ReportInterestContext = createContext<ReportInterestContextValue | null>(n
 
 export function ReportInterestProvider({
   projectId,
-  initialStatus,
+  appliedOffers = {},
   offers = [],
   locale = DEFAULT_LOCALE,
   brandPhone = "",
@@ -62,7 +71,9 @@ export function ReportInterestProvider({
   children,
 }: {
   projectId: number;
-  initialStatus: InterestStatus | null;
+  /** offerKey -> status for the applications this brand already holds here
+   *  (getBrandInterestOffers). Empty for anyone who is not a brand. */
+  appliedOffers?: Record<string, InterestStatus>;
   /** Resolved on the server from the session — see ReportViewer. */
   viewer?: ReportViewer;
   /** Placement deadline is behind us (see isArchived) — offers are closed. */
@@ -76,7 +87,12 @@ export function ReportInterestProvider({
   brandPhone?: string;
   children: React.ReactNode;
 }) {
-  const [applied, setApplied] = useState(initialStatus !== null);
+  // Which offers already carry an application. Seeded from the server and
+  // extended in place when one is sent, so the card that was just applied for
+  // relabels itself without a reload — and its neighbours don't.
+  const [sentOffers, setSentOffers] = useState<Set<string>>(
+    () => new Set(Object.keys(appliedOffers)),
+  );
   const [isOpen, setIsOpen] = useState(false);
   /** offerValue the popup should open on, or "" for "let them choose". */
   const [preselected, setPreselected] = useState("");
@@ -107,7 +123,8 @@ export function ReportInterestProvider({
   }, [archived, viewer]);
 
   const value: ReportInterestContextValue = {
-    applied,
+    applied: sentOffers.size > 0,
+    appliedTo: (offer) => sentOffers.has(offer),
     isOpen,
     archived,
     archivedLabel: t("report.offersClosed"),
@@ -124,7 +141,8 @@ export function ReportInterestProvider({
       setIsOpen(true);
     },
     closeDialog: () => setIsOpen(false),
-    markApplied: () => setApplied(true),
+    markApplied: (offer = NO_OFFER_KEY) =>
+      setSentOffers((prev) => (prev.has(offer) ? prev : new Set(prev).add(offer))),
   };
 
   return (
@@ -135,11 +153,17 @@ export function ReportInterestProvider({
           projectId={projectId}
           offers={offers}
           initialOffer={preselected}
-          alreadyApplied={applied}
+          // The offers this brand has already applied for — the popup warns
+          // only when the one currently picked is among them, since that is
+          // the only application a send can replace.
+          appliedOffers={sentOffers}
           brandPhone={brandPhone}
           t={t}
           onClose={() => setIsOpen(false)}
-          onSubmitted={() => setApplied(true)}
+          // The popup reports WHICH offer was sent, so only that card flips to
+          // "already sent" — applying for one placement must not read as all
+          // nine being taken.
+          onSubmitted={(offer) => value.markApplied(offer)}
         />
       ) : null}
     </ReportInterestContext.Provider>

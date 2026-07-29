@@ -12,11 +12,14 @@ import { emitInterestChanged } from "../interest-events";
  *  the page's props (getBrandInterests) refresh. Also emits
  *  INTEREST_CHANGED_EVENT so the sidebar badge updates immediately (IA-9). */
 export function RemoveInterestButton({
-  projectId,
+  interestId,
   label,
   errorMessage,
 }: {
-  projectId: number;
+  /** This application, not the project: a brand can hold one per offer, and
+   *  removing a row must take that row away rather than every application it
+   *  has for that film. */
+  interestId: number;
   label: string;
   errorMessage: string;
 }) {
@@ -34,7 +37,7 @@ export function RemoveInterestButton({
         onClick={() =>
           startTransition(async () => {
             setError(null);
-            const res = await withdrawInterest(projectId);
+            const res = await withdrawInterest(interestId);
             if (!res.ok) setError(res.error ?? errorMessage);
             else emitInterestChanged(); // IA-9 — sync the sidebar badge without a reload
           })

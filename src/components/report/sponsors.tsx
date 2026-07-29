@@ -71,6 +71,7 @@ export function Sponsors({
                       // One short wording for the action everywhere on the
                       // page — see the note in product-placements.tsx.
                       label={t("report.offerBarCta")}
+                      sentLabel={t("report.offerApplied")}
                     />
                   </div>
                 </div>

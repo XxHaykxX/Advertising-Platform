@@ -11,6 +11,7 @@ import { BRAND_CATEGORIES, BUDGET_RANGES } from "@/lib/brand-categories";
 import { makeUI } from "@/lib/i18n";
 import { createNotification, notifyRoles } from "@/lib/data/notifications";
 import { notifyNewInterest } from "@/lib/mail";
+import { offerKeyOf } from "@/lib/offer-value";
 
 /* #23 — BRAND-cabinet server actions. Every action re-checks requireMember()
  * + role === "BRAND" itself (defense in depth — the layout gate already
@@ -25,25 +26,76 @@ function revalidateBrandPaths() {
 
 export type ExpressInterestResult = { ok: true } | { ok: false; error: string };
 
-/** Delete the current BRAND member's Interest row on `projectId` — the other
- *  half of the toggle (expressInterest ⇄ withdrawInterest). deleteMany (not
- *  delete) so a double-click / already-withdrawn race is a no-op instead of
- *  a P2025 "record not found" throw. */
-export async function withdrawInterest(projectId: number): Promise<ExpressInterestResult> {
+/** Withdraw ONE of the current brand's applications.
+ *
+ *  Takes the application's own id, not a project id: since 2026-07-29 a brand
+ *  can hold several applications on one project — one per placement or package
+ *  — and "remove" on a row in the cabinet must take that row away, not every
+ *  application for that film. The `brandId` in the filter is what makes it the
+ *  brand's own: an id belonging to somebody else matches nothing.
+ *
+ *  deleteMany (not delete) so a double-click, or a row already withdrawn in
+ *  another tab, is a no-op instead of a P2025 "record not found" throw.
+ *
+ *  A withdrawn application that was accepted gives its slot back — otherwise
+ *  the package would stay booked by a deal that no longer exists. */
+export async function withdrawInterest(interestId: number): Promise<ExpressInterestResult> {
   const user = await requireMember();
   const locale = await getLocale();
   const t = makeUI(locale);
   if (user.role !== "BRAND") return { ok: false, error: t("account.brand.expressInterestError") };
 
-  if (!Number.isInteger(projectId)) return { ok: false, error: t("account.brand.expressInterestError") };
+  if (!Number.isInteger(interestId)) return { ok: false, error: t("account.brand.expressInterestError") };
 
   try {
-    await prisma.interest.deleteMany({ where: { brandId: user.id, projectId } });
+    const row = await prisma.interest.findFirst({
+      where: { id: interestId, brandId: user.id },
+      select: { id: true, slotReserved: true, tierId: true, placementId: true },
+    });
+    // Already gone (or never theirs) — nothing to undo, and saying so would
+    // tell a caller whether somebody else's application exists.
+    if (!row) {
+      revalidateBrandPaths();
+      return { ok: true };
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.interest.deleteMany({ where: { id: row.id, brandId: user.id } });
+      if (!row.slotReserved) return;
+      // `availableSlots: null` means "capacity unspecified" — incrementing
+      // that is meaningless (and in MySQL yields NULL), so only counted rows
+      // are touched.
+      if (row.tierId != null) {
+        const tier = await tx.sponsorshipTier.findUnique({
+          where: { id: row.tierId },
+          select: { availableSlots: true },
+        });
+        if (tier?.availableSlots != null) {
+          await tx.sponsorshipTier.update({
+            where: { id: row.tierId },
+            data: { availableSlots: { increment: 1 } },
+          });
+        }
+      } else if (row.placementId != null) {
+        const placement = await tx.placement.findUnique({
+          where: { id: row.placementId },
+          select: { availableSlots: true },
+        });
+        if (placement?.availableSlots != null) {
+          await tx.placement.update({
+            where: { id: row.placementId },
+            data: { availableSlots: { increment: 1 } },
+          });
+        }
+      }
+    });
   } catch {
     return { ok: false, error: t("account.brand.expressInterestError") };
   }
 
   revalidateBrandPaths();
+  revalidatePath("/account/interests");
+  revalidatePath("/admin/interests");
   return { ok: true };
 }
 
@@ -184,22 +236,29 @@ export async function submitApplication(
     }
   }
 
-  // Snapshot the application as it stands BEFORE the upsert overwrites it:
-  // resending switches packages, and the slot to release belongs to the OLD
-  // tier. Reading it afterwards would hand the slot back to the new package
-  // instead, quietly leaking the old one.
+  // Which application this is. Keyed by the offer, not by the project: a brand
+  // interested in two placements of the same film holds two applications, and
+  // sending the second must not touch the first (owner decision 2026-07-29 —
+  // it used to overwrite it, accepted deal and reserved slot included).
+  const offerKey = offerKeyOf(resolvedTierId, resolvedPlacementId);
+
+  // Snapshot THIS application as it stands before the upsert overwrites it. A
+  // resend on the same offer reopens it, so a slot its earlier acceptance held
+  // has to go back on sale; reading the row afterwards would show the new
+  // state and the slot would leak.
   const previous = await prisma.interest.findUnique({
-    where: { brandId_projectId: { brandId: user.id, projectId } },
-    select: { slotReserved: true, tierId: true },
+    where: { brandId_projectId_offerKey: { brandId: user.id, projectId, offerKey } },
+    select: { slotReserved: true, tierId: true, placementId: true },
   });
 
   let interestId: number;
   try {
     const saved = await prisma.interest.upsert({
-      where: { brandId_projectId: { brandId: user.id, projectId } },
+      where: { brandId_projectId_offerKey: { brandId: user.id, projectId, offerKey } },
       create: {
         brandId: user.id,
         projectId,
+        offerKey,
         status: "SENT",
         message: trimmedMessage,
         contact: trimmedContact,
@@ -210,14 +269,14 @@ export async function submitApplication(
         dealType,
         offerAmountAmd,
       },
-      // A resend reopens the conversation: back to SENT, new message, and any
-      // slot the previous answer had taken is released below.
+      // A resend for the SAME offer reopens that conversation: back to SENT,
+      // new message, and any slot the previous answer had taken is released
+      // below. tierId/placementId are not written here — they are what the key
+      // is derived from, so on this branch they already hold these values.
       update: {
         status: "SENT",
         message: trimmedMessage,
         contact: trimmedContact,
-        tierId: resolvedTierId,
-        placementId: resolvedPlacementId,
         productInfo,
         desiredTiming,
         dealType,
@@ -254,24 +313,47 @@ export async function submitApplication(
     });
 
     // Reopening frees the slot the earlier acceptance held, so it can't stay
-    // booked by an application that is pending again. `availableSlots: null`
-    // means "capacity unspecified" — incrementing that is meaningless (and in
-    // MySQL just yields NULL), so only counted packages are touched.
-    if (previous?.slotReserved && previous.tierId != null) {
-      const previousTier = await prisma.sponsorshipTier.findUnique({
-        where: { id: previous.tierId },
-        select: { availableSlots: true },
-      });
+    // booked by an application that is pending again.
+    //
+    // Both kinds of offer, not just packages: a brand applies for a product
+    // placement too since 2026-07-29, and the placement branch was missing —
+    // a resend on an accepted placement reopened the application but left its
+    // slot booked, so the capacity never came back and the row claimed a
+    // reservation its own status contradicted (found in QA 2026-07-29).
+    //
+    // `availableSlots: null` means "capacity unspecified" — incrementing that
+    // is meaningless (and in MySQL just yields NULL), so only counted rows are
+    // touched.
+    if (previous?.slotReserved) {
       const ops: Prisma.PrismaPromise<unknown>[] = [
         prisma.interest.update({ where: { id: saved.id }, data: { slotReserved: false } }),
       ];
-      if (previousTier?.availableSlots != null) {
-        ops.unshift(
-          prisma.sponsorshipTier.update({
-            where: { id: previous.tierId },
-            data: { availableSlots: { increment: 1 } },
-          }),
-        );
+      if (previous.tierId != null) {
+        const previousTier = await prisma.sponsorshipTier.findUnique({
+          where: { id: previous.tierId },
+          select: { availableSlots: true },
+        });
+        if (previousTier?.availableSlots != null) {
+          ops.unshift(
+            prisma.sponsorshipTier.update({
+              where: { id: previous.tierId },
+              data: { availableSlots: { increment: 1 } },
+            }),
+          );
+        }
+      } else if (previous.placementId != null) {
+        const previousPlacement = await prisma.placement.findUnique({
+          where: { id: previous.placementId },
+          select: { availableSlots: true },
+        });
+        if (previousPlacement?.availableSlots != null) {
+          ops.unshift(
+            prisma.placement.update({
+              where: { id: previous.placementId },
+              data: { availableSlots: { increment: 1 } },
+            }),
+          );
+        }
       }
       await prisma.$transaction(ops);
     }

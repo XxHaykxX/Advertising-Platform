@@ -16,6 +16,19 @@ export function offerValue(offer: { id: number; kind: OfferKind }): string {
   return `${offer.kind === "PLACEMENT" ? "P" : "T"}:${offer.id}`;
 }
 
+/** What an application is stored against (Interest.offerKey). The same
+ *  encoding the picker uses above, so an offer card's value and the row it
+ *  produces are the same string — with one extra case the picker has no need
+ *  for: "-" is "the brand named no particular offer", which is a thing you can
+ *  only apply for once per project. */
+export const NO_OFFER_KEY = "-";
+
+export function offerKeyOf(tierId: number | null, placementId: number | null): string {
+  if (placementId != null) return offerValue({ id: placementId, kind: "PLACEMENT" });
+  if (tierId != null) return offerValue({ id: tierId, kind: "TIER" });
+  return NO_OFFER_KEY;
+}
+
 export function parseOfferValue(value: string): { kind: OfferKind; id: number } | null {
   const [prefix, rawId] = value.split(":");
   const id = Number(rawId);
