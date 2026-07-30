@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect, notFound } from "next/navigation";
+import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireSuperadmin } from "@/lib/auth/require";
 import { getLocale } from "@/lib/data/locale";
@@ -23,7 +23,14 @@ export type PartnerFormValues = {
   url: string;
 };
 
-export type PartnerFormState = { error?: string; values?: PartnerFormValues };
+export type PartnerFormState = {
+  error?: string;
+  values?: PartnerFormValues;
+  // Success is REPORTED, not acted on: the action must not call redirect()
+  // itself. See the comment on the redirect contract below.
+  ok?: boolean;
+  redirect?: string;
+};
 
 function buildData(fd: FormData): PartnerFormValues {
   return {
@@ -47,9 +54,33 @@ function revalidatePartnerPaths() {
   // previously visited pages to refresh when navigated to again", and forcing a
   // reseed from the root layout down while a Server Action response is in
   // flight is exactly what broke the project form on 2026-07-15 (see the
-  // comment on revalidateProjectPaths in ../projects/actions.ts).
+  // comment on revalidateProjectPaths in ../projects/actions.ts). /about still
+  // lives under the PUBLIC root layout while this action runs under the admin
+  // panel layout, and revalidating across that boundary is what makes the
+  // redirect contract below mandatory.
   revalidatePath("/about");
 }
+
+/* Why these actions return { ok, redirect } instead of calling redirect():
+ *
+ * redirect() inside the action makes Next answer the POST with 303 plus an RSC
+ * payload for the destination. Because the action revalidated a path in another
+ * layout branch (/about, and before that "/"), that payload carries the whole
+ * tree from the public root layout down — and on production its
+ * client-reference entries point at chunk files the build never emitted:
+ *
+ *   2:I[85820,["/_next/static/chunks/3nyd3uho56p0l.js", …],"DocumentLanguage"]
+ *
+ * Each 404s, the Turbopack runtime raises ChunkLoadError, and the admin error
+ * boundary renders "Что-то пошло не так" — even though the save itself already
+ * succeeded. Captured live on 2026-07-30: a plain RSC GET of the same route
+ * returns working chunk names; the action's 303 does not. A clean rebuild, a
+ * server cache purge and a Node restart all left it unchanged.
+ *
+ * Returning the destination instead means the client navigates with a full page
+ * load, so the broken payload is never requested. Same contract the project
+ * form has used since the 2026-07-15 black-screen fix — that fix landed there
+ * and was never carried over here. */
 
 export async function createPartner(
   _prev: PartnerFormState,
@@ -75,7 +106,7 @@ export async function createPartner(
   });
 
   revalidatePartnerPaths();
-  redirect("/admin/partners");
+  return { ok: true, redirect: "/admin/partners" };
 }
 
 export async function updatePartner(
@@ -105,7 +136,7 @@ export async function updatePartner(
   });
 
   revalidatePartnerPaths();
-  redirect("/admin/partners");
+  return { ok: true, redirect: "/admin/partners" };
 }
 
 export async function deletePartner(id: number) {

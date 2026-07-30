@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect, notFound } from "next/navigation";
+import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireSuperadmin } from "@/lib/auth/require";
 import { getLocale } from "@/lib/data/locale";
@@ -35,12 +35,22 @@ export type PortfolioFormValues = {
   descriptionEn: string;
 };
 
-export type PortfolioFormState = { error?: string; values?: PortfolioFormValues };
+export type PortfolioFormState = {
+  error?: string;
+  values?: PortfolioFormValues;
+  // Success is reported, never acted on here — the action must not call
+  // redirect(). Same contract and same reason as the partner form: see the
+  // redirect-contract comment in ../partners/actions.ts.
+  ok?: boolean;
+  redirect?: string;
+};
 
 function buildData(fd: FormData): PortfolioFormValues {
   // The form only submits the per-locale fields — derive the legacy
-  // title/description columns from them (ru → hy → en priority, same as the
-  // project form) so the base fallback stays populated.
+  // title/description columns from them (hy → ru → en priority, same as the
+  // project form) so the base fallback stays populated. Was ru-first, which
+  // made an Armenian-only rename invisible wherever the legacy column is
+  // rendered — see the 2026-07-30 fix in ../projects/actions.ts.
   const titleHy = str(fd, "titleHy", VARCHAR_MAX);
   const titleRu = str(fd, "titleRu", VARCHAR_MAX);
   const titleEn = str(fd, "titleEn", VARCHAR_MAX);
@@ -48,8 +58,8 @@ function buildData(fd: FormData): PortfolioFormValues {
   const descriptionRu = str(fd, "descriptionRu");
   const descriptionEn = str(fd, "descriptionEn");
   return {
-    title: (titleRu || titleHy || titleEn).slice(0, VARCHAR_MAX),
-    description: descriptionRu || descriptionHy || descriptionEn,
+    title: (titleHy || titleRu || titleEn).slice(0, VARCHAR_MAX),
+    description: descriptionHy || descriptionRu || descriptionEn,
     brand: str(fd, "brand", VARCHAR_MAX),
     image: str(fd, "image", VARCHAR_MAX),
     metrics: str(fd, "metrics"),
@@ -130,7 +140,7 @@ export async function createPortfolio(
   });
 
   revalidatePortfolioPaths();
-  redirect("/admin/portfolio");
+  return { ok: true, redirect: "/admin/portfolio" };
 }
 
 export async function updatePortfolio(
@@ -171,7 +181,7 @@ export async function updatePortfolio(
   });
 
   revalidatePortfolioPaths();
-  redirect("/admin/portfolio");
+  return { ok: true, redirect: "/admin/portfolio" };
 }
 
 export async function deletePortfolio(id: number) {

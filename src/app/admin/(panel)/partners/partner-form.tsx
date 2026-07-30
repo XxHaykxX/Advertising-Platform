@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { MediaField } from "@/components/media-field";
@@ -37,6 +37,16 @@ export function PartnerForm({
   submitLabel: string;
 }) {
   const [state, formAction, pending] = useActionState<PartnerFormState, FormData>(action, {});
+
+  // The action reports success instead of redirecting, and we navigate with a
+  // full page load rather than the client router — see the redirect-contract
+  // comment in ./actions.ts for why the router path is broken here.
+  // Depends on `state` as a whole, not state.ok: two successful saves in a row
+  // read identically, and useActionState hands back a fresh object per dispatch
+  // (the IA-15 trap).
+  useEffect(() => {
+    if (state.ok && state.redirect) window.location.assign(state.redirect);
+  }, [state]);
 
   // On a failed submit (validation error), the server echoes back exactly
   // what the user typed in state.values — so re-rendering the form never

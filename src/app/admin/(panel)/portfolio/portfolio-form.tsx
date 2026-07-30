@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useRef, useState, useTransition } from "react";
+import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { Languages, Loader2 } from "lucide-react";
 import { makeUI } from "@/lib/i18n";
@@ -60,6 +60,13 @@ export function PortfolioForm({
   submitLabel: string;
 }) {
   const [state, formAction, pending] = useActionState<PortfolioFormState, FormData>(action, {});
+
+  // Full page load rather than the client router — see the redirect-contract
+  // comment in ../partners/actions.ts. Depends on `state`, not state.ok: two
+  // successful saves in a row read identically (the IA-15 trap).
+  useEffect(() => {
+    if (state.ok && state.redirect) window.location.assign(state.redirect);
+  }, [state]);
 
   // On a failed submit (validation error), the server echoes back exactly
   // what the user typed in state.values — so re-rendering the form never
