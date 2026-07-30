@@ -40,8 +40,15 @@ function validate(data: PartnerFormValues, t: ReturnType<typeof makeUI>): string
 
 function revalidatePartnerPaths() {
   revalidatePath("/admin/partners");
-  revalidatePath("/partners");
-  revalidatePath("/");
+  // /about is the only page that renders partners (PartnersMarquee +
+  // PartnersGrid). This used to revalidate "/partners" — a route that does not
+  // exist — and "/", which renders no partners at all. Revalidating "/" is the
+  // expensive, blast-radius-everything option: per the Next docs it "causes all
+  // previously visited pages to refresh when navigated to again", and forcing a
+  // reseed from the root layout down while a Server Action response is in
+  // flight is exactly what broke the project form on 2026-07-15 (see the
+  // comment on revalidateProjectPaths in ../projects/actions.ts).
+  revalidatePath("/about");
 }
 
 export async function createPartner(
