@@ -1,10 +1,8 @@
-import Link from "next/link";
-import { Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireContentEditor } from "@/lib/auth/require";
 import { isArchived } from "@/lib/data/format";
 import { missingCount, projectCompleteness } from "@/lib/project-completeness";
-import { PlainProjectsTable, ReorderableProjectsTable, type ProjectRow } from "./reorder-list";
+import { ProjectsPanel, type ProjectRow } from "./reorder-list";
 
 export default async function ProjectsAdminPage() {
   // Content-editor gate (not requireUser): MODERATOR and TRANSLATOR have no
@@ -89,62 +87,8 @@ export default async function ProjectsAdminPage() {
     ),
   }));
 
-  const archivedCount = rows.filter((r) => r.archived).length;
-
-  return (
-    <div>
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Projects</h1>
-          {/* "in catalog" used to count every row, including the ones not in
-              the catalog at all. Count what the visitor can actually see. */}
-          <p className="mt-1 text-sm text-muted-foreground">
-            {/* An archived project is switched on but past its deadline, so it
-                is off the catalog too — counting it as "in catalog" would
-                overstate what a visitor can see. */}
-            {rows.filter((p) => p.isActive && !p.archived).length} in catalog
-            {projects.length !== projects.filter((p) => p.isActive).length
-              ? ` · ${projects.length - projects.filter((p) => p.isActive).length} unpublished`
-              : ""}
-          </p>
-          {archivedCount > 0 ? (
-            <p className="mt-1 text-sm text-muted-foreground">
-              {archivedCount} in archive — placement deadline has passed
-            </p>
-          ) : null}
-          {awaitingModeration > 0 ? (
-            <p className="mt-1 text-sm">
-              <Link href="/admin/moderation" className="text-warn hover:underline">
-                {awaitingModeration} awaiting moderation →
-              </Link>
-            </p>
-          ) : null}
-        </div>
-        <Link
-          href="/admin/projects/new"
-          className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:opacity-90"
-        >
-          <Plus className="h-4 w-4" />
-          New project
-        </Link>
-      </div>
-
-      {projects.length === 0 ? (
-        <div className="mt-8 rounded-2xl border border-border bg-card py-16 text-center text-muted-foreground">
-          No projects.
-        </div>
-      ) : isSuperadmin ? (
-        // T2: catalog display order (sortOrder — see src/lib/data/projects.ts)
-        // is a single global sequence, so drag-to-reorder only makes sense
-        // from the superadmin's full-list view.
-        <div className="mt-6">
-          <ReorderableProjectsTable projects={rows} />
-        </div>
-      ) : (
-        <div className="mt-6">
-          <PlainProjectsTable projects={rows} />
-        </div>
-      )}
-    </div>
-  );
+  // The header counters, the FilterBar and the table below it all share one
+  // Filters state now (a number in the header jumps straight to that filter),
+  // so they have to live in one client component — see ProjectsPanel.
+  return <ProjectsPanel rows={rows} isSuperadmin={isSuperadmin} awaitingModeration={awaitingModeration} />;
 }

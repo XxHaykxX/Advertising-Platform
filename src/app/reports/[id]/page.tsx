@@ -23,7 +23,6 @@ import {
 import { StickyOfferBar } from "@/components/report/sticky-offer-bar";
 import { ViewPing } from "@/components/report/view-ping";
 import { makeUI } from "@/lib/i18n";
-import { ReportTabs } from "./report-tabs";
 
 export async function generateStaticParams() {
   const ids = await getProjectIds();
@@ -146,8 +145,6 @@ export default async function ReportPage({
   );
 
   const hasOffer = allOffers.length > 0;
-  const hasProduction = project.milestones.length > 0;
-  const hasCast = project.actors.length > 0;
 
   return (
     <ReportInterestProvider
@@ -195,21 +192,16 @@ export default async function ReportPage({
       {/* Counts this visit for the owner's stats — see the component. */}
       <ViewPing projectId={project.id} />
       <Header user={user} locale={locale} currency={currency} />
-      <ReportTabs
-        hasProduction={hasProduction}
-        hasCast={hasCast}
-        hasOffer={hasOffer}
-        locale={locale}
-      />
-      {/* Anchor targets for the tab bar. `scroll-mt` is what keeps a clicked
-          tab from parking the section heading underneath the fixed chrome:
-          the site header is 64px (the tab bar's own `top-16`) and the tab bar
-          about 52px on top of that, so anything less hides the heading — and
-          on the offer section, the apply buttons with it (audit A3). Wrapper
-          ids are used rather than the sections' own (`#placements`,
-          `#sponsors`, `#cast`) so the two offer sections can share one
-          target and no id is defined twice. */}
-      <div id="overview" className="scroll-mt-[7.5rem]">
+      {/* Anchor targets for #overview/#production/#team/#offer links (e.g.
+          from the sticky offer bar's own deep links, or shared URLs).
+          `scroll-mt-24` clears the sticky site header (64px, `top-0`) with
+          the same breathing room the admin form's own anchored sections use
+          — otherwise a jump parks the section heading right under the fixed
+          header, and on the offer section, the apply buttons with it (audit
+          A3). Wrapper ids are used rather than the sections' own
+          (`#placements`, `#sponsors`, `#cast`) so the two offer sections can
+          share one target and no id is defined twice. */}
+      <div id="overview" className="scroll-mt-24">
         <ReportHero
           project={project}
           // The same summary the sticky bar gets — the hero's deal card is
@@ -227,10 +219,10 @@ export default async function ReportPage({
             isn't shown twice (user request 2026-07-25). */}
         <KeyFacts project={project} locale={locale} user={user} />
       </div>
-      <div id="production" className="scroll-mt-[7.5rem]">
+      <div id="production" className="scroll-mt-24">
         <ProductionTimeline project={project} locale={locale} />
       </div>
-      <div id="team" className="scroll-mt-[7.5rem]">
+      <div id="team" className="scroll-mt-24">
         <Cast project={project} locale={locale} />
       </div>
       {/* pb: the sticky bar is fixed to the viewport bottom, so without room
@@ -238,7 +230,7 @@ export default async function ReportPage({
           that is the top of an offer card, which reads as content cut off.
           --offer-bar-h is published by the bar itself and is 0px whenever it
           is hidden, so nothing is reserved when nothing is there. */}
-      <div id="offer" className="scroll-mt-[7.5rem] pb-[var(--offer-bar-h,0px)]">
+      <div id="offer" className="scroll-mt-24 pb-[var(--offer-bar-h,0px)]">
         {/* Product placement first — that's what a brand comes here for;
             sponsorship (logo on promo, credits) is the second offer. */}
         <ProductPlacements project={project} locale={locale} />

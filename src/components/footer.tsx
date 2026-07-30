@@ -6,6 +6,7 @@ import { LocaleSwitcher } from "@/components/locale-switcher";
 import { CurrencySwitcher } from "@/components/currency-switcher";
 import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
 import { DEFAULT_CURRENCY, type CurrencyCode } from "@/lib/currency";
+import { PORTFOLIO_ENABLED } from "@/lib/feature-flags";
 
 const CONTACTS = [
   { icon: Mail, label: "hello@igovazd.am", href: "mailto:hello@igovazd.am" },
@@ -136,14 +137,19 @@ export function Footer({
                   {t("footer.howItWorks")}
                 </Link>
               </li>
-              <li>
-                <Link
-                  href="/portfolio"
-                  className="text-sm text-muted-foreground transition-colors hover:text-primary"
-                >
-                  {t("footer.portfolio")}
-                </Link>
-              </li>
+              {/* Hidden behind PORTFOLIO_ENABLED while the owner keeps
+                  preparing cases (see src/lib/feature-flags.ts) — the route
+                  itself 404s too. */}
+              {PORTFOLIO_ENABLED ? (
+                <li>
+                  <Link
+                    href="/portfolio"
+                    className="text-sm text-muted-foreground transition-colors hover:text-primary"
+                  >
+                    {t("footer.portfolio")}
+                  </Link>
+                </li>
+              ) : null}
               <li>
                 {/* Was "/#faq", an anchor on the landing page — off-limits to a
                     signed-in member (IA-37/38/39). /faq is a standalone route

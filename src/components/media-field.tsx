@@ -1,21 +1,24 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import Image from "next/image";
-import { FileVideo, ImageIcon, Loader2 } from "lucide-react";
+import { FileVideo, ImageIcon } from "lucide-react";
 import { MediaPicker, isVideoPath, type MediaPickerAccept, type MediaPickerScope } from "@/components/media-picker";
 import { MediaCropDialog } from "@/components/media-crop-dialog";
-import { uploadImage } from "@/lib/actions/uploads";
-import { uploadMemberImage } from "@/lib/actions/member-uploads";
-import { captureVideoPoster } from "@/lib/video-poster";
+import { UploadProgress } from "@/components/ui/upload-progress";
+import { uploadViaXhr } from "@/lib/upload-xhr";
+import { captureVideoPoster, posterPathFor } from "@/lib/video-poster";
 import { Dropzone, DropzoneEmptyState, DropzonePreview } from "@/components/ui/dropzone";
 import type { Locale } from "@/lib/i18n";
 import { imageSizeHint } from "@/lib/images/size-hint";
 
-/** Mirror of MAX_BYTES / MAX_BYTES_VIDEO in lib/actions/uploads.ts. Checked
- *  before the round trip: past the framework body limit the request is cut off
+/** Mirror of MAX_BYTES / MAX_BYTES_VIDEO in lib/uploads-store.ts. Checked before
+ *  the round trip: past the framework body limit the request is cut off
  *  mid-flight and the server's own "too large" message never runs. */
 const MAX_MB = { image: 8, video: 50 };
+
+/** The file currently going out, with its byte counters. */
+type UploadJob = { file: File; loaded: number; total: number };
 
 // Drop-in replacement for the old "<input> a URL" image fields (partner logo,
 // portfolio image, …). Mirrors the chosen /uploads/… path into a hidden input
@@ -35,6 +38,8 @@ export function MediaField({
   dropTitle = "Upload a file",
   dropLabel = "Drag and drop or click to upload",
   errTooLargeLabel = "File is too large",
+  errUploadFailedLabel = "Upload failed",
+  cancelLabel = "Cancel upload",
   replaceLabel = "Replace",
   removeLabel = "Remove",
   dropReplaceLabel = "Drop to replace",
@@ -65,6 +70,11 @@ export function MediaField({
   dropTitle?: string;
   dropLabel?: string;
   errTooLargeLabel?: string;
+  /** Shown when the upload never came back with an answer (offline, the host
+   *  cutting the request, a 502) — localized by the caller. */
+  errUploadFailedLabel?: string;
+  /** aria-label of the cancel control on the progress block. */
+  cancelLabel?: string;
   /** Overlay actions on the filled preview, localized by the caller. */
   replaceLabel?: string;
   removeLabel?: string;
@@ -100,7 +110,9 @@ export function MediaField({
   // upload, but the form itself had no target to drag a file onto — most of all
   // on the video field, where the file is the whole point.
   const [dropError, setDropError] = useState<string | null>(null);
-  const [uploading, startUpload] = useTransition();
+  const [job, setJob] = useState<UploadJob | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+  const uploading = job !== null;
 
   function update(v: string) {
     setValue(v);
@@ -109,6 +121,12 @@ export function MediaField({
 
   // The actual round trip — shared by a plain drop and by MediaCropDialog's
   // onDone, which hands back a cropped File to go through the same checks.
+  //
+  // Posted to /api/uploads over XHR rather than through the upload server
+  // action: the far end runs the same validation and the same write either way,
+  // but only a plain request tells the browser how many bytes have actually
+  // gone out. On the trailer field that is the whole difference — a 50 MB mp4
+  // on a home connection used to be a spinner and nothing else.
   async function uploadFile(file: File, kind: "image" | "video") {
     setDropError(null);
     const max = MAX_MB[kind];
@@ -117,6 +135,12 @@ export function MediaField({
       setDropError(`${errTooLargeLabel}: ${file.name} (${mb} MB > ${max} MB)`);
       return;
     }
+
+    const controller = new AbortController();
+    abortRef.current = controller;
+    // Shown before the first byte leaves: grabbing the poster frame below
+    // decodes the file first, which on a big clip is a visible pause of its own.
+    setJob({ file, loaded: 0, total: file.size });
 
     const fd = new FormData();
     fd.append("file", file);
@@ -127,17 +151,25 @@ export function MediaField({
       const poster = await captureVideoPoster(file);
       if (poster) fd.append("poster", poster);
     }
+    if (controller.signal.aborted) {
+      abortRef.current = null;
+      setJob(null);
+      return;
+    }
 
-    const upload = scope === "member" ? uploadMemberImage : uploadImage;
-    startUpload(async () => {
-      try {
-        const res = await upload(fd);
-        if (res.error) setDropError(res.error);
-        else if (res.path) update(res.path);
-      } catch {
-        setDropError(`${errTooLargeLabel}: ${file.name}`);
-      }
+    const res = await uploadViaXhr(fd, {
+      scope,
+      signal: controller.signal,
+      errorLabel: errUploadFailedLabel,
+      onProgress: ({ loaded, total }) =>
+        setJob((current) => (current?.file === file ? { ...current, loaded, total } : current)),
     });
+
+    abortRef.current = null;
+    setJob(null);
+    if (res.canceled) return; // the user asked for this — not an error
+    if (res.error) setDropError(res.error);
+    else if (res.path) update(res.path);
   }
 
   async function handleDrop(file: File | undefined) {
@@ -178,14 +210,11 @@ export function MediaField({
     : previewShape === "square"
       ? "aspect-square w-40"
       : "aspect-video w-72";
-  const preview = value ? (
+  const filled = value ? (
     <DropzonePreview replaceLabel={replaceLabel} removeLabel={removeLabel} onRemove={() => update("")}>
       <div className={`relative ${frame} max-w-full overflow-hidden bg-muted`}>
         {isVideoPath(value) ? (
-          <span className="grid h-full w-full place-items-center gap-1 text-muted-foreground">
-            <FileVideo className="h-6 w-6" />
-            <span className="max-w-full truncate px-2 text-xs">{value.split("/").pop()}</span>
-          </span>
+          <VideoThumbnail key={value} path={value} />
         ) : (
           <Image
             src={value}
@@ -199,6 +228,23 @@ export function MediaField({
       </div>
     </DropzonePreview>
   ) : undefined;
+
+  // While a file is going out the block stands in the slot the result will
+  // occupy, at the same size, so the field doesn't jump when it lands. The
+  // zone draws its own ring around a preview, hence border-0 here.
+  const preview = job ? (
+    <UploadProgress
+      value={job.loaded}
+      max={job.total}
+      size={previewShape === "square" && !compact ? "square" : "block"}
+      caption={job.file.name}
+      onCancel={() => abortRef.current?.abort()}
+      cancelLabel={cancelLabel}
+      className={`border-0 ${compact ? "w-full" : previewShape === "square" ? "w-40" : "w-72"}`}
+    />
+  ) : (
+    filled
+  );
 
   return (
     <div className={compact ? "space-y-1.5" : "space-y-3"}>
@@ -219,7 +265,7 @@ export function MediaField({
         // Filled: the zone wraps the picture, and its default w-fit would
         // collapse a w-full preview to nothing. Empty: tighter padding than the
         // full-width field, which is sized for three lines of copy.
-        className={compact ? (value ? "w-full" : "w-full p-3") : undefined}
+        className={compact ? (preview ? "w-full" : "w-full p-3") : undefined}
       >
         {/* In a table cell the standard three lines don't fit — they were being
             clipped mid-word. Icon plus one word says the same thing. */}
@@ -248,12 +294,11 @@ export function MediaField({
           <ImageIcon className={compact ? "h-3.5 w-3.5" : "h-4 w-4"} />
           {label}
         </button>
-        {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" /> : null}
       </div>
       {dropError ? <p className="text-xs text-danger">{dropError}</p> : null}
 
       {/* Video fields state the format + the 50 MB per-file cap enforced by
-          uploadImage (MAX_BYTES_VIDEO) — the old silent limit was half the
+          the upload store (MAX_BYTES_VIDEO) — the old silent limit was half the
           "MP4 upload doesn't work" confusion. Repeated once per row it is just
           noise, so a compact field leaves it to the section. */}
       {compact ? null : (
@@ -286,5 +331,37 @@ export function MediaField({
         />
       ) : null}
     </div>
+  );
+}
+
+/** A stored clip's own frame, instead of the file name on a grey card.
+ *
+ *  The frame is captured in the browser at upload time and written next to the
+ *  video as "<file>.jpg" (lib/video-poster.ts) — the field just has to point at
+ *  it. Two cases legitimately have none: clips uploaded before poster capture
+ *  existed, and a codec the browser wouldn't decode. Both fall back to the card
+ *  rather than to a broken image, so the caller must key this by path — the
+ *  fallback is state, and it has to reset when the video does. */
+function VideoThumbnail({ path }: { path: string }) {
+  const [noPoster, setNoPoster] = useState(false);
+  if (noPoster) return <VideoCard path={path} />;
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={posterPathFor(path)}
+      alt=""
+      className="h-full w-full object-cover"
+      onError={() => setNoPoster(true)}
+    />
+  );
+}
+
+function VideoCard({ path }: { path: string }): ReactNode {
+  return (
+    <span className="grid h-full w-full place-items-center gap-1 text-muted-foreground">
+      <FileVideo className="h-6 w-6" />
+      <span className="max-w-full truncate px-2 text-xs">{path.split("/").pop()}</span>
+    </span>
   );
 }

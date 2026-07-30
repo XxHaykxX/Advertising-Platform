@@ -1691,6 +1691,34 @@ export const UI: Record<string, Dict> = {
     hy: "Պատկերասրահ (կադրեր, ցուցադրվում է մինչև 5-ը)",
   },
   "projectForm.uploadGalleryImages": { ru: "Загрузить изображения галереи", en: "Upload gallery images", hy: "Վերբեռնել պատկերասրահի նկարները" },
+  // Design section cards (owner request 2026-07-30 — "разделы не отличаются"):
+  // poster/gallery/video each got a heading (bigger than a normal field
+  // label) plus one line saying where the asset is actually seen, so the
+  // three upload zones stop reading as duplicates of each other.
+  "projectForm.media.posterHeading": { ru: "Постер", en: "Poster", hy: "Պաստառ" },
+  "projectForm.media.posterHint": {
+    ru: "Главное изображение — показывается в каталоге (16:9).",
+    en: "The main image — shown in the catalog (16:9).",
+    hy: "Հիմնական պատկերը՝ ցուցադրվում է կատալոգում (16:9)։",
+  },
+  "projectForm.media.galleryHeading": { ru: "Галерея / кадры", en: "Gallery / stills", hy: "Պատկերասրահ / կադրեր" },
+  "projectForm.media.galleryHint": {
+    ru: "До 5 штук — показываются лентой на странице проекта.",
+    en: "Up to 5 — shown as a strip on the project page.",
+    hy: "Մինչև 5 հատ՝ ցուցադրվում է շերտով նախագծի էջում։",
+  },
+  "projectForm.media.videoHeading": { ru: "Видео", en: "Video", hy: "Տեսանյութ" },
+  "projectForm.media.videoHint": {
+    ru: "Трейлер — ссылка или файл MP4.",
+    en: "Trailer — a link or an MP4 file.",
+    hy: "Թրեյլեր՝ հղում կամ MP4 ֆայլ։",
+  },
+  // Distinct from the generic "btn.browse" (shared with profile photo /
+  // offer image / reference thumbnail pickers elsewhere): here it specifically
+  // opens the shared media LIBRARY to reuse an already-uploaded file, as
+  // opposed to the drop zone right above it, which uploads a NEW one — the
+  // two were being read as duplicate controls (owner report 2026-07-30).
+  "projectForm.media.browseLibrary": { ru: "Из медиатеки", en: "From media library", hy: "Մեդիագրադարանից" },
   // Renamed from "Kind" (admin redesign phase 1) — the Format Category
   // dropdown that used to own this label was removed, so "Format" is free.
   "projectForm.field.kind": { ru: "Формат", en: "Format", hy: "Ձևաչափ" },

@@ -92,10 +92,40 @@ function LogoutConfirmDialog({
   // edge of the screen instead of centring it on the viewport.
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+
+  // Portalling has a sharp edge, and it bit immediately: this dialog is opened
+  // from menus that close themselves on a document-level "click outside"
+  // (the header's UserMenu, header.tsx — and the same idiom is used by the
+  // currency/locale switchers, MultiSelect and the cast editor). Once the
+  // dialog lives under <body> instead of inside the menu, its own buttons ARE
+  // "outside" that menu: pressing "Yes, log out" fired mousedown first, the
+  // menu closed, this component unmounted with it, and the click never reached
+  // the button — signing out from the header silently did nothing.
+  //
+  // Swallowing mousedown at the dialog root fixes it for every such menu at
+  // once, including ones written later, instead of teaching each of them about
+  // this dialog. A native listener rather than React's onMouseDown on purpose:
+  // React routes portal events through the tree they were rendered in, so a
+  // synthetic stopPropagation is not a reliable way to keep the native event
+  // from reaching a listener bound directly to `document`.
+  const rootRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+    const stop = (e: Event) => e.stopPropagation();
+    el.addEventListener("mousedown", stop);
+    el.addEventListener("pointerdown", stop);
+    return () => {
+      el.removeEventListener("mousedown", stop);
+      el.removeEventListener("pointerdown", stop);
+    };
+  }, [mounted]);
+
   if (!mounted) return null;
 
   return createPortal(
     <div
+      ref={rootRef}
       // data-lenis-prevent: this dialog is reachable from the public header
       // (signed-in members see it there too), and Lenis owns the wheel
       // globally on the public pages — without this a wheel over the dialog

@@ -1,8 +1,8 @@
 "use client";
 
-import { forwardRef, useImperativeHandle, useState, useTransition } from "react";
+import { forwardRef, useImperativeHandle, useRef, useState } from "react";
 import Image from "next/image";
-import { ImageIcon, Loader2, Plus, Trash2 } from "lucide-react";
+import { ImageIcon, Plus, Trash2 } from "lucide-react";
 import {
   DndContext,
   KeyboardSensor,
@@ -27,12 +27,12 @@ import {
   DropzonePreview,
   useDropzoneOpen,
 } from "@/components/ui/dropzone";
-import { uploadImage } from "@/lib/actions/uploads";
-import { uploadMemberImage } from "@/lib/actions/member-uploads";
+import { UploadProgress } from "@/components/ui/upload-progress";
+import { uploadViaXhr } from "@/lib/upload-xhr";
 import type { Locale } from "@/lib/i18n";
 import { imageSizeHint } from "@/lib/images/size-hint";
 
-/** Mirrors MAX_BYTES in lib/actions/uploads.ts. Checked before the round trip:
+/** Mirrors MAX_BYTES in lib/uploads-store.ts. Checked before the round trip:
  *  past the framework body limit the request is cut off mid-flight and the
  *  server's own message never gets a chance to run. */
 const MAX_IMAGE_MB = 8;
@@ -41,6 +41,9 @@ const MAX_IMAGE_MB = 8;
  *  panel) push a freshly generated image path into an uncontrolled
  *  ImageUploader without the parent form having to lift its state. */
 export type ImageUploaderHandle = { addPath: (path: string) => void };
+
+/** One file on its way out. Files go one at a time, so there is only ever one. */
+type UploadJob = { file: File; loaded: number; total: number; index: number; count: number };
 
 /** Image field backed by the MediaPicker: one "Browse" button opens the picker,
  *  which itself lets you pick an existing image OR upload a new one from the
@@ -63,6 +66,8 @@ export const ImageUploader = forwardRef<ImageUploaderHandle, {
   dropTitle?: string; // headline inside the drop zone, localized by the caller
   dropLabel?: string; // second line inside the drop zone, localized by the caller
   errTooLargeLabel?: string; // shown when a dropped file exceeds the size cap
+  errUploadFailedLabel?: string; // shown when the upload never came back (offline, 502)
+  cancelLabel?: string; // aria-label of the cancel control on the progress block
   replaceLabel?: string; // overlay action on the filled single-image preview
   dropReplaceLabel?: string; // shown while a file hovers over a filled field
   addLabel?: string; // caption of the "+" tile that ends the gallery grid
@@ -80,6 +85,8 @@ export const ImageUploader = forwardRef<ImageUploaderHandle, {
   dropTitle = "Upload files",
   dropLabel = "Drag and drop or click to upload",
   errTooLargeLabel = "File is too large",
+  errUploadFailedLabel = "Upload failed",
+  cancelLabel = "Cancel upload",
   replaceLabel = "Replace",
   dropReplaceLabel = "Drop to replace",
   addLabel = "Add",
@@ -89,10 +96,12 @@ export const ImageUploader = forwardRef<ImageUploaderHandle, {
   // always upload, but reaching a file meant opening a dialog first — there was
   // nowhere on the form itself to drop one.
   const [dropError, setDropError] = useState<string | null>(null);
-  const [uploading, startUpload] = useTransition();
+  const [job, setJob] = useState<UploadJob | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
   const [paths, setPaths] = useState<string[]>(
     initial ? initial.split("\n").map((s) => s.trim()).filter(Boolean) : [],
   );
+  const uploading = job !== null;
 
   // Small activation distance keeps a plain click on a thumbnail's remove
   // button from being swallowed as a drag start — same pattern as
@@ -123,37 +132,52 @@ export const ImageUploader = forwardRef<ImageUploaderHandle, {
     commit(next);
   }
 
-  /** Files dropped on the zone. Uploads them through the same server action
-   *  the picker uses, then appends the returned paths (a single-image field
-   *  keeps only the last one, matching what picking does). */
-  function handleFiles(files: File[]) {
+  /** Files dropped on the zone. Each goes to /api/uploads over XHR rather than
+   *  through the upload server action: the checks and the write on the far end
+   *  are the same code either way, but only a plain request reports how many
+   *  bytes have actually left the browser — which is the whole point of the
+   *  bar the zone shows while this runs. One at a time, so the bar means
+   *  something; a single-image field keeps only the last one, matching what
+   *  picking does. */
+  async function handleFiles(files: File[]) {
     if (!files.length) return;
     setDropError(null);
-    const upload = scope === "member" ? uploadMemberImage : uploadImage;
 
-    startUpload(async () => {
-      const added: string[] = [];
-      for (const file of multiple ? files : files.slice(-1)) {
-        if (file.size > MAX_IMAGE_MB * 1024 * 1024) {
-          setDropError(`${errTooLargeLabel}: ${file.name}`);
-          continue;
-        }
-        const fd = new FormData();
-        fd.append("file", file);
-        fd.append("dir", dir);
-        fd.append("kind", "image");
-        // A rejected action (framework 413, a proxy cutting the request) would
-        // otherwise reject inside the transition with nothing on screen.
-        try {
-          const res = await upload(fd);
-          if (res.error) setDropError(res.error);
-          else if (res.path) added.push(res.path);
-        } catch {
-          setDropError(`${errTooLargeLabel}: ${file.name}`);
-        }
+    const queue = multiple ? files : files.slice(-1);
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    const added: string[] = [];
+    for (const [i, file] of queue.entries()) {
+      if (file.size > MAX_IMAGE_MB * 1024 * 1024) {
+        setDropError(`${errTooLargeLabel}: ${file.name}`);
+        continue;
       }
-      if (added.length) commit(multiple ? [...paths, ...added] : [added[added.length - 1]]);
-    });
+      setJob({ file, loaded: 0, total: file.size, index: i + 1, count: queue.length });
+
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("dir", dir);
+      fd.append("kind", "image");
+
+      const res = await uploadViaXhr(fd, {
+        scope,
+        signal: controller.signal,
+        errorLabel: errUploadFailedLabel,
+        onProgress: ({ loaded, total }) =>
+          setJob((current) => (current?.file === file ? { ...current, loaded, total } : current)),
+      });
+
+      // Cancel means cancel: the rest of the batch is dropped too, and nothing
+      // is reported as an error — the user asked for this.
+      if (res.canceled) break;
+      if (res.error) setDropError(res.error);
+      else if (res.path) added.push(res.path);
+    }
+
+    abortRef.current = null;
+    setJob(null);
+    if (added.length) commit(multiple ? [...paths, ...added] : [added[added.length - 1]]);
   }
 
   useImperativeHandle(ref, () => ({
@@ -167,12 +191,29 @@ export const ImageUploader = forwardRef<ImageUploaderHandle, {
   // meaningless there — only the multi-image gallery instance gets drag.
   const sortable = multiple && paths.length > 1;
 
+  // The bar takes the slot the picture is about to fill, so the field doesn't
+  // jump when the upload lands: in a gallery it stands where the "+" tile is,
+  // in a single-image field it IS the zone.
+  const progress = job ? (
+    <UploadProgress
+      value={job.loaded}
+      max={job.total}
+      caption={job.count > 1 ? `${job.file.name} · ${job.index}/${job.count}` : job.file.name}
+      onCancel={() => abortRef.current?.abort()}
+      cancelLabel={cancelLabel}
+      // Single-image field: the zone already draws a ring around whatever it
+      // previews, so the block would otherwise sit inside a doubled frame. In a
+      // gallery it is one tile among bordered tiles and keeps its own.
+      className={multiple ? "w-56" : "w-72 border-0"}
+    />
+  ) : null;
+
   // Filled fields show their content INSTEAD of an empty zone. Keeping both on
   // screen (a big "Upload a file" rectangle above the picture it already holds)
   // read as two competing drop targets — the single complaint behind this
   // rewrite. Empty stays a zone: for adding files, lead with the target.
-  const preview = paths.length
-    ? multiple
+  const preview = multiple
+    ? paths.length || progress
       ? <GalleryGrid
           paths={paths}
           sortable={sortable}
@@ -181,13 +222,18 @@ export const ImageUploader = forwardRef<ImageUploaderHandle, {
           onRemove={removeAt}
           removeLabel={removeLabel}
           addLabel={addLabel}
+          progress={progress}
         />
-      : <DropzonePreview replaceLabel={replaceLabel} removeLabel={removeLabel} onRemove={() => removeAt(0)}>
-          <div className="relative aspect-video w-72 max-w-full overflow-hidden bg-muted">
-            <Image src={paths[0]} alt="" fill className="object-cover" sizes="288px" unoptimized />
-          </div>
-        </DropzonePreview>
-    : undefined;
+      : undefined
+    : progress
+      ? progress
+      : paths.length
+        ? <DropzonePreview replaceLabel={replaceLabel} removeLabel={removeLabel} onRemove={() => removeAt(0)}>
+            <div className="relative aspect-video w-72 max-w-full overflow-hidden bg-muted">
+              <Image src={paths[0]} alt="" fill className="object-cover" sizes="288px" unoptimized />
+            </div>
+          </DropzonePreview>
+        : undefined;
 
   return (
     <div className="space-y-3">
@@ -205,7 +251,7 @@ export const ImageUploader = forwardRef<ImageUploaderHandle, {
         onError={(e) => setDropError(e.message)}
         labels={{ title: dropTitle, hint: dropLabel, replaceHint: dropReplaceLabel }}
         preview={preview}
-        className={multiple && paths.length ? "w-full" : undefined}
+        className={multiple && (paths.length || progress) ? "w-full" : undefined}
       >
         <DropzoneEmptyState />
       </Dropzone>
@@ -219,11 +265,6 @@ export const ImageUploader = forwardRef<ImageUploaderHandle, {
           <ImageIcon className="h-4 w-4" />
           {browseLabel}
         </button>
-        {uploading ? (
-          <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          </span>
-        ) : null}
         {trailing}
       </div>
       <p className="text-xs text-muted-foreground">{imageSizeHint(dir)}</p>
@@ -254,6 +295,7 @@ function GalleryGrid({
   onRemove,
   removeLabel,
   addLabel,
+  progress,
 }: {
   paths: string[];
   sortable: boolean;
@@ -262,6 +304,9 @@ function GalleryGrid({
   onRemove: (i: number) => void;
   removeLabel: string;
   addLabel: string;
+  /** Shown in the "+" tile's place while a file is going out — the slot the
+   *  new tile is about to appear in, so the grid doesn't reflow twice. */
+  progress?: React.ReactNode;
 }) {
   const tiles = paths.map((p, i) =>
     sortable ? (
@@ -284,14 +329,14 @@ function GalleryGrid({
           <SortableContext items={paths} strategy={rectSortingStrategy}>
             <div className="flex flex-wrap gap-3">
               {tiles}
-              <AddTile label={addLabel} />
+              {progress ?? <AddTile label={addLabel} />}
             </div>
           </SortableContext>
         </DndContext>
       ) : (
         <div className="flex flex-wrap gap-3">
           {tiles}
-          <AddTile label={addLabel} />
+          {progress ?? <AddTile label={addLabel} />}
         </div>
       )}
     </div>

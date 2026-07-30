@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { AboutHero } from "@/components/about-page/about-hero";
 import Why from "@/components/why";
 import { PartnersMarquee } from "@/components/partners-page/partners-marquee";
-import { PartnersGrid } from "@/components/partners-page/partners-grid";
 import { getLocale } from "@/lib/data/locale";
 import { getCurrency } from "@/lib/data/currency";
 import { getPartners } from "@/lib/data/partners";
@@ -164,9 +163,6 @@ export default async function AboutPage() {
           <div className="mb-12">
             <PartnersMarquee partners={partners} />
           </div>
-          <Container>
-            <PartnersGrid partners={partners} />
-          </Container>
         </div>
       ) : null}
 

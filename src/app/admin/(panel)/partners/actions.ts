@@ -47,8 +47,8 @@ function validate(data: PartnerFormValues, t: ReturnType<typeof makeUI>): string
 
 function revalidatePartnerPaths() {
   revalidatePath("/admin/partners");
-  // /about is the only page that renders partners (PartnersMarquee +
-  // PartnersGrid). This used to revalidate "/partners" — a route that does not
+  // /about is the only page that renders partners (PartnersMarquee — the card
+  // grid was dropped 2026-07-30). This used to revalidate "/partners" — a route that does not
   // exist — and "/", which renders no partners at all. Revalidating "/" is the
   // expensive, blast-radius-everything option: per the Next docs it "causes all
   // previously visited pages to refresh when navigated to again", and forcing a

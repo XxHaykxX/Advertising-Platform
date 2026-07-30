@@ -6,93 +6,35 @@
 // (listUploads walks it recursively, members/* included). The shared uploadImage
 // in ./uploads.ts is staff-only (requireUser); these are the member twins,
 // gated by requireMember and hard-scoped to the caller's own folder.
-import { randomUUID } from "node:crypto";
-import { mkdir, writeFile, readdir, stat, unlink } from "node:fs/promises";
+import { readdir, stat, unlink } from "node:fs/promises";
 import path from "node:path";
 import { requireMember } from "@/lib/auth/require";
 import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
 import { UPLOADS_DIR } from "@/lib/uploads-dir";
 import { findUploadUsage } from "@/lib/uploads-usage";
-import { optimizeImage, kindForDir } from "@/lib/images/optimize";
+import { memberUploadMessages, storeUpload } from "@/lib/uploads-store";
 import type { MediaFile } from "@/lib/actions/uploads";
 
 const MEMBERS_ROOT = path.join(UPLOADS_DIR, "members");
-const MAX_BYTES = 8 * 1024 * 1024; // 8 MB
-const EXT_BY_TYPE: Record<string, string> = {
-  "image/jpeg": "jpg",
-  "image/png": "png",
-  "image/webp": "webp",
-  "image/gif": "gif",
-  "image/avif": "avif",
-};
-// Video branch (#10 project trailer upload) — kept small, shared hosting.
-const MAX_BYTES_VIDEO = 50 * 1024 * 1024; // 50 MB
-const EXT_BY_TYPE_VIDEO: Record<string, string> = {
-  "video/mp4": "mp4",
-  "video/webm": "webm",
-};
 
-function safeSegment(input: string): string {
-  return input.replace(/[^a-zA-Z0-9._-]/g, "").slice(0, 64) || "misc";
-}
-
+/** Member upload, no progress reporting — the twin of uploadImage. The rules
+ *  and the write are the shared ones in lib/uploads-store.ts; what makes this
+ *  the MEMBER door is the gate plus the root: everything lands under that
+ *  member's own namespace, so the `dir` field can only ever choose a subfolder
+ *  of it. Fields that show a progress bar post to /api/uploads?scope=member
+ *  instead, which runs this same pair of decisions. */
 export async function uploadMemberImage(fd: FormData): Promise<{ path?: string; error?: string }> {
   const me = await requireMember();
   // Audit 4.5: these messages surface directly in a member's cabinet, which is
   // in their own language — they used to be hardcoded English.
   const t = makeUI(await getLocale());
 
-  const file = fd.get("file");
-  if (!(file instanceof File) || file.size === 0) return { error: t("media.errNoFile") };
-
-  const dir = safeSegment(String(fd.get("dir") || "misc"));
-  const kind = String(fd.get("kind") || "image");
-
-  // Same folder/type rule as the staff uploader (see uploads.ts): clips belong
-  // in "videos", stills everywhere else, "references" takes both.
-  if (dir === "videos" && kind !== "video") return { error: t("media.errUnsupportedVideo") };
-  if (dir !== "videos" && kind === "video" && dir !== "references") {
-    return { error: t("media.errUnsupportedImage") };
-  }
-
-  if (kind === "video") {
-    if (file.size > MAX_BYTES_VIDEO) {
-      return { error: t("media.errTooLargeServer", { limit: String(MAX_BYTES_VIDEO / (1024 * 1024)) }) };
-    }
-    // See uploads.ts: fall back to the filename extension when the browser sends
-    // a blank/non-standard MIME for an otherwise valid mp4/webm.
-    const ext = EXT_BY_TYPE_VIDEO[file.type] || file.name.toLowerCase().match(/\.(mp4|webm)$/)?.[1];
-    if (!ext) return { error: t("media.errUnsupportedVideo") };
-
-    const name = `${Date.now()}-${randomUUID().slice(0, 8)}.${ext}`;
-    const destDir = path.join(MEMBERS_ROOT, String(me.id), dir);
-    await mkdir(destDir, { recursive: true });
-    await writeFile(path.join(destDir, name), Buffer.from(await file.arrayBuffer()));
-    await writePosterFrame(fd, destDir, name);
-
-    return { path: `/uploads/members/${me.id}/${dir}/${name}` };
-  }
-
-  if (file.size > MAX_BYTES) {
-    return { error: t("media.errTooLargeServer", { limit: String(MAX_BYTES / (1024 * 1024)) }) };
-  }
-  const ext = EXT_BY_TYPE[file.type];
-  if (!ext) return { error: t("media.errUnsupportedImage") };
-
-  let optimized;
-  try {
-    optimized = await optimizeImage(Buffer.from(await file.arrayBuffer()), kindForDir(dir));
-  } catch {
-    return { error: t("media.loadError") };
-  }
-
-  const name = `${Date.now()}-${randomUUID().slice(0, 8)}.${optimized.ext}`;
-  const destDir = path.join(MEMBERS_ROOT, String(me.id), dir);
-  await mkdir(destDir, { recursive: true });
-  await writeFile(path.join(destDir, name), optimized.buffer);
-
-  return { path: `/uploads/members/${me.id}/${dir}/${name}` };
+  return storeUpload(fd, {
+    root: path.join(MEMBERS_ROOT, String(me.id)),
+    publicPrefix: `/uploads/members/${me.id}`,
+    messages: memberUploadMessages(t),
+  });
 }
 
 /** Lists ONLY the current member's own uploads (recursively under their
@@ -148,26 +90,4 @@ export async function deleteMemberUpload(
     // already gone — treat as success
   }
   return { ok: true };
-}
-
-/** Store the poster frame the browser grabbed for an uploaded video, as
- *  "<video-file>.jpg" next to it.
- *
- *  Why the client sends it: a <video> tile can only paint a frame after the
- *  browser has the file's metadata, and for a 40 MB mp4 with its moov atom at
- *  the end that means downloading the whole thing — so the Videos folder sat
- *  mostly blank (user report 2026-07-26). Generating the frame server-side
- *  would need ffmpeg, which shared hosting doesn't have; the browser already
- *  decoded the file to show a preview, so it hands over a small JPEG instead.
- *  Best-effort: a missing or broken poster just means the tile falls back to
- *  the <video> element. */
-async function writePosterFrame(fd: FormData, destDir: string, videoName: string) {
-  const poster = fd.get("poster");
-  if (!(poster instanceof File) || poster.size === 0) return;
-  if (poster.size > 2 * 1024 * 1024) return; // a frame is tens of KB; ignore junk
-  try {
-    await writeFile(path.join(destDir, `${videoName}.jpg`), Buffer.from(await poster.arrayBuffer()));
-  } catch {
-    /* poster is a nicety, never fail the upload over it */
-  }
 }

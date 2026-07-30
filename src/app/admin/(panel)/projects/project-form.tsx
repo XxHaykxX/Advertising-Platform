@@ -149,6 +149,33 @@ function Field({
   );
 }
 
+// Design section redesign (owner: "разделы не отличаются" — the three upload
+// zones read as identical). Each of poster/gallery/video gets its own visible
+// card with a heading well above Field's tiny label size, plus one line
+// saying WHERE the asset surfaces — that placement is the thing staff kept
+// guessing at, not the upload mechanics.
+function MediaCard({
+  heading,
+  hint,
+  children,
+}: {
+  heading: string;
+  /** One line: where this asset is actually seen (catalog / project page /
+   *  player), not a restatement of the heading. */
+  hint: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-3 rounded-lg border border-border bg-background p-4">
+      <div>
+        <h3 className="text-base font-semibold text-foreground">{heading}</h3>
+        <p className="text-xs text-muted-foreground">{hint}</p>
+      </div>
+      {children}
+    </div>
+  );
+}
+
 export function ProjectForm({
   action,
   initial,
@@ -518,6 +545,29 @@ export function ProjectForm({
     ru: data.taglineRu.length,
     en: data.taglineEn.length,
   }));
+  // Per-tab completeness dot (owner request 2026-07-30, tightened same day):
+  // "filled" means this locale is DONE — title AND synopsis AND short
+  // description all non-empty, not just one of the three. An "any one"
+  // reading let a title-only locale show as filled while its synopsis/
+  // tagline stayed blank, hiding exactly the gap the dot exists to reveal;
+  // all three are load-bearing downstream too (validate() in actions.ts
+  // needs title+synopsis, publishBlockers() in form-shared.ts needs a
+  // tagline). Title/synopsis/tagline stay uncontrolled (ref-driven, see
+  // titleRefs above), so this can't derive from React state; it's recomputed
+  // off the same onInput plumbing that already drives the draft autosave and
+  // the tagline counter (see recomputeAboutFilled).
+  const [aboutFilled, setAboutFilled] = useState<Record<TranslateLang, boolean>>(() => ({
+    hy: !!data.titleHy.trim() && !!data.synopsisHy.trim() && !!(data.taglineHy || data.tagline || "").trim(),
+    ru: !!data.titleRu.trim() && !!data.synopsisRu.trim() && !!data.taglineRu.trim(),
+    en: !!data.titleEn.trim() && !!data.synopsisEn.trim() && !!data.taglineEn.trim(),
+  }));
+  function recomputeAboutFilled(l: TranslateLang) {
+    const has =
+      !!(titleRefs[l].current?.value || "").trim() &&
+      !!(synopsisRefs[l].current?.value || "").trim() &&
+      !!(taglineRefs[l].current?.value || "").trim();
+    setAboutFilled((prev) => (prev[l] === has ? prev : { ...prev, [l]: has }));
+  }
 
 
   // ── Autosave draft (#20², create only) ─────────────────────────────────
@@ -604,6 +654,9 @@ export function ProjectForm({
       }
     }
     pendingRestore.current = null;
+    // The title/synopsis/tagline refs just got their values replayed above —
+    // re-check every tab's dot against what's actually in the DOM now.
+    for (const l of ABOUT_LANGS) recomputeAboutFilled(l);
     // A restored draft IS unsaved work — compare against the stored values,
     // not against what was just replayed onto the DOM.
     recomputeDirty();
@@ -707,6 +760,7 @@ export function ProjectForm({
           taglineRefs[l].current!.value = value.tagline;
           setTaglineLen((prev) => ({ ...prev, [l]: value.tagline.length }));
         }
+        recomputeAboutFilled(l);
       }
       scheduleSaveDraft();
     });
@@ -838,17 +892,28 @@ export function ProjectForm({
               </p>
             )}
 
-            {/* Tab switcher */}
-            <div className="flex gap-1 rounded-xl border border-border bg-background p-1">
+            {/* Tab switcher — sized to its labels, not the form width (owner
+                request 2026-07-30): three flex-1 segments used to stretch this
+                across the whole 1400px column for what is just a 3-way pick,
+                same complaint the video source tabs below already fixed.
+                Each tab also carries a completeness dot (filled/hollow) so a
+                missing locale shows without switching to it. */}
+            <div className="inline-flex w-fit gap-1 rounded-lg border border-border bg-background p-1">
               {ABOUT_LANGS.map((l) => (
                 <button
                   key={l}
                   type="button"
                   onClick={() => setAboutTab(l)}
-                  className={`flex-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                  className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
                     aboutTab === l ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
+                  <span
+                    aria-hidden="true"
+                    className={`h-1.5 w-1.5 shrink-0 rounded-full ${
+                      aboutFilled[l] ? "bg-success" : "border border-current opacity-50"
+                    }`}
+                  />
                   {ABOUT_LANG_NAMES[l]}
                 </button>
               ))}
@@ -871,6 +936,7 @@ export function ProjectForm({
                       name={`title${nameSuffix}`}
                       defaultValue={titleValue}
                       placeholder={t("projectForm.about.title")}
+                      onInput={() => recomputeAboutFilled(l)}
                       className={inputCls}
                     />
                   </Field>
@@ -881,6 +947,7 @@ export function ProjectForm({
                       defaultValue={synopsisValue}
                       rows={5}
                       placeholder={t("projectForm.about.descriptionPlaceholder")}
+                      onInput={() => recomputeAboutFilled(l)}
                       className={`${inputCls} resize-y`}
                     />
                     <p className="mt-1 text-xs text-muted-foreground">{t("projectForm.about.richHint")}</p>
@@ -892,7 +959,10 @@ export function ProjectForm({
                       defaultValue={taglineValue}
                       rows={2}
                       maxLength={TAGLINE_MAX}
-                      onInput={(e) => setTaglineLen((prev) => ({ ...prev, [l]: e.currentTarget.value.length }))}
+                      onInput={(e) => {
+                        setTaglineLen((prev) => ({ ...prev, [l]: e.currentTarget.value.length }));
+                        recomputeAboutFilled(l);
+                      }}
                       placeholder={t("projectForm.about.shortDescriptionPlaceholder")}
                       className={`${inputCls} resize-none`}
                     />
@@ -906,19 +976,24 @@ export function ProjectForm({
           </section>
 
           {/* ── Design (was "Press-kit"): poster, gallery & video ── the
-              project's media all lives here. Tagline / logline is in the About
-              block above (per-locale hy/ru/en); Comparable titles moved to its
-              own Reference Projects section at the end of the form. */}
+              project's media all lives here, one CARD per asset (owner:
+              "разделы не отличаются" — three identical upload zones with
+              nothing saying what any of them was for or where it ends up).
+              Tagline / logline is in the About block above (per-locale
+              hy/ru/en); Comparable titles moved to its own Reference Projects
+              section at the end of the form. */}
           <section id="sec-media" className="scroll-mt-24 space-y-3 rounded-xl border border-border bg-card p-4">
             <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">
               {t("projectForm.section.pressKit")}
             </h2>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Field label={t("projectForm.field.poster")}>
-                {/* "Upload poster" and the "Generate poster" trigger sit on ONE row
-                    (trailing slot) so the generate action stays next to upload even
-                    after a poster is uploaded (preview thumbs render below). The
-                    panel itself opens full-width below the grid. */}
+            <div className="space-y-3">
+              <MediaCard heading={t("projectForm.media.posterHeading")} hint={t("projectForm.media.posterHint")}>
+                {/* Upload and the "Generate poster" trigger sit on ONE row
+                    (trailing slot) so the generate action stays next to upload
+                    even after a poster is uploaded (preview thumbs render
+                    below). The panel itself opens right under it, still inside
+                    this card — it's the poster's own affordance, not a
+                    separate section. */}
                 <ImageUploader
                   key={`poster-${restoreNonce}`}
                   ref={posterUploaderRef}
@@ -926,7 +1001,15 @@ export function ProjectForm({
                   dir="projects"
                   scope={uploaderScope}
                   pickerLocale={locale}
-                  browseLabel={t("btn.browse")}
+                  // "Browse" read as a second copy of the drop zone above it
+                  // (owner's actual complaint) — it isn't: the zone uploads a
+                  // NEW file, this opens the shared media LIBRARY to reuse an
+                  // already-uploaded one. t("btn.browse") is too generic and
+                  // shared with other surfaces (profile photo, offer image,
+                  // reference thumbnail — see project-form.tsx report), so the
+                  // clearer label is set locally here rather than renaming
+                  // that shared dictionary key.
+                  browseLabel={t("projectForm.media.browseLibrary")}
                   dropTitle={t("media.dropTitlePoster")}
                   dropLabel={t("media.dropHereOne")}
                   errTooLargeLabel={t("media.errTooLargeShort")}
@@ -949,91 +1032,94 @@ export function ProjectForm({
                     </>
                   }
                 />
-              </Field>
-            </div>
-            <PosterGenerator
-              hideTrigger
-              open={posterOpen}
-              onOpenChange={setPosterOpen}
-              action={resolvedPosterAction}
-              getDefaultPrompt={getDefaultPromptForPoster}
-              hasOwnerAvatar={ownerHasAvatar}
-              onUse={(path) => posterUploaderRef.current?.addPath(path)}
-              t={t}
-              scope={uploaderScope}
-                  pickerLocale={locale}
-              uploadDir="projects"
-            />
-            <Field label={t("projectForm.field.gallery")}>
-              <ImageUploader
-                key={`gallery-${restoreNonce}`}
-                name="gallery"
-                dir="projects"
-                multiple
-                scope={uploaderScope}
-                  pickerLocale={locale}
-                browseLabel={t("btn.browse")}
-                dropTitle={t("media.dropTitleMany")}
-                dropLabel={t("media.dropHere")}
-                errTooLargeLabel={t("media.errTooLargeShort")}
-                addLabel={t("media.addImage")}
-                dropReplaceLabel={t("media.dropToReplace")}
-                initial={galleryInitial}
-                label={t("projectForm.uploadGalleryImages")}
-                removeLabel={t("ui.remove")}
-              />
-            </Field>
-            {/* ── Video (#10/#35) ── a YouTube/Vimeo link OR an uploaded MP4,
-                never both — a tab picks the one active source; the inactive
-                field unmounts, so it's absent from the submit and the server
-                nulls that column. */}
-            {/* Sized to its labels, not to the form width: stretched across
-                1400px these two read as a pair of banners competing with the
-                section heading, when all they do is pick which of two inputs
-                shows. */}
-            <div className="inline-flex w-fit gap-1 rounded-lg border border-border bg-background p-0.5">
-              {(["embed", "upload"] as const).map((tab) => (
-                <button
-                  key={tab}
-                  type="button"
-                  onClick={() => setVideoTab(tab)}
-                  className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
-                    videoTab === tab ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {tab === "embed" ? t("projectForm.video.tabEmbed") : t("projectForm.video.tabUpload")}
-                </button>
-              ))}
-            </div>
-            {videoTab === "embed" ? (
-              <Field label={t("projectForm.field.videoEmbed")}>
-                <input
-                  name="videoEmbedUrl"
-                  defaultValue={data.videoEmbedUrl}
-                  placeholder={t("projectForm.videoEmbedPlaceholder")}
-                  className={inputCls}
-                />
-              </Field>
-            ) : (
-              <Field label={t("projectForm.field.videoFile")}>
-                <MediaField
-                  key={`video-${restoreNonce}`}
-                  name="videoFile"
-                  initial={videoFileInitial}
-                  label={t("btn.browse")}
-                  uploadDir="videos"
-                  accept="video"
+                <PosterGenerator
+                  hideTrigger
+                  open={posterOpen}
+                  onOpenChange={setPosterOpen}
+                  action={resolvedPosterAction}
+                  getDefaultPrompt={getDefaultPromptForPoster}
+                  hasOwnerAvatar={ownerHasAvatar}
+                  onUse={(path) => posterUploaderRef.current?.addPath(path)}
+                  t={t}
                   scope={uploaderScope}
-                  locale={locale}
-                  dropTitle={t("media.dropTitleOne")}
-                  dropLabel={t("media.dropHereOne")}
-                  errTooLargeLabel={t("media.errTooLargeShort")}
-                  replaceLabel={t("media.replace")}
-                  removeLabel={t("ui.remove")}
-                  dropReplaceLabel={t("media.dropToReplace")}
+                  pickerLocale={locale}
+                  uploadDir="projects"
                 />
-              </Field>
-            )}
+              </MediaCard>
+
+              <MediaCard heading={t("projectForm.media.galleryHeading")} hint={t("projectForm.media.galleryHint")}>
+                <ImageUploader
+                  key={`gallery-${restoreNonce}`}
+                  name="gallery"
+                  dir="projects"
+                  multiple
+                  scope={uploaderScope}
+                  pickerLocale={locale}
+                  browseLabel={t("projectForm.media.browseLibrary")}
+                  dropTitle={t("media.dropTitleMany")}
+                  dropLabel={t("media.dropHere")}
+                  errTooLargeLabel={t("media.errTooLargeShort")}
+                  addLabel={t("media.addImage")}
+                  dropReplaceLabel={t("media.dropToReplace")}
+                  initial={galleryInitial}
+                  label={t("projectForm.uploadGalleryImages")}
+                  removeLabel={t("ui.remove")}
+                />
+              </MediaCard>
+
+              <MediaCard heading={t("projectForm.media.videoHeading")} hint={t("projectForm.media.videoHint")}>
+                {/* ── Video (#10/#35) ── a YouTube/Vimeo link OR an uploaded
+                    MP4, never both — a tab picks the one active source; the
+                    inactive field unmounts, so it's absent from the submit and
+                    the server nulls that column. Sized to its labels, not the
+                    card width — same compact-tab treatment as the About tabs
+                    above, for the same reason: it's a 2-way pick, not a
+                    banner. */}
+                <div className="inline-flex w-fit gap-1 rounded-lg border border-border bg-background p-0.5">
+                  {(["embed", "upload"] as const).map((tab) => (
+                    <button
+                      key={tab}
+                      type="button"
+                      onClick={() => setVideoTab(tab)}
+                      className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+                        videoTab === tab ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {tab === "embed" ? t("projectForm.video.tabEmbed") : t("projectForm.video.tabUpload")}
+                    </button>
+                  ))}
+                </div>
+                {videoTab === "embed" ? (
+                  <Field label={t("projectForm.field.videoEmbed")}>
+                    <input
+                      name="videoEmbedUrl"
+                      defaultValue={data.videoEmbedUrl}
+                      placeholder={t("projectForm.videoEmbedPlaceholder")}
+                      className={inputCls}
+                    />
+                  </Field>
+                ) : (
+                  <Field label={t("projectForm.field.videoFile")}>
+                    <MediaField
+                      key={`video-${restoreNonce}`}
+                      name="videoFile"
+                      initial={videoFileInitial}
+                      label={t("projectForm.media.browseLibrary")}
+                      uploadDir="videos"
+                      accept="video"
+                      scope={uploaderScope}
+                      locale={locale}
+                      dropTitle={t("media.dropTitleOne")}
+                      dropLabel={t("media.dropHereOne")}
+                      errTooLargeLabel={t("media.errTooLargeShort")}
+                      replaceLabel={t("media.replace")}
+                      removeLabel={t("ui.remove")}
+                      dropReplaceLabel={t("media.dropToReplace")}
+                    />
+                  </Field>
+                )}
+              </MediaCard>
+            </div>
           </section>
 
           {/* ── Cast & crew (inline, #20²) ── */}

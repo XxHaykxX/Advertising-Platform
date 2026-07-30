@@ -132,7 +132,7 @@ export function MediaPicker({
         // Size-check before the round trip: past the framework body limit the
         // request is cut off mid-flight and the server-side "max 50 MB" message
         // never gets a chance to run, so the user would only see a generic
-        // failure. Mirrors MAX_BYTES / MAX_BYTES_VIDEO in lib/actions/uploads.ts.
+        // failure. Mirrors MAX_BYTES / MAX_BYTES_VIDEO in lib/uploads-store.ts.
         const maxMb = kind === "video" ? 50 : 8;
         if (file.size > maxMb * 1024 * 1024) {
           const mb = Math.round((file.size / (1024 * 1024)) * 10) / 10;

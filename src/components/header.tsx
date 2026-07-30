@@ -12,6 +12,7 @@ import { LocaleSwitcher } from "@/components/locale-switcher";
 import { LogoutButton } from "@/components/logout-button";
 import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
 import { DEFAULT_CURRENCY, type CurrencyCode } from "@/lib/currency";
+import { PORTFOLIO_ENABLED } from "@/lib/feature-flags";
 import { cn } from "@/lib/utils";
 import { logout as staffLogout } from "@/app/admin/actions";
 import { logout as memberLogout } from "@/app/account/actions";
@@ -54,7 +55,9 @@ const DARK_HERO_PATHS = new Set([
 function useNav(t: ReturnType<typeof makeUI>) {
   return [
     { label: t("nav.catalog"), href: "/catalog" },
-    { label: t("nav.portfolio"), href: "/portfolio" },
+    // Hidden behind PORTFOLIO_ENABLED while the owner keeps preparing cases
+    // (see src/lib/feature-flags.ts) — the route itself 404s too.
+    ...(PORTFOLIO_ENABLED ? [{ label: t("nav.portfolio"), href: "/portfolio" }] : []),
     { label: t("nav.about"), href: "/about" },
     { label: t("nav.contact"), href: "/contact" },
   ] as const;

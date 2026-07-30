@@ -19,7 +19,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { ChevronDown, ChevronUp, GripVertical, Loader2, Search, X } from "lucide-react";
+import { ChevronDown, ChevronUp, GripVertical, Loader2, Plus, Search, X } from "lucide-react";
 import { makeUI } from "@/lib/i18n";
 import { ActiveToggle, DeleteButton } from "./row-actions";
 import { reorderProjects } from "./actions";
@@ -46,13 +46,20 @@ export type ProjectRow = {
 // --- Client-side filtering (redesign §3.4) -------------------------------
 // Filters the already-loaded rows; no server round-trip. Status filter was
 // removed per user request (2026-07-25) — search + visibility only.
+// Grew two more dimensions on 2026-07-30: incomplete-only and owner.
 
-type Filters = { query: string; active: string; archive: string };
+type Filters = { query: string; active: string; archive: string; incomplete: boolean; owner: string };
 
-const NO_FILTERS: Filters = { query: "", active: "ALL", archive: "ALL" };
+const NO_FILTERS: Filters = { query: "", active: "ALL", archive: "ALL", incomplete: false, owner: "ALL" };
 
 function isFiltering(f: Filters) {
-  return f.query.trim() !== "" || f.active !== "ALL" || f.archive !== "ALL";
+  return (
+    f.query.trim() !== "" ||
+    f.active !== "ALL" ||
+    f.archive !== "ALL" ||
+    f.incomplete ||
+    f.owner !== "ALL"
+  );
 }
 
 function applyFilters(rows: ProjectRow[], f: Filters) {
@@ -61,7 +68,9 @@ function applyFilters(rows: ProjectRow[], f: Filters) {
     (p) =>
       (!q || p.title.toLowerCase().includes(q)) &&
       (f.active === "ALL" || (f.active === "ACTIVE") === p.isActive) &&
-      (f.archive === "ALL" || (f.archive === "ARCHIVED") === p.archived),
+      (f.archive === "ALL" || (f.archive === "ARCHIVED") === p.archived) &&
+      (!f.incomplete || p.incomplete > 0) &&
+      (f.owner === "ALL" || p.ownerName === f.owner),
   );
 }
 
@@ -90,21 +99,61 @@ function IncompleteBadge({ n }: { n: number }) {
   );
 }
 
+// Three mutually-exclusive values shown at once with instant apply — a
+// segmented control reads faster than a dropdown here. Owner and deadline
+// stay <select>s: deadline is only two real states plus "all" but is framed
+// as a question ("has the deadline passed?") rather than a mode, and owner's
+// option count is unbounded, so a row of buttons would outgrow the toolbar.
+function SegmentedControl({
+  value,
+  onChange,
+  options,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  options: { value: string; label: string }[];
+}) {
+  return (
+    <div className="inline-flex overflow-hidden rounded-lg border border-border" role="group">
+      {options.map((opt, i) => (
+        <button
+          key={opt.value}
+          type="button"
+          onClick={() => onChange(opt.value)}
+          aria-pressed={value === opt.value}
+          className={`px-2.5 py-1.5 text-sm transition-colors ${i > 0 ? "border-l border-border" : ""} ${
+            value === opt.value
+              ? "bg-primary text-primary-foreground"
+              : "bg-card text-foreground hover:bg-muted"
+          }`}
+        >
+          {opt.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function FilterBar({
   filters,
   onChange,
   shown,
   total,
+  owners,
 }: {
   filters: Filters;
   onChange: (next: Filters) => void;
   shown: number;
   total: number;
+  /** Distinct owner names among the rows this table is showing — a Publisher
+   *  only ever sees their own name here, so the select is hidden for them
+   *  rather than offered as a one-item no-op. */
+  owners: string[];
 }) {
   const selectCls =
     "rounded-lg border border-border bg-card px-2.5 py-1.5 text-sm text-foreground outline-none transition-colors focus:border-primary";
   return (
-    <div className="mb-3 flex flex-wrap items-center gap-2">
+    <div className="mb-3 flex flex-wrap items-center gap-3">
       <div className="relative">
         <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <input
@@ -115,29 +164,61 @@ function FilterBar({
           className="w-56 rounded-lg border border-border bg-card py-1.5 pl-8 pr-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:border-primary"
         />
       </div>
-      <select
-        value={filters.active}
-        onChange={(e) => onChange({ ...filters, active: e.target.value })}
-        className={selectCls}
-        aria-label="Filter by visibility"
-      >
-        <option value="ALL">All</option>
-        <option value="ACTIVE">Active</option>
-        <option value="INACTIVE">Inactive</option>
-      </select>
+      <div className="flex items-center gap-1.5">
+        <span className="text-sm text-muted-foreground">Show:</span>
+        <SegmentedControl
+          value={filters.active}
+          onChange={(v) => onChange({ ...filters, active: v })}
+          options={[
+            { value: "ALL", label: "All" },
+            { value: "ACTIVE", label: "Active" },
+            { value: "INACTIVE", label: "Inactive" },
+          ]}
+        />
+      </div>
       {/* Archive is derived from the placement deadline, so it can't be
           toggled here — only filtered on. Moving the date in the form is what
           brings a project back. */}
-      <select
-        value={filters.archive}
-        onChange={(e) => onChange({ ...filters, archive: e.target.value })}
-        className={selectCls}
-        aria-label="Filter by archive state"
-      >
-        <option value="ALL">All deadlines</option>
-        <option value="LIVE">Deadline open</option>
-        <option value="ARCHIVED">Archive</option>
-      </select>
+      <div className="flex items-center gap-1.5">
+        <span className="text-sm text-muted-foreground">Deadline:</span>
+        <select
+          value={filters.archive}
+          onChange={(e) => onChange({ ...filters, archive: e.target.value })}
+          className={selectCls}
+          aria-label="Filter by archive state"
+        >
+          <option value="ALL">All</option>
+          <option value="LIVE">Deadline open</option>
+          <option value="ARCHIVED">Archive</option>
+        </select>
+      </div>
+      {owners.length > 1 && (
+        <div className="flex items-center gap-1.5">
+          <span className="text-sm text-muted-foreground">Owner:</span>
+          <select
+            value={filters.owner}
+            onChange={(e) => onChange({ ...filters, owner: e.target.value })}
+            className={selectCls}
+            aria-label="Filter by owner"
+          >
+            <option value="ALL">All</option>
+            {owners.map((name) => (
+              <option key={name} value={name}>
+                {name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+      <label className="flex items-center gap-2 text-sm text-foreground">
+        <input
+          type="checkbox"
+          checked={filters.incomplete}
+          onChange={(e) => onChange({ ...filters, incomplete: e.target.checked })}
+          className="h-4 w-4 rounded border-border accent-primary"
+        />
+        Incomplete only
+      </label>
       {isFiltering(filters) && (
         <>
           <span className="text-sm text-muted-foreground">
@@ -170,9 +251,19 @@ const HEADER_ROW_CLS =
 // While any filter is active, reorder (drag + chevrons) is disabled: the
 // catalog order is one global sequence and reordering a filtered subset
 // would be ambiguous.
-export function ReorderableProjectsTable({ projects }: { projects: ProjectRow[] }) {
+export function ReorderableProjectsTable({
+  projects,
+  filters,
+  onFiltersChange,
+}: {
+  projects: ProjectRow[];
+  /** Owned by ProjectsPanel, not this component — the header's clickable
+   *  counters and this table's own FilterBar both need to land on the same
+   *  state, and ProjectsPanel is their nearest common ancestor. */
+  filters: Filters;
+  onFiltersChange: (next: Filters) => void;
+}) {
   const [rows, setRows] = useState(projects);
-  const [filters, setFilters] = useState(NO_FILTERS);
 
   // `rows` is a local, reorderable copy — but useState only reads its initial
   // value once, so anything the server changed underneath it (a delete, a
@@ -195,6 +286,7 @@ export function ReorderableProjectsTable({ projects }: { projects: ProjectRow[] 
 
   const filtering = isFiltering(filters);
   const visible = useMemo(() => applyFilters(rows, filters), [rows, filters]);
+  const owners = useMemo(() => Array.from(new Set(rows.map((p) => p.ownerName))).sort(), [rows]);
 
   const sensors = useSensors(
     // A small activation distance keeps plain clicks (chevrons, links) from
@@ -234,7 +326,13 @@ export function ReorderableProjectsTable({ projects }: { projects: ProjectRow[] 
 
   return (
     <div>
-      <FilterBar filters={filters} onChange={setFilters} shown={visible.length} total={rows.length} />
+      <FilterBar
+        filters={filters}
+        onChange={onFiltersChange}
+        shown={visible.length}
+        total={rows.length}
+        owners={owners}
+      />
       <div className="mb-2 flex h-5 items-center gap-2 text-sm">
         {pending && (
           <span className="inline-flex items-center gap-1.5 text-muted-foreground">
@@ -416,17 +514,27 @@ function SortableRow({
 
 // PUBLISHER view: same list (filter bar, density) without the reorder column
 // — catalog order is a single global sequence, superadmin-only.
-export function PlainProjectsTable({ projects }: { projects: ProjectRow[] }) {
-  const [filters, setFilters] = useState(NO_FILTERS);
+export function PlainProjectsTable({
+  projects,
+  filters,
+  onFiltersChange,
+}: {
+  projects: ProjectRow[];
+  /** Same lifted state as ReorderableProjectsTable — see that component. */
+  filters: Filters;
+  onFiltersChange: (next: Filters) => void;
+}) {
   const visible = useMemo(() => applyFilters(projects, filters), [projects, filters]);
+  const owners = useMemo(() => Array.from(new Set(projects.map((p) => p.ownerName))).sort(), [projects]);
 
   return (
     <div>
       <FilterBar
         filters={filters}
-        onChange={setFilters}
+        onChange={onFiltersChange}
         shown={visible.length}
         total={projects.length}
+        owners={owners}
       />
       <div className="overflow-x-auto rounded-2xl border border-border bg-card">
         <table className="w-full min-w-[900px] text-sm">
@@ -467,7 +575,7 @@ export function PlainProjectsTable({ projects }: { projects: ProjectRow[] }) {
                       {p.title}
                     </Link>
                     {p.archived && <ArchivedBadge />}
-        {p.incomplete > 0 && <IncompleteBadge n={p.incomplete} />}
+                    {p.incomplete > 0 && <IncompleteBadge n={p.incomplete} />}
                     <Link
                       href={`/admin/projects/${p.id}/edit`}
                       className="mt-0.5 block text-xs text-muted-foreground hover:text-primary"
@@ -487,6 +595,115 @@ export function PlainProjectsTable({ projects }: { projects: ProjectRow[] }) {
           </tbody>
         </table>
       </div>
+    </div>
+  );
+}
+
+/** A number in the header breakdown that, on click, jumps straight to the
+ *  matching filter — e.g. "2 unpublished" sets Show:Inactive instead of
+ *  making the admin find that combination in the toolbar themselves. */
+function CountButton({ n, label, onClick }: { n: number; label: string; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="underline decoration-dotted underline-offset-2 hover:text-foreground"
+    >
+      {n} {label}
+    </button>
+  );
+}
+
+// Owns the one Filters state shared by the header's clickable counters and
+// the table's own FilterBar below it — the two used to live in separate
+// components (page.tsx rendered the counters, the table owned the filters),
+// so a number here had nothing to set. This is now the page's actual body;
+// page.tsx just fetches the rows and renders this.
+export function ProjectsPanel({
+  rows,
+  isSuperadmin,
+  awaitingModeration,
+}: {
+  rows: ProjectRow[];
+  isSuperadmin: boolean;
+  awaitingModeration: number;
+}) {
+  const [filters, setFilters] = useState(NO_FILTERS);
+
+  // These three aren't mutually exclusive (a project can be both unpublished
+  // and archived at once), so they're independent counts, not a partition —
+  // same as the old separate paragraphs they replace.
+  const inCatalog = rows.filter((p) => p.isActive && !p.archived).length;
+  const unpublished = rows.filter((p) => !p.isActive).length;
+  const archivedCount = rows.filter((p) => p.archived).length;
+
+  return (
+    <div>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Projects</h1>
+          {/* "in catalog" used to count every row, including the ones not in
+              the catalog at all. Count what the visitor can actually see. */}
+          <p className="mt-1 text-sm text-muted-foreground">
+            <CountButton
+              n={inCatalog}
+              label="in catalog"
+              onClick={() => setFilters({ ...NO_FILTERS, active: "ACTIVE", archive: "LIVE" })}
+            />
+            {unpublished > 0 && (
+              <>
+                {" · "}
+                <CountButton
+                  n={unpublished}
+                  label="unpublished"
+                  onClick={() => setFilters({ ...NO_FILTERS, active: "INACTIVE" })}
+                />
+              </>
+            )}
+            {archivedCount > 0 && (
+              <>
+                {" · "}
+                <CountButton
+                  n={archivedCount}
+                  label="in archive"
+                  onClick={() => setFilters({ ...NO_FILTERS, archive: "ARCHIVED" })}
+                />
+              </>
+            )}
+          </p>
+          {awaitingModeration > 0 ? (
+            <p className="mt-1 text-sm">
+              <Link href="/admin/moderation" className="text-warn hover:underline">
+                {awaitingModeration} awaiting moderation →
+              </Link>
+            </p>
+          ) : null}
+        </div>
+        <Link
+          href="/admin/projects/new"
+          className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:opacity-90"
+        >
+          <Plus className="h-4 w-4" />
+          New project
+        </Link>
+      </div>
+
+      {rows.length === 0 ? (
+        <div className="mt-8 rounded-2xl border border-border bg-card py-16 text-center text-muted-foreground">
+          No projects.
+        </div>
+      ) : isSuperadmin ? (
+        // T2: catalog display order (sortOrder — see src/lib/data/projects.ts)
+        // is a single global sequence, so drag-to-reorder only makes sense
+        // from the superadmin's full-list view.
+        <div className="mt-6">
+          <ReorderableProjectsTable projects={rows} filters={filters} onFiltersChange={setFilters} />
+        </div>
+      ) : (
+        <div className="mt-6">
+          <PlainProjectsTable projects={rows} filters={filters} onFiltersChange={setFilters} />
+        </div>
+      )}
     </div>
   );
 }

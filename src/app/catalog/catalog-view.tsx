@@ -467,22 +467,12 @@ export function CatalogView({
   // bottom-sheet, so the two never drift out of sync.
   const filterGroups = (
     <>
-      <div className="border-t border-border py-4">
-        <h3 className="mb-3 text-sm font-semibold text-foreground">{t("catalog.genre")}</h3>
-        <div className="flex flex-col gap-2.5">
-          {genres.map((g) => (
-            <label key={g} className="flex items-center gap-2 text-sm text-foreground">
-              <input
-                type="checkbox"
-                checked={selectedGenres.includes(g)}
-                onChange={() => toggleGenre(g)}
-                className="h-4 w-4 rounded border-border accent-primary"
-              />
-              {localizeValue(locale, "genre", g)}
-            </label>
-          ))}
-        </div>
-      </div>
+      <CheckboxFilter
+        label={t("catalog.genre")}
+        options={genres.map((g) => ({ value: g, label: localizeValue(locale, "genre", g) }))}
+        selected={selectedGenres}
+        onToggle={toggleGenre}
+      />
 
       <CheckboxFilter
         label={t("catalog.format")}
