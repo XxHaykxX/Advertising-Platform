@@ -18,9 +18,27 @@ import type { Role } from "@prisma/client";
    member blocked mid-session: the cookie is still validly signed, so proxy.ts
    reads it as "a member" and bounces back into the cabinet, which lands here
    again. Only clearing the cookie ends that, and a server component can't —
-   see src/app/api/auth/signout/route.ts. */
+   see src/app/api/auth/signout/route.ts.
+
+   But that detour is only worth taking when there IS a cookie to clear. A
+   plain guest opening a cabinet URL has none, so nothing can bounce them
+   back; routing them through the signout route only cost an extra redirect
+   and a Set-Cookie deleting a cookie they never had. They go straight to the
+   login page. */
+const LOGIN_MEMBER = "/login";
+const LOGIN_STAFF = "/admin/login";
 const SIGNOUT_MEMBER = "/api/auth/signout";
 const SIGNOUT_STAFF = "/api/auth/signout?to=staff";
+
+/** Where to send a request that failed an auth check: through the signout
+ *  route when a session cookie is present (it has to be cleared, or the
+ *  proxy will bounce the visitor straight back), otherwise to the login page
+ *  directly. */
+async function rejectTo(kind: "member" | "staff"): Promise<string> {
+  const hasCookie = (await cookies()).get(SESSION_COOKIE)?.value != null;
+  if (kind === "staff") return hasCookie ? SIGNOUT_STAFF : LOGIN_STAFF;
+  return hasCookie ? SIGNOUT_MEMBER : LOGIN_MEMBER;
+}
 
 export type AuthedUser = {
   id: number;
@@ -89,8 +107,8 @@ function isStaffRole(role: Role): boolean {
    can never reach the admin panel even with a valid member session. */
 export async function requireUser(): Promise<AuthedUser> {
   const user = await loadCurrentUser();
-  if (!user) redirect(SIGNOUT_STAFF);
-  if (!isStaffRole(user.role)) redirect(SIGNOUT_STAFF);
+  if (!user) redirect(await rejectTo("staff"));
+  if (!isStaffRole(user.role)) redirect(await rejectTo("staff"));
   return user;
 }
 
@@ -98,7 +116,7 @@ export async function requireUser(): Promise<AuthedUser> {
    otherwise (unauthenticated, staff, or not-yet-approved / blocked). */
 export async function requireMember(): Promise<AuthedUser> {
   const user = await loadCurrentMember();
-  if (!user) redirect(SIGNOUT_MEMBER);
+  if (!user) redirect(await rejectTo("member"));
   return user;
 }
 
