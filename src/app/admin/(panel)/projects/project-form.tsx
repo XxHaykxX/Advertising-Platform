@@ -311,6 +311,7 @@ export function ProjectForm({
       } catch {
         /* ignore */
       }
+      leavingRef.current = true;
       window.location.assign(state.redirect);
       return;
     }
@@ -322,6 +323,7 @@ export function ProjectForm({
     if (leaveAfterSave.current) {
       const href = leaveAfterSave.current;
       leaveAfterSave.current = null;
+      leavingRef.current = true;
       window.location.assign(href);
       return;
     }
@@ -404,6 +406,13 @@ export function ProjectForm({
   // Set when they chose "save and leave": the post-save effect below picks it
   // up and completes the navigation once the action reports success.
   const leaveAfterSave = useRef<string | null>(null);
+  // Every deliberate departure sets this first. `isDirty` cannot do the job on
+  // its own: it is state, so setIsDirty(false) followed by location.assign() in
+  // the same tick leaves the beforeunload listener from the PREVIOUS render —
+  // the one that closed over isDirty === true — still attached, and the browser
+  // put its own "Leave site?" prompt in front of a save the user had already
+  // confirmed. A ref is read at fire time, so clearing it takes effect at once.
+  const leavingRef = useRef(false);
 
   useEffect(() => {
     if (!isDirty) return;
@@ -411,6 +420,9 @@ export function ProjectForm({
     // Reload / close tab / external URL — the browser's own generic prompt is
     // the only thing available here.
     function onBeforeUnload(e: BeforeUnloadEvent) {
+      // A navigation this form started itself is already the user's decision —
+      // prompting again would be asking twice about the same click.
+      if (leavingRef.current) return;
       e.preventDefault();
       e.returnValue = "";
     }
@@ -1499,6 +1511,7 @@ export function ProjectForm({
                   const href = pendingHref;
                   setPendingHref(null);
                   setIsDirty(false); // stop the guard re-firing on the way out
+                  leavingRef.current = true;
                   if (href) window.location.assign(href);
                 }}
                 className="inline-flex items-center justify-center rounded-lg border border-danger/40 px-4 py-2.5 text-sm font-medium text-danger transition-colors hover:bg-danger/10"
