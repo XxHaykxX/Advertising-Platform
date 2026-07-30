@@ -32,9 +32,16 @@ export async function captureVideoPoster(file: File, maxWidth = 640): Promise<Fi
 
       video.onerror = () => finish(null);
       video.onloadeddata = () => {
-        // A hair in, not 0: the opening frame of an encode is often black.
-        const target = Math.min(0.1, (video.duration || 1) / 2);
-        if (video.currentTime < target) {
+        // The MIDDLE of the clip, not the opening (owner request 2026-07-30).
+        // The first seconds are the worst place to look for a representative
+        // still: encodes routinely open on black, on a fade-in or on a logo
+        // card, so thumbnails came out empty-looking. Halfway in is where the
+        // actual content is. `duration` is Infinity for a stream and NaN before
+        // metadata on some browsers — both fall back to a small offset rather
+        // than seeking somewhere nonsensical.
+        const duration = video.duration;
+        const target = Number.isFinite(duration) && duration > 0 ? duration / 2 : 0.1;
+        if (Math.abs(video.currentTime - target) > 0.01) {
           video.currentTime = target;
         } else {
           draw();

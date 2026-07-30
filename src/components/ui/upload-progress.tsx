@@ -13,11 +13,13 @@ import { cn } from "@/lib/utils";
  * the field doesn't jump when the upload lands. `size="square"` matches a
  * portrait field, `size="row"` is the short variant for a table row.
  *
- * The fill is deliberately a tint (bg-primary/15 under a solid top edge) rather
- * than a solid bar: the percentage sits on top of it, and a solid indigo fill
- * rising past the text would take the label with it into unreadable territory
- * on the light palette. Tint + edge reads as a level and leaves text-foreground
- * legible over both halves.
+ * The fill is SOLID, and the readability problem that usually forces a pale tint
+ * is solved by drawing the label twice instead of weakening the colour. The
+ * first copy is dark on the empty track; the second is white on the fill and
+ * clipped to exactly the filled part, so whichever side of the rising line a
+ * character is on, it is the readable one. A tint was tried first (2026-07-30)
+ * and the owner rejected it on sight: at 100% the block was a flat pale
+ * rectangle with washed-out text and read as decoration, not activity.
  */
 
 const progressBlock = cva(
@@ -76,15 +78,7 @@ export function UploadProgress({
     >
       <StripeKeyframes />
 
-      {/* The level. Bottom-anchored so it rises; the solid top edge is what the
-          eye actually tracks. */}
-      <div
-        className="absolute inset-x-0 bottom-0 border-t-2 border-primary bg-primary/15 transition-[height] duration-200 ease-out"
-        style={{ height: `${percent}%` }}
-      >
-        <div className="igv-upload-stripes absolute inset-0 opacity-25" />
-      </div>
-
+      {/* Copy one: dark on the empty track. */}
       <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1 px-3 text-center">
         {showValue ? (
           <span className="text-3xl font-semibold tabular-nums text-foreground">{percent}%</span>
@@ -97,6 +91,32 @@ export function UploadProgress({
         {caption ? (
           <span className="max-w-full truncate text-xs text-muted-foreground">{caption}</span>
         ) : null}
+      </div>
+
+      {/* Copy two, on the solid fill, clipped to the filled part. Full-size and
+          laid out identically to copy one — that is what keeps the two in exact
+          register, so a character straddling the line is half dark, half white
+          rather than two glyphs a pixel apart. clip-path, not a height on this
+          element: a shorter box would re-centre its own contents and the text
+          would slide as the fill rose. */}
+      <div
+        className="pointer-events-none absolute inset-0 bg-primary text-primary-foreground transition-[clip-path] duration-200 ease-out"
+        style={{ clipPath: `inset(${100 - percent}% 0 0 0)` }}
+      >
+        <div className="igv-upload-stripes absolute inset-0 opacity-20" />
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 px-3 text-center">
+          {showValue ? (
+            <span className="text-3xl font-semibold tabular-nums">{percent}%</span>
+          ) : null}
+          {total > 0 ? (
+            <span className="text-xs tabular-nums opacity-90">
+              {(value / MB).toFixed(1)} / {(total / MB).toFixed(1)} MB
+            </span>
+          ) : null}
+          {caption ? (
+            <span className="max-w-full truncate text-xs opacity-90">{caption}</span>
+          ) : null}
+        </div>
       </div>
 
       {onCancel ? (
@@ -127,9 +147,11 @@ function StripeKeyframes() {
   return (
     <style href="igv-upload-stripes" precedence="default">{`
       .igv-upload-stripes {
+        /* White, not var(--primary): since 2026-07-30 these stripes sit ON the
+           solid primary fill, and primary-on-primary is an invisible texture. */
         background-image: repeating-linear-gradient(
           45deg,
-          var(--primary) 0 8px,
+          rgba(255, 255, 255, 0.9) 0 8px,
           transparent 8px 16px
         );
         animation: igv-upload-stripes 0.9s linear infinite;
