@@ -1,8 +1,8 @@
-import { Clock, Layers, Wallet } from "lucide-react";
+import { Building2, Clapperboard, Clock, Film, Layers, MapPin, Wallet } from "lucide-react";
 import { DealCta } from "@/components/report/deal-cta";
-import { formatFullDate } from "@/lib/data/format";
+import { formatFullDate, splitCountries } from "@/lib/data/format";
 import { cn } from "@/lib/utils";
-import { DEFAULT_LOCALE, intlLocale, makeUI, type Locale } from "@/lib/i18n";
+import { DEFAULT_LOCALE, intlLocale, localizeValue, makeUI, type Locale } from "@/lib/i18n";
 
 /** The offer, in the right column of the hero (owner decision 2026-07-29).
  *
@@ -26,10 +26,15 @@ export function DealCard({
   slotsTotal,
   applicationDeadline,
   daysLeft,
+  meta,
   locale = DEFAULT_LOCALE,
 }: {
   /** Production budget, preformatted in the visitor's currency. */
   budgetDisplay: string | null;
+  /** What the project IS — the icon row that used to sit under the hero image
+   *  as bare values. It lands here, labelled, in the space this card had left
+   *  over above the button (owner decision 2026-07-30). */
+  meta: { genre: string; format: string; studio: string; countries: string };
   /** Cheapest offer on the page (placement or package), preformatted. */
   fromPrice: string | null;
   slotsFree: number;
@@ -46,10 +51,19 @@ export function DealCard({
   const hasBudget = Boolean(budgetDisplay);
   const hasOffer = Boolean(fromPrice) || slotsTotal > 0;
   const hasDeadline = Boolean(applicationDeadline);
-  // A project with no budget, no priced offer and no deadline has nothing to
-  // put in this card — better an empty column than an empty box with a border
-  // around it.
-  if (!hasBudget && !hasOffer && !hasDeadline) return null;
+  // Each fact carries its own label, so an unfamiliar studio name no longer
+  // reads as a word with no explanation. Empty ones drop out entirely — a
+  // label above nothing is worse than a missing row.
+  const metaItems = [
+    { icon: Film, label: t("keyFacts.genre"), value: localizeValue(locale, "genre", meta.genre) },
+    { icon: Clapperboard, label: t("keyFacts.format"), value: meta.format },
+    { icon: Building2, label: t("keyFacts.studio"), value: meta.studio },
+    { icon: MapPin, label: t("keyFacts.countries"), value: splitCountries(meta.countries).join(", ") },
+  ].filter((m) => Boolean(m.value));
+  // A project with no budget, no priced offer, no deadline and no facts has
+  // nothing to put in this card — better an empty column than an empty box
+  // with a border around it.
+  if (!hasBudget && !hasOffer && !hasDeadline && metaItems.length === 0) return null;
 
   // Matches the catalog card's threshold, so "closing soon" means the same
   // thing in the list and on the page.
@@ -111,6 +125,23 @@ export function DealCard({
             ) : null}
           </div>
         </div>
+      ) : null}
+
+      {metaItems.length > 0 ? (
+        <>
+          {hasBudget || hasOffer || hasDeadline ? <hr className="border-border" /> : null}
+          <dl className="grid grid-cols-2 gap-x-4 gap-y-3 max-sm:grid-cols-1">
+            {metaItems.map(({ icon: Icon, label, value }) => (
+              <div key={label} className="min-w-0">
+                <dt className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                  <span className="truncate">{label}</span>
+                </dt>
+                <dd className="mt-1 break-words text-sm font-medium text-foreground">{value}</dd>
+              </div>
+            ))}
+          </dl>
+        </>
       ) : null}
 
       {/* mt-auto: the button sits on the card's bottom edge whatever the rows

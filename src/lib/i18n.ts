@@ -1050,6 +1050,18 @@ export const UI: Record<string, Dict> = {
   "keyFacts.price": { ru: "Цена", en: "Price", hy: "Գին" },
   "keyFacts.onRequest": { ru: "По запросу", en: "On request", hy: "Ըստ պահանջի" },
   "keyFacts.platforms": { ru: "Где смотреть", en: "Available on", hy: "Հասանելի է" },
+  // The inline icon row that used to sit under the hero image (genre · format ·
+  // studio · countries) moved into this card as a labelled group — an icon with
+  // a bare value ("Kinodaran") doesn't say what the value IS (owner decision
+  // 2026-07-30, NN/g icon-usability). Group headings order the card the way a
+  // brand decides: what it is -> who will see it -> when -> what it resembles.
+  "keyFacts.groupAbout": { ru: "О проекте", en: "About", hy: "Նախագծի մասին" },
+  "keyFacts.groupWhere": { ru: "Где увидят", en: "Where it airs", hy: "Որտեղ կդիտեն" },
+  "keyFacts.groupWhen": { ru: "Когда", en: "When", hy: "Երբ" },
+  "keyFacts.genre": { ru: "Жанр", en: "Genre", hy: "Ժանր" },
+  "keyFacts.format": { ru: "Формат", en: "Format", hy: "Ձևաչափ" },
+  "keyFacts.studio": { ru: "Студия", en: "Studio", hy: "Ստուդիա" },
+  "keyFacts.countries": { ru: "Съёмки", en: "Filmed in", hy: "Նկարահանումները" },
   "keyFacts.boxOffice": { ru: "Кассовый сбор", en: "Box office", hy: "Դրամարկղ" },
   "keyFacts.productionBudget": { ru: "Бюджет производства", en: "Production budget", hy: "Արտադրության բյուջե" },
   "report.productionBudget": { ru: "Бюджет производства", en: "Production budget", hy: "Արտադրության բյուջե" },

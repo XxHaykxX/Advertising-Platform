@@ -1,4 +1,3 @@
-import { Building2, Clapperboard, Film, MapPin } from "lucide-react";
 import { Reveal } from "@/components/ui/reveal";
 import { DealCard } from "@/components/report/deal-card";
 import { BackButton, PrintButton, ShareButton } from "@/components/report/report-actions";
@@ -6,8 +5,8 @@ import { PosterSlider } from "@/components/report/poster-slider";
 import { toEmbedUrl } from "@/components/report/report-video";
 import { StoryboardMarquee } from "@/components/report/storyboard-marquee";
 import { SynopsisDisclosure } from "@/components/report/synopsis-disclosure";
-import { parseStringArray, splitCountries } from "@/lib/data/format";
-import { DEFAULT_LOCALE, localizeValue, makeUI, type Locale } from "@/lib/i18n";
+import { parseStringArray } from "@/lib/data/format";
+import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
 import type { ProjectDetailDTO } from "@/lib/types";
 
 /** Offer summary for the hero's deal card. Computed in page.tsx (it is the
@@ -31,9 +30,7 @@ export function ReportHero({
   locale?: Locale;
 }) {
   const t = makeUI(locale);
-  const countries = splitCountries(project.countries).join(", ");
   const thumbnails = parseStringArray(project.gallery).slice(0, 20);
-  const statusLabel = t(`report.status.${project.status}`);
   // Main slider shows the poster plus every gallery image, poster first,
   // de-duplicated in case the same file is used in both fields.
   const sliderImages = Array.from(
@@ -45,15 +42,6 @@ export function ReportHero({
   const videoEmbed = project.videoEmbedUrl ? toEmbedUrl(project.videoEmbedUrl) : null;
   const videoSource =
     videoEmbed || project.videoFile ? { embed: videoEmbed, file: project.videoFile || null } : undefined;
-
-  // Same icon vocabulary as the catalog card (Clapperboard = format, MapPin =
-  // countries), so a project reads the same way in the list and on its page.
-  const metaItems = [
-    { icon: Film, value: localizeValue(locale, "genre", project.genre) },
-    { icon: Clapperboard, value: project.format },
-    { icon: Building2, value: project.studio },
-    { icon: MapPin, value: countries },
-  ].filter((m) => Boolean(m.value));
 
   return (
     <section className="pt-8 pb-4">
@@ -96,9 +84,11 @@ export function ReportHero({
                 nextLabel={t("report.next")}
                 video={videoSource}
               />
-              <span className="absolute bottom-3 left-3 inline-flex items-center rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground shadow-sm">
-                {statusLabel}
-              </span>
+              {/* The production-status pill ("Filming", "Post-Production", …)
+                  used to sit here over the poster. Removed on every project by
+                  owner decision 2026-07-30: it is production trivia a brand
+                  cannot act on, and it covered the image. The status still
+                  lives in the production timeline, where it has context. */}
               {project.ageRating ? (
                 <span className="absolute right-3 top-3 inline-flex items-center rounded-full bg-black/75 px-2.5 py-1 text-xs font-bold text-white shadow-sm ring-1 ring-white/20">
                   {project.ageRating}
@@ -119,22 +109,26 @@ export function ReportHero({
               slotsTotal={deal.slotsTotal}
               applicationDeadline={project.applicationDeadline}
               daysLeft={deal.daysLeft}
+              // The old icon row under the image, moved into this card's spare
+              // space and labelled (owner decision 2026-07-30).
+              meta={{
+                genre: project.genre,
+                format: project.format,
+                studio: project.studio,
+                countries: project.countries,
+              }}
               locale={locale}
             />
           </div>
         </Reveal>
 
         <Reveal delay={0.1}>
-          {/* Icons replace the middot separators: each fact now carries its own
-              marker, so the dots would only add noise between them. */}
-          <p className="mt-6 flex flex-wrap gap-x-5 gap-y-1.5 text-sm text-muted-foreground">
-            {metaItems.map(({ icon: Icon, value }, idx) => (
-              <span key={idx} className="inline-flex items-center gap-2">
-                <Icon className="h-3.5 w-3.5 shrink-0" />
-                {value}
-              </span>
-            ))}
-          </p>
+          {/* The icon row (genre · format · studio · countries) that used to sit
+              here is now a labelled group inside KeyFacts: an icon next to a
+              bare "Kinodaran" never said what the value was, and research on
+              icon usability is blunt about unlabelled icons carrying unique
+              facts (owner decision 2026-07-30). The synopsis now follows the
+              image directly. */}
           <SynopsisDisclosure
             text={project.synopsis}
             moreLabel={t("report.showMore")}
