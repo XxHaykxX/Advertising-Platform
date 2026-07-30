@@ -42,9 +42,31 @@ const EXT_BY_TYPE_VIDEO: Record<string, string> = {
 };
 
 /** Keep only a safe folder segment (project code etc.) — strip anything that
-   could escape the uploads root. */
+   could escape the uploads root.
+
+   The dot is deliberately in the allowlist (folder names like "v1.2" are fine),
+   and that used to be the hole: ".." survived the filter untouched, and
+   path.join() normalises it, so `dir=".."` climbed exactly one level out of the
+   root. For a member that landed in uploads/members/ — served over HTTP, and
+   the opposite of what this function's contract promises — and in local dev,
+   where the root is public/uploads, it landed in public/ itself. A segment made
+   only of dots is never a real folder name, so it collapses to the fallback.
+   Found in review 2026-07-30; the flaw predates the /api/uploads route and was
+   equally reachable through the upload Server Actions. */
 export function safeSegment(input: string): string {
-  return input.replace(/[^a-zA-Z0-9._-]/g, "").slice(0, 64) || "misc";
+  const cleaned = input.replace(/[^a-zA-Z0-9._-]/g, "").slice(0, 64);
+  if (/^\.+$/.test(cleaned)) return "misc";
+  return cleaned || "misc";
+}
+
+/** Belt and braces for the above: resolve the final directory and refuse it if
+   it is not inside the root we were handed. safeSegment() is the fix; this is
+   the check that catches the NEXT way somebody finds to smuggle a separator or
+   a traversal through it, instead of trusting one regex forever. */
+function assertInside(root: string, candidate: string): boolean {
+  const resolvedRoot = path.resolve(root);
+  const resolved = path.resolve(candidate);
+  return resolved === resolvedRoot || resolved.startsWith(resolvedRoot + path.sep);
 }
 
 /** Every rejection the store can produce. Passed in rather than hardcoded: the
@@ -138,6 +160,7 @@ export async function storeUpload(fd: FormData, opts: StoreUploadOptions): Promi
 
     const name = `${Date.now()}-${randomUUID().slice(0, 8)}.${ext}`;
     const destDir = path.join(root, dir);
+    if (!assertInside(root, destDir)) return { error: messages.noFile };
     await mkdir(destDir, { recursive: true });
     await writeFile(path.join(destDir, name), Buffer.from(await file.arrayBuffer()));
     await writePosterFrame(fd, destDir, name);
@@ -159,6 +182,7 @@ export async function storeUpload(fd: FormData, opts: StoreUploadOptions): Promi
 
   const name = `${Date.now()}-${randomUUID().slice(0, 8)}.${optimized.ext}`;
   const destDir = path.join(root, dir);
+  if (!assertInside(root, destDir)) return { error: messages.noFile };
   await mkdir(destDir, { recursive: true });
   await writeFile(path.join(destDir, name), optimized.buffer);
 

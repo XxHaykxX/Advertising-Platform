@@ -6,7 +6,7 @@ import { FileVideo, ImageIcon } from "lucide-react";
 import { MediaPicker, isVideoPath, type MediaPickerAccept, type MediaPickerScope } from "@/components/media-picker";
 import { MediaCropDialog } from "@/components/media-crop-dialog";
 import { UploadProgress } from "@/components/ui/upload-progress";
-import { uploadViaXhr } from "@/lib/upload-xhr";
+import { holdProgress, uploadViaXhr } from "@/lib/upload-xhr";
 import { captureVideoPoster, posterPathFor } from "@/lib/video-poster";
 import { Dropzone, DropzoneEmptyState, DropzonePreview } from "@/components/ui/dropzone";
 import type { Locale } from "@/lib/i18n";
@@ -157,6 +157,7 @@ export function MediaField({
       return;
     }
 
+    const startedAt = Date.now();
     const res = await uploadViaXhr(fd, {
       scope,
       signal: controller.signal,
@@ -166,10 +167,26 @@ export function MediaField({
     });
 
     abortRef.current = null;
+    if (res.canceled) {
+      setJob(null);
+      return; // the user asked for this — not an error
+    }
+    if (res.error) {
+      setJob(null);
+      setDropError(res.error);
+      return;
+    }
+    if (res.path) {
+      // Finish the bar, then let it stand for its minimum before the poster
+      // replaces it — see holdProgress. Without this the block exists but is
+      // never actually seen on a fast upload.
+      setJob((current) => (current ? { ...current, loaded: current.total } : current));
+      await holdProgress(startedAt);
+      setJob(null);
+      update(res.path);
+      return;
+    }
     setJob(null);
-    if (res.canceled) return; // the user asked for this — not an error
-    if (res.error) setDropError(res.error);
-    else if (res.path) update(res.path);
   }
 
   async function handleDrop(file: File | undefined) {

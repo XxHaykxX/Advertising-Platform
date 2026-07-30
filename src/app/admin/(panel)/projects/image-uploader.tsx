@@ -28,7 +28,7 @@ import {
   useDropzoneOpen,
 } from "@/components/ui/dropzone";
 import { UploadProgress } from "@/components/ui/upload-progress";
-import { uploadViaXhr } from "@/lib/upload-xhr";
+import { holdProgress, uploadViaXhr } from "@/lib/upload-xhr";
 import type { Locale } from "@/lib/i18n";
 import { imageSizeHint } from "@/lib/images/size-hint";
 
@@ -154,6 +154,7 @@ export const ImageUploader = forwardRef<ImageUploaderHandle, {
         continue;
       }
       setJob({ file, loaded: 0, total: file.size, index: i + 1, count: queue.length });
+      const startedAt = Date.now();
 
       const fd = new FormData();
       fd.append("file", file);
@@ -172,7 +173,13 @@ export const ImageUploader = forwardRef<ImageUploaderHandle, {
       // is reported as an error — the user asked for this.
       if (res.canceled) break;
       if (res.error) setDropError(res.error);
-      else if (res.path) added.push(res.path);
+      else if (res.path) {
+        // Finish the bar and let it stand its minimum before the picture takes
+        // its place — see holdProgress. Per file, so a batch reads as a batch.
+        setJob((current) => (current ? { ...current, loaded: current.total } : current));
+        await holdProgress(startedAt);
+        added.push(res.path);
+      }
     }
 
     abortRef.current = null;

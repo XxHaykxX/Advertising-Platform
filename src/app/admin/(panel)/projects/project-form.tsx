@@ -1475,10 +1475,19 @@ export function ProjectForm({
             <p className="mt-2 text-sm text-muted-foreground">{t("projectForm.leaveMessage")}</p>
             <div className="mt-6 flex flex-col gap-2">
               <button
-                type="submit"
+                // Submitted by hand, NOT by letting this be the form's submit
+                // button. Closing the dialog in the same handler unmounts this
+                // button, and React flushes that state update before the
+                // browser runs the click's default action — a button that is no
+                // longer in the document submits nothing, so "Save and leave"
+                // just closed the dialog and dropped the save on the floor (no
+                // request left the page at all). requestSubmit() on the form
+                // itself does not care what happens to the button afterwards.
+                type="button"
                 onClick={() => {
                   leaveAfterSave.current = pendingHref;
                   setPendingHref(null);
+                  formRef.current?.requestSubmit();
                 }}
                 className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:opacity-90"
               >
