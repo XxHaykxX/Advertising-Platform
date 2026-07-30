@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition, type ButtonHTMLAttributes } from "react";
+import { createPortal } from "react-dom";
 import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { useModalDialog } from "@/lib/use-modal-dialog";
@@ -82,7 +83,18 @@ function LogoutConfirmDialog({
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [onCancel]);
 
-  return (
+  // Portalled to <body>, and that is load-bearing rather than tidiness: every
+  // sidebar this button lives in is itself transformed (admin-shell's <aside>
+  // carries md:translate-x-0 for the mobile slide-in; the brand and creator
+  // sidebars do the same). A transform makes the element the containing block
+  // for `position: fixed` descendants, so `fixed inset-0 place-items-center`
+  // centred the dialog inside the 15rem sidebar and clipped it against the left
+  // edge of the screen instead of centring it on the viewport.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return null;
+
+  return createPortal(
     <div
       // data-lenis-prevent: this dialog is reachable from the public header
       // (signed-in members see it there too), and Lenis owns the wheel
@@ -113,6 +125,7 @@ function LogoutConfirmDialog({
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
