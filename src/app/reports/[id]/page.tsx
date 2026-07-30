@@ -63,7 +63,30 @@ export default async function ReportPage({
     (await prisma.project.findFirst({ where: { id: pid, ownerId: authed.id }, select: { id: true } })) !=
       null;
   const canPreviewUnapproved = authed != null && (isStaff(authed.role) || ownsThis);
-  const project = await getProject(pid, locale, currency, !canPreviewUnapproved);
+  // IA-30/36: a brand that already applied here must be able to reopen what
+  // it applied for even after the creator unpublishes the project — otherwise
+  // an accepted deal becomes literally unreachable to the brand that holds
+  // it. Scoped to that brand's own Interest on this exact project, so no
+  // other member borrows the door; only ever queried for a signed-in BRAND
+  // (guests, the common case, and every other role skip it entirely).
+  // Favorite is deliberately left out of this exception — it's just a
+  // bookmark, never vetted by anyone, and carries none of the "this brand was
+  // let past the gate" evidence an Interest does.
+  // moderationStatus is a separate axis and is NOT bypassed: a brand can only
+  // ever apply while a project is APPROVED (the apply button never shows
+  // otherwise), and nothing in the moderation queue moves an already-APPROVED
+  // project back to PENDING/REJECTED, so this is defense in depth rather than
+  // a real path — but it means a rejected project stays a 404 for the brand
+  // too, same as for everyone but staff and the owner.
+  const myInterest =
+    authed?.role === "BRAND"
+      ? await prisma.interest.findFirst({
+          where: { brandId: authed.id, projectId: pid },
+          select: { project: { select: { moderationStatus: true, isActive: true } } },
+        })
+      : null;
+  const hasInterestHere = myInterest?.project.moderationStatus === "APPROVED";
+  const project = await getProject(pid, locale, currency, !(canPreviewUnapproved || hasInterestHere));
   if (!project) notFound();
 
   // Offer -> status for everything this brand has already applied for here.
@@ -159,8 +182,15 @@ export default async function ReportPage({
       brandPhone={brandPhone}
       // Past its placement deadline the project is archived: it drops out of
       // the catalog, but this page stays reachable by direct link (a brand may
-      // have bookmarked it) with the offer button closed instead.
-      archived={isArchived(project.applicationDeadline)}
+      // have bookmarked it) with the offer button closed instead. Same
+      // treatment when the brand only got in on the hasInterestHere exception
+      // above because the creator unpublished the project after the brand
+      // applied — it must read as closed, not invite a fresh application to a
+      // project no longer on sale.
+      archived={
+        isArchived(project.applicationDeadline) ||
+        (hasInterestHere && myInterest?.project.isActive === false)
+      }
     >
       {/* Counts this visit for the owner's stats — see the component. */}
       <ViewPing projectId={project.id} />

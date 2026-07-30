@@ -213,6 +213,20 @@ export function Header({
   // floats over it, switch text to a light-on-dark scheme.
   const onDark =
     DARK_HERO_PATHS.has(pathname ?? "") && !scrolled && !menuOpen;
+  // IA-32: a guest reading a project (or any page) used to land in the
+  // cabinet after signing in via this header link, losing their place — carry
+  // `?from=` the same way the report's own apply-button login links do
+  // (report-interest-context.tsx). safeMemberRedirect() on the login/register
+  // actions re-validates the target, so it's fine to be optimistic here; we
+  // only guard against pointing the link at /login or /register themselves,
+  // which would otherwise send someone signing in back to the auth flow they
+  // just left. Path-only (no query string) — usePathname() doesn't carry one,
+  // and every place that needs to preserve a query (e.g. `?offer=`) already
+  // builds its own richer `from` value.
+  const loginHref =
+    pathname && pathname !== "/login" && pathname !== "/register"
+      ? `/login?from=${encodeURIComponent(pathname)}`
+      : "/login";
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -260,7 +274,7 @@ export function Header({
               <UserMenu user={user} locale={locale} onDark={onDark} />
             ) : (
               <Button asChild variant="primary" size="sm">
-                <Link href="/login" className="group gap-2">
+                <Link href={loginHref} className="group gap-2">
                   <LogIn className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
                   {t("nav.signInUp")}
                 </Link>
@@ -347,7 +361,7 @@ export function Header({
               ) : (
                 <div className="flex flex-col gap-2 pt-2">
                   <Button asChild variant="primary" size="sm" onClick={() => setMenuOpen(false)}>
-                    <Link href="/login" className="group gap-2">
+                    <Link href={loginHref} className="group gap-2">
                       <LogIn className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
                       {t("nav.signInUp")}
                     </Link>

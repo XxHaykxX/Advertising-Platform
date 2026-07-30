@@ -306,6 +306,12 @@ export function ApplicationDialog({
                 placeholder={t("apply.productPlaceholder")}
                 className={inputClass}
               />
+              {/* IA-29: the only required field in the form, and the button
+                  gave no sign of it — say so here, the same way the message
+                  field already explains its own 20-character floor below. */}
+              {trimmedProduct.length === 0 ? (
+                <p className="mt-1 text-xs text-muted-foreground">{t("apply.productRequiredHint")}</p>
+              ) : null}
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -373,7 +379,11 @@ export function ApplicationDialog({
                 className={inputClass}
               />
               {/* Optional, but a one-word "hi" is not worth the seller reading:
-                  once something is typed it has to say something. */}
+                  once something is typed it has to say something. IA-29: the
+                  hint used to read as an unconditional demand ("please
+                  describe... at least 20 characters") that contradicted the
+                  "(optional)" label above it — reworded so it only reads as a
+                  floor on what's already been typed. */}
               {trimmedMessage.length > 0 && trimmedMessage.length < MIN_MESSAGE ? (
                 <p className="mt-1 text-xs text-muted-foreground">
                   {t("apply.messageTooShort").replace("{n}", String(MIN_MESSAGE))}
@@ -398,7 +408,12 @@ export function ApplicationDialog({
                     "+374 …" had to be typed, and a number without a country
                     code is a lead nobody can call. */}
                 <PhoneInput id="apply-phone" required value={phone} onChange={setPhone} />
-                {phone.trim() !== "" && phone.trim() !== DEFAULT_DIAL_CODE && !isValidPhone(phone) ? (
+                {/* IA-29: shown as soon as the number isn't a real one yet —
+                    including the untouched default dial code — not only
+                    after it's been typed into and is still wrong. Otherwise a
+                    visitor who never touches this field sees no reason at all
+                    for the button staying disabled. */}
+                {!isValidPhone(phone) ? (
                   <p className="mt-1 text-xs text-muted-foreground">{t("apply.phoneInvalid")}</p>
                 ) : null}
               </div>

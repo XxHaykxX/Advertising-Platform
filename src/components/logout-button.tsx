@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState, useTransition, type ButtonHTMLAttributes } from "react";
+import { useEffect, useRef, useState, useTransition, type ButtonHTMLAttributes } from "react";
 import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
+import { useModalDialog } from "@/lib/use-modal-dialog";
 
 /** Client-side logout trigger. Replaces `<form action={logout}>` — the
  *  server action just clears the cookie and reports where to go; navigation
@@ -67,6 +68,12 @@ function LogoutConfirmDialog({
   onConfirm: () => void;
   onCancel: () => void;
 }) {
+  // Focus into the dialog, Tab kept inside it, focus back on the trigger when
+  // it closes, and the page behind frozen while it is open — see the hook.
+  // The hook doesn't handle Escape, so that stays here.
+  const panelRef = useRef<HTMLDivElement>(null);
+  useModalDialog(panelRef);
+
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") onCancel();
@@ -76,15 +83,29 @@ function LogoutConfirmDialog({
   }, [onCancel]);
 
   return (
-    <div className="fixed inset-0 z-[100] grid place-items-center p-4" role="dialog" aria-modal="true" aria-labelledby="logout-confirm-title">
+    <div
+      // data-lenis-prevent: this dialog is reachable from the public header
+      // (signed-in members see it there too), and Lenis owns the wheel
+      // globally on the public pages — without this a wheel over the dialog
+      // scrolls the page underneath instead.
+      data-lenis-prevent
+      className="fixed inset-0 z-[100] grid place-items-center p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="logout-confirm-title"
+    >
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onCancel} />
-      <div className="relative w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-2xl">
+      <div
+        ref={panelRef}
+        tabIndex={-1}
+        className="relative w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-2xl outline-none"
+      >
         <h2 id="logout-confirm-title" className="text-base font-bold text-foreground">
           {t("logout.confirmTitle")}
         </h2>
         <p className="mt-2 text-sm text-muted-foreground">{t("logout.confirmMessage")}</p>
         <div className="mt-6 flex items-center gap-3">
-          <Button type="button" variant="secondary" className="flex-1" autoFocus onClick={onCancel}>
+          <Button type="button" variant="secondary" className="flex-1" onClick={onCancel}>
             {t("logout.confirmNo")}
           </Button>
           <Button type="button" variant="primary" className="flex-1" onClick={onConfirm}>

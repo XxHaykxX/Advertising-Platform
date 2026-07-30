@@ -29,7 +29,25 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const target = TARGETS[url.searchParams.get("to") ?? "member"] ?? TARGETS.member;
 
-  const res = NextResponse.redirect(new URL(target, url.origin));
+  // NextResponse.redirect() insists on an absolute URL (it runs `new URL()`
+  // on whatever you give it with no base, so a bare path throws). Building
+  // that absolute URL from req.url/req.nextUrl is exactly the trap IA-31 hit:
+  // behind Hostinger's Passenger proxy, req.url reports the app's internal
+  // bind address, so `new URL(target, url.origin)` produced
+  // http://0.0.0.0:3000/login — a URL only the server can reach, which the
+  // browser rejects with ERR_ADDRESS_INVALID. A forwarded-host header would
+  // fix that, but it's attacker-suppliable, and TARGETS is already a closed
+  // list so there's nothing to gain from trusting it here.
+  //
+  // A root-relative `Location` header sidesteps all of that: it has no
+  // scheme or host, so there is no origin to get wrong. It's legal per RFC
+  // 7231 §7.1.2, and every browser resolves it against whatever origin it
+  // actually connected to. Building the response by hand (instead of via
+  // NextResponse.redirect) is what lets us send a relative Location.
+  const res = new NextResponse(null, {
+    status: 307,
+    headers: { Location: target },
+  });
   // Same attributes the cookie was set with (path especially) or the browser
   // keeps the original alongside the expired one.
   res.cookies.set(SESSION_COOKIE, "", { ...sessionCookieOptions(0), maxAge: 0 });

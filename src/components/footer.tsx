@@ -145,8 +145,11 @@ export function Footer({
                 </Link>
               </li>
               <li>
+                {/* Was "/#faq", an anchor on the landing page — off-limits to a
+                    signed-in member (IA-37/38/39). /faq is a standalone route
+                    reusing the same accordion so this link works everywhere. */}
                 <Link
-                  href="/#faq"
+                  href="/faq"
                   className="text-sm text-muted-foreground transition-colors hover:text-primary"
                 >
                   {t("footer.faq")}

@@ -2,8 +2,30 @@
    own cabinet — the public catalog and legal/contact pages (audit 4.1, owner
    decision C.4). Shared by proxy.ts (enforces the member confinement) and
    the login action (validates a post-login ?from= redirect target), so the
-   two stay in sync instead of drifting apart. */
-export const MEMBER_ALLOWED_PUBLIC_PREFIXES = ["/catalog", "/contact", "/terms", "/privacy", "/how-it-works"];
+   two stay in sync instead of drifting apart.
+
+   IA-37/38/39: the footer (shown on /reports/[id], a page members reach
+   constantly) also links to /portfolio, /about and FAQ. Portfolio and About
+   are plain informational pages with no guest-only call to action beyond a
+   single "/register" button each already carries — same as every other page
+   here, that link just bounces a member back to their cabinet, which is
+   correct. FAQ is different: the footer pointed at "/#faq", an anchor on the
+   landing page itself, and the landing page stays off-limits on purpose (it's
+   exactly the guest-only flow the confinement exists to keep members out of).
+   Rather than let a member fall through to the anchor and get bounced with no
+   way to read the FAQ at all, /faq is a small standalone route (see
+   app/faq/page.tsx) that reuses the same accordion component, and the footer
+   link now points there for everyone instead of "/#faq". */
+export const MEMBER_ALLOWED_PUBLIC_PREFIXES = [
+  "/catalog",
+  "/contact",
+  "/terms",
+  "/privacy",
+  "/how-it-works",
+  "/portfolio",
+  "/about",
+  "/faq",
+];
 
 function hasPrefix(pathname: string, prefix: string): boolean {
   return pathname === prefix || pathname.startsWith(`${prefix}/`);

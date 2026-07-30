@@ -12,6 +12,7 @@ import { makeUI } from "@/lib/i18n";
 import { createNotification, notifyRoles } from "@/lib/data/notifications";
 import { notifyNewInterest } from "@/lib/mail";
 import { offerKeyOf } from "@/lib/offer-value";
+import { parseWebsiteUrl } from "@/lib/website-url";
 
 /* #23 — BRAND-cabinet server actions. Every action re-checks requireMember()
  * + role === "BRAND" itself (defense in depth — the layout gate already
@@ -458,7 +459,14 @@ export async function updateBrandProfile(
   if (user.role !== "BRAND") return { error: t("account.brand.expressInterestError") };
 
   const company = String(fd.get("company") || "").trim().slice(0, VARCHAR_MAX);
-  const website = String(fd.get("website") || "").trim().slice(0, VARCHAR_MAX);
+  // Capped generously before parsing (not to VARCHAR_MAX yet) — the parsed
+  // and normalised URL is what actually gets capped to the column limit,
+  // below, since `new URL(...).toString()` can come out longer than what was
+  // typed (a bare domain gains a scheme and a trailing slash).
+  const websiteRaw = String(fd.get("website") || "").trim().slice(0, 2000);
+  const websiteParsed = parseWebsiteUrl(websiteRaw);
+  if (!websiteParsed.ok) return { error: t("account.brand.websiteInvalid") };
+  const website = websiteParsed.value ? websiteParsed.value.slice(0, VARCHAR_MAX) : null;
   const categories = jsonArray(fd, "brandCategories").filter((c) => BRAND_CATEGORIES.includes(c));
   const budgetRangeRaw = String(fd.get("budgetRange") || "");
   const budgetRange = BUDGET_VALUES.includes(budgetRangeRaw) ? budgetRangeRaw : null;
@@ -478,7 +486,7 @@ export async function updateBrandProfile(
     where: { id: user.id },
     data: {
       company: company || null,
-      website: website || null,
+      website,
       phone: phone || null,
       brandCategories: JSON.stringify(categories),
       budgetRange,

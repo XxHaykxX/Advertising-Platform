@@ -14,7 +14,17 @@ interface FaqItem {
   answer: string;
 }
 
-export default function Faq({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
+export default function Faq({
+  locale = DEFAULT_LOCALE,
+  showTitle = true,
+}: {
+  locale?: Locale;
+  /** The landing page has no h1 above this section, so the component's own
+   *  h2 title is the page's only heading. /faq/page.tsx gives the standalone
+   *  route a proper h1 via PageHero (IA-37/38/39) — passing false here drops
+   *  the h2 instead of stacking two competing titles on top of each other. */
+  showTitle?: boolean;
+}) {
   const t = makeUI(locale);
   // q1..q6, no gap. The list used to skip q2 (q1, q3..q7), which is what sent
   // the content writer's numbered rows one key off when her sheet was applied.
@@ -28,11 +38,13 @@ export default function Faq({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
   return (
     <Section id="faq">
       <Container>
-        <div className="mb-16 text-center">
-          <Reveal>
-            <h2 className="text-4xl font-bold md:text-5xl">{t("faq.title")}</h2>
-          </Reveal>
-        </div>
+        {showTitle ? (
+          <div className="mb-16 text-center">
+            <Reveal>
+              <h2 className="text-4xl font-bold md:text-5xl">{t("faq.title")}</h2>
+            </Reveal>
+          </div>
+        ) : null}
 
         <Reveal delay={0.1}>
           <div className="mx-auto max-w-3xl">
