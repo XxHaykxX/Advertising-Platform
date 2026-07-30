@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,10 +21,30 @@ const cardClass = "rounded-2xl border border-border bg-card p-6";
 export function ProfileForm({ profile, locale }: { profile: BrandProfileDTO; locale: Locale }) {
   const t = makeUI(locale);
   const router = useRouter();
-  const [state, formAction, pending] = useActionState<BrandProfileFormState, FormData>(
+  const [state, formAction, actionPending] = useActionState<BrandProfileFormState, FormData>(
     updateBrandProfile,
     initialState,
   );
+  const [transitionPending, startTransition] = useTransition();
+  const pending = actionPending || transitionPending;
+
+  // Submitted by hand rather than through <form action={formAction}> (IA-34).
+  // React resets a form automatically once its `action` has run, which for one
+  // frame puts every field back to the value the page was loaded with before
+  // the controlled value is re-applied — the budget select visibly flashed the
+  // previously saved option on every save (measured: one frame, ~17ms, on
+  // three saves out of three). Dispatching the action ourselves skips that
+  // reset. Nothing is lost by skipping it: every field here is controlled by
+  // this component's own state, so there is no uncontrolled input relying on
+  // the form being cleared.
+  //
+  // Same mechanism as IA-15 and its reopen, where the reset left the stale
+  // value on screen for good rather than for a frame.
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const data = new FormData(e.currentTarget);
+    startTransition(() => formAction(data));
+  }
   const [categories, setCategories] = useState<string[]>(profile.brandCategories);
   // Controlled so the value survives React's automatic form reset after the
   // server action — an uncontrolled defaultValue reverts to the (stale) prop
@@ -68,7 +88,7 @@ export function ProfileForm({ profile, locale }: { profile: BrandProfileDTO; loc
         </label>
       </div>
 
-      <form action={formAction} className="flex flex-col gap-6">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         <div className={cardClass}>
           <h2 className="text-lg font-semibold text-foreground">{t("account.brand.companyDetails")}</h2>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
