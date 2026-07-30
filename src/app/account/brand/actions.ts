@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireMember } from "@/lib/auth/require";
@@ -94,6 +94,9 @@ export async function withdrawInterest(interestId: number): Promise<ExpressInter
     return { ok: false, error: t("account.brand.expressInterestError") };
   }
 
+  // Withdrawing an accepted application gives its slot back, and slot counts
+  // are part of the cached catalog DTOs — same reasoning as respondToInterest.
+  updateTag("projects");
   revalidateBrandPaths();
   revalidatePath("/account/interests");
   revalidatePath("/admin/interests");
@@ -422,6 +425,10 @@ export async function submitApplication(
   }
 
   void interestId;
+  // Re-applying frees the slot booked by the previous application, and slot
+  // counts live in the cached catalog DTOs — same reasoning as
+  // respondToInterest in src/lib/actions/interest-response.ts.
+  updateTag("projects");
   revalidateBrandPaths();
   revalidatePath("/account/interests");
   revalidatePath("/admin/interests");

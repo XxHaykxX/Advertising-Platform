@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { SESSION_COOKIE, verifySessionToken } from "@/lib/auth/session";
@@ -172,6 +172,11 @@ export async function respondToInterest(
     console.error("[interests] failed to email the brand:", err);
   }
 
+  // Accepting or declining moves availableSlots, and the slot counts are baked
+  // into the cached catalog DTOs (src/lib/data/projects.ts) — without this the
+  // public card kept advertising a slot that had just been taken, for up to the
+  // 300s cache window.
+  updateTag("projects");
   revalidatePath("/admin/interests");
   revalidatePath("/account/interests");
   revalidatePath("/account/brand/interests");
