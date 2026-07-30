@@ -141,7 +141,10 @@ export default async function ModerationAdminPage({
                       rel="noopener noreferrer"
                       className="font-medium text-foreground hover:text-primary"
                     >
-                      {p.title}
+                      {/* Per-locale columns first, same order as
+                          /admin/projects: the legacy `title` is only rebuilt on
+                          save, so an Armenian-only rename would not show here. */}
+                      {p.titleHy || p.titleRu || p.titleEn || p.title}
                     </Link>
                     {canEdit ? (
                       <Link

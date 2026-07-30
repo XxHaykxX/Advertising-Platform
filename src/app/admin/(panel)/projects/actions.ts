@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { notFound } from "next/navigation";
 import { Prisma } from "@prisma/client";
 import type { ProjectKind } from "@prisma/client";
@@ -27,7 +27,7 @@ export type ProjectFormValues = {
   genres: string[]; // multi-genre picks (Genre MultiSelect)
   synopsis: string;
   // ── Per-locale translations — the form only submits these; title/synopsis
-  // above are derived from them (ru, then hy, then en) in buildData ──
+  // above are derived from them (hy, then ru, then en) in buildData ──
   titleHy: string;
   titleRu: string;
   titleEn: string;
@@ -174,8 +174,14 @@ function buildData(fd: FormData): ProjectFormValues {
   const genres = jsonArray<string>(fd, "genres");
   const kind = enumVal(fd, "kind", KIND_VALUES, "FILM");
   // The form no longer submits generic title/synopsis fields — only the
-  // per-locale ones. Derive the legacy title/synopsis columns from them
-  // (ru first, per spec default, then hy, then en).
+  // per-locale ones. Derive the legacy title/synopsis columns from them,
+  // hy first (DEFAULT_LOCALE — see src/lib/i18n.ts), then ru, then en.
+  //
+  // This used to be ru-first, which made editing the Armenian name look like
+  // it did not save at all: titleHy landed in the DB, but `title` — the column
+  // /admin/projects renders — kept the untouched Russian name, so the list
+  // showed the old title forever. Deriving from the site's default locale
+  // first means the admin list shows what a default visitor sees.
   const titleHy = str(fd, "titleHy", VARCHAR_MAX);
   const titleRu = str(fd, "titleRu", VARCHAR_MAX);
   const titleEn = str(fd, "titleEn", VARCHAR_MAX);
@@ -186,11 +192,11 @@ function buildData(fd: FormData): ProjectFormValues {
   const taglineRu = str(fd, "taglineRu", VARCHAR_MAX);
   const taglineEn = str(fd, "taglineEn", VARCHAR_MAX);
   return {
-    title: (titleRu || titleHy || titleEn).slice(0, VARCHAR_MAX),
+    title: (titleHy || titleRu || titleEn).slice(0, VARCHAR_MAX),
     code: str(fd, "code", VARCHAR_MAX),
     genre: (genres[0] || "").slice(0, VARCHAR_MAX),
     genres,
-    synopsis: synopsisRu || synopsisHy || synopsisEn,
+    synopsis: synopsisHy || synopsisRu || synopsisEn,
     titleHy,
     titleRu,
     titleEn,
@@ -218,7 +224,7 @@ function buildData(fd: FormData): ProjectFormValues {
     applicationDeadline: str(fd, "applicationDeadline"),
     releaseDate: str(fd, "releaseDate"),
     platforms: jsonArray<string>(fd, "platforms").join(", ").slice(0, VARCHAR_MAX),
-    tagline: taglineRu || taglineHy || taglineEn, // base/fallback, mirrors synopsis
+    tagline: taglineHy || taglineRu || taglineEn, // base/fallback, mirrors synopsis
     taglineHy,
     taglineRu,
     taglineEn,
@@ -555,14 +561,20 @@ async function generateProjectCode(): Promise<string> {
 
 function revalidateProjectPaths(id?: number) {
   // Drop the cached DB reads in src/lib/data/projects.ts (tagged "projects") so
-  // an admin edit is visible on next visit. `"max"` marks the tag stale
-  // (stale-while-revalidate) — the Next 16 recommended two-arg form; the old
-  // `{ expire: 0 }` blocking-expire form (plus revalidatePath("/") /
-  // "/catalog") forced an immediate reseed from the root layout down, which
-  // crashed the in-flight useActionState navigation with a black screen
-  // ("This page couldn't load") — see 2026-07-15 bugfix. Public pages still
-  // pick up the change via the tag within the visitor's next request.
-  revalidateTag("projects", "max");
+  // an admin edit is visible immediately.
+  //
+  // This was updateTag("projects"), whose documented behaviour is
+  // stale-while-revalidate: the tag is marked stale, the NEXT visitor is still
+  // served the old value, and fresh data is only fetched in the background. An
+  // editor who renamed a project and then opened the catalog therefore kept
+  // seeing the old name (reproduced on production: two identical requests
+  // returned old, then new). updateTag expires the entry outright and makes the
+  // next request wait for fresh data — it exists for exactly this
+  // read-your-own-writes case, and unlike the 2026-07-15 regression it touches
+  // only the tag, not paths: no root-layout reseed, so the in-flight
+  // useActionState navigation is left alone. It is legal only inside a Server
+  // Action, which is the only place this helper is called from.
+  updateTag("projects");
   revalidatePath("/admin/projects");
   if (id) revalidatePath(`/reports/${id}`);
 }

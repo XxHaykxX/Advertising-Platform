@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireModerator, requireUser } from "@/lib/auth/require";
 import { notifyProjectApproved, notifyProjectRejected } from "@/lib/mail";
@@ -31,7 +31,7 @@ function revalidateModerationPaths(projectId?: number) {
   // Same two-arg stale-while-revalidate form as projects/actions.ts
   // (revalidateProjectPaths) — an immediate blocking expire crashed an
   // in-flight client navigation on 2026-07-15; "max" avoids that.
-  revalidateTag("projects", "max");
+  updateTag("projects");
   revalidatePath("/admin/moderation");
   revalidatePath("/admin/projects");
   if (projectId) revalidatePath(`/reports/${projectId}`);

@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { notFound } from "next/navigation";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -109,11 +109,14 @@ function buildData(fd: FormData): ProjectFormValues {
   const taglineRu = str(fd, "taglineRu", VARCHAR_MAX);
   const taglineEn = str(fd, "taglineEn", VARCHAR_MAX);
   return {
-    title: (titleRu || titleHy || titleEn).slice(0, VARCHAR_MAX),
+    // hy first (DEFAULT_LOCALE), then ru, then en — mirrors the admin form's
+    // buildData. Ru-first made an Armenian-only rename invisible in every list
+    // that renders the legacy `title` column.
+    title: (titleHy || titleRu || titleEn).slice(0, VARCHAR_MAX),
     code: str(fd, "code", VARCHAR_MAX),
     genre: (genres[0] || "").slice(0, VARCHAR_MAX),
     genres,
-    synopsis: synopsisRu || synopsisHy || synopsisEn,
+    synopsis: synopsisHy || synopsisRu || synopsisEn,
     titleHy,
     titleRu,
     titleEn,
@@ -143,7 +146,7 @@ function buildData(fd: FormData): ProjectFormValues {
     applicationDeadline: str(fd, "applicationDeadline"),
     releaseDate: str(fd, "releaseDate"),
     platforms: jsonArray<string>(fd, "platforms").join(", ").slice(0, VARCHAR_MAX),
-    tagline: taglineRu || taglineHy || taglineEn,
+    tagline: taglineHy || taglineRu || taglineEn,
     taglineHy,
     taglineRu,
     taglineEn,
@@ -564,7 +567,7 @@ export async function createCreatorProject(
         link: "/admin/moderation",
       });
 
-      revalidateTag("projects", "max");
+      updateTag("projects");
       revalidatePath("/account/projects");
       revalidatePath("/admin/moderation");
       return { ok: true, redirect: "/account/projects" };
@@ -702,7 +705,7 @@ export async function updateCreatorProject(
     link: "/admin/moderation",
   });
 
-  revalidateTag("projects", "max");
+  updateTag("projects");
   revalidatePath("/account/projects");
   revalidatePath("/admin/moderation");
   return { ok: true, redirect: "/account/projects" };

@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireContentEditor } from "@/lib/auth/require";
 import type { PersonRow } from "@/lib/data/persons";
@@ -76,7 +76,7 @@ async function syncActorNames(personId: number): Promise<void> {
   });
   // Project reads are cached under the "projects" tag (src/lib/data/projects.ts,
   // 300s) — without this the corrected name would sit in the DB unseen.
-  if (count > 0) revalidateTag("projects", "max");
+  if (count > 0) updateTag("projects");
 }
 
 export async function updatePerson(id: number, patch: PersonPatchInput): Promise<void> {

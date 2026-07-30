@@ -170,7 +170,15 @@ export default async function MyProjectsPage() {
                         {t("completeness.badge", { n: incompleteCount(p) })}
                       </span>
                     ) : null}
-                    <h3 className="mt-2 truncate font-semibold text-foreground">{p.title}</h3>
+                    {/* Show the name in the reader's own language, falling back
+                        the way the catalog does. The legacy `title` column is
+                        only rebuilt when a project is saved, so relying on it
+                        hid renames made in one locale. */}
+                    <h3 className="mt-2 truncate font-semibold text-foreground">
+                      {(locale === "hy" ? p.titleHy : locale === "ru" ? p.titleRu : p.titleEn) ||
+                        p.titleEn ||
+                        p.title}
+                    </h3>
                     {/* The #PP-… code is a staff-side identifier and is not
                         shown in member cabinets (owner decision 2026-07-26). */}
                     {/* Views / shortlists / applications — shown once the

@@ -50,7 +50,13 @@ export default async function ProjectsAdminPage() {
   const rows: ProjectRow[] = projects.map((p) => ({
     id: p.id,
     poster: p.poster,
-    title: p.title,
+    // Read the per-locale columns directly instead of the legacy `title`.
+    // `title` is only re-derived when the project is saved, so a row last
+    // written before the hy-first fix (or by an older build) still carries the
+    // Russian name and an Armenian-only rename never showed up here — which is
+    // exactly what "the name doesn't save" turned out to be. Same order the
+    // catalog uses for a default (hy) visitor.
+    title: p.titleHy || p.titleRu || p.titleEn || p.title,
     isActive: p.isActive,
     ownerName: p.owner.name,
     // Derived here rather than queried: the archive is "the placement deadline
