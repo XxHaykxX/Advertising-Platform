@@ -26,7 +26,7 @@ export default async function ProjectsAdminPage() {
     },
     orderBy: { sortOrder: "asc" },
     include: {
-      owner: { select: { name: true } },
+      owner: { select: { name: true, company: true } },
       // Counts feed the "Incomplete: N" badge — see projectCompleteness. Rows
       // themselves aren't needed, only whether each block has any; packages
       // are the exception, since a package without a benefits list doesn't
@@ -56,7 +56,11 @@ export default async function ProjectsAdminPage() {
     // catalog uses for a default (hy) visitor.
     title: p.titleHy || p.titleRu || p.titleEn || p.title,
     isActive: p.isActive,
-    ownerName: p.owner.name,
+    // Owner wants the company on the ledger, not the individual's name — but
+    // not every account has one filled in, so fall back rather than show a
+    // blank cell. The owner filter in reorder-list.tsx matches on this same
+    // field, so filtering and display never disagree about who "the owner" is.
+    ownerName: p.owner.company || p.owner.name,
     // Derived here rather than queried: the archive is "the placement deadline
     // is behind us", with no column and no cron job to keep in sync.
     archived: isArchived(p.applicationDeadline?.toISOString() ?? null),

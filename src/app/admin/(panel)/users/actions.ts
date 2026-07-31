@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireSuperadmin } from "@/lib/auth/require";
+import { changeStaffRole } from "@/lib/auth/staff-roles";
 import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
 
@@ -14,6 +15,7 @@ export type FormState = {
   values?: { email: string; name: string };
 };
 export type ResetState = { ok?: boolean; error?: string };
+export type RoleState = { ok?: boolean; error?: string };
 
 function str(fd: FormData, key: string) {
   return String(fd.get(key) || "").trim();
@@ -92,6 +94,28 @@ export async function resetUserPassword(
 
   const passwordHash = await bcrypt.hash(password, 10);
   await prisma.user.update({ where: { id }, data: { passwordHash } });
+  revalidatePath("/admin/users");
+  return { ok: true };
+}
+
+type ChangeRoleReason = Extract<Awaited<ReturnType<typeof changeStaffRole>>, { ok: false }>["reason"];
+
+// Human copy for changeStaffRole's refusal reasons — see staff-roles.ts for
+// what each one guards against.
+const ROLE_CHANGE_ERROR: Record<ChangeRoleReason, string> = {
+  self: "You can't change your own role — ask another super-admin.",
+  invalid_role: "Not a valid staff role.",
+  not_staff: "That account isn't a staff account.",
+  last_superadmin: "Can't change this — they're the only super-admin left.",
+};
+
+/** Change a staff account's role (SUPERADMIN/PUBLISHER/MODERATOR/TRANSLATOR
+   only — see changeStaffRole for the guards: no self-change, no demoting the
+   last super-admin, no crossing into BRAND/CREATOR). */
+export async function setUserRole(id: number, role: string): Promise<RoleState> {
+  const me = await requireSuperadmin();
+  const res = await changeStaffRole(me.id, id, role);
+  if (!res.ok) return { error: ROLE_CHANGE_ERROR[res.reason] };
   revalidatePath("/admin/users");
   return { ok: true };
 }

@@ -77,6 +77,19 @@ export async function getHistoryAuthors(): Promise<{ id: number; name: string }[
   });
 }
 
+/** Every version of one record, newest first — feeds the "History" tab
+ *  embedded in that record's own edit page (Project/Portfolio/Partner; Person
+ *  has no dedicated page, see entityHref). Capped the same defensive way as
+ *  getDeletedEntities: one record's own history is expected to stay well
+ *  under this in practice. */
+export async function getEntityHistory(entity: HistoryEntity, entityId: number): Promise<ContentVersion[]> {
+  return prisma.contentVersion.findMany({
+    where: { entity, entityId },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    take: 500,
+  });
+}
+
 export type HistoryGroup = {
   entity: string;
   entityId: number;
@@ -241,4 +254,44 @@ export function mergeFieldSummaries(rows: ContentVersion[]): string {
   const shown = all.slice(0, 6);
   const rest = all.length - shown.length;
   return rest > 0 ? `${shown.join(", ")} +${rest} more` : shown.join(", ");
+}
+
+/** One version, formatted for display — shared by the /admin/history feed
+ *  (group-row.tsx) and the per-record "History" tab (entity-history-panel.tsx).
+ *  Structurally the same as group-row.tsx's GroupVersionView; not imported
+ *  from there to keep this file free of a dependency on a "use client" module. */
+export function toVersionView(v: ContentVersion) {
+  return {
+    id: v.id,
+    version: v.version,
+    action: v.action,
+    actionLabel: ACTION_LABEL[v.action] ?? v.action,
+    actionPill: ACTION_PILL[v.action] ?? ACTION_PILL.UPDATE,
+    summary: v.summary ?? "",
+    time: `${formatDateOnly(v.createdAt)}, ${formatTime(v.createdAt)}`,
+  };
+}
+
+/** "Jul 31, 2026, 18:42" for a single save, "Jul 31, 2026, 18:30–18:42" for a
+ *  collapsed group — the line every group row (feed or per-record tab) heads
+ *  with. */
+export function groupHeaderTime(group: HistoryGroup): string {
+  const newest = group.versions[0];
+  const oldest = group.versions[group.versions.length - 1];
+  return group.versions.length > 1
+    ? `${formatDateOnly(oldest.createdAt)}, ${formatTime(oldest.createdAt)}–${formatTime(newest.createdAt)}`
+    : `${formatDateOnly(newest.createdAt)}, ${formatTime(newest.createdAt)}`;
+}
+
+/** Groups one record's own version history for its "History" tab — same
+ *  groupVersions() collapsing the main feed uses, mapped down to exactly what
+ *  EntityHistoryPanel needs to render (no Type/Record columns: the record is
+ *  already the page you're on). */
+export function buildEntityHistoryGroups(rows: ContentVersion[]) {
+  return groupVersions(rows).map((group) => ({
+    authorName: group.authorName,
+    headerTime: groupHeaderTime(group),
+    mergedSummary: mergeFieldSummaries(group.versions),
+    versions: group.versions.map(toVersionView),
+  }));
 }

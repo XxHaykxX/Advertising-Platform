@@ -2,20 +2,18 @@ import Link from "next/link";
 import { History as HistoryIcon } from "lucide-react";
 import { requireStaffExceptTranslator } from "@/lib/auth/require";
 import {
-  ACTION_LABEL,
-  ACTION_PILL,
   ENTITY_TYPE_LABEL,
   HISTORY_ENTITIES,
   entityHref,
   entityLabel,
-  formatDateOnly,
-  formatTime,
   getHistoryAuthors,
   getHistoryPage,
+  groupHeaderTime,
   groupVersions,
   isHistoryEntity,
   mergeFieldSummaries,
   parseSnapshot,
+  toVersionView,
   type HistoryFilters,
 } from "./lib";
 import { HistoryGroupRow, type HistoryGroupRowProps } from "./group-row";
@@ -63,7 +61,6 @@ export default async function HistoryPage({
 
   const rowProps: HistoryGroupRowProps[] = groups.map((group) => {
     const newest = group.versions[0];
-    const oldest = group.versions[group.versions.length - 1];
     const snapshot = parseSnapshot(newest.snapshot);
 
     return {
@@ -73,20 +70,9 @@ export default async function HistoryPage({
       recordLabel: entityLabel(group.entity, snapshot),
       recordHref: entityHref(group.entity, group.entityId),
       authorName: group.authorName,
-      headerTime:
-        group.versions.length > 1
-          ? `${formatDateOnly(oldest.createdAt)}, ${formatTime(oldest.createdAt)}–${formatTime(newest.createdAt)}`
-          : `${formatDateOnly(newest.createdAt)}, ${formatTime(newest.createdAt)}`,
+      headerTime: groupHeaderTime(group),
       mergedSummary: mergeFieldSummaries(group.versions),
-      versions: group.versions.map((v) => ({
-        id: v.id,
-        version: v.version,
-        action: v.action,
-        actionLabel: ACTION_LABEL[v.action] ?? v.action,
-        actionPill: ACTION_PILL[v.action] ?? ACTION_PILL.UPDATE,
-        summary: v.summary ?? "",
-        time: `${formatDateOnly(v.createdAt)}, ${formatTime(v.createdAt)}`,
-      })),
+      versions: group.versions.map(toVersionView),
       canRestore,
     };
   });

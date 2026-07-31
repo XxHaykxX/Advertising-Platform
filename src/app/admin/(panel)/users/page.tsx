@@ -2,25 +2,17 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireSuperadmin } from "@/lib/auth/require";
+import { STAFF_ROLES, type StaffRole } from "@/lib/auth/staff-roles";
 import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
 import type { AccountStatus } from "@prisma/client";
-import { RowActions as StaffRowActions } from "./user-form";
+import { RowActions as StaffRowActions, RoleControl } from "./user-form";
 import { RowActions as MemberRowActions } from "../registrations/row-actions";
 import { UsersTabs } from "./users-tabs";
 
 function formatDate(d: Date) {
   return new Intl.DateTimeFormat("en-US", { year: "numeric", month: "short", day: "numeric" }).format(d);
 }
-
-type StaffRole = "SUPERADMIN" | "PUBLISHER" | "MODERATOR" | "TRANSLATOR";
-
-const STAFF_ROLE_LABEL: Record<StaffRole, string> = {
-  SUPERADMIN: "Super-admin",
-  PUBLISHER: "Publisher",
-  MODERATOR: "Moderator",
-  TRANSLATOR: "Translator",
-};
 
 const STATUS_PILL: Record<AccountStatus, string> = {
   PENDING: "border-warn/25 bg-warn/10 text-warn",
@@ -36,7 +28,7 @@ export default async function UsersAdminPage() {
 
   const [staff, members] = await Promise.all([
     prisma.user.findMany({
-      where: { role: { in: ["SUPERADMIN", "PUBLISHER", "MODERATOR", "TRANSLATOR"] } },
+      where: { role: { in: [...STAFF_ROLES] } },
       orderBy: { createdAt: "asc" },
       include: { _count: { select: { projects: true } } },
     }),
@@ -93,15 +85,7 @@ export default async function UsersAdminPage() {
                 <td className="px-4 py-3 font-medium text-foreground">{u.name}</td>
                 <td className="px-4 py-3 text-muted-foreground">{u.email}</td>
                 <td className="px-4 py-3">
-                  <span
-                    className={`rounded-full border px-2.5 py-1 text-xs font-medium ${
-                      u.role === "SUPERADMIN"
-                        ? "border-primary/30 bg-primary/10 text-primary"
-                        : "border-border bg-muted text-muted-foreground"
-                    }`}
-                  >
-                    {STAFF_ROLE_LABEL[u.role as StaffRole]}
-                  </span>
+                  <RoleControl id={u.id} name={u.name} role={u.role as StaffRole} isSelf={u.id === me.id} />
                 </td>
                 <td className="px-4 py-3">
                   <span

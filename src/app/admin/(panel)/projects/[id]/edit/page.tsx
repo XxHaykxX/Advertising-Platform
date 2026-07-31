@@ -10,6 +10,9 @@ import { getCountryOptions } from "@/lib/data/countries";
 import { getStudioOptions } from "@/lib/data/studios";
 import { getTierTemplates } from "@/lib/data/tier-templates";
 import { projectCompleteness } from "@/lib/project-completeness";
+import { buildEntityHistoryGroups, getEntityHistory } from "@/app/admin/(panel)/history/lib";
+import { EntityEditTabs } from "@/app/admin/(panel)/history/entity-edit-tabs";
+import { EntityHistoryPanel } from "@/app/admin/(panel)/history/entity-history-panel";
 import { updateProject } from "../../actions";
 import {
   formatDateInput,
@@ -128,6 +131,11 @@ export default async function EditProjectPage({
 
   const action = updateProject.bind(null, pid);
 
+  // "History" tab (task #25) — every save of this project, in place next to
+  // the form that makes them. See buildEntityHistoryGroups for the collapsing
+  // rule (same one the /admin/history feed uses).
+  const historyGroups = buildEntityHistoryGroups(await getEntityHistory("Project", pid));
+
   return (
     <div>
       <Link
@@ -139,56 +147,60 @@ export default async function EditProjectPage({
       </Link>
       <h1 className="mb-6 mt-4 text-2xl font-bold text-foreground">Edit: {p.title}</h1>
 
-      <ProjectForm
-        action={action}
-        initial={initial}
-        initialActors={p.actors.map((a) => ({
-          // The admin form is English-only, so show the English spelling —
-          // the server re-snapshots all three from the directory on save.
-          name: pickPersonName("en", a, a.name),
-          roles: parseRolesInput(a.roles, a.role),
-          kind: a.kind,
-          photo: a.photo ?? "",
-          personId: a.personId,
-        }))}
-        initialTiers={p.tiers.map((tier) => ({
-          // Carries the DB id so a save updates this tier in place instead of
-          // deleting and re-creating it (which detached brand applications).
-          dbId: tier.id,
-          name: tier.name,
-          priceAmd: tier.priceAmd,
-          benefits: parseBenefitsInput(tier.benefits),
-          image: tier.image ?? "",
-          isExclusive: tier.isExclusive,
-          availableSlots: tier.availableSlots,
-          totalSlots: tier.totalSlots,
-        }))}
-        initialPlacements={p.placements.map((pl) => ({
-          // Same "carry the id" reasoning as initialTiers above.
-          dbId: pl.id,
-          title: pl.title,
-          description: parseBenefitsInput(pl.description),
-          image: pl.image ?? "",
-          priceAmd: pl.priceAmd,
-          availableSlots: pl.availableSlots,
-          totalSlots: pl.totalSlots,
-        }))}
-        initialMilestones={p.milestones.map((m) => ({
-          label: m.label,
-          date: formatDateInput(m.date),
-          note: m.note,
-          active: m.isActive,
-        }))}
-        submitLabel="Save"
-        studios={studios}
+      <EntityEditTabs
+        history={<EntityHistoryPanel entity="Project" entityId={pid} groups={historyGroups} canRestore={isSuperadmin} />}
+      >
+        <ProjectForm
+          action={action}
+          initial={initial}
+          initialActors={p.actors.map((a) => ({
+            // The admin form is English-only, so show the English spelling —
+            // the server re-snapshots all three from the directory on save.
+            name: pickPersonName("en", a, a.name),
+            roles: parseRolesInput(a.roles, a.role),
+            kind: a.kind,
+            photo: a.photo ?? "",
+            personId: a.personId,
+          }))}
+          initialTiers={p.tiers.map((tier) => ({
+            // Carries the DB id so a save updates this tier in place instead of
+            // deleting and re-creating it (which detached brand applications).
+            dbId: tier.id,
+            name: tier.name,
+            priceAmd: tier.priceAmd,
+            benefits: parseBenefitsInput(tier.benefits),
+            image: tier.image ?? "",
+            isExclusive: tier.isExclusive,
+            availableSlots: tier.availableSlots,
+            totalSlots: tier.totalSlots,
+          }))}
+          initialPlacements={p.placements.map((pl) => ({
+            // Same "carry the id" reasoning as initialTiers above.
+            dbId: pl.id,
+            title: pl.title,
+            description: parseBenefitsInput(pl.description),
+            image: pl.image ?? "",
+            priceAmd: pl.priceAmd,
+            availableSlots: pl.availableSlots,
+            totalSlots: pl.totalSlots,
+          }))}
+          initialMilestones={p.milestones.map((m) => ({
+            label: m.label,
+            date: formatDateInput(m.date),
+            note: m.note,
+            active: m.isActive,
+          }))}
+          submitLabel="Save"
+          studios={studios}
           tierTemplates={tierTemplates}
-        streamingSources={streamingSources}
-        countryOptions={countryOptions}
-        knownPeople={knownPeople}
-        projectId={pid}
-        ownerHasAvatar={!!p.owner.avatar}
-        completeness={completeness}
-      />
+          streamingSources={streamingSources}
+          countryOptions={countryOptions}
+          knownPeople={knownPeople}
+          projectId={pid}
+          ownerHasAvatar={!!p.owner.avatar}
+          completeness={completeness}
+        />
+      </EntityEditTabs>
     </div>
   );
 }

@@ -3,6 +3,9 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireSuperadmin } from "@/lib/auth/require";
+import { buildEntityHistoryGroups, getEntityHistory } from "@/app/admin/(panel)/history/lib";
+import { EntityEditTabs } from "@/app/admin/(panel)/history/entity-edit-tabs";
+import { EntityHistoryPanel } from "@/app/admin/(panel)/history/entity-history-panel";
 import { updatePartner } from "../../actions";
 import { PartnerForm, type PartnerFormInitial } from "../../partner-form";
 
@@ -28,6 +31,10 @@ export default async function EditPartnerPage({
 
   const action = updatePartner.bind(null, pid);
 
+  // "History" tab (task #25) — this page is already SUPERADMIN-only, so the
+  // restore buttons are always shown here.
+  const historyGroups = buildEntityHistoryGroups(await getEntityHistory("Partner", pid));
+
   return (
     <div>
       <Link
@@ -39,7 +46,9 @@ export default async function EditPartnerPage({
       </Link>
       <h1 className="mb-6 mt-4 text-2xl font-bold text-foreground">Edit: {p.name}</h1>
 
-      <PartnerForm action={action} initial={initial} submitLabel="Save" />
+      <EntityEditTabs history={<EntityHistoryPanel entity="Partner" entityId={pid} groups={historyGroups} canRestore />}>
+        <PartnerForm action={action} initial={initial} submitLabel="Save" />
+      </EntityEditTabs>
     </div>
   );
 }

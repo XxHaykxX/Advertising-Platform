@@ -57,7 +57,13 @@ export async function recordVersion(
             ? "hidden from the catalog"
             : action === "RESTORE"
               ? "restored an earlier version"
-              : summarize(previousSnapshot, snapshot);
+              : // An edit to a record that predates the history feature has
+                // nothing to diff against. Saying "created" there would be a
+                // lie — the record already existed — so name what this row
+                // actually is: the first state we ever captured.
+                !previousSnapshot && action === "UPDATE"
+                ? "first recorded state"
+                : summarize(previousSnapshot, snapshot);
 
     const mediaPaths = collectMediaPaths(snapshot);
 

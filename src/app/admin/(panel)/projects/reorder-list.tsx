@@ -29,6 +29,9 @@ export type ProjectRow = {
   poster: string | null;
   title: string;
   isActive: boolean;
+  /** Owner's company name, or their personal name when the account has no
+   *  company set (see page.tsx) — the Owner column and its filter both key
+   *  off this one field, so what you filter by is exactly what you see. */
   ownerName: string;
   /** Placement deadline has passed — the project is out of the public catalog
    *  and no longer takes offers. Derived on the server from

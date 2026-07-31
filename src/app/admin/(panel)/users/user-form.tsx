@@ -3,9 +3,11 @@
 import { useActionState, useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { Loader2, KeyRound, Ban, RotateCcw, CheckCircle2 } from "lucide-react";
-import type { FormState, ResetState } from "./actions";
-import { setUserActive, resetUserPassword } from "./actions";
+import type { FormState, ResetState, RoleState } from "./actions";
+import { setUserActive, resetUserPassword, setUserRole } from "./actions";
 import { PasswordInput } from "@/components/ui/password-input";
+import { ConfirmDialog } from "@/components/confirm-dialog";
+import { STAFF_ROLES, STAFF_ROLE_LABEL, roleChangeMessage, type StaffRole } from "@/lib/auth/staff-roles";
 
 const inputCls =
   "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none transition-colors focus:border-primary";
@@ -144,6 +146,68 @@ function ResetPasswordForm({ id, onDone }: { id: number; onDone: () => void }) {
         </span>
       )}
     </form>
+  );
+}
+
+/** Role select for a staff row, in the Role column of the Users table. Every
+   change goes through a confirm dialog (never the native confirm()) that
+   spells out what the person will gain or lose — see roleChangeMessage.
+   Disabled for the signed-in super-admin's own row: changing your own role
+   away from Super-admin would lock you out of this very page mid-request,
+   so that has to be done by another super-admin instead (setUserRole also
+   refuses it server-side — this is just the UI half). */
+export function RoleControl({
+  id,
+  name,
+  role,
+  isSelf,
+}: {
+  id: number;
+  name: string;
+  role: StaffRole;
+  isSelf: boolean;
+}) {
+  const [pending, start] = useTransition();
+  const [nextRole, setNextRole] = useState<StaffRole | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  function confirm() {
+    if (!nextRole) return;
+    const role = nextRole;
+    start(async () => {
+      const res: RoleState = await setUserRole(id, role);
+      setError(res.error ?? null);
+      setNextRole(null);
+    });
+  }
+
+  return (
+    <div>
+      <select
+        value={role}
+        disabled={isSelf || pending}
+        title={isSelf ? "You can't change your own role — ask another super-admin" : undefined}
+        onChange={(e) => setNextRole(e.target.value as StaffRole)}
+        className="rounded-lg border border-border bg-background px-2 py-1 text-xs font-medium text-foreground outline-none transition-colors focus:border-primary disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        {STAFF_ROLES.map((r) => (
+          <option key={r} value={r}>
+            {STAFF_ROLE_LABEL[r]}
+          </option>
+        ))}
+      </select>
+      {error && <p className="mt-1 text-xs text-danger">{error}</p>}
+      <ConfirmDialog
+        open={nextRole != null}
+        title="Change role?"
+        message={nextRole ? roleChangeMessage(name, nextRole) : undefined}
+        confirmLabel="Change role"
+        danger={false}
+        pending={pending}
+        onConfirm={confirm}
+        onCancel={() => setNextRole(null)}
+      />
+    </div>
   );
 }
 
