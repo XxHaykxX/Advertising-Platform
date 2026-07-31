@@ -24,7 +24,7 @@ import { Header, type SiteHeaderUser } from "@/components/header";
 import { daysUntil, formatFullDate, parseStringArray, splitCountries } from "@/lib/data/format";
 import { FORMAT_CATEGORY_VALUES } from "@/app/admin/(panel)/projects/form-shared";
 import { cn } from "@/lib/utils";
-import { DEFAULT_LOCALE, intlLocale, makeUI, useLocalizer, LOCALES, type Locale } from "@/lib/i18n-client";
+import { DEFAULT_LOCALE, intlLocale, makeUI, useLocalizer, type Locale } from "@/lib/i18n-client";
 import { DEFAULT_CURRENCY, type CurrencyCode } from "@/lib/currency";
 import type { ProjectListDTO } from "@/lib/types";
 
@@ -180,7 +180,6 @@ export function CatalogView({
   favorites = new Set(),
   signedIn = false,
   isBrand = false,
-  statusLabelsAll,
   footer,
 }: {
   projects: ProjectListDTO[];
@@ -192,11 +191,6 @@ export function CatalogView({
   favorites?: Set<number>;
   signedIn?: boolean;
   isBrand?: boolean;
-  /** `report.status.*` labels in every locale (server-side allStatusLabels(),
-   *  see @/lib/i18n) — the free-text search below matches a project's status
-   *  against all three languages regardless of the page's current locale, so
-   *  it needs more than the single-locale client dictionary slice. */
-  statusLabelsAll: Record<string, Record<Locale, string>>;
   /** <Footer/>, rendered by the server page (catalog/page.tsx) and passed
    *  down instead of imported here — Footer is a plain Server Component used
    *  by many pure-server pages (bundle audit 2026-07-31); importing it
@@ -226,14 +220,6 @@ export function CatalogView({
     () => projects.some((p) => !p.formatCategory),
     [projects],
   );
-  const statuses = useMemo(
-    () => Array.from(new Set(projects.map((p) => p.status))).sort(),
-    [projects],
-  );
-  const statusOptions = useMemo(
-    () => statuses.map((s) => ({ value: s, label: t(`report.status.${s}`) })),
-    [statuses, t],
-  );
   // Distinct platforms / countries actually present across the projects — the
   // Format/Language filters instead always show their full closed value sets.
   const platformOptions = useMemo(
@@ -246,7 +232,6 @@ export function CatalogView({
   );
 
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
-  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [selectedFormats, setSelectedFormats] = useState<string[]>([]);
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
@@ -276,7 +261,6 @@ export function CatalogView({
       if (!raw) return;
       const f = JSON.parse(raw);
       if (Array.isArray(f.genres)) setSelectedGenres(f.genres);
-      if (Array.isArray(f.statuses)) setSelectedStatuses(f.statuses);
       if (Array.isArray(f.formats)) setSelectedFormats(f.formats);
       if (Array.isArray(f.languages)) setSelectedLanguages(f.languages);
       if (Array.isArray(f.platforms)) setSelectedPlatforms(f.platforms);
@@ -298,7 +282,6 @@ export function CatalogView({
         FILTERS_KEY,
         JSON.stringify({
           genres: selectedGenres,
-          statuses: selectedStatuses,
           formats: selectedFormats,
           languages: selectedLanguages,
           platforms: selectedPlatforms,
@@ -313,7 +296,6 @@ export function CatalogView({
     }
   }, [
     selectedGenres,
-    selectedStatuses,
     selectedFormats,
     selectedLanguages,
     selectedPlatforms,
@@ -332,7 +314,6 @@ export function CatalogView({
     setVisibleCount(PAGE_SIZE);
   }, [
     selectedGenres,
-    selectedStatuses,
     selectedFormats,
     selectedLanguages,
     selectedPlatforms,
@@ -345,7 +326,6 @@ export function CatalogView({
   // own always-visible box) — shown as a badge on the mobile "Filters" button.
   const activeFilterCount =
     selectedGenres.length +
-    selectedStatuses.length +
     selectedFormats.length +
     selectedLanguages.length +
     selectedPlatforms.length +
@@ -363,7 +343,6 @@ export function CatalogView({
 
   const hasFilters =
     selectedGenres.length > 0 ||
-    selectedStatuses.length > 0 ||
     selectedFormats.length > 0 ||
     selectedLanguages.length > 0 ||
     selectedPlatforms.length > 0 ||
@@ -372,7 +351,6 @@ export function CatalogView({
 
   const clearAll = () => {
     setSelectedGenres([]);
-    setSelectedStatuses([]);
     setSelectedFormats([]);
     setSelectedLanguages([]);
     setSelectedPlatforms([]);
@@ -387,7 +365,6 @@ export function CatalogView({
       setter((prev) => (prev.includes(value) ? prev.filter((x) => x !== value) : [...prev, value]));
 
   const toggleGenre = makeToggle(setSelectedGenres);
-  const toggleStatus = makeToggle(setSelectedStatuses);
   const toggleFormat = makeToggle(setSelectedFormats);
   const toggleLanguage = makeToggle(setSelectedLanguages);
   const togglePlatform = makeToggle(setSelectedPlatforms);
@@ -401,7 +378,6 @@ export function CatalogView({
         const gs = p.genres.length > 0 ? p.genres : [p.genre];
         if (!selectedGenres.some((s) => gs.includes(s))) return false;
       }
-      if (selectedStatuses.length > 0 && !selectedStatuses.includes(p.status)) return false;
       // 5.8: formatCategory can legitimately be "" (deriveFormatCategory found
       // no match). With no format filter active (selectedFormats empty) these
       // rows pass through untouched — "all formats" really means all. Once a
@@ -427,11 +403,7 @@ export function CatalogView({
       }
 
       if (term) {
-        const statusLabels = LOCALES.map(
-          (l) => statusLabelsAll[`report.status.${p.status}`]?.[l] ?? "",
-        ).join(" ");
-        const haystack =
-          `${p.title} ${p.genre} ${p.countries} ${p.synopsis} ${statusLabels}`.toLowerCase();
+        const haystack = `${p.title} ${p.genre} ${p.countries} ${p.synopsis}`.toLowerCase();
         if (!haystack.includes(term)) return false;
       }
 
@@ -442,13 +414,11 @@ export function CatalogView({
   }, [
     projects,
     selectedGenres,
-    selectedStatuses,
     selectedFormats,
     selectedLanguages,
     selectedPlatforms,
     selectedCountries,
     search,
-    statusLabelsAll,
   ]);
 
   // 5.7: re-sort the already-filtered list. "default" is a no-op — `filtered`
@@ -508,13 +478,6 @@ export function CatalogView({
         ]}
         selected={selectedFormats}
         onToggle={toggleFormat}
-      />
-
-      <CheckboxFilter
-        label={t("catalog.status")}
-        options={statusOptions}
-        selected={selectedStatuses}
-        onToggle={toggleStatus}
       />
 
       {/* Platform only appears when the catalog actually carries such values —

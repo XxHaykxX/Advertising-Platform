@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, type ReactNode } from "react";
 import { AlertTriangle, Loader2 } from "lucide-react";
 
 // Reusable styled confirmation modal (replaces the browser's native confirm()).
@@ -18,7 +18,9 @@ export function ConfirmDialog({
 }: {
   open: boolean;
   title: string;
-  message?: string;
+  // ReactNode, not just string: the media library's "in use" warning needs
+  // links + a short list, not one line of text.
+  message?: ReactNode;
   confirmLabel?: string;
   cancelLabel?: string;
   onConfirm: () => void;
@@ -58,7 +60,7 @@ export function ConfirmDialog({
           </span>
           <div className="flex-1">
             <h2 className="text-base font-semibold text-foreground">{title}</h2>
-            {message && <p className="mt-1 text-sm text-muted-foreground">{message}</p>}
+            {message && <div className="mt-1 text-sm text-muted-foreground">{message}</div>}
           </div>
         </div>
 

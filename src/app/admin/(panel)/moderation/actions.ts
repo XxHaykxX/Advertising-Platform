@@ -3,6 +3,7 @@
 import { revalidatePath, updateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireModerator, requireUser } from "@/lib/auth/require";
+import { recordVersion } from "@/lib/history/record";
 import { notifyProjectApproved, notifyProjectRejected } from "@/lib/mail";
 import { createNotification } from "@/lib/data/notifications";
 import { getLocale } from "@/lib/data/locale";
@@ -46,7 +47,7 @@ function revalidateModerationPaths(projectId?: number) {
    placement package used to pass moderation and land in the catalog with
    nothing for a brand to buy). */
 export async function approveProject(projectId: number): Promise<{ ok: true } | { error: string }> {
-  await requireModerator();
+  const user = await requireModerator();
   const before = await prisma.project.findUnique({
     where: { id: projectId },
     select: {
@@ -88,9 +89,10 @@ export async function approveProject(projectId: number): Promise<{ ok: true } | 
 
   const project = await prisma.project.update({
     where: { id: projectId },
-    data: { moderationStatus: "APPROVED", isActive: true },
+    data: { moderationStatus: "APPROVED", isActive: true, updatedById: user.id },
     select: { id: true, title: true, ownerId: true, owner: { select: { email: true } } },
   });
+  await recordVersion(prisma, "Project", project.id, "UPDATE", { id: user.id, name: user.name });
   // #22: notify the owning Creator, but only on an actual status change —
   // re-approving an already-APPROVED project (e.g. an edit re-save) shouldn't
   // re-send the email or the in-app notification.
@@ -115,7 +117,7 @@ export async function approveProject(projectId: number): Promise<{ ok: true } | 
    the creator's cabinet. It used to be discarded (`void reason`), so the
    creator got a template letter that never said what to fix (audit 1.4). */
 export async function rejectProject(projectId: number, reason?: string) {
-  await requireModerator();
+  const user = await requireModerator();
   const before = await prisma.project.findUnique({
     where: { id: projectId },
     select: { moderationStatus: true },
@@ -123,9 +125,10 @@ export async function rejectProject(projectId: number, reason?: string) {
   const trimmedReason = (reason || "").trim();
   const project = await prisma.project.update({
     where: { id: projectId },
-    data: { moderationStatus: "REJECTED", rejectionReason: trimmedReason || null },
+    data: { moderationStatus: "REJECTED", rejectionReason: trimmedReason || null, updatedById: user.id },
     select: { id: true, title: true, ownerId: true, owner: { select: { email: true } } },
   });
+  await recordVersion(prisma, "Project", project.id, "UPDATE", { id: user.id, name: user.name });
   if (before?.moderationStatus !== "REJECTED") {
     try {
       await notifyProjectRejected(project, project.owner.email, trimmedReason);

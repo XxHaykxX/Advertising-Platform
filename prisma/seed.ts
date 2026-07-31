@@ -25,7 +25,7 @@ async function main() {
         titleHy: p.titleHy, titleRu: p.titleRu, titleEn: p.titleEn,
         synopsisHy: p.synopsisHy, synopsisRu: p.synopsisRu, synopsisEn: p.synopsisEn,
         poster: p.poster, gallery: JSON.stringify(p.gallery),
-        format: p.format, studio: p.studio, status: p.status,
+        format: p.format, studio: p.studio,
         countries: p.countries,
         sortOrder: i, ownerId: admin.id,
         applicationDeadline: new Date(p.applicationDeadline), releaseDate: new Date(p.releaseDate),

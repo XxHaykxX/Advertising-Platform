@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireSuperadmin } from "@/lib/auth/require";
+import { recordVersion } from "@/lib/history/record";
 import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
 
@@ -86,7 +87,7 @@ export async function createPartner(
   _prev: PartnerFormState,
   fd: FormData,
 ): Promise<PartnerFormState> {
-  await requireSuperadmin();
+  const user = await requireSuperadmin();
   const t = makeUI(await getLocale());
   const data = buildData(fd);
   const error = validate(data, t);
@@ -96,7 +97,7 @@ export async function createPartner(
   // a new partner lands at the end of the strip.
   const max = await prisma.partner.aggregate({ _max: { sortOrder: true } });
 
-  await prisma.partner.create({
+  const created = await prisma.partner.create({
     data: {
       name: data.name,
       logo: data.logo || null,
@@ -104,6 +105,7 @@ export async function createPartner(
       sortOrder: (max._max.sortOrder ?? 0) + 1,
     },
   });
+  await recordVersion(prisma, "Partner", created.id, "CREATE", { id: user.id, name: user.name });
 
   revalidatePartnerPaths();
   return { ok: true, redirect: "/admin/partners" };
@@ -114,7 +116,7 @@ export async function updatePartner(
   _prev: PartnerFormState,
   fd: FormData,
 ): Promise<PartnerFormState> {
-  await requireSuperadmin();
+  const user = await requireSuperadmin();
   const t = makeUI(await getLocale());
 
   const existing = await prisma.partner.findUnique({ where: { id }, select: { id: true } });
@@ -134,13 +136,16 @@ export async function updatePartner(
       // the strip. Order is set by dragging in the list (reorderPartners).
     },
   });
+  await recordVersion(prisma, "Partner", id, "UPDATE", { id: user.id, name: user.name });
 
   revalidatePartnerPaths();
   return { ok: true, redirect: "/admin/partners" };
 }
 
 export async function deletePartner(id: number) {
-  await requireSuperadmin();
+  const user = await requireSuperadmin();
+  // Before the delete — there is nothing left to snapshot afterwards.
+  await recordVersion(prisma, "Partner", id, "DELETE", { id: user.id, name: user.name });
   await prisma.partner.delete({ where: { id } }).catch(() => null);
   revalidatePartnerPaths();
 }

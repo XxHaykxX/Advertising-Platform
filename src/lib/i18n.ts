@@ -387,7 +387,6 @@ export const UI: Record<string, Dict> = {
   "catalog.budgetRange": { ru: "Диапазон бюджета", en: "Budget Range", hy: "Բյուջեի միջակայք" },
   "catalog.min": { ru: "Мин", en: "Min", hy: "Նվազ." },
   "catalog.max": { ru: "Макс", en: "Max", hy: "Առավ." },
-  "catalog.status": { ru: "Статус", en: "Status", hy: "Կարգավիճակ" },
   "catalog.format": { ru: "Формат", en: "Format", hy: "Ձևաչափ" },
   // 5.8: explicit bucket for rows whose formatCategory heuristic found nothing
   // (deriveFormatCategory can legitimately return "") — lets a visitor opt
@@ -865,10 +864,6 @@ export const UI: Record<string, Dict> = {
   "report.slotsAvailable": { ru: "мест доступно", en: "slots available", hy: "հասանելի տեղ" },
   "report.exclusive": { ru: "Эксклюзив", en: "Exclusive", hy: "Բացառիկ" },
   "report.budgetRange": { ru: "Диапазон бюджета", en: "Budget Range", hy: "Բյուջեի միջակայք" },
-  "report.status.PRE_PRODUCTION": { ru: "Пре-продакшен", en: "Pre-Production", hy: "Նախապատրաստական փուլ" },
-  "report.status.FILMING": { ru: "Съёмки", en: "Filming", hy: "Նկարահանում" },
-  "report.status.POST_PRODUCTION": { ru: "Пост-продакшен", en: "Post-Production", hy: "Հետարտադրական փուլ" },
-  "report.status.RELEASED": { ru: "Выпущено", en: "Released", hy: "Թողարկված" },
   // Replaces the "Express interest" button once the placement deadline has
   // passed — the page still reads, the offer just can't be made any more.
   "report.offersClosed": {
@@ -1783,9 +1778,10 @@ export const UI: Record<string, Dict> = {
   "projectForm.field.synopsisRu": { ru: "Синопсис (RU)", en: "Synopsis (RU)", hy: "Սինոպսիս (RU)" },
   "projectForm.field.synopsisEn": { ru: "Синопсис (EN)", en: "Synopsis (EN)", hy: "Սինոպսիս (EN)" },
   // "Production stage" (projectForm.field.status / .help.status) and its option
-  // labels were removed on 2026-07-26 — the field is gone from both editors at
-  // the owner's request. The stage is still shown to visitors through the
-  // report.status.* / catalog.* keys, which stay.
+  // labels were removed from both editors on 2026-07-26; the Project.status
+  // column itself (and the report.status.*/catalog.status keys that showed it
+  // to visitors) was dropped entirely on 2026-07-31 (owner decision) — the
+  // production-stage concept is gone from the product, not just the editors.
   "projectForm.help.placementDeadline": {
     ru: "Последняя дата, когда бренд может подать заявку на размещение — после неё монтаж закрыт.",
     en: "Last date a brand can apply for a placement — after this the shoot / edit is locked.",
@@ -2365,7 +2361,6 @@ export const UI: Record<string, Dict> = {
   "account.brand.comparePriceFrom": { ru: "Цена от", en: "Price from", hy: "Գինը՝ սկսած" },
   "account.brand.compareSlots": { ru: "Свободные места", en: "Open slots", hy: "Ազատ տեղեր" },
   "account.brand.compareDeadline": { ru: "Дедлайн заявок", en: "Application deadline", hy: "Հայտերի վերջնաժամկետ" },
-  "account.brand.compareStage": { ru: "Стадия", en: "Stage", hy: "Փուլ" },
   "account.brand.compareFormat": { ru: "Формат", en: "Format", hy: "Ձևաչափ" },
   "account.brand.compareNoValue": { ru: "—", en: "—", hy: "—" },
 
@@ -2453,19 +2448,6 @@ export function clientDict(locale: Locale): Record<string, string> {
         out[key] = UI[key]?.[locale] ?? UI[key]?.en ?? key;
       }
     }
-  }
-  return out;
-}
-
-/** All `report.status.*` labels, every locale — the catalog's free-text
- *  search matches project status against every language regardless of the
- *  page's current locale (catalog-view.tsx), so it needs more than the
- *  single-locale clientDict() slice above. Kept tiny (4 keys × 3 locales) and
- *  passed down as its own prop instead of widening clientDict(). */
-export function allStatusLabels(): Record<string, Dict> {
-  const out: Record<string, Dict> = {};
-  for (const key of Object.keys(UI)) {
-    if (key.startsWith("report.status.")) out[key] = UI[key];
   }
   return out;
 }

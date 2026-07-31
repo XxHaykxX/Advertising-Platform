@@ -3,6 +3,7 @@
 import { revalidatePath, updateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireContentEditor } from "@/lib/auth/require";
+import { recordVersion } from "@/lib/history/record";
 import type { PersonRow } from "@/lib/data/persons";
 import { guessNameLocale } from "@/lib/person-name";
 import { TranslateError, transliterateName, type TranslateErrorCode } from "@/lib/translate";
@@ -12,11 +13,12 @@ const CAST_PATH = "/admin/cast";
 /** Prepend a new empty row — sortOrder one below the current minimum so it
  *  always lands first regardless of what reorderPersons has settled on. */
 export async function createPerson(): Promise<PersonRow> {
-  await requireContentEditor();
+  const user = await requireContentEditor();
   const min = await prisma.person.aggregate({ _min: { sortOrder: true } });
   const person = await prisma.person.create({
     data: { name: "", role: "", kind: "CAST", sortOrder: (min._min.sortOrder ?? 0) - 1 },
   });
+  await recordVersion(prisma, "Person", person.id, "CREATE", { id: user.id, name: user.name });
   revalidatePath(CAST_PATH);
   return {
     id: person.id,
@@ -80,7 +82,7 @@ async function syncActorNames(personId: number): Promise<void> {
 }
 
 export async function updatePerson(id: number, patch: PersonPatchInput): Promise<void> {
-  await requireContentEditor();
+  const user = await requireContentEditor();
   const current = await prisma.person.findUnique({
     where: { id },
     select: { nameHy: true, nameRu: true, nameEn: true },
@@ -89,11 +91,14 @@ export async function updatePerson(id: number, patch: PersonPatchInput): Promise
   const data = withBaseName(patch, current);
   await prisma.person.update({ where: { id }, data });
   if ("name" in data) await syncActorNames(id);
+  await recordVersion(prisma, "Person", id, "UPDATE", { id: user.id, name: user.name });
   revalidatePath(CAST_PATH);
 }
 
 export async function deletePerson(id: number): Promise<void> {
-  await requireContentEditor();
+  const user = await requireContentEditor();
+  // Before the delete — there is nothing left to snapshot afterwards.
+  await recordVersion(prisma, "Person", id, "DELETE", { id: user.id, name: user.name });
   await prisma.person.delete({ where: { id } });
   revalidatePath(CAST_PATH);
 }
@@ -123,7 +128,7 @@ export type SpellNameResult =
  * by hand outranks a model's guess.
  */
 export async function spellPersonName(id: number): Promise<SpellNameResult> {
-  await requireContentEditor();
+  const user = await requireContentEditor();
   const person = await prisma.person.findUnique({
     where: { id },
     select: { name: true, nameHy: true, nameRu: true, nameEn: true },
@@ -158,6 +163,7 @@ export async function spellPersonName(id: number): Promise<SpellNameResult> {
     data: { ...merged, name: (merged.nameHy || merged.nameEn || merged.nameRu || "").trim() },
   });
   await syncActorNames(id);
+  await recordVersion(prisma, "Person", id, "UPDATE", { id: user.id, name: user.name });
   revalidatePath(CAST_PATH);
   return { ok: true, ...merged };
 }

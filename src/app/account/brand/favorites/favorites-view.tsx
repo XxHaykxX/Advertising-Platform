@@ -94,7 +94,6 @@ export function FavoritesView({ favorites, locale }: { favorites: BrandFavoriteD
                 <th className="border-b border-border pb-2 pr-4">{t("account.brand.comparePriceFrom")}</th>
                 <th className="border-b border-border pb-2 pr-4">{t("account.brand.compareSlots")}</th>
                 <th className="border-b border-border pb-2 pr-4">{t("account.brand.compareDeadline")}</th>
-                <th className="border-b border-border pb-2 pr-4">{t("account.brand.compareStage")}</th>
                 <th className="border-b border-border pb-2">{t("account.brand.compareFormat")}</th>
               </tr>
             </thead>
@@ -135,9 +134,6 @@ export function FavoritesView({ favorites, locale }: { favorites: BrandFavoriteD
                       )}
                     >
                       {p.applicationDeadline ? formatFullDate(p.applicationDeadline, intlLocale(locale)) : dash}
-                    </td>
-                    <td className="border-b border-border py-2.5 pr-4 text-foreground">
-                      {t(`report.status.${p.status}`)}
                     </td>
                     <td className="border-b border-border py-2.5 text-foreground">{p.format || dash}</td>
                   </tr>

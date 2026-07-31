@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import {
   AlertCircle,
   ArrowLeft,
@@ -18,9 +19,14 @@ import {
   X,
 } from "lucide-react";
 import { deleteUpload, saveVideoPoster, uploadImage, type MediaFile } from "@/lib/actions/uploads";
+import type { UploadUsage } from "@/lib/uploads-usage";
 import { captureVideoPoster, isPosterPath, posterPathFor } from "@/lib/video-poster";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Dropzone, DropzoneEmptyState } from "@/components/ui/dropzone";
+
+function formatDate(ms: number): string {
+  return new Intl.DateTimeFormat("en-US", { year: "numeric", month: "short", day: "numeric" }).format(new Date(ms));
+}
 
 /** Mirrors MAX_BYTES / MAX_BYTES_VIDEO in lib/actions/uploads.ts. Checked
  *  before the round trip: past the framework body limit the request is cut
@@ -341,15 +347,42 @@ export function MediaManager({ files }: { files: MediaFile[] }) {
     );
   }
 
-  // Deleting a file is irreversible and hits the disk — ask first (user
-  // request 2026-07-26; it used to delete on the first click).
+  // Deleting a file is irreversible and hits the disk. It's always allowed —
+  // the server no longer blocks a referenced file, it just says so — but a
+  // file with something to lose still gets a confirmation with the specifics;
+  // one with nothing referencing it (live or in history) deletes straight away.
   const [confirmPath, setConfirmPath] = useState<string | null>(null);
+  const [confirmUsage, setConfirmUsage] = useState<UploadUsage | null>(null);
+  const [checkingPath, setCheckingPath] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
-  async function remove(path: string) {
+  async function requestRemove(path: string) {
     setNotice(null);
-    // Non-optimistic: the server refuses if the file is still referenced by a
-    // project / portfolio / cast / avatar (would 404 on the live site).
-    const res = await deleteUpload(path);
+    setCheckingPath(path);
+    const res = await deleteUpload(path); // no force yet — just checks usage
+    setCheckingPath(null);
+    if (res.error) {
+      setNotice(res.error);
+      return;
+    }
+    if (res.usage) {
+      setConfirmPath(path);
+      setConfirmUsage(res.usage);
+      return;
+    }
+    // Nothing referenced it, so deleteUpload already deleted it.
+    setItems((prev) => prev.filter((f) => f.path !== path));
+    setLightboxIndex(null);
+  }
+
+  async function confirmRemove() {
+    const path = confirmPath;
+    if (!path) return;
+    setDeleting(true);
+    const res = await deleteUpload(path, { force: true });
+    setDeleting(false);
+    setConfirmPath(null);
+    setConfirmUsage(null);
     if (res.error) {
       setNotice(res.error);
       return;
@@ -598,11 +631,16 @@ export function MediaManager({ files }: { files: MediaFile[] }) {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setConfirmPath(f.path)}
+                      onClick={() => void requestRemove(f.path)}
+                      disabled={checkingPath === f.path}
                       aria-label="Delete"
-                      className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-primary"
+                      className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:bg-muted hover:text-primary disabled:opacity-60"
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      {checkingPath === f.path ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-3.5 w-3.5" />
+                      )}
                     </button>
                   </div>
                 </div>
@@ -690,17 +728,72 @@ export function MediaManager({ files }: { files: MediaFile[] }) {
       <ConfirmDialog
         open={confirmPath !== null}
         title="Delete this file?"
-        message={`${confirmPath ?? ""} — the file is removed from disk. This cannot be undone.`}
-        confirmLabel="Delete"
-        onCancel={() => setConfirmPath(null)}
-        onConfirm={() => {
-          const target = confirmPath;
+        message={confirmUsage && <UsageWarning path={confirmPath ?? ""} usage={confirmUsage} />}
+        confirmLabel="Delete anyway"
+        pending={deleting}
+        onCancel={() => {
           setConfirmPath(null);
-          if (target) void remove(target);
+          setConfirmUsage(null);
         }}
+        onConfirm={() => void confirmRemove()}
       />
 
       {notice && <Toast message={notice} onClose={() => setNotice(null)} />}
+    </div>
+  );
+}
+
+/** Body of the delete-confirmation dialog once the server has reported that
+ *  the file isn't free to delete without consequences — everywhere it's used
+ *  right now, plus every past version that would go stale (bring back a link
+ *  to a file that's now gone) if someone ever restored it. */
+function UsageWarning({ path, usage }: { path: string; usage: UploadUsage }) {
+  return (
+    <div className="space-y-3">
+      <p>{path} — the file is removed from disk. This cannot be undone.</p>
+
+      {usage.current.length > 0 && (
+        <div>
+          <p className="font-medium text-foreground">Used right now by:</p>
+          <ul className="list-disc space-y-0.5 pl-4">
+            {usage.current.map((ref, i) => (
+              <li key={i}>
+                {ref.href ? (
+                  <Link href={ref.href} target="_blank" className="text-primary hover:underline">
+                    {ref.label}
+                  </Link>
+                ) : (
+                  ref.label
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {usage.history.length > 0 && (
+        <div>
+          <p className="font-medium text-foreground">Still in past versions of:</p>
+          <ul className="list-disc space-y-0.5 pl-4">
+            {usage.history.map((ref, i) => (
+              <li key={i}>
+                {ref.href ? (
+                  <Link href={ref.href} target="_blank" className="text-primary hover:underline">
+                    {ref.label}
+                  </Link>
+                ) : (
+                  ref.label
+                )}{" "}
+                — {ref.versions} version{ref.versions > 1 ? "s" : ""}, last {formatDate(ref.lastVersionAt)}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-1 text-xs">
+            Restoring one of those versions would bring back a link to this file — it would show as a broken image,
+            since the file itself will be gone.
+          </p>
+        </div>
+      )}
     </div>
   );
 }

@@ -46,12 +46,10 @@ const CHECK = process.argv.includes("--check");
 // t(`prefix.${...}`) template-literal call sites whose prefix can't be
 // statically extracted (the localizeValue(locale, "prefix", value) form
 // below IS auto-detected — this list is only for the t() form):
-//   - report.status.${s}   — catalog/browse status filters (catalog-view.tsx,
-//     browse-view.tsx, favorites-view.tsx)
 //   - translate.${errorCode} — AI-translate error banner (project-form.tsx,
 //     portfolio-form.tsx)
 //   - faq.q${n}.question / faq.q${n}.answer — FAQ accordion (faq.tsx)
-const EXTRA_PREFIXES = ["report.status.", "translate.", "faq."];
+const EXTRA_PREFIXES = ["translate.", "faq."];
 
 async function walk(dir, out = []) {
   const entries = await readdir(dir, { withFileTypes: true });

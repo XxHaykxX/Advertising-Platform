@@ -82,17 +82,12 @@ export function BrowseView({
   const [selectedFormats, setSelectedFormats] = useState<string[]>([]);
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
   const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
-  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
   const [slotsOnly, setSlotsOnly] = useState(false);
 
   // Format/Language show the full closed value set (same as catalog); Country
-  // and Stage only show values actually present among the listed projects.
+  // only shows values actually present among the listed projects.
   const countryOptions = useMemo(
     () => Array.from(new Set(projects.flatMap((p) => splitCountries(p.countries)))).sort(),
-    [projects],
-  );
-  const statusOptions = useMemo(
-    () => Array.from(new Set(projects.map((p) => p.status))).sort(),
     [projects],
   );
 
@@ -102,17 +97,15 @@ export function BrowseView({
   const toggleFormat = makeToggle(setSelectedFormats);
   const toggleLanguage = makeToggle(setSelectedLanguages);
   const toggleCountry = makeToggle(setSelectedCountries);
-  const toggleStatus = makeToggle(setSelectedStatuses);
 
   const activeFilterCount =
-    selectedFormats.length + selectedLanguages.length + selectedCountries.length + selectedStatuses.length + (slotsOnly ? 1 : 0);
+    selectedFormats.length + selectedLanguages.length + selectedCountries.length + (slotsOnly ? 1 : 0);
 
   const hasFilters = activeFilterCount > 0;
   const clearAll = () => {
     setSelectedFormats([]);
     setSelectedLanguages([]);
     setSelectedCountries([]);
-    setSelectedStatuses([]);
     setSlotsOnly(false);
   };
 
@@ -128,7 +121,6 @@ export function BrowseView({
         const cs = splitCountries(p.countries);
         if (!selectedCountries.some((s) => cs.includes(s))) return false;
       }
-      if (selectedStatuses.length > 0 && !selectedStatuses.includes(p.status)) return false;
       // "Open slots" = the same condition the catalog card's "X / Y placements
       // available" indicator already relies on (slotsTotal>0 means at least
       // one tier has a total set at all; slotsAvailable>0 means some of that
@@ -137,7 +129,7 @@ export function BrowseView({
       if (term && !`${p.title} ${p.genre} ${p.countries} ${p.synopsis}`.toLowerCase().includes(term)) return false;
       return true;
     });
-  }, [projects, search, selectedFormats, selectedLanguages, selectedCountries, selectedStatuses, slotsOnly]);
+  }, [projects, search, selectedFormats, selectedLanguages, selectedCountries, slotsOnly]);
 
   // Language and Country facets removed 2026-07-27 (content review) — the
   // filter state stays so nothing downstream has to change shape.
@@ -148,12 +140,6 @@ export function BrowseView({
         options={FORMAT_CATEGORY_VALUES.map((v) => ({ value: v, label: localize("formatCategory", v) }))}
         selected={selectedFormats}
         onToggle={toggleFormat}
-      />
-      <CheckboxFilter
-        label={t("catalog.status")}
-        options={statusOptions.map((s) => ({ value: s, label: t(`report.status.${s}`) }))}
-        selected={selectedStatuses}
-        onToggle={toggleStatus}
       />
       <div className="pb-3">
         <label className="flex items-center gap-2 text-sm font-semibold text-foreground">

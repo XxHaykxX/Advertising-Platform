@@ -21,7 +21,6 @@ export interface ProjectListDTO {
   // editors and the storefront at the owner's request); kept so the stored
   // figures aren't lost and bringing the display back is a one-line change.
   boxOfficeDisplay: string;
-  status: string;
   applicationDeadline: string | null;
   releaseDate: string | null;
   platforms: string; // JSON string[]; parse with parseStringArray
@@ -38,7 +37,6 @@ export interface ProjectListDTO {
 
 export interface ProjectDetailDTO extends ProjectListDTO {
   gallery: string;
-  status: string;
   actors: ActorDTO[];
   // ── Press-kit fields (Aram) ──
   tagline: string; // "" when unset

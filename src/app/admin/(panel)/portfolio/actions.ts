@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireSuperadmin } from "@/lib/auth/require";
+import { recordVersion } from "@/lib/history/record";
 import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
 
@@ -108,7 +109,7 @@ export async function createPortfolio(
   _prev: PortfolioFormState,
   fd: FormData,
 ): Promise<PortfolioFormState> {
-  await requireSuperadmin();
+  const user = await requireSuperadmin();
   const t = makeUI(await getLocale());
   const data = buildData(fd);
 
@@ -122,7 +123,7 @@ export async function createPortfolio(
   // lands at the end, one past the current maximum.
   const max = await prisma.portfolio.aggregate({ _max: { sortOrder: true } });
 
-  await prisma.portfolio.create({
+  const created = await prisma.portfolio.create({
     data: {
       title: data.title,
       titleHy: data.titleHy,
@@ -138,6 +139,7 @@ export async function createPortfolio(
       sortOrder: (max._max.sortOrder ?? 0) + 1,
     },
   });
+  await recordVersion(prisma, "Portfolio", created.id, "CREATE", { id: user.id, name: user.name });
 
   revalidatePortfolioPaths();
   return { ok: true, redirect: "/admin/portfolio" };
@@ -148,7 +150,7 @@ export async function updatePortfolio(
   _prev: PortfolioFormState,
   fd: FormData,
 ): Promise<PortfolioFormState> {
-  await requireSuperadmin();
+  const user = await requireSuperadmin();
   const t = makeUI(await getLocale());
 
   const existing = await prisma.portfolio.findUnique({ where: { id }, select: { id: true } });
@@ -179,13 +181,16 @@ export async function updatePortfolio(
       // order is set by dragging in the list (reorderPortfolio below).
     },
   });
+  await recordVersion(prisma, "Portfolio", id, "UPDATE", { id: user.id, name: user.name });
 
   revalidatePortfolioPaths();
   return { ok: true, redirect: "/admin/portfolio" };
 }
 
 export async function deletePortfolio(id: number) {
-  await requireSuperadmin();
+  const user = await requireSuperadmin();
+  // Before the delete — there is nothing left to snapshot afterwards.
+  await recordVersion(prisma, "Portfolio", id, "DELETE", { id: user.id, name: user.name });
   await prisma.portfolio.delete({ where: { id } }).catch(() => null);
   revalidatePortfolioPaths();
 }

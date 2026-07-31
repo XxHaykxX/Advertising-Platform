@@ -9,7 +9,7 @@ import path from "node:path";
 // Members have their own scoped path in src/lib/actions/member-uploads.ts.
 import { requireContentEditor } from "@/lib/auth/require";
 import { UPLOADS_DIR } from "@/lib/uploads-dir";
-import { findUploadUsage } from "@/lib/uploads-usage";
+import { findUploadUsage, type UploadUsage } from "@/lib/uploads-usage";
 import { STAFF_UPLOAD_MESSAGES, storeUpload } from "@/lib/uploads-store";
 
 // All uploads live under UPLOADS_DIR (see that module — an env-pinned absolute
@@ -42,18 +42,23 @@ export async function uploadImage(fd: FormData): Promise<UploadResult> {
   });
 }
 
+/** Deleting is always allowed — the caller decides, after seeing what it would
+ *  affect. Without `force`, a file that's referenced anywhere (live or only in
+ *  old versions) isn't touched: `usage` comes back instead of a delete, so the
+ *  UI can show the consequences before asking to confirm. A file with nothing
+ *  to report deletes immediately, no confirmation needed. Pass `force: true`
+ *  (after the user confirmed) to delete regardless of what's referencing it. */
 export async function deleteUpload(
   publicPath: string,
-): Promise<{ ok?: boolean; error?: string; usedBy?: string[] }> {
+  opts?: { force?: boolean },
+): Promise<{ ok?: boolean; error?: string; usage?: UploadUsage }> {
   await requireContentEditor();
   const abs = resolveInsideUploads(publicPath);
   if (!abs) return { error: "Invalid path." };
 
-  // Guard: refuse to delete a file that's still referenced somewhere, otherwise
-  // that project/portfolio/avatar would show a broken image on the live site.
-  const usedBy = await findUploadUsage(publicPath);
-  if (usedBy.length) {
-    return { error: `In use — can't delete. Referenced by: ${usedBy.join("; ")}`, usedBy };
+  if (!opts?.force) {
+    const usage = await findUploadUsage(publicPath);
+    if (usage.current.length || usage.history.length) return { usage };
   }
 
   try {

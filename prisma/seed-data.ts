@@ -13,7 +13,6 @@ type SeedProject = {
   gallery: string[];
   format: string;
   studio: string;
-  status: "PRE_PRODUCTION" | "FILMING" | "POST_PRODUCTION" | "RELEASED";
   releaseLabel: string;
   countries: string;
   audienceGender: string;
@@ -74,7 +73,6 @@ export const SEED_PROJECTS: SeedProject[] = [
     ],
     format: "Feature · 95 min · 12+",
     studio: "Kinodaran Studios",
-    status: "POST_PRODUCTION",
     releaseLabel: "Q4 2026",
     countries: "Armenia, Russia, Georgia, Diaspora (US, France)",
     audienceGender: "All",
@@ -121,7 +119,6 @@ export const SEED_PROJECTS: SeedProject[] = [
     ],
     format: "Series · 18+",
     studio: "Kinodaran Studios",
-    status: "FILMING",
     releaseLabel: "Q1 2027",
     countries: "Armenia, Russia, Georgia",
     audienceGender: "All",
@@ -168,7 +165,6 @@ export const SEED_PROJECTS: SeedProject[] = [
     ],
     format: "Series · 4+",
     studio: "Kinodaran Studios",
-    status: "PRE_PRODUCTION",
     releaseLabel: "Q2 2027",
     countries: "Armenia, Georgia, Diaspora (US, France)",
     audienceGender: "All",
@@ -213,7 +209,6 @@ export const SEED_PROJECTS: SeedProject[] = [
     ],
     format: "Documentary · 44 min",
     studio: "Kinodaran Studios",
-    status: "POST_PRODUCTION",
     releaseLabel: "Q3 2026",
     countries: "Armenia, Russia, Italy, Diaspora (US, France)",
     audienceGender: "All",
@@ -257,7 +252,6 @@ export const SEED_PROJECTS: SeedProject[] = [
     ],
     format: "Series · 16+",
     studio: "Kinodaran Studios",
-    status: "RELEASED",
     releaseLabel: "Streaming now",
     countries: "Armenia, Russia, Georgia",
     audienceGender: "All",
@@ -302,7 +296,6 @@ export const SEED_PROJECTS: SeedProject[] = [
     ],
     format: "Film · 23 min · 18+",
     studio: "Kinodaran Studios",
-    status: "FILMING",
     releaseLabel: "Q4 2026",
     countries: "Armenia, Russia",
     audienceGender: "All",

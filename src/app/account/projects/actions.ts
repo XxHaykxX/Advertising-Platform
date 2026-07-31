@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireMember } from "@/lib/auth/require";
+import { recordVersion } from "@/lib/history/record";
 import { getLocale } from "@/lib/data/locale";
 import { makeUI, type Locale } from "@/lib/i18n";
 import { seedNames } from "@/lib/person-name";
@@ -521,6 +522,8 @@ export async function createCreatorProject(
     // ── Never trusted from the form — forced server-side ──
     // ownerId is always the submitting member.
     ownerId: user.id,
+    // Last editor — same user on create, kept in step on every later save.
+    updatedById: user.id,
     // Creator submissions always start PENDING + inactive: they only reach
     // the public catalog once a moderator approves them in
     // /admin/moderation (unlike staff-authored projects in
@@ -552,6 +555,9 @@ export async function createCreatorProject(
             data: placementRows.map(({ dbId: _dbId, ...r }) => ({ ...r, projectId: project.id })),
           });
         }
+        // After cast/tiers/placements have landed, so the snapshot captures
+        // the full aggregate the moderator will see, not just the bare row.
+        await recordVersion(tx, "Project", project.id, "CREATE", { id: user.id, name: user.name });
         return project;
       }, { timeout: 15000 });
 
@@ -678,6 +684,8 @@ export async function updateCreatorProject(
           moderationStatus: "PENDING",
           isActive: false,
           rejectionReason: null,
+          // Last editor, kept in step on every save (not just create).
+          updatedById: user.id,
         },
       });
       await tx.actor.deleteMany({ where: { projectId: id } });
@@ -687,6 +695,8 @@ export async function updateCreatorProject(
       }
       await saveTierRows(tx, id, tierRows);
       await savePlacementRows(tx, id, placementRows);
+      // After the full replace, so the snapshot reflects the saved aggregate.
+      await recordVersion(tx, "Project", id, "UPDATE", { id: user.id, name: user.name });
     }, { timeout: 15000 });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {

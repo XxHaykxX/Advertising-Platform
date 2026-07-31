@@ -26,7 +26,6 @@ export type BrandFavoriteDTO = {
     slotsAvailable: number;
     slotsTotal: number; // 0 => no tier has a total set, i.e. hide the slots column value
     applicationDeadline: string | null;
-    status: string;
   };
 };
 
@@ -72,7 +71,6 @@ export async function getBrandFavorites(
         slotsAvailable: tiers.reduce((sum, t) => sum + (t.availableSlots ?? 0), 0),
         slotsTotal: tiers.reduce((sum, t) => sum + (t.totalSlots ?? 0), 0),
         applicationDeadline: r.project.applicationDeadline?.toISOString() ?? null,
-        status: r.project.status,
       },
     };
   });

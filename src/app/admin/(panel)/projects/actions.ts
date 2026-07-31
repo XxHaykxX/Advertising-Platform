@@ -6,7 +6,9 @@ import { Prisma } from "@prisma/client";
 import type { ProjectKind } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireContentEditor, requireSuperadmin } from "@/lib/auth/require";
+import { recordVersion } from "@/lib/history/record";
 import { deleteUpload } from "@/lib/actions/uploads";
+import { findUploadUsage } from "@/lib/uploads-usage";
 import { addStreamingSources } from "@/lib/actions/streaming-sources";
 import { addCountries } from "@/lib/actions/countries";
 import { addStudios } from "@/lib/actions/studios";
@@ -642,6 +644,8 @@ export async function createProject(
     videoFile: data.videoFile || null,
     // ownerId is always the creating user — never trusted from the form.
     ownerId: user.id,
+    // Last editor — same user on create, kept in step on every later save.
+    updatedById: user.id,
     // #13: staff (SUPERADMIN/PUBLISHER) content is trusted and goes
     // straight to the public catalog — no moderation queue. This is
     // also the schema default, but set explicitly here so intent is
@@ -681,6 +685,9 @@ export async function createProject(
             data: milestoneRows.map((r) => ({ ...r, projectId: created.id })),
           });
         }
+        // After everything (cast/tiers/placements/milestones) has landed, so
+        // the snapshot captures the full aggregate, not just the bare row.
+        await recordVersion(tx, "Project", created.id, "CREATE", { id: user.id, name: user.name });
       }, { timeout: 15000 });
       revalidateProjectPaths();
       return { ok: true, redirect: "/admin/projects" };
@@ -772,6 +779,8 @@ export async function updateProject(
           cinemas: data.cinemas || null,
           videoEmbedUrl: data.videoEmbedUrl || null,
           videoFile: data.videoFile || null,
+          // Last editor, kept in step on every save (not just create).
+          updatedById: user.id,
         },
       });
       await tx.actor.deleteMany({ where: { projectId: id } });
@@ -785,6 +794,8 @@ export async function updateProject(
       if (milestoneRows.length) {
         await tx.productionMilestone.createMany({ data: milestoneRows.map((r) => ({ ...r, projectId: id })) });
       }
+      // After the full replace, so the snapshot reflects the saved aggregate.
+      await recordVersion(tx, "Project", id, "UPDATE", { id: user.id, name: user.name });
     }, { timeout: 15000 });
   } catch (e) {
     if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
@@ -816,16 +827,27 @@ export async function deleteProject(id: number) {
 
   // Collect the project's own image paths BEFORE deleting, then delete the row
   // (cascades to actors/tiers/placements/interests/favorites via the schema),
-  // then remove the files. deleteUpload skips any file still referenced
-  // elsewhere (another project's gallery, a portfolio, an avatar), so shared
-  // images survive.
+  // then remove the files that nothing ELSE still points at (another project's
+  // gallery, a portfolio, an avatar), so shared images survive.
   const imagePaths = collectProjectImagePaths(existing);
 
+  // Before the delete — there is nothing left to snapshot afterwards.
+  await recordVersion(prisma, "Project", id, "DELETE", { id: user.id, name: user.name });
   await prisma.project.delete({ where: { id } });
 
   for (const p of imagePaths) {
     try {
-      await deleteUpload(p);
+      // The DELETE version just written above always mentions these paths, so
+      // a plain deleteUpload(p) would see non-empty *history* usage for this
+      // project (now gone) and refuse to touch the file — every project
+      // deletion would silently stop freeing any disk space at all. Check
+      // `current` ourselves (an ID this project doesn't have has already been
+      // deleted, so only some OTHER live record can show up here) and force
+      // past the now-irrelevant history hit.
+      const usage = await findUploadUsage(p);
+      if (usage.current.length === 0) {
+        await deleteUpload(p, { force: true });
+      }
     } catch {
       // best-effort file cleanup — never let a stray unlink error block delete
     }
@@ -866,7 +888,11 @@ export async function toggleActive(id: number, isActive: boolean) {
   if (!existing) return;
   if (user.role !== "SUPERADMIN" && existing.ownerId !== user.id) return;
 
-  await prisma.project.update({ where: { id }, data: { isActive } });
+  await prisma.project.update({ where: { id }, data: { isActive, updatedById: user.id } });
+  await recordVersion(prisma, "Project", id, isActive ? "PUBLISH" : "UNPUBLISH", {
+    id: user.id,
+    name: user.name,
+  });
   revalidateProjectPaths(id);
 }
 
@@ -939,6 +965,8 @@ export async function duplicateProject(
             isActive: false,
             moderationStatus: "APPROVED",
             ownerId: user.id,
+            // Not the original project's last editor — the person cloning it.
+            updatedById: user.id,
           },
         });
         if (actors.length) {
@@ -1001,6 +1029,9 @@ export async function duplicateProject(
             })),
           });
         }
+        // The clone is a brand-new record — CREATE, not a copy of the
+        // source project's history.
+        await recordVersion(tx, "Project", proj.id, "CREATE", { id: user.id, name: user.name });
         return proj;
       }, { timeout: 15000 });
       revalidateProjectPaths();

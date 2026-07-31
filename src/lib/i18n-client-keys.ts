@@ -22,7 +22,6 @@ export const CLIENT_KEYS: readonly string[] = [
   "account.brand.comparePriceFrom",
   "account.brand.compareProject",
   "account.brand.compareSlots",
-  "account.brand.compareStage",
   "account.brand.compareTitle",
   "account.brand.emailReadonlyNote",
   "account.brand.expressInterestError",
@@ -124,7 +123,6 @@ export const CLIENT_KEYS: readonly string[] = [
   "catalog.sortLabel",
   "catalog.sortNewest",
   "catalog.sortTitle",
-  "catalog.status",
   "catalog.until",
   "completeness.allFilled",
   "completeness.badge",
@@ -419,7 +417,6 @@ export const CLIENT_PREFIXES: readonly string[] = [
   "formatCategory.",
   "genre.",
   "metric.",
-  "report.status.",
   "role.",
   "translate.",
 ];

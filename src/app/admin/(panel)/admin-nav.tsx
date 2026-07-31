@@ -16,6 +16,7 @@ import {
   Send,
   Languages,
   Inbox,
+  History,
 } from "lucide-react";
 import type { Role } from "@prisma/client";
 import {
@@ -75,6 +76,12 @@ const NAV_GROUPS: {
       { href: "/admin/projects", label: "Projects", icon: Film, show: canEditContent },
       { href: "/admin/cast", label: "Cast & Crew", icon: Users2, show: canEditContent },
       { href: "/admin/media", label: "Media", icon: FolderOpen, show: canEditContent },
+      // Audit: content damage used to be untraceable — no record of who
+      // changed what, or when. Every staff role can read this feed (it's
+      // "what happened on the site", not a content-edit tool); TRANSLATOR is
+      // still excluded, same as Dashboard/Notifications below — its only
+      // page is /admin/i18n.
+      { href: "/admin/history", label: "History", icon: History, show: (role) => !isTranslatorOnly(role) },
     ],
   },
   {

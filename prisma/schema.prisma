@@ -61,6 +61,7 @@ model User {
   budgetRange     String? // one of BUDGET_RANGES in src/lib/brand-categories.ts
 
   projects  Project[]
+  projectsUpdated Project[] @relation("ProjectUpdatedBy") // projects this user last saved
   interests Interest[] // Interest rows this user (as a BRAND) has expressed
   favorites Favorite[] // Favorite (shortlist) rows this user (as a BRAND) saved
   passwordResetTokens PasswordResetToken[]
@@ -68,6 +69,7 @@ model User {
   pushSubscriptions PushSubscription[]
   uiDrafts      UiDraft[] // dictionary rows this staff user last edited (TRANSLATOR)
   i18nPublishes I18nPublish[] // publish clicks this staff user made
+  contentVersions ContentVersion[] // content edits this user authored (history)
 }
 
 /// In-app notification (#25 / V9). Text is NOT stored translated — only a
@@ -132,13 +134,6 @@ model Content {
   hy  String @db.Text
 }
 
-enum ProjectStatus {
-  PRE_PRODUCTION
-  FILMING
-  POST_PRODUCTION
-  RELEASED
-}
-
 /// A film/series project listed for product placement
 model Project {
   id             Int           @id @default(autoincrement())
@@ -156,7 +151,6 @@ model Project {
   gallery        String?       @db.Text // JSON string[]; nullable — MySQL forbids literal defaults on TEXT columns
   format         String        @default("") // "50 ep × 1m 15s"
   studio         String        @default("")
-  status         ProjectStatus @default(PRE_PRODUCTION)
   countries      String        @default("") // "US, UK, …"
   ageRating      String        @default("") // content rating badge on the poster: "16+", "18+", "12+", …
   // Money — admin enters AMD only; the public site converts + formats for
@@ -174,6 +168,12 @@ model Project {
   // /api/projects/[id]/view route), so a refresh loop can't inflate it.
   viewCount      Int           @default(0)
   createdAt      DateTime      @default(now())
+  // When this project was last saved, and by whom. The full edit history lives
+  // in ContentVersion; these two are denormalized onto the row so the admin list
+  // can show "changed 31.07 by Мариам" without joining history for every line.
+  // Their absence is what made the 2026-07-31 damage impossible to trace.
+  updatedAt      DateTime      @default(now()) @updatedAt
+  updatedById    Int?
   ownerId        Int
 
   // ── Moderation & content-kind (added for the Creator submission flow) ──
@@ -209,6 +209,7 @@ model Project {
   videoFile     String? // uploaded MP4 path ("/uploads/…")
 
   owner         User                   @relation(fields: [ownerId], references: [id])
+  updatedBy     User?                  @relation("ProjectUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
   actors        Actor[]
   tiers         SponsorshipTier[]
   placements    Placement[]
@@ -575,4 +576,55 @@ model I18nPublish {
   commitUrl String   @db.Text
 
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+/// One saved state of a content record — the site's undo history (2026-07-31).
+///
+/// Why it exists: until now nothing recorded who changed a project or when, so
+/// when content was damaged there was no way to find the edit, name the author,
+/// or put the old text back. The dictionary already had this (I18nPublish +
+/// the git commit); content had nothing.
+///
+/// One row per save, not per field and not per day: pressing Save writes a
+/// version, and any version can be restored. The UI groups consecutive edits by
+/// the same author into one collapsible line, but that is display only — every
+/// version is kept and individually restorable.
+///
+/// `snapshot` holds the whole aggregate, so a Project row carries its cast,
+/// tiers, placements and milestones with it and a restore can put all of them
+/// back together. It is LongText rather than Json: the file-usage lookup needs a
+/// cheap substring match, and prod is MariaDB, whose JSON support differs from
+/// MySQL 8's.
+model ContentVersion {
+  id       Int    @id @default(autoincrement())
+  entity   String @db.VarChar(32) // Project | Person | Portfolio | Partner
+  entityId Int
+  version  Int // 1, 2, 3… within one entity+entityId
+  /// CREATE | UPDATE | DELETE | RESTORE | PUBLISH | UNPUBLISH
+  action   String @db.VarChar(16)
+
+  snapshot String @db.LongText // full aggregate state as JSON
+
+  /// Every /uploads/… path found in the snapshot, newline-separated. Denormalized
+  /// so the media library can answer "which versions still reference this file?"
+  /// without parsing every snapshot.
+  mediaPaths String? @db.Text
+
+  /// Which fields changed against the previous version ("описание (ru), постер").
+  /// Computed on write — the history list must not have to diff two snapshots to
+  /// render a line.
+  summary String? @db.Text
+
+  authorId Int? // null once that account is deleted
+  /// Author's name copied at write time, so history stays readable after the
+  /// account is gone (authorId goes null, this does not).
+  authorName String   @db.VarChar(191)
+  createdAt  DateTime @default(now())
+
+  author User? @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@unique([entity, entityId, version])
+  @@index([entity, entityId, createdAt])
+  @@index([createdAt]) // the site-wide feed at /admin/history
+  @@index([authorId])
 }

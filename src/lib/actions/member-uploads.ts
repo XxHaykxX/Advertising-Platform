@@ -12,7 +12,7 @@ import { requireMember } from "@/lib/auth/require";
 import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
 import { UPLOADS_DIR } from "@/lib/uploads-dir";
-import { findUploadUsage } from "@/lib/uploads-usage";
+import { findUploadUsage, type UploadUsage } from "@/lib/uploads-usage";
 import { memberUploadMessages, storeUpload } from "@/lib/uploads-store";
 import type { MediaFile } from "@/lib/actions/uploads";
 
@@ -67,9 +67,13 @@ export async function listMemberUploads(): Promise<MediaFile[]> {
   return out.sort((a, b) => b.mtime - a.mtime);
 }
 
+/** Same "warn, don't block" contract as deleteUpload (lib/actions/uploads.ts):
+ *  without `force`, a referenced file comes back as `usage` instead of being
+ *  deleted; pass `force: true` once the member has confirmed. */
 export async function deleteMemberUpload(
   publicPath: string,
-): Promise<{ ok?: boolean; error?: string; usedBy?: string[] }> {
+  opts?: { force?: boolean },
+): Promise<{ ok?: boolean; error?: string; usage?: UploadUsage }> {
   const me = await requireMember();
 
   // Hard-scope: a member can only delete files inside their own namespace.
@@ -79,9 +83,9 @@ export async function deleteMemberUpload(
   const abs = path.resolve(UPLOADS_DIR, rel);
   if (abs !== UPLOADS_DIR && !abs.startsWith(UPLOADS_DIR + path.sep)) return { error: "Invalid path." };
 
-  const usedBy = await findUploadUsage(publicPath);
-  if (usedBy.length) {
-    return { error: `In use — can't delete. Referenced by: ${usedBy.join("; ")}`, usedBy };
+  if (!opts?.force) {
+    const usage = await findUploadUsage(publicPath);
+    if (usage.current.length || usage.history.length) return { usage };
   }
 
   try {

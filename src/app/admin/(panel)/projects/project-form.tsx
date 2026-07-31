@@ -1385,20 +1385,17 @@ export function ProjectForm({
             </Field>
           </section>
 
-          {/* ── Production Info ── project status/timeline + where it plays:
-              Status, Release date, Application deadline, Available on
-              (Platforms + Streaming source merged, #29), Cinemas. The
-              ambiguous ones carry a helper hint under the field. */}
+          {/* ── Production Info ── where the project plays: Release date,
+              Application deadline, Available on (Platforms + Streaming source
+              merged, #29), Cinemas. The ambiguous ones carry a helper hint
+              under the field. */}
           <section id="sec-production" className="scroll-mt-24 space-y-3 rounded-xl border border-border bg-card p-4">
             <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">{t("projectForm.section.production")}</h2>
             {/* "Production stage" (and its helper text) was removed from both
-                editors on 2026-07-26 at the owner's request. The Project.status
-                column stays — the public catalog still filters on it and the
-                report page still shows it — but nobody edits it here any more,
-                which is also why `status` left ProjectFormValues: parsing an
-                absent field would have written PRE_PRODUCTION over the real
-                value on every save (the same trap the `format` column fell into
-                earlier that day). */}
+                editors on 2026-07-26 at the owner's request, and the
+                Project.status column itself (with the catalog filter and the
+                report page display it fed) was dropped entirely on 2026-07-31
+                — the production-stage concept no longer exists in the product. */}
             <Field label={t("projectForm.field.releaseDate")} anchorId="field-releaseDate">
               <input name="releaseDate" type="date" defaultValue={data.releaseDate} className={inputCls} />
             </Field>
