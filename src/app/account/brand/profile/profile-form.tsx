@@ -51,6 +51,12 @@ export function ProfileForm({ profile, locale }: { profile: BrandProfileDTO; loc
   // until the page refreshes (IA-15).
   const [budgetRange, setBudgetRange] = useState(profile.budgetRange);
   const [phone, setPhone] = useState(profile.phone);
+  // Controlled so a successful save can refresh it to the normalised value the
+  // server actually stored (IA-35) — otherwise `\\example.com` keeps showing
+  // verbatim after "Saved" even though the database holds
+  // `https://example.com`. A failed save must leave what was typed alone, so
+  // this is only ever written from the effect below, never reset on error.
+  const [website, setWebsite] = useState(profile.website);
   // Transient "Saved" confirmation — auto-hides a few seconds after each save
   // instead of lingering forever (IA-28). Kept separate from `state.ok` (which
   // stays true) so it can be re-shown and re-timed on every consecutive save.
@@ -67,6 +73,10 @@ export function ProfileForm({ profile, locale }: { profile: BrandProfileDTO; loc
     if (!state.ok) return;
     router.refresh();
     setShowSaved(true);
+    // Reflect what the server actually stored — `website` is the one field
+    // this action rewrites before saving it (IA-35); every other field here
+    // round-trips unchanged, which is why only this one needs syncing back.
+    if (state.website !== undefined) setWebsite(state.website ?? "");
     const id = setTimeout(() => setShowSaved(false), 2500);
     return () => clearTimeout(id);
   }, [state, router]);
@@ -107,7 +117,8 @@ export function ProfileForm({ profile, locale }: { profile: BrandProfileDTO; loc
               <input
                 name="website"
                 type="url"
-                defaultValue={profile.website}
+                value={website}
+                onChange={(e) => setWebsite(e.target.value)}
                 placeholder={t("account.brand.websitePlaceholder")}
                 className={fieldClass}
               />

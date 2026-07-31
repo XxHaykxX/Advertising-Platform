@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MediaField } from "@/components/media-field";
@@ -35,10 +35,22 @@ export function ProfileForm({
 }) {
   const t = makeUI(locale);
   const [phoneValue, setPhoneValue] = useState(phone);
+  // Controlled so a successful save can refresh it to the normalised value
+  // the server actually stored (IA-35, mirrors the brand profile form) —
+  // otherwise `\\example.com` keeps showing verbatim after "Saved" even
+  // though the database holds `https://example.com`. A failed save must
+  // leave what was typed alone, so this is only ever written by the effect
+  // below, never reset on error.
+  const [websiteValue, setWebsiteValue] = useState(website);
   const [state, formAction, pending] = useActionState<CreatorProfileFormState, FormData>(
     updateCreatorProfile,
     initialState,
   );
+
+  useEffect(() => {
+    if (!state.ok || state.website === undefined) return;
+    setWebsiteValue(state.website ?? "");
+  }, [state]);
 
   return (
     <div className="mt-8 flex flex-col gap-6">
@@ -103,7 +115,8 @@ export function ProfileForm({
             <input
               name="website"
               type="url"
-              defaultValue={website}
+              value={websiteValue}
+              onChange={(e) => setWebsiteValue(e.target.value)}
               placeholder={t("account.profile.website")}
               className={fieldClass}
             />

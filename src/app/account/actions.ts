@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { requireMember } from "@/lib/auth/require";
 import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
+import { parseWebsiteUrl } from "@/lib/website-url";
 
 /** Logs the current member out by clearing the session cookie. Doesn't
  *  redirect() itself — on Hostinger/Passenger a redirect() inside a server
@@ -19,7 +20,15 @@ export async function logout(): Promise<{ ok: true; redirect: string }> {
   return { ok: true, redirect: "/" };
 }
 
-export type CreatorProfileFormState = { ok?: true; error?: string };
+export type CreatorProfileFormState = {
+  ok?: true;
+  error?: string;
+  /** The normalised value actually stored, echoed back on success only
+   *  (IA-35, mirrors BrandProfileFormState) — without it the field goes on
+   *  showing whatever was typed even after `\\example.com` is rewritten to
+   *  `https://example.com` before it hits the database. */
+  website?: string | null;
+};
 
 /** Update the current CREATOR member's own profile — display name, avatar,
  *  phone, website. Re-checks requireMember() + role itself (defense in
@@ -43,7 +52,14 @@ export async function updateCreatorProfile(
   // not as a "+374" that nobody can call.
   const rawPhone = String(formData.get("phone") ?? "").trim();
   const phone = /^\+\d{1,4}$/.test(rawPhone) ? "" : rawPhone;
-  const website = String(formData.get("website") ?? "").trim();
+  // Same parser the brand profile form uses (IA-35) — this field used to be
+  // written raw, so `\example.com` (missing a leading slash, which the URL
+  // parser folds to a slash and the browser's own `type="url"` check lets
+  // through unfixed) was stored verbatim instead of normalised.
+  const websiteRaw = String(formData.get("website") ?? "").trim().slice(0, 2000);
+  const websiteParsed = parseWebsiteUrl(websiteRaw);
+  if (!websiteParsed.ok) return { error: t("account.brand.websiteInvalid") };
+  const website = websiteParsed.value ? websiteParsed.value.slice(0, 191) : null;
 
   if (!name) return { error: t("account.profile.nameRequired") };
 
@@ -51,10 +67,10 @@ export async function updateCreatorProfile(
 
   await prisma.user.update({
     where: { id: user.id },
-    data: { name: name.slice(0, 120), avatar: avatar || null, phone: phone || null, website: website || null },
+    data: { name: name.slice(0, 120), avatar: avatar || null, phone: phone || null, website },
   });
 
   revalidatePath("/account");
   revalidatePath("/account/profile");
-  return { ok: true };
+  return { ok: true, website };
 }

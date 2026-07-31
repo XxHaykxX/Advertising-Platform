@@ -58,4 +58,40 @@ test.describe("brand profile — saving", () => {
     await page.locator("form button[type=submit]").first().click();
     await expect(page.getByText("Պահպանված է")).toBeVisible({ timeout: 15000 });
   });
+
+  /* IA-35. The server has always corrected a backslash address before storing
+     it, but the field kept showing what was typed — the form stopped
+     re-syncing itself when the IA-34 fix removed React's automatic reset. QA
+     retested, saw its own `\\…` still sitting there and filed it as unfixed,
+     which is a fair reading: as far as the screen was concerned nothing had
+     been checked. The field must now show what was actually stored. */
+  test("the website field shows the address that was stored, not what was typed", async ({
+    page,
+  }) => {
+    await page.goto("/login");
+    await page.fill('input[name="email"]', "brand@test.com");
+    await page.fill('input[name="password"]', "brand1234");
+    await page.locator("form button[type=submit]").first().click();
+    await page.waitForURL((u) => u.pathname === "/account/brand", { timeout: 20000 });
+
+    await page.goto("/account/brand/profile");
+    const website = page.locator('input[name="website"]');
+    await expect(website).toBeVisible();
+    const original = await website.inputValue();
+
+    await website.fill("\\\\example.com/x");
+    await page.locator("form button[type=submit]").first().click();
+    await expect(page.getByText("Պահպանված է")).toBeVisible({ timeout: 15000 });
+    await expect(website).toHaveValue("https://example.com/x");
+
+    // And it survives a reload — i.e. what the field showed is what the
+    // database actually holds, not a cosmetic rewrite in the browser.
+    await page.reload();
+    await expect(page.locator('input[name="website"]')).toHaveValue("https://example.com/x");
+
+    // Leave the account as it was found.
+    await page.locator('input[name="website"]').fill(original);
+    await page.locator("form button[type=submit]").first().click();
+    await expect(page.getByText("Պահպանված է")).toBeVisible({ timeout: 15000 });
+  });
 });

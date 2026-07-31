@@ -438,6 +438,12 @@ export async function submitApplication(
 export type BrandProfileFormState = {
   error?: string;
   ok?: boolean;
+  /** The normalised value actually stored, echoed back on success only
+   *  (IA-35) — the form no longer resets itself after a save (IA-34), so
+   *  without this the input goes on showing whatever the brand typed even
+   *  though `\\example.com` was rewritten to `https://example.com` before it
+   *  hit the database. */
+  website?: string | null;
 };
 
 function jsonArray(fd: FormData, key: string): string[] {
@@ -501,7 +507,7 @@ export async function updateBrandProfile(
   });
 
   revalidateBrandPaths();
-  return { ok: true };
+  return { ok: true, website };
 }
 
 /** Returns a JSON dump of the brand's own profile + expressed interests
