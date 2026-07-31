@@ -15,4 +15,4 @@ What's new and what's fixed on igovazd.am since v2.3.
 
 — Elsewhere —
 8. Translations continue to be filled in across the site. Project descriptions that still appear in Armenian on the Russian and English versions are being completed by the content team; the pages themselves show whichever language exists and fall back to the original.
-9. The case studies section is temporarily hidden while real cases are prepared. The six entries on it were demonstration material — invented brands and numbers — under a heading promising real results.
+9. The case studies section is hidden until there are real cases to show. The six entries on it were demonstration material — invented brands and numbers — under a heading promising real results. Nothing was deleted; the section returns as soon as genuine case studies are ready.
