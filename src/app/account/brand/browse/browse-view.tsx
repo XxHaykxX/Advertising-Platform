@@ -84,8 +84,13 @@ export function BrowseView({
   const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
   const [slotsOnly, setSlotsOnly] = useState(false);
 
-  // Format/Language show the full closed value set (same as catalog); Country
-  // only shows values actually present among the listed projects.
+  // Every facet offers only values actually present among the listed projects
+  // — same rule as the public catalog. Format keeps FORMAT_CATEGORY_VALUES
+  // order (editorial, not alphabetical) rather than being sorted.
+  const formatOptions = useMemo(() => {
+    const present = new Set(projects.map((p) => p.formatCategory).filter(Boolean));
+    return FORMAT_CATEGORY_VALUES.filter((v) => present.has(v));
+  }, [projects]);
   const countryOptions = useMemo(
     () => Array.from(new Set(projects.flatMap((p) => splitCountries(p.countries)))).sort(),
     [projects],
@@ -137,7 +142,7 @@ export function BrowseView({
     <>
       <CheckboxFilter
         label={t("catalog.format")}
-        options={FORMAT_CATEGORY_VALUES.map((v) => ({ value: v, label: localize("formatCategory", v) }))}
+        options={formatOptions.map((v) => ({ value: v, label: localize("formatCategory", v) }))}
         selected={selectedFormats}
         onToggle={toggleFormat}
       />

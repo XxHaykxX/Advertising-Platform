@@ -18,7 +18,7 @@
 //   - static:  literal keys passed to t("some.key") (including
 //     `t(cond ? "a.one" : "a.many")` ternaries) — found by scanning source
 //     text, no need to list them here.
-//   - prefix:  dynamic keys built at runtime, e.g. t(`report.status.${s}`)
+//   - prefix:  dynamic keys built at runtime, e.g. t(`completeness.item.${k}`)
 //     or localizeValue(locale, "genre", project.genre). localizeValue's
 //     prefix argument is always a literal, so those are auto-detected; the
 //     handful of t(`prefix.${var}`) template-literal call sites can't be

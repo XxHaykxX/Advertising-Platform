@@ -220,8 +220,18 @@ export function CatalogView({
     () => projects.some((p) => !p.formatCategory),
     [projects],
   );
-  // Distinct platforms / countries actually present across the projects — the
-  // Format/Language filters instead always show their full closed value sets.
+  // Formats actually present in the catalog, kept in FORMAT_CATEGORY_VALUES
+  // order rather than sorted: that order is editorial (Feature film → Series →
+  // Mini-series → …), and alphabetising it would scatter related buckets.
+  //
+  // This used to render the whole closed set — twelve checkboxes over a catalog
+  // holding three formats, nine of which filtered to nothing (owner report
+  // 2026-07-31).
+  const formatOptions = useMemo(() => {
+    const present = new Set(projects.map((p) => p.formatCategory).filter(Boolean));
+    return FORMAT_CATEGORY_VALUES.filter((v) => present.has(v));
+  }, [projects]);
+  // Distinct platforms / countries actually present across the projects.
   const platformOptions = useMemo(
     () => Array.from(new Set(projects.flatMap((p) => parseStringArray(p.platforms)))).sort(),
     [projects],
@@ -468,7 +478,7 @@ export function CatalogView({
       <CheckboxFilter
         label={t("catalog.format")}
         options={[
-          ...FORMAT_CATEGORY_VALUES.map((v) => ({
+          ...formatOptions.map((v) => ({
             value: v,
             label: localize("formatCategory", v),
           })),
