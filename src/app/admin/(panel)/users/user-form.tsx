@@ -2,12 +2,14 @@
 
 import { useActionState, useEffect, useState, useTransition } from "react";
 import Link from "next/link";
-import { Loader2, KeyRound, Ban, RotateCcw, CheckCircle2 } from "lucide-react";
-import type { FormState, ResetState, RoleState } from "./actions";
-import { setUserActive, resetUserPassword, setUserRole } from "./actions";
+import { Loader2, KeyRound, Ban, RotateCcw, CheckCircle2, Trash2 } from "lucide-react";
+import type { Role } from "@prisma/client";
+import type { FormState, ResetState, RoleState, DeleteState } from "./actions";
+import { setUserActive, resetUserPassword, setUserRole, deleteUserAccount } from "./actions";
 import { PasswordInput } from "@/components/ui/password-input";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { STAFF_ROLES, STAFF_ROLE_LABEL, roleChangeMessage, type StaffRole } from "@/lib/auth/staff-roles";
+import { deleteAccountMessage } from "@/lib/auth/delete-account";
 
 const inputCls =
   "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none transition-colors focus:border-primary";
@@ -211,17 +213,89 @@ export function RoleControl({
   );
 }
 
-/** Inline row actions (toggle active / reset password) for the users table.
-   Kept inside this file rather than a dedicated component to stay within the
-   four files owned by this feature. */
-export function RowActions({
+/** Delete button for a single account row — staff or member, so it's used
+   both from RowActions below and directly from the Members tab in page.tsx.
+   Trash2 + a ConfirmDialog naming what disappears (see deleteAccountMessage),
+   never the native confirm(). Disabled up front for the two cases the caller
+   already has the data for — your own row, and an account that still owns
+   projects — with a tooltip explaining why; the last-super-admin guard can't
+   be predicted per-row like that, so it only surfaces as a returned error
+   after confirming (same split as RoleControl's last_superadmin handling). */
+export function DeleteAccountButton({
   id,
-  isActive,
+  name,
+  role,
   isSelf,
+  projectCount,
 }: {
   id: number;
+  name: string;
+  role: Role;
+  isSelf: boolean;
+  projectCount: number;
+}) {
+  const [pending, start] = useTransition();
+  const [open, setOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const disabled = isSelf || projectCount > 0;
+  const title = isSelf
+    ? "You can't delete your own account"
+    : projectCount > 0
+      ? `Can't delete — owns ${projectCount} project${projectCount === 1 ? "" : "s"}. Reassign or remove them first.`
+      : undefined;
+
+  function confirm() {
+    start(async () => {
+      const res: DeleteState = await deleteUserAccount(id);
+      setError(res.error ?? null);
+      setOpen(false);
+    });
+  }
+
+  return (
+    <div className="inline-block">
+      <button
+        type="button"
+        disabled={disabled || pending}
+        title={title}
+        onClick={() => setOpen(true)}
+        className="grid h-8 w-8 place-items-center rounded-lg text-muted-foreground hover:bg-danger/10 hover:text-danger disabled:cursor-not-allowed disabled:opacity-40"
+        aria-label="Delete account"
+      >
+        {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+      </button>
+      {error && <p className="mt-1 text-xs text-danger">{error}</p>}
+      <ConfirmDialog
+        open={open}
+        title="Delete account?"
+        message={deleteAccountMessage(name, role)}
+        confirmLabel="Delete"
+        pending={pending}
+        onConfirm={confirm}
+        onCancel={() => setOpen(false)}
+      />
+    </div>
+  );
+}
+
+/** Inline row actions (toggle active / reset password / delete) for the
+   staff table. Kept inside this file rather than a dedicated component to
+   stay within the four files owned by this feature. */
+export function RowActions({
+  id,
+  name,
+  role,
+  isActive,
+  isSelf,
+  projectCount,
+}: {
+  id: number;
+  name: string;
+  role: Role;
   isActive: boolean;
   isSelf: boolean;
+  projectCount: number;
 }) {
   const [pending, start] = useTransition();
   const [resetting, setResetting] = useState(false);
@@ -253,6 +327,7 @@ export function RowActions({
         >
           <KeyRound className="h-4 w-4" />
         </button>
+        <DeleteAccountButton id={id} name={name} role={role} isSelf={isSelf} projectCount={projectCount} />
       </div>
       {resetting && <ResetPasswordForm id={id} onDone={() => setResetting(false)} />}
     </div>

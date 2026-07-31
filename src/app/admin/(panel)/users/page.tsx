@@ -6,7 +6,7 @@ import { STAFF_ROLES, type StaffRole } from "@/lib/auth/staff-roles";
 import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
 import type { AccountStatus } from "@prisma/client";
-import { RowActions as StaffRowActions, RoleControl } from "./user-form";
+import { RowActions as StaffRowActions, RoleControl, DeleteAccountButton } from "./user-form";
 import { RowActions as MemberRowActions } from "../registrations/row-actions";
 import { UsersTabs } from "./users-tabs";
 
@@ -38,6 +38,7 @@ export default async function UsersAdminPage() {
     prisma.user.findMany({
       where: { role: { in: ["BRAND", "CREATOR"] } },
       orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+      include: { _count: { select: { projects: true } } },
     }),
   ]);
 
@@ -101,7 +102,14 @@ export default async function UsersAdminPage() {
                 <td className="px-4 py-3 text-muted-foreground">{u._count.projects}</td>
                 <td className="px-4 py-3 text-muted-foreground">{formatDate(u.createdAt)}</td>
                 <td className="px-4 py-3">
-                  <StaffRowActions id={u.id} isActive={u.isActive} isSelf={u.id === me.id} />
+                  <StaffRowActions
+                    id={u.id}
+                    name={u.name}
+                    role={u.role}
+                    isActive={u.isActive}
+                    isSelf={u.id === me.id}
+                    projectCount={u._count.projects}
+                  />
                 </td>
               </tr>
             ))}
@@ -151,14 +159,23 @@ export default async function UsersAdminPage() {
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">{formatDate(m.createdAt)}</td>
                   <td className="px-4 py-3">
-                    <MemberRowActions
-                      userId={m.id}
-                      status={m.status}
-                      approveLabel={ui("admin.registrations.approve")}
-                      rejectLabel={ui("admin.registrations.reject")}
-                      blockLabel={ui("admin.registrations.block")}
-                      unblockLabel={ui("admin.registrations.unblock")}
-                    />
+                    <div className="flex items-center gap-2">
+                      <MemberRowActions
+                        userId={m.id}
+                        status={m.status}
+                        approveLabel={ui("admin.registrations.approve")}
+                        rejectLabel={ui("admin.registrations.reject")}
+                        blockLabel={ui("admin.registrations.block")}
+                        unblockLabel={ui("admin.registrations.unblock")}
+                      />
+                      <DeleteAccountButton
+                        id={m.id}
+                        name={m.name}
+                        role={m.role}
+                        isSelf={m.id === me.id}
+                        projectCount={m._count.projects}
+                      />
+                    </div>
                   </td>
                 </tr>
               ))}

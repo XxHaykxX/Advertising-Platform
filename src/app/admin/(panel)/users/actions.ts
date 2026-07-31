@@ -7,6 +7,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireSuperadmin } from "@/lib/auth/require";
 import { changeStaffRole } from "@/lib/auth/staff-roles";
+import { deleteAccount } from "@/lib/auth/delete-account";
 import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
 
@@ -116,6 +117,36 @@ export async function setUserRole(id: number, role: string): Promise<RoleState> 
   const me = await requireSuperadmin();
   const res = await changeStaffRole(me.id, id, role);
   if (!res.ok) return { error: ROLE_CHANGE_ERROR[res.reason] };
+  revalidatePath("/admin/users");
+  return { ok: true };
+}
+
+export type DeleteState = { ok?: boolean; error?: string };
+
+// Human copy for deleteAccount's refusal reasons — see delete-account.ts for
+// what each one guards against. has_projects carries a count, so it's built
+// separately below instead of living in this static map.
+const DELETE_ACCOUNT_ERROR: Record<"self" | "not_found" | "last_superadmin", string> = {
+  self: "You can't delete your own account.",
+  not_found: "That account no longer exists.",
+  last_superadmin: "Can't delete this — they're the only super-admin left.",
+};
+
+/** Delete a staff or member account outright (see deleteAccount for the
+   guards: no self-delete, no deleting the last super-admin, no deleting an
+   account that still owns projects — those are content brands paid for and
+   are never dropped silently). Reachable from both the Staff and Members
+   tabs of /admin/users. */
+export async function deleteUserAccount(id: number): Promise<DeleteState> {
+  const me = await requireSuperadmin();
+  const res = await deleteAccount(me.id, id);
+  if (!res.ok) {
+    if (res.reason === "has_projects") {
+      const n = res.projectCount;
+      return { error: `Can't delete — this account owns ${n} project${n === 1 ? "" : "s"}. Reassign or remove them first.` };
+    }
+    return { error: DELETE_ACCOUNT_ERROR[res.reason] };
+  }
   revalidatePath("/admin/users");
   return { ok: true };
 }
