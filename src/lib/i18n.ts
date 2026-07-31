@@ -427,7 +427,7 @@ export const UI: Record<string, Dict> = {
 
   // ── project card / row ──────────────────────
   "card.projectedViews": { ru: "прогноз. просмотров", en: "projected views", hy: "կանխատեսվող դիտում" },
-  "card.release": { ru: "Выход", en: "Release", hy: "Թողարկում" },
+  "card.release": { ru: "Выход", en: "Release", hy: "C" },
   "card.applicationsUntil": { ru: "Заявки до", en: "Applications until", hy: "Հայտեր՝ մինչև" },
   "card.slotsAvailable": { ru: "мест доступно", en: "slots available", hy: "հասանելի տեղ" },
   // Owner request 2026-07-28: say on the card how many placement opportunities
@@ -1049,7 +1049,7 @@ export const UI: Record<string, Dict> = {
   "cast.title": { ru: "Актёры и создатели", en: "Cast & Creators", hy: "Դերասաններ և ստեղծագործողներ" },
   "cast.subtitle": { ru: "Актёры и создатели, задействованные в проекте", en: "Actors and creators attached to this project", hy: "Այս նախագծին կցված դերասաններ և ստեղծագործողներ" },
 
-  "keyFacts.release": { ru: "Выход", en: "Release", hy: "Թողարկում" },
+  "keyFacts.release": { ru: "Выход", en: "Release", hy: "Ցուցադրությունը՝" },
   "keyFacts.applicationDeadline": { ru: "Срок подачи предложений", en: "Offer deadline", hy: "Առաջարկների ընդունման վերջնաժամկետ" },
   "keyFacts.price": { ru: "Цена", en: "Price", hy: "Գին" },
   "keyFacts.onRequest": { ru: "По запросу", en: "On request", hy: "Ըստ պահանջի" },
