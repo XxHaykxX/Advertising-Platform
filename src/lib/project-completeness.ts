@@ -25,7 +25,8 @@ export type CompletenessKey =
   | "platforms"
   | "cinemas"
   | "budget"
-  | "ageRating";
+  | "ageRating"
+  | "formatCategory";
 
 export type CompletenessItem = {
   key: CompletenessKey;
@@ -64,6 +65,10 @@ export type CompletenessInput = {
   cinemas: string | null; // comma-separated
   productionBudgetAmd: number | null;
   ageRating: string | null;
+  /** FEATURE | SERIES | SITCOM | … — the bucket the catalog's Format filter
+   *  works on. Empty means the project is missing from that filter entirely,
+   *  which is a way of being invisible that no section on the page shows. */
+  formatCategory: string | null;
 };
 
 /** JSON string[] (or null/malformed) -> true if it holds at least one entry.
@@ -123,6 +128,7 @@ export function projectCompleteness(input: CompletenessInput): CompletenessItem[
     cinemas: !!(input.cinemas && input.cinemas.trim()),
     budget: input.productionBudgetAmd != null,
     ageRating: !!(input.ageRating && input.ageRating.trim()),
+    formatCategory: !!(input.formatCategory && input.formatCategory.trim()),
   };
 
   return (Object.keys(filled) as CompletenessKey[]).map((key) => ({

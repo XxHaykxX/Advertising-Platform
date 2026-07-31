@@ -78,7 +78,8 @@ export default async function MyProjectsPage() {
         cinemas: p.cinemas,
         productionBudgetAmd: p.productionBudgetAmd,
         ageRating: p.ageRating,
-      }),
+        formatCategory: p.formatCategory,
+  }),
     );
   }
 

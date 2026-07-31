@@ -980,6 +980,10 @@ export const UI: Record<string, Dict> = {
   "completeness.item.cinemas": { ru: "Кинотеатры", en: "Cinemas", hy: "Կինոթատրոններ" },
   "completeness.item.budget": { ru: "Бюджет производства", en: "Production budget", hy: "Արտադրության բյուջե" },
   "completeness.item.ageRating": { ru: "Возрастной рейтинг", en: "Age rating", hy: "Տարիքային սահմանափակում" },
+  // Unlike the others, an empty Format doesn't hide a section — it drops the
+  // project out of the catalog's Format filter, so a brand narrowing the list
+  // never reaches it at all.
+  "completeness.item.formatCategory": { ru: "Формат", en: "Format", hy: "Ձևաչափ" },
 
   // ── "How it works" — converging flows (audit E1) ──────────────────────────
   // The page used to be two independent columns, so nothing on it showed that
@@ -1745,8 +1749,18 @@ export const UI: Record<string, Dict> = {
   "projectForm.media.browseLibrary": { ru: "Из медиатеки", en: "From media library", hy: "Մեդիագրադարանից" },
   // Renamed from "Kind" (admin redesign phase 1) — the Format Category
   // dropdown that used to own this label was removed, so "Format" is free.
-  "projectForm.field.kind": { ru: "Формат", en: "Format", hy: "Ձևաչափ" },
+  // "Type" is Single vs Series — it decides which runtime fields the form
+  // shows. It used to be labelled "Format", which collided with the real
+  // Format field below (the one the catalog filters by) and made the admin
+  // look like it only offered two formats.
+  "projectForm.field.kind": { ru: "Тип", en: "Type", hy: "Տեսակ" },
   "projectForm.field.formatCategory": { ru: "Формат", en: "Format", hy: "Ձևաչափ" },
+  "projectForm.field.formatCategoryNotSet": { ru: "Не указан", en: "Not set", hy: "Նշված չէ" },
+  "projectForm.help.formatCategory": {
+    ru: "Как проект подаётся зрителю: полнометражный фильм, сериал, ситком, реалити. По этому полю бренды фильтруют каталог.",
+    en: "How the project is presented to viewers: feature film, series, sitcom, reality. Brands filter the catalog by this.",
+    hy: "Ինչպես է նախագիծը ներկայացվում դիտողին՝ լիամետրաժ ֆիլմ, սերիալ, սիթքոմ, ռեալիթի։ Այս դաշտով բրենդները զտում են կատալոգը։",
+  },
   "projectForm.kindFilm": { ru: "Одиночный", en: "Single", hy: "Առանձին" },
   "projectForm.kindSerial": { ru: "Сериал", en: "Series", hy: "Շարք" },
   "projectForm.field.episodes": { ru: "Кол-во серий *", en: "Episodes *", hy: "Սերիաների քանակ *" },

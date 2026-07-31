@@ -23,6 +23,7 @@ const FULL: CompletenessInput = {
   cinemas: "Cinema Star",
   productionBudgetAmd: 5_000_000,
   ageRating: "12+",
+  formatCategory: "SERIES",
 };
 
 const EMPTY: CompletenessInput = {
@@ -47,19 +48,20 @@ const EMPTY: CompletenessInput = {
   cinemas: null,
   productionBudgetAmd: null,
   ageRating: null,
+  formatCategory: null,
 };
 
 describe("projectCompleteness", () => {
   it("marks every item filled for a fully-filled project", () => {
     const items = projectCompleteness(FULL);
-    expect(items).toHaveLength(17);
+    expect(items).toHaveLength(18);
     expect(missingCount(items)).toBe(0);
     expect(items.every((i) => i.filled)).toBe(true);
   });
 
   it("marks every item empty for a blank project", () => {
     const items = projectCompleteness(EMPTY);
-    expect(missingCount(items)).toBe(17);
+    expect(missingCount(items)).toBe(18);
     expect(items.every((i) => !i.filled)).toBe(true);
   });
 

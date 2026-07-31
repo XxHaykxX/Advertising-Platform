@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import { Languages, Loader2, RotateCcw, Sparkles, X } from "lucide-react";
 import {
   AGE_RATING_VALUES,
+  FORMAT_CATEGORY_VALUES,
   KIND_VALUES,
   parseCsvInput,
   parseReferencesInput,
@@ -839,16 +840,6 @@ export function ProjectForm({
         <input type="hidden" name="milestonesRows" value={JSON.stringify(milestones)} />
       )}
 
-      {/* Admin redesign phase 1: formatCategory was dropped from the UI but the
-          server action still reads it via formData.get() on every save — an
-          absent field would silently blank out existing data on edit. Carried
-          as a hidden input so a save round-trips whatever value the row
-          already has instead of clearing it. It's still derived server-side
-          (deriveFormatCategory, used by the public catalog Format filter)
-          even though its own dropdown is gone. (Views/Budget/CPM/Audience/
-          Price/Subgenre/Release label were dropped from the schema entirely
-          in Ф2/#30 — no longer round-tripped here.) */}
-      <input type="hidden" name="formatCategory" defaultValue={data.formatCategory} />
 
       {/* ── Sticky Save bar ── pinned so Submit/dirty-state is reachable
           without scrolling to the bottom of a long form. Duplicates the
@@ -1266,6 +1257,30 @@ export function ProjectForm({
                   </label>
                 ))}
               </div>
+            </Field>
+            {/* Format (formatCategory) is what the public catalog's Format
+                filter groups by — a project left blank here is simply absent
+                from that filter, which no section on the page reveals. The
+                field was dropped from the UI in admin redesign phase 1 and
+                carried as a hidden input, so for months nobody could set it:
+                values only ever came from deriveFormatCategory's guess. Put
+                back as a real control on the owner's call (2026-07-31), in
+                both the admin form and the creator cabinet — they share this
+                component. Leaving it unset is still allowed; the server falls
+                back to deriving one. */}
+            <Field
+              label={t("projectForm.field.formatCategory")}
+              hint={t("projectForm.help.formatCategory")}
+              anchorId="field-formatCategory"
+            >
+              <select name="formatCategory" defaultValue={data.formatCategory} className={inputCls}>
+                <option value="">{t("projectForm.field.formatCategoryNotSet")}</option>
+                {FORMAT_CATEGORY_VALUES.map((v) => (
+                  <option key={v} value={v}>
+                    {t(`formatCategory.${v}`)}
+                  </option>
+                ))}
+              </select>
             </Field>
             {/* Runtime is required to PUBLISH, not to save (owner decision
                 2026-07-26). It briefly carried `required`, which meant an old

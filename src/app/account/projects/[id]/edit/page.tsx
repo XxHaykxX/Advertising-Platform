@@ -137,6 +137,7 @@ export default async function EditCreatorProjectPage({
     cinemas: p.cinemas,
     productionBudgetAmd: p.productionBudgetAmd,
     ageRating: p.ageRating,
+    formatCategory: p.formatCategory,
   });
 
   const action = updateCreatorProject.bind(null, pid);

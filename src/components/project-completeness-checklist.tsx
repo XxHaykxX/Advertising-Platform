@@ -45,6 +45,7 @@ const ANCHORS: Record<CompletenessKey, string> = {
   cinemas: "field-cinemas",
   budget: "field-budget",
   ageRating: "field-ageRating",
+  formatCategory: "field-formatCategory",
 };
 
 /** "What a brand sees" — a static snapshot of the SAVED project, not a live
