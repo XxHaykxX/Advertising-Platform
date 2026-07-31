@@ -282,7 +282,6 @@ export const CLIENT_KEYS: readonly string[] = [
   "projectForm.field.videoFile",
   "projectForm.genresPlaceholder",
   "projectForm.help.availableOn",
-  "projectForm.help.formatCategory",
   "projectForm.help.placementDeadline",
   "projectForm.kindFilm",
   "projectForm.kindSerial",

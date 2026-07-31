@@ -1258,30 +1258,6 @@ export function ProjectForm({
                 ))}
               </div>
             </Field>
-            {/* Format (formatCategory) is what the public catalog's Format
-                filter groups by — a project left blank here is simply absent
-                from that filter, which no section on the page reveals. The
-                field was dropped from the UI in admin redesign phase 1 and
-                carried as a hidden input, so for months nobody could set it:
-                values only ever came from deriveFormatCategory's guess. Put
-                back as a real control on the owner's call (2026-07-31), in
-                both the admin form and the creator cabinet — they share this
-                component. Leaving it unset is still allowed; the server falls
-                back to deriving one. */}
-            <Field
-              label={t("projectForm.field.formatCategory")}
-              hint={t("projectForm.help.formatCategory")}
-              anchorId="field-formatCategory"
-            >
-              <select name="formatCategory" defaultValue={data.formatCategory} className={inputCls}>
-                <option value="">{t("projectForm.field.formatCategoryNotSet")}</option>
-                {FORMAT_CATEGORY_VALUES.map((v) => (
-                  <option key={v} value={v}>
-                    {t(`formatCategory.${v}`)}
-                  </option>
-                ))}
-              </select>
-            </Field>
             {/* Runtime is required to PUBLISH, not to save (owner decision
                 2026-07-26). It briefly carried `required`, which meant an old
                 project without minutes could not be edited at all until they
@@ -1323,6 +1299,29 @@ export function ProjectForm({
                 />
               </Field>
             )}
+            {/* Format (formatCategory) is what the public catalog's Format
+                filter groups by — a project left blank here is simply absent
+                from that filter, which no section on the page reveals. The
+                field was dropped from the UI in admin redesign phase 1 and
+                carried as a hidden input, so for months nobody could set it:
+                values only ever came from deriveFormatCategory's guess. Put
+                back as a real control on the owner's call (2026-07-31), in
+                both the admin form and the creator cabinet — they share this
+                component. Leaving it unset is still allowed; the server falls
+                back to deriving one. Sits directly above Genre (owner request
+                2026-07-31): the two are read as one "what kind of thing is
+                this" question, and the helper text under it was dropped in the
+                same pass. */}
+            <Field label={t("projectForm.field.formatCategory")} anchorId="field-formatCategory">
+              <select name="formatCategory" defaultValue={data.formatCategory} className={inputCls}>
+                <option value="">{t("projectForm.field.formatCategoryNotSet")}</option>
+                {FORMAT_CATEGORY_VALUES.map((v) => (
+                  <option key={v} value={v}>
+                    {t(`formatCategory.${v}`)}
+                  </option>
+                ))}
+              </select>
+            </Field>
             <Field label={t("projectForm.field.genre")}>
               <MultiSelect
                 options={GENRES}

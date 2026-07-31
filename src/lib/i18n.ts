@@ -1756,11 +1756,6 @@ export const UI: Record<string, Dict> = {
   "projectForm.field.kind": { ru: "Тип", en: "Type", hy: "Տեսակ" },
   "projectForm.field.formatCategory": { ru: "Формат", en: "Format", hy: "Ձևաչափ" },
   "projectForm.field.formatCategoryNotSet": { ru: "Не указан", en: "Not set", hy: "Նշված չէ" },
-  "projectForm.help.formatCategory": {
-    ru: "Как проект подаётся зрителю: полнометражный фильм, сериал, ситком, реалити. По этому полю бренды фильтруют каталог.",
-    en: "How the project is presented to viewers: feature film, series, sitcom, reality. Brands filter the catalog by this.",
-    hy: "Ինչպես է նախագիծը ներկայացվում դիտողին՝ լիամետրաժ ֆիլմ, սերիալ, սիթքոմ, ռեալիթի։ Այս դաշտով բրենդները զտում են կատալոգը։",
-  },
   "projectForm.kindFilm": { ru: "Одиночный", en: "Single", hy: "Առանձին" },
   "projectForm.kindSerial": { ru: "Сериал", en: "Series", hy: "Շարք" },
   "projectForm.field.episodes": { ru: "Кол-во серий *", en: "Episodes *", hy: "Սերիաների քանակ *" },
