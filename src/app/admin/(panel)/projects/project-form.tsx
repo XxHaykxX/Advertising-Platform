@@ -161,16 +161,22 @@ function numOrEmpty(n: number | null): number | string {
 function Field({
   label,
   hint,
+  anchorId,
   children,
 }: {
   label: string;
   /** Optional helper text, rendered under the field — for fields whose
    *  purpose/format isn't obvious from the label alone. */
   hint?: string;
+  /** Target for the "what a brand sees" checklist. Jumping to the enclosing
+   *  <section> was not enough: General alone holds ~8 fields, so landing there
+   *  still left the creator hunting for the empty one. The checklist scrolls to
+   *  this element and flashes it (see flashField in field-flash.ts). */
+  anchorId?: string;
   children: React.ReactNode;
 }) {
   return (
-    <div className="block">
+    <div id={anchorId} className="block scroll-mt-28 rounded-lg">
       <span className={labelCls}>{label}</span>
       {children}
       {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
@@ -186,16 +192,21 @@ function Field({
 function MediaCard({
   heading,
   hint,
+  anchorId,
   children,
 }: {
   heading: string;
   /** One line: where this asset is actually seen (catalog / project page /
    *  player), not a restatement of the heading. */
   hint: string;
+  /** Checklist jump target — poster, gallery and video all live in the same
+   *  section, so pointing at the section alone never said which one was empty
+   *  (see Field's anchorId). */
+  anchorId?: string;
   children: React.ReactNode;
 }) {
   return (
-    <div className="space-y-3 rounded-lg border border-border bg-background p-4">
+    <div id={anchorId} className="space-y-3 scroll-mt-28 rounded-lg border border-border bg-background p-4">
       <div>
         <h3 className="text-base font-semibold text-foreground">{heading}</h3>
         <p className="text-xs text-muted-foreground">{hint}</p>
@@ -976,7 +987,7 @@ export function ProjectForm({
                       ref={titleRefs[l]}
                       name={`title${nameSuffix}`}
                       defaultValue={titleValue}
-                      placeholder={t("projectForm.about.title")}
+                      placeholder={t("projectForm.about.titlePlaceholder")}
                       onInput={() => recomputeAboutFilled(l)}
                       className={inputCls}
                     />
@@ -1028,7 +1039,7 @@ export function ProjectForm({
               {t("projectForm.section.pressKit")}
             </h2>
             <div className="space-y-3">
-              <MediaCard heading={t("projectForm.media.posterHeading")} hint={t("projectForm.media.posterHint")}>
+              <MediaCard heading={t("projectForm.media.posterHeading")} hint={t("projectForm.media.posterHint")} anchorId="field-poster">
                 {/* Upload and the "Generate poster" trigger sit on ONE row
                     (trailing slot) so the generate action stays next to upload
                     even after a poster is uploaded (preview thumbs render
@@ -1088,7 +1099,7 @@ export function ProjectForm({
                 />
               </MediaCard>
 
-              <MediaCard heading={t("projectForm.media.galleryHeading")} hint={t("projectForm.media.galleryHint")}>
+              <MediaCard heading={t("projectForm.media.galleryHeading")} hint={t("projectForm.media.galleryHint")} anchorId="field-gallery">
                 <ImageUploader
                   key={`gallery-${restoreNonce}`}
                   name="gallery"
@@ -1108,7 +1119,7 @@ export function ProjectForm({
                 />
               </MediaCard>
 
-              <MediaCard heading={t("projectForm.media.videoHeading")} hint={t("projectForm.media.videoHint")}>
+              <MediaCard heading={t("projectForm.media.videoHeading")} hint={t("projectForm.media.videoHint")} anchorId="field-video">
                 {/* ── Video (#10/#35) ── a YouTube/Vimeo link OR an uploaded
                     MP4, never both — a tab picks the one active source; the
                     inactive field unmounts, so it's absent from the submit and
@@ -1263,7 +1274,7 @@ export function ProjectForm({
                 that. The asterisk in the label stays: the field is still
                 mandatory before the project can reach the catalog. */}
             {kind === "SERIAL" ? (
-              <div className="grid grid-cols-2 gap-3">
+              <div id="field-runtime" className="grid scroll-mt-28 grid-cols-2 gap-3 rounded-lg">
                 <Field label={t("projectForm.field.episodes")}>
                   <input
                     name="episodes"
@@ -1286,7 +1297,7 @@ export function ProjectForm({
                 </Field>
               </div>
             ) : (
-              <Field label={t("projectForm.field.durationMinutes")}>
+              <Field label={t("projectForm.field.durationMinutes")} anchorId="field-runtime">
                 <input
                   name="durationMinutes"
                   type="number"
@@ -1342,11 +1353,14 @@ export function ProjectForm({
                 onDeleteOption={mode === "creator" ? undefined : (v) => setDeletingCountryOption(v)}
               />
             </Field>
-            <Field label={t("projectForm.field.ageRating")}>
+            <Field label={t("projectForm.field.ageRating")} anchorId="field-ageRating">
+              {/* Value stays "" either way — only the label changes, from a
+                  bare "—" (unreadable as a rendering glitch) to a spelled-out
+                  "Not set" (#20 placeholder audit). */}
               <select name="ageRating" defaultValue={data.ageRating} className={inputCls}>
                 {AGE_RATING_VALUES.map((r) => (
                   <option key={r} value={r}>
-                    {r || "—"}
+                    {r || t("projectForm.field.ageRatingNotSet")}
                   </option>
                 ))}
               </select>
@@ -1356,12 +1370,16 @@ export function ProjectForm({
                 pre-existing column holds box-office gross. They were being
                 conflated under one "Budget" label. Moved below Age rating on
                 2026-07-31 (owner request). */}
-            <Field label={t("projectForm.field.productionBudget")}>
+            <Field label={t("projectForm.field.productionBudget")} anchorId="field-budget">
+              {/* Had no placeholder at all — an empty box next to a label
+                  already carrying "(AMD, optional)" was the exact complaint
+                  in the owner's screenshot (#20 placeholder audit). */}
               <input
                 name="productionBudgetAmd"
                 type="number"
                 min={0}
                 defaultValue={numOrEmpty(data.productionBudgetAmd)}
+                placeholder="120000000"
                 className={inputCls}
               />
             </Field>
@@ -1381,10 +1399,10 @@ export function ProjectForm({
                 absent field would have written PRE_PRODUCTION over the real
                 value on every save (the same trap the `format` column fell into
                 earlier that day). */}
-            <Field label={t("projectForm.field.releaseDate")}>
+            <Field label={t("projectForm.field.releaseDate")} anchorId="field-releaseDate">
               <input name="releaseDate" type="date" defaultValue={data.releaseDate} className={inputCls} />
             </Field>
-            <Field label={t("projectForm.field.applicationDeadline")} hint={t("projectForm.help.placementDeadline")}>
+            <Field label={t("projectForm.field.applicationDeadline")} hint={t("projectForm.help.placementDeadline")} anchorId="field-deadline">
               <input
                 name="applicationDeadline"
                 type="date"
@@ -1398,7 +1416,7 @@ export function ProjectForm({
                 over the studio dictionary, with the same escape hatch as
                 Countries: type one that isn't listed and it is offered on every
                 future project. */}
-            <Field label={t("projectForm.field.studio")}>
+            <Field label={t("projectForm.field.studio")} anchorId="field-studio">
               <MultiSelect
                 options={studioOptions}
                 value={studioValues}
@@ -1418,7 +1436,7 @@ export function ProjectForm({
                 Platforms filter reads that column), but now carries the global
                 streaming-source dictionary UX (allowCustom + staff-only delete)
                 the old Streaming Source field had. */}
-            <Field label={t("projectForm.field.availableOn")} hint={t("projectForm.help.availableOn")}>
+            <Field label={t("projectForm.field.availableOn")} hint={t("projectForm.help.availableOn")} anchorId="field-platforms">
               <MultiSelect
                 options={streamOptions}
                 value={platforms}
@@ -1435,7 +1453,7 @@ export function ProjectForm({
                 }
               />
             </Field>
-            <Field label={t("projectForm.field.cinemas")}>
+            <Field label={t("projectForm.field.cinemas")} anchorId="field-cinemas">
               <MultiSelect
                 options={[]}
                 value={cinemas}

@@ -86,6 +86,27 @@ html { scrollbar-gutter: stable; }
   .placement-glow { animation: none !important; }
 }
 
+/* "what a brand sees" → jump to an unfilled field and say which one it is.
+   Ring + tint only (box-shadow/background), never a border or padding, so the
+   form doesn't shift by a pixel while this plays. Held at full strength for
+   most of the 2.2s so the field is still marked once the smooth scroll has
+   settled, then faded. With reduced motion the same mark appears, it just
+   doesn't animate — the field stays visibly picked out for the same beat. */
+@keyframes field-flash {
+  0% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); background-color: rgba(79, 70, 229, 0); }
+  12% { box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.35); background-color: rgba(79, 70, 229, 0.07); }
+  70% { box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.35); background-color: rgba(79, 70, 229, 0.07); }
+  100% { box-shadow: 0 0 0 4px rgba(79, 70, 229, 0); background-color: rgba(79, 70, 229, 0); }
+}
+.field-flash { animation: field-flash 2.2s ease-out 1; }
+@media (prefers-reduced-motion: reduce) {
+  .field-flash {
+    animation: none !important;
+    box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.35);
+    background-color: rgba(79, 70, 229, 0.07);
+  }
+}
+
 /* horizontal marquee (partners logo slider) */
 @keyframes marquee-left {
   from { transform: translateX(0); }

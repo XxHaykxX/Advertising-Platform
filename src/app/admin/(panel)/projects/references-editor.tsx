@@ -79,13 +79,16 @@ export function ReferencesSection({
                 <input
                   value={r.name}
                   onChange={(e) => update(i, { name: e.target.value })}
-                  placeholder={t("projectForm.field.referenceName")}
+                  // Was placeholder={t("projectForm.field.referenceName")} —
+                  // just re-showed the "Title" column header (#20 placeholder
+                  // audit); a real example title reads as an example instead.
+                  placeholder={t("projectForm.field.referenceNamePlaceholder")}
                   className={`${cellCls} col-start-1 row-start-1 sm:col-start-1`}
                 />
                 <input
                   value={r.url}
                   onChange={(e) => update(i, { url: e.target.value })}
-                  placeholder={t("projectForm.field.referenceUrl")}
+                  placeholder={t("projectForm.field.referenceUrlPlaceholder")}
                   className={`${cellCls} col-span-2 col-start-1 row-start-2 sm:col-span-1 sm:col-start-2 sm:row-start-1`}
                 />
                 <div className="col-span-2 col-start-1 row-start-3 flex items-center gap-2 sm:col-span-1 sm:col-start-3 sm:row-start-1">

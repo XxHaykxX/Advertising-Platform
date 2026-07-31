@@ -483,7 +483,10 @@ function ActorTableRow({
           nameLocale={nameLocale}
           onChangeName={onName}
           onSelectPerson={onSelectPerson}
-          placeholder={t("projectForm.cast.name")}
+          // A ready-made namePlaceholder key already existed for this field
+          // (t("projectForm.cast.name") repeats the "Name" column header
+          // instead) but nothing pointed at it (#20 placeholder audit).
+          placeholder={t("projectForm.cast.namePlaceholder")}
           inputRef={nameInputRef}
           unlinked={!!r.name.trim() && r.personId == null}
           unlinkedHint={t("projectForm.cast.notInDirectory")}

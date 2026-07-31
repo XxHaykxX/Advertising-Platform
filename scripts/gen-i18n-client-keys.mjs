@@ -140,6 +140,17 @@ function scan(src, keys, prefixes) {
       for (const lit of span.matchAll(/["'`]([A-Za-z][\w]*(?:\.[\w]+)+)["'`]/g)) {
         keys.add(lit[1]);
       }
+      // t(`prefix.${expr}`) — the key is built at runtime, so take the static
+      // head as a prefix group. Trimming at the last dot covers both
+      // `completeness.item.${k}` (head already ends in a dot) and
+      // `faq.q${n}.question` (head "faq.q" → group "faq."). This used to be a
+      // hand-maintained list, which is exactly how the completeness checklist
+      // shipped to prod rendering raw `completeness.item.*` keys on 2026-07-31:
+      // nobody remembered to add its prefix. Derive it instead of listing it.
+      for (const tpl of span.matchAll(/`([A-Za-z][\w.]*)\$\{/g)) {
+        const dot = tpl[1].lastIndexOf(".");
+        if (dot > 0) prefixes.add(tpl[1].slice(0, dot + 1));
+      }
     }
   }
   // localizeValue(locale, "prefix", value) — the prefix arg is always a

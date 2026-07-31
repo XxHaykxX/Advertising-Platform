@@ -1642,6 +1642,14 @@ export const UI: Record<string, Dict> = {
   // ── About block (#11) ──
   "projectForm.section.about": { ru: "О проекте", en: "About", hy: "Նախագծի մասին" },
   "projectForm.about.title": { ru: "Название", en: "Title", hy: "Վերնագիր" },
+  // Example title, not a real project — the field's own placeholder used to
+  // just repeat the label ("Title"), which reads as blank at a glance (owner
+  // screenshot, #20 placeholder audit).
+  "projectForm.about.titlePlaceholder": {
+    ru: "Тайна старого моста",
+    en: "The Old Bridge Mystery",
+    hy: "Հին կամրջի առեղծվածը",
+  },
   "projectForm.about.description": { ru: "Описание", en: "Description", hy: "Նկարագրություն" },
   "projectForm.about.descriptionPlaceholder": {
     ru: "Опишите проект…",
@@ -1819,6 +1827,10 @@ export const UI: Record<string, Dict> = {
   "projectForm.field.audienceAge": { ru: "Возраст аудитории", en: "Audience age", hy: "Լսարանի տարիք" },
   "projectForm.audienceAgePlaceholder": { ru: "16-30", en: "16-30", hy: "16-30" },
   "projectForm.field.ageRating": { ru: "Возрастной рейтинг (значок на постере)", en: "Age rating (poster badge)", hy: "Տարիքային սահմանափակում (նշան պաստառի վրա)" },
+  // The empty option used to render as a bare "—" (a <select> can't take a
+  // placeholder) — indistinguishable from a rendering glitch (#20 placeholder
+  // audit). Spelled out instead; the stored value stays "" either way.
+  "projectForm.field.ageRatingNotSet": { ru: "Не указан", en: "Not set", hy: "Նշված չէ" },
   "projectForm.field.tagline": {
     ru: "Слоган (одна строка, показывается в шапке)",
     en: "Tagline / logline (one line, shown in the hero)",
@@ -1841,7 +1853,16 @@ export const UI: Record<string, Dict> = {
   // Ф2: repeatable Reference Projects editor (replaces the single
   // comma-separated input above, which is now unused).
   "projectForm.field.referenceName": { ru: "Название", en: "Title", hy: "Վերնագիր" },
+  // Same example used by the retired comma-separated field above
+  // (referencesPlaceholder) — a recognizable title, not a restatement of the
+  // "Title" label (#20 placeholder audit).
+  "projectForm.field.referenceNamePlaceholder": { ru: "Богемская рапсодия", en: "Bohemian Rhapsody", hy: "Bohemian Rhapsody" },
   "projectForm.field.referenceUrl": { ru: "Ссылка / URL изображения", en: "Link/image URL", hy: "Հղում / նկարի URL" },
+  "projectForm.field.referenceUrlPlaceholder": {
+    ru: "https://imdb.com/title/…",
+    en: "https://imdb.com/title/…",
+    hy: "https://imdb.com/title/…",
+  },
   // A past project can also carry an uploaded still or clip, not just a link
   // (the customer's CSV schema allowed either; only the link half existed).
   "projectForm.field.referenceMedia": { ru: "Фото / видео", en: "Photo / video", hy: "Լուսանկար / տեսանյութ" },
