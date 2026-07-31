@@ -5,11 +5,31 @@ const nextConfig: NextConfig = {
   // `next start` (which errors out against a standalone build). It keeps
   // node_modules + .next around at runtime, so plain `next start` is what works.
   // Poster/gallery/headshots are uploaded in the panel and served from
-  // /uploads. `unoptimized` sends the file straight to the browser <img> — no
-  // server-side fetch/optimizer, so nothing can hang the Node server and
-  // there's no image-optimizer SSRF surface.
+  // /uploads. The optimizer was off (`unoptimized: true`) until 2026-07-31 —
+  // which meant every `sizes` prop in the app did nothing and a 24px cast
+  // thumbnail downloaded the full-size original. Perf audit measured ~300 KB of
+  // needlessly large images per page, so it is on now, with the blast radius
+  // kept small:
+  //   * no `remotePatterns` → only same-origin paths can be optimized, so the
+  //     SSRF surface the old comment worried about stays closed;
+  //   * `/uploads/**` lives outside public_html on prod and is served by the
+  //     Node route in src/app/uploads/[...path]/route.ts — the optimizer reaches
+  //     it through Next's *internal* request handler (fetchInternalImage, no
+  //     socket), so nothing depends on the app being able to call its own
+  //     public URL behind Passenger;
+  //   * one format (WebP, not AVIF) and one quality — AVIF encodes several times
+  //     slower, and this is shared hosting with a small CPU budget;
+  //   * a trimmed size ladder, so a poster is encoded a handful of times, not
+  //     once per breakpoint in the default list;
+  //   * 31-day TTL on `.next/cache/images`, because uploads are content-hashed
+  //     names that never change in place.
+  // SVG is passed through untouched by Next itself (flags/ is 271 SVGs).
   images: {
-    unoptimized: true,
+    formats: ["image/webp"],
+    qualities: [75],
+    deviceSizes: [640, 828, 1080, 1920],
+    imageSizes: [32, 64, 96, 128, 256, 384],
+    minimumCacheTTL: 2678400,
   },
   experimental: {
     // Server Actions cap request bodies at 1 MB by default; uploads (uploadImage)

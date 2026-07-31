@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { Languages, Loader2, RotateCcw, Sparkles, X } from "lucide-react";
 import {
   AGE_RATING_VALUES,
@@ -16,12 +17,11 @@ import { deleteStreamingSource } from "@/lib/actions/streaming-sources";
 import { deleteCountry } from "@/lib/actions/countries";
 import { deleteStudio } from "@/lib/actions/studios";
 import { ImageUploader, type ImageUploaderHandle } from "./image-uploader";
-import { ActorsSection, type ActorRow } from "./actors-editor";
+import type { ActorRow } from "./actors-editor";
 import type { PersonSuggestion } from "@/lib/data/actors";
-import { TiersSection, type TierRow, type TierTemplate } from "./tiers-editor";
-import { PlacementsSection, type PlacementRow } from "./placements-editor";
+import type { TierRow, TierTemplate } from "./tiers-editor";
+import type { PlacementRow } from "./placements-editor";
 import { ReferencesSection } from "./references-editor";
-import { MilestonesSection } from "./milestones-editor";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { MediaField } from "@/components/media-field";
 import { PosterGenerator, type PosterGenerateInput, type PosterGenerateResult } from "@/components/poster-generator";
@@ -31,8 +31,37 @@ import { GENRES } from "@/lib/genres";
 import { type ProjectFormState, type ProjectFormValues } from "./actions";
 import { translateProjectAction, type TranslateProjectState } from "./translate-action";
 import { generatePosterAction } from "./poster-action";
-import { makeUI, type Locale } from "@/lib/i18n";
+import { makeUI, type Locale } from "@/lib/i18n-client";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+
+// @dnd-kit (core + sortable + utilities, ~126 KB total) backs the
+// drag-to-reorder rows in all four sections below — split out via
+// next/dynamic(ssr:false) so it ships as its own chunk instead of riding into
+// every /admin and /account project-form page load whether or not staff ever
+// drags a row (bundle audit 2026-07-31). Each section still renders its own
+// list/cards/table exactly as before; only the module boundary moved. A
+// shared skeleton stands in for the brief moment the chunk takes to arrive —
+// row order itself is unaffected, it's still just array order → sortOrder on
+// save.
+const SECTION_SKELETON = (
+  <div className="h-24 animate-pulse rounded-xl border border-border bg-muted/40" />
+);
+const ActorsSection = dynamic(
+  () => import("./actors-editor").then((m) => m.ActorsSection),
+  { ssr: false, loading: () => SECTION_SKELETON },
+);
+const TiersSection = dynamic(
+  () => import("./tiers-editor").then((m) => m.TiersSection),
+  { ssr: false, loading: () => SECTION_SKELETON },
+);
+const PlacementsSection = dynamic(
+  () => import("./placements-editor").then((m) => m.PlacementsSection),
+  { ssr: false, loading: () => SECTION_SKELETON },
+);
+const MilestonesSection = dynamic(
+  () => import("./milestones-editor").then((m) => m.MilestonesSection),
+  { ssr: false, loading: () => SECTION_SKELETON },
+);
 
 type TranslateLang = "hy" | "ru" | "en";
 
@@ -1288,19 +1317,6 @@ export function ProjectForm({
                 (owner request 2026-07-27): who made it and where it plays are
                 one question, and it sat here between the poster and the money
                 fields for no reason. */}
-            {/* Two separate money figures (owner decision C.3, 2026-07-26):
-                the CSV schema's "Budget" is the production budget, while the
-                pre-existing column holds box-office gross. They were being
-                conflated under one "Budget" label. */}
-            <Field label={t("projectForm.field.productionBudget")}>
-              <input
-                name="productionBudgetAmd"
-                type="number"
-                min={0}
-                defaultValue={numOrEmpty(data.productionBudgetAmd)}
-                className={inputCls}
-              />
-            </Field>
             {/* Box office was removed on 2026-07-27 (owner request): it is a
                 past-performance number, not part of what a brand is buying, and
                 it was the only money figure on the card competing with the
@@ -1334,6 +1350,20 @@ export function ProjectForm({
                   </option>
                 ))}
               </select>
+            </Field>
+            {/* Two separate money figures (owner decision C.3, 2026-07-26):
+                the CSV schema's "Budget" is the production budget, while the
+                pre-existing column holds box-office gross. They were being
+                conflated under one "Budget" label. Moved below Age rating on
+                2026-07-31 (owner request). */}
+            <Field label={t("projectForm.field.productionBudget")}>
+              <input
+                name="productionBudgetAmd"
+                type="number"
+                min={0}
+                defaultValue={numOrEmpty(data.productionBudgetAmd)}
+                className={inputCls}
+              />
             </Field>
           </section>
 

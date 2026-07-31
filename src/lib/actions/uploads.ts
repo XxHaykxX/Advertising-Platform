@@ -18,7 +18,7 @@ import { STAFF_UPLOAD_MESSAGES, storeUpload } from "@/lib/uploads-store";
 // process is long-lived, so files written at runtime persist on disk.
 const UPLOAD_ROOT = UPLOADS_DIR;
 
-export type UploadResult = { path?: string; error?: string };
+export type UploadResult = { path?: string; error?: string; warning?: string };
 
 /** Reject any path that isn't a real /uploads/… file (blocks ../ traversal). */
 function resolveInsideUploads(publicPath: string): string | null {

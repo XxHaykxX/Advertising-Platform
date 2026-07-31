@@ -25,10 +25,13 @@ export type XhrUploadOptions = {
   errorLabel?: string;
 };
 
-/** Exactly one of these is set: `path` on success, `error` on a rejection the
- *  server explained or a transport failure, `canceled` when the caller aborted
- *  (never an error — nothing went wrong). */
-export type XhrUploadResult = { path?: string; error?: string; canceled?: boolean };
+/** Exactly one of `path`/`error`/`canceled` is set: `path` on success, `error`
+ *  on a rejection the server explained or a transport failure, `canceled` when
+ *  the caller aborted (never an error — nothing went wrong). `warning` can
+ *  ride alongside a successful `path` (#16, 2026-07-31) — e.g. an mp4 the host
+ *  couldn't compress server-side; the file is still stored, this just tells
+ *  the editor it stayed at its original weight. */
+export type XhrUploadResult = { path?: string; error?: string; canceled?: boolean; warning?: string };
 
 export function uploadViaXhr(fd: FormData, options: XhrUploadOptions = {}): Promise<XhrUploadResult> {
   const { scope = "staff", onProgress, signal, errorLabel = "Upload failed." } = options;

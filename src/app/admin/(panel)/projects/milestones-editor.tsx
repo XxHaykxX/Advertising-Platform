@@ -19,7 +19,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Plus, Trash2 } from "lucide-react";
-import type { makeUI } from "@/lib/i18n";
+import type { makeUI } from "@/lib/i18n-client";
 import { EMPTY_MILESTONE, type MilestoneRow } from "./form-shared";
 
 // Controlled Production Timeline editor (Ф4/#27). A drag-reorderable list of

@@ -24,7 +24,7 @@ const MEMBERS_ROOT = path.join(UPLOADS_DIR, "members");
  *  member's own namespace, so the `dir` field can only ever choose a subfolder
  *  of it. Fields that show a progress bar post to /api/uploads?scope=member
  *  instead, which runs this same pair of decisions. */
-export async function uploadMemberImage(fd: FormData): Promise<{ path?: string; error?: string }> {
+export async function uploadMemberImage(fd: FormData): Promise<{ path?: string; error?: string; warning?: string }> {
   const me = await requireMember();
   // Audit 4.5: these messages surface directly in a member's cabinet, which is
   // in their own language — they used to be hardcoded English.

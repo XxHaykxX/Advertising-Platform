@@ -1,11 +1,18 @@
+"use client";
+
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { Film, TrendingUp } from "lucide-react";
 import { AccentBadge } from "@/components/ui/badge";
 import type { PortfolioDTO } from "@/lib/types";
-import { DEFAULT_LOCALE, type Locale } from "@/lib/i18n";
-import { localizeMetricLabel, parseMetrics } from "./metrics";
+import { DEFAULT_LOCALE, type Locale } from "@/lib/i18n-client";
+import { useMetricLabeler, parseMetrics } from "./metrics";
 
+// Explicitly "use client" (bundle audit 2026-07-31): already uses
+// framer-motion and is only ever rendered by portfolio-view.tsx inside a
+// client-side `cases.map()`, so it was already always browser-rendered —
+// marking it avoids it silently falling back to server-only i18n imports
+// that would break the moment it's rendered from a Client Component.
 export function CaseCard({
   data: c,
   index,
@@ -18,6 +25,7 @@ export function CaseCard({
   locale?: Locale;
 }) {
   const metrics = Object.entries(parseMetrics(c.metrics)).slice(0, 3);
+  const metricLabel = useMetricLabeler(locale);
 
   return (
     <motion.button
@@ -61,7 +69,7 @@ export function CaseCard({
               >
                 <TrendingUp className="h-3 w-3 shrink-0" />
                 {value}
-                <span className="font-normal text-primary/70">{localizeMetricLabel(locale, key)}</span>
+                <span className="font-normal text-primary/70">{metricLabel(key)}</span>
               </span>
             ))}
           </div>

@@ -14,10 +14,12 @@ import { randomUUID } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { optimizeImage, kindForDir } from "@/lib/images/optimize";
+import { ffmpegAvailable, transcodeMp4 } from "@/lib/video/optimize";
 
 export const MAX_BYTES = 8 * 1024 * 1024; // 8 MB
-// Video branch (project trailer upload, #10): no sharp pass — the file is
-// stored as-is. Kept small since this runs on Hostinger shared hosting.
+// Video branch (project trailer upload, #10). Kept small since this runs on
+// Hostinger shared hosting. #16 (2026-07-31): mp4 now gets an ffmpeg pass when
+// the host has one — see prepareVideo() below.
 export const MAX_BYTES_VIDEO = 50 * 1024 * 1024; // 50 MB
 
 /** Ceiling for a whole multipart body, for a front door that wants to reject a
@@ -125,7 +127,10 @@ export type StoreUploadOptions = {
   messages: UploadMessages;
 };
 
-export type StoredUpload = { path?: string; error?: string };
+/** `warning` is set alongside a successful `path` — never instead of it — for
+ *  cases the upload should still succeed but the editor ought to know about
+ *  (right now: an mp4 that couldn't be compressed server-side). */
+export type StoredUpload = { path?: string; error?: string; warning?: string };
 
 /** Validate a multipart upload and write it. Identical rules whichever front
  *  door called: the folder/type rule, the per-kind size cap, the MIME/extension
@@ -158,35 +163,83 @@ export async function storeUpload(fd: FormData, opts: StoreUploadOptions): Promi
     const ext = EXT_BY_TYPE_VIDEO[file.type] || file.name.toLowerCase().match(/\.(mp4|webm)$/)?.[1];
     if (!ext) return { error: messages.unsupportedVideo };
 
+    const rawBuffer = Buffer.from(await file.arrayBuffer());
     const name = `${Date.now()}-${randomUUID().slice(0, 8)}.${ext}`;
     const destDir = path.join(root, dir);
     if (!assertInside(root, destDir)) return { error: messages.noFile };
     await mkdir(destDir, { recursive: true });
-    await writeFile(path.join(destDir, name), Buffer.from(await file.arrayBuffer()));
+
+    const { buffer: outBuffer, warning } = await prepareVideo(rawBuffer, ext, file.size);
+    await writeFile(path.join(destDir, name), outBuffer);
     await writePosterFrame(fd, destDir, name);
 
-    return { path: `${publicPrefix}/${dir}/${name}` };
+    return { path: `${publicPrefix}/${dir}/${name}`, warning };
   }
 
   if (file.size > MAX_BYTES) return { error: messages.tooLargeImage };
   const ext = EXT_BY_TYPE[file.type];
   if (!ext) return { error: messages.unsupportedImage };
 
-  // Optimize (resize + recompress) to the target for this dir before saving.
-  let optimized;
-  try {
-    optimized = await optimizeImage(Buffer.from(await file.arrayBuffer()), kindForDir(dir));
-  } catch {
-    return { error: messages.processFailed };
+  const rawBuffer = Buffer.from(await file.arrayBuffer());
+
+  // Animated GIFs lose their animation if pushed through the webp branch
+  // below: sharp only preserves frames when it is explicitly told to read
+  // them (`{ animated: true }`), and optimizeImage() doesn't — it always emits
+  // one static frame, which for an animated source is a silent regression, not
+  // a compression win. Static GIFs would compress fine as webp, but there's no
+  // cheap way here to tell "animated" from "static" apart from decoding twice,
+  // so every GIF is stored as-is (still under the same MAX_BYTES cap above).
+  let outBuffer: Buffer;
+  let outExt: string = ext;
+  if (ext === "gif") {
+    outBuffer = rawBuffer;
+  } else {
+    // Optimize (resize + recompress) to the target for this dir before saving.
+    try {
+      const optimized = await optimizeImage(rawBuffer, kindForDir(dir));
+      outBuffer = optimized.buffer;
+      outExt = optimized.ext;
+    } catch {
+      return { error: messages.processFailed };
+    }
   }
 
-  const name = `${Date.now()}-${randomUUID().slice(0, 8)}.${optimized.ext}`;
+  const name = `${Date.now()}-${randomUUID().slice(0, 8)}.${outExt}`;
   const destDir = path.join(root, dir);
   if (!assertInside(root, destDir)) return { error: messages.noFile };
   await mkdir(destDir, { recursive: true });
-  await writeFile(path.join(destDir, name), optimized.buffer);
+  await writeFile(path.join(destDir, name), outBuffer);
 
   return { path: `${publicPrefix}/${dir}/${name}` };
+}
+
+/** #16 (2026-07-31): re-encode mp4 uploads when the host has ffmpeg on PATH;
+ *  Hostinger shared hosting is the one most likely not to (hence the whole
+ *  fallback), so this never blocks an upload on it being there. WebM is left
+ *  untouched either way — re-encoding it to H.264/AAC would also mean
+ *  changing its container to .mp4, which is a bigger change than this pass
+ *  makes, and the Videos folder mostly sees phone/export MP4s in practice. */
+async function prepareVideo(
+  raw: Buffer,
+  ext: string,
+  originalBytes: number,
+): Promise<{ buffer: Buffer; warning?: string }> {
+  if (ext !== "mp4") return { buffer: raw };
+
+  const mb = () => (originalBytes / (1024 * 1024)).toFixed(1);
+
+  if (!(await ffmpegAvailable())) {
+    return {
+      buffer: raw,
+      warning: `Stored without server-side compression — ffmpeg isn't available on this host (${mb()} MB as uploaded).`,
+    };
+  }
+
+  const transcoded = await transcodeMp4(raw);
+  if (!transcoded) {
+    return { buffer: raw, warning: `Server-side compression failed — stored as uploaded (${mb()} MB).` };
+  }
+  return { buffer: transcoded };
 }
 
 /** Store the poster frame the browser grabbed for an uploaded video, as

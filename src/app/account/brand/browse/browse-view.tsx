@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ProjectCard } from "@/components/project-card";
 import { splitCountries } from "@/lib/data/format";
 import { FORMAT_CATEGORY_VALUES } from "@/app/admin/(panel)/projects/form-shared";
-import { DEFAULT_LOCALE, localizeValue, makeUI, type Locale } from "@/lib/i18n";
+import { DEFAULT_LOCALE, makeUI, useLocalizer, type Locale } from "@/lib/i18n-client";
 import type { ProjectListDTO } from "@/lib/types";
 
 /** One checkbox facet group — shared by every filter below (4.4). Simplified
@@ -68,6 +68,10 @@ export function BrowseView({
   title: string;
 }) {
   const t = makeUI(locale);
+  // One hook call up front — FORMAT_CATEGORY_VALUES.map() below calls this
+  // per item; localizeValue() itself reads context and can't be called
+  // inside a loop.
+  const localize = useLocalizer(locale);
   const [search, setSearch] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
 
@@ -141,7 +145,7 @@ export function BrowseView({
     <>
       <CheckboxFilter
         label={t("catalog.format")}
-        options={FORMAT_CATEGORY_VALUES.map((v) => ({ value: v, label: localizeValue(locale, "formatCategory", v) }))}
+        options={FORMAT_CATEGORY_VALUES.map((v) => ({ value: v, label: localize("formatCategory", v) }))}
         selected={selectedFormats}
         onToggle={toggleFormat}
       />

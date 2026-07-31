@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { Languages, Loader2 } from "lucide-react";
-import { makeUI } from "@/lib/i18n";
+import { makeUI } from "@/lib/i18n-client";
 import { MediaField } from "@/components/media-field";
 import { MetricsEditor } from "./metrics-editor";
 import type { PortfolioFormState, PortfolioFormValues } from "./actions";
@@ -12,10 +12,6 @@ import { translatePortfolioAction, type TranslatePortfolioState } from "./transl
 export type PortfolioFormInitial = PortfolioFormValues;
 
 type TranslateLang = "hy" | "ru" | "en";
-
-// Admin chrome is English-only (same as project-form) — used purely for the
-// shared translate.* error strings surfaced by the Translate button.
-const t = makeUI("en");
 
 // Locale tabs, same pattern (and same reasoning) as the project form's About
 // block: all three panels stay mounted, the inactive ones are just `hidden`, so
@@ -59,6 +55,11 @@ export function PortfolioForm({
   initial?: PortfolioFormInitial;
   submitLabel: string;
 }) {
+  // Admin chrome is English-only (same as project-form) — used purely for the
+  // shared translate.* error strings surfaced by the Translate button. Called
+  // here rather than at module scope: makeUI reads the dictionary off React
+  // context now, so it only works during a render.
+  const t = makeUI("en");
   const [state, formAction, pending] = useActionState<PortfolioFormState, FormData>(action, {});
 
   // Full page load rather than the client router — see the redirect-contract

@@ -6,6 +6,7 @@ import { getCurrency } from "@/lib/data/currency";
 import { getSiteHeaderUser } from "@/lib/data/site-header-user";
 import { PortfolioView } from "@/components/portfolio-page/portfolio-view";
 import { PortfolioJsonLd } from "@/components/portfolio-page/portfolio-json-ld";
+import { Footer } from "@/components/footer";
 import { PORTFOLIO_ENABLED } from "@/lib/feature-flags";
 
 // The `canonical: "/portfolio"` link is dropped while the page is hidden
@@ -38,7 +39,13 @@ export default async function PortfolioPage() {
   return (
     <>
       <PortfolioJsonLd cases={cases} />
-      <PortfolioView cases={cases} locale={locale} currency={currency} user={user} />
+      <PortfolioView
+        cases={cases}
+        locale={locale}
+        currency={currency}
+        user={user}
+        footer={<Footer locale={locale} currency={currency} />}
+      />
     </>
   );
 }

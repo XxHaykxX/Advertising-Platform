@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { BRAND_CATEGORIES, BUDGET_RANGES } from "@/lib/brand-categories";
-import { localizeValue, makeUI, type Locale } from "@/lib/i18n";
+import { makeUI, useLocalizer, type Locale } from "@/lib/i18n-client";
 import { updateBrandProfile, type BrandProfileFormState } from "../actions";
 import type { BrandProfileDTO } from "@/lib/data/brand-profile";
 
@@ -20,6 +20,10 @@ const cardClass = "rounded-2xl border border-border bg-card p-6";
 
 export function ProfileForm({ profile, locale }: { profile: BrandProfileDTO; locale: Locale }) {
   const t = makeUI(locale);
+  // One hook call up front — BRAND_CATEGORIES.map() below calls this per
+  // item; localizeValue() itself reads context and can't be called inside a
+  // loop.
+  const localize = useLocalizer(locale);
   const router = useRouter();
   const [state, formAction, actionPending] = useActionState<BrandProfileFormState, FormData>(
     updateBrandProfile,
@@ -83,7 +87,7 @@ export function ProfileForm({ profile, locale }: { profile: BrandProfileDTO; loc
 
   const categoryOptions = BRAND_CATEGORIES.map((c) => ({
     value: c,
-    label: localizeValue(locale, "category", c),
+    label: localize("category", c),
   }));
 
   return (

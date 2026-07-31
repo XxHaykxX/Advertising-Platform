@@ -1,4 +1,4 @@
-import { intlLocale, type Locale } from "@/lib/i18n";
+import { intlLocale, type Locale } from "@/lib/i18n-base";
 
 export function parseStringArray(json: string | null): string[] {
   if (!json) return [];

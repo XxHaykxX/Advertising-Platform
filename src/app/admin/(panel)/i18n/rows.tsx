@@ -12,7 +12,7 @@ import {
   Minimize2,
   RotateCcw,
 } from "lucide-react";
-import { LOCALES, type Locale } from "@/lib/i18n";
+import { LOCALES, type Locale } from "@/lib/i18n-client";
 import { isChanged, type ValidationIssue, type Values } from "@/lib/i18n-validate";
 import { MARK_LIST, MARK_META, type Colour, type Mark } from "./mark";
 import {

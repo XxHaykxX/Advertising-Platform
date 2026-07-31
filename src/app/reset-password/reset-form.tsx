@@ -5,7 +5,7 @@ import { Loader2, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PasswordInput } from "@/components/ui/password-input";
 import { resetPassword, type ResetState } from "@/app/forgot/actions";
-import { makeUI, type Locale } from "@/lib/i18n";
+import { makeUI, type Locale } from "@/lib/i18n-client";
 
 export function ResetForm({ locale, token }: { locale: Locale; token: string }) {
   const t = makeUI(locale);

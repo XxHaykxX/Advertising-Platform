@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -20,12 +20,11 @@ import { PageHero } from "@/components/ui/page-hero";
 import { GenreBadge } from "@/components/ui/badge";
 import { ProjectCard } from "@/components/project-card";
 import { FavoriteHeart } from "@/components/favorite-heart";
-import { Footer } from "@/components/footer";
 import { Header, type SiteHeaderUser } from "@/components/header";
 import { daysUntil, formatFullDate, parseStringArray, splitCountries } from "@/lib/data/format";
 import { FORMAT_CATEGORY_VALUES } from "@/app/admin/(panel)/projects/form-shared";
 import { cn } from "@/lib/utils";
-import { DEFAULT_LOCALE, intlLocale, localizeValue, makeUI, UI, LOCALES, type Locale } from "@/lib/i18n";
+import { DEFAULT_LOCALE, intlLocale, makeUI, useLocalizer, LOCALES, type Locale } from "@/lib/i18n-client";
 import { DEFAULT_CURRENCY, type CurrencyCode } from "@/lib/currency";
 import type { ProjectListDTO } from "@/lib/types";
 
@@ -56,6 +55,10 @@ function ProjectRow({
   signedIn?: boolean;
 }) {
   const t = makeUI(locale);
+  // One hook call up front — shownExtraGenres.map() below (variable-length,
+  // depends on the project) calls this per item; localizeValue() itself
+  // reads context and can't be called inside a loop.
+  const localize = useLocalizer(locale);
   const countries = splitCountries(project.countries);
   const deadlineDays = daysUntil(project.applicationDeadline);
   const deadlineUrgent = deadlineDays !== null && deadlineDays <= 45;
@@ -93,9 +96,9 @@ function ProjectRow({
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <h3 className="text-lg font-semibold text-foreground">{project.title}</h3>
-          <GenreBadge>{localizeValue(locale, "genre", allGenres[0])}</GenreBadge>
+          <GenreBadge>{localize("genre", allGenres[0])}</GenreBadge>
           {shownExtraGenres.map((g) => (
-            <GenreBadge key={g}>{localizeValue(locale, "genre", g)}</GenreBadge>
+            <GenreBadge key={g}>{localize("genre", g)}</GenreBadge>
           ))}
           {moreGenres > 0 ? <GenreBadge>+{moreGenres}</GenreBadge> : null}
         </div>
@@ -177,6 +180,8 @@ export function CatalogView({
   favorites = new Set(),
   signedIn = false,
   isBrand = false,
+  statusLabelsAll,
+  footer,
 }: {
   projects: ProjectListDTO[];
   locale?: Locale;
@@ -187,8 +192,23 @@ export function CatalogView({
   favorites?: Set<number>;
   signedIn?: boolean;
   isBrand?: boolean;
+  /** `report.status.*` labels in every locale (server-side allStatusLabels(),
+   *  see @/lib/i18n) — the free-text search below matches a project's status
+   *  against all three languages regardless of the page's current locale, so
+   *  it needs more than the single-locale client dictionary slice. */
+  statusLabelsAll: Record<string, Record<Locale, string>>;
+  /** <Footer/>, rendered by the server page (catalog/page.tsx) and passed
+   *  down instead of imported here — Footer is a plain Server Component used
+   *  by many pure-server pages (bundle audit 2026-07-31); importing it
+   *  directly into this Client Component would force it into every page's
+   *  client bundle, not just this one. */
+  footer: ReactNode;
 }) {
   const t = makeUI(locale);
+  // One hook call up front — genres.map()/FORMAT_CATEGORY_VALUES.map() below
+  // call this per item; localizeValue() itself reads context and can't be
+  // called inside a loop.
+  const localize = useLocalizer(locale);
   // 5.6: the genre facet (and the filter match below) now considers every
   // genre a project carries, not just genres[0] — a project tagged
   // Comedy+Drama should surface under either filter, not just the first.
@@ -408,7 +428,7 @@ export function CatalogView({
 
       if (term) {
         const statusLabels = LOCALES.map(
-          (l) => UI[`report.status.${p.status}`]?.[l] ?? "",
+          (l) => statusLabelsAll[`report.status.${p.status}`]?.[l] ?? "",
         ).join(" ");
         const haystack =
           `${p.title} ${p.genre} ${p.countries} ${p.synopsis} ${statusLabels}`.toLowerCase();
@@ -428,6 +448,7 @@ export function CatalogView({
     selectedPlatforms,
     selectedCountries,
     search,
+    statusLabelsAll,
   ]);
 
   // 5.7: re-sort the already-filtered list. "default" is a no-op — `filtered`
@@ -469,7 +490,7 @@ export function CatalogView({
     <>
       <CheckboxFilter
         label={t("catalog.genre")}
-        options={genres.map((g) => ({ value: g, label: localizeValue(locale, "genre", g) }))}
+        options={genres.map((g) => ({ value: g, label: localize("genre", g) }))}
         selected={selectedGenres}
         onToggle={toggleGenre}
       />
@@ -479,7 +500,7 @@ export function CatalogView({
         options={[
           ...FORMAT_CATEGORY_VALUES.map((v) => ({
             value: v,
-            label: localizeValue(locale, "formatCategory", v),
+            label: localize("formatCategory", v),
           })),
           // 5.8: explicit opt-in bucket for formatCategory === "" — see the
           // filtering comment above for why this keeps those rows visible.
@@ -719,7 +740,7 @@ export function CatalogView({
         </div>
       ) : null}
 
-      <Footer locale={locale} currency={currency} />
+      {footer}
     </>
   );
 }

@@ -260,6 +260,9 @@ export function MediaManager({ files }: { files: MediaFile[] }) {
           continue;
         }
         setUploadQueue((q) => q.map((it, idx) => (idx === i ? { ...it, status: "done" } : it)));
+        // #16 (2026-07-31): mp4 the host couldn't compress server-side — the
+        // file is stored, so this is a Toast (informational), not setError.
+        if (res.warning) setNotice(res.warning);
         if (res.path) added.push({ path: res.path, size: file.size, mtime: Date.now() });
       }
       if (added.length) setItems((prev) => [...added, ...prev]);

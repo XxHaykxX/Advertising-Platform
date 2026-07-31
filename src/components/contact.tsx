@@ -7,7 +7,7 @@ import { Container } from "@/components/ui/container";
 import { Reveal } from "@/components/ui/reveal";
 import { Button } from "@/components/ui/button";
 import { submitLead, type LeadState } from "@/lib/actions/leads";
-import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
+import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n-client";
 
 const initialState: LeadState = { ok: false };
 

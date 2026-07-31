@@ -19,7 +19,7 @@ import {
   useSortableRows,
 } from "./offer-card";
 import type { MediaPickerScope } from "@/components/media-picker";
-import type { makeUI, Locale } from "@/lib/i18n";
+import type { makeUI, Locale } from "@/lib/i18n-client";
 
 // Controlled sponsorship-tiers section (#20²) — the "Sponsors" block: the
 // logo-on-materials deal, as opposed to the brand inside the story

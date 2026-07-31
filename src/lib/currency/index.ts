@@ -4,7 +4,7 @@
    convert and format that AMD amount for display in the visitor's chosen
    currency. */
 
-import { intlLocale, type Locale } from "@/lib/i18n";
+import { intlLocale, type Locale } from "@/lib/i18n-base";
 
 export const CURRENCIES = ["AMD", "USD", "EUR", "RUB"] as const;
 export type CurrencyCode = (typeof CURRENCIES)[number];

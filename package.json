@@ -17,7 +17,9 @@
     "db:seed": "tsx prisma/seed.ts",
     "postinstall": "prisma generate",
     "i18n:export": "tsx scripts/i18n-export.ts",
-    "i18n:import": "tsx scripts/i18n-import.ts"
+    "i18n:import": "tsx scripts/i18n-import.ts",
+    "i18n:keys": "node scripts/gen-i18n-client-keys.mjs",
+    "optimize:images": "node scripts/optimize-static-images.mjs"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

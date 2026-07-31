@@ -11,7 +11,7 @@ import {
   Undo2,
   X,
 } from "lucide-react";
-import type { Locale } from "@/lib/i18n";
+import type { Locale } from "@/lib/i18n-client";
 import { isChanged, validateEntry, type ValidationIssue, type Values } from "@/lib/i18n-validate";
 import { MARK_LIST, MARK_META, type Colour, type Mark } from "./mark";
 import { CsvTransfer } from "./csv-transfer";

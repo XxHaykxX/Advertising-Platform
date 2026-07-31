@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Bell, BellRing, Loader2, X } from "lucide-react";
-import { makeUI, type Locale } from "@/lib/i18n";
+import { makeUI, type Locale } from "@/lib/i18n-client";
 import { savePushSubscription } from "@/lib/actions/push";
 
 type Status = "loading" | "unsupported" | "prompt" | "enabled" | "denied";

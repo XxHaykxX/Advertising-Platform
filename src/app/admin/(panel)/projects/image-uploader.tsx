@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/dropzone";
 import { UploadProgress } from "@/components/ui/upload-progress";
 import { holdProgress, uploadViaXhr } from "@/lib/upload-xhr";
-import type { Locale } from "@/lib/i18n";
+import type { Locale } from "@/lib/i18n-client";
 import { imageSizeHint } from "@/lib/images/size-hint";
 
 /** Mirrors MAX_BYTES in lib/uploads-store.ts. Checked before the round trip:

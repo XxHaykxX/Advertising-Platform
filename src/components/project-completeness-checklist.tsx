@@ -1,6 +1,14 @@
+"use client";
+
 import { Check, Circle } from "lucide-react";
-import { makeUI, type Locale } from "@/lib/i18n";
+import { makeUI, type Locale } from "@/lib/i18n-client";
 import type { CompletenessItem, CompletenessKey } from "@/lib/project-completeness";
+
+// Explicitly "use client" (bundle audit 2026-07-31): its only caller
+// (project-form.tsx) recomputes `items` from live client-side form state, so
+// it always renders in the browser anyway — marking it avoids it silently
+// falling back to server-only i18n imports that would break the moment it's
+// rendered from a Client Component.
 
 // Anchors into the project form's own sections (project-form.tsx, `id="sec-…"`
 // on each <section>) — a click on an empty item jumps straight there instead

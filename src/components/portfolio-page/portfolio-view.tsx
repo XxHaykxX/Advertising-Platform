@@ -1,13 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { Header, type SiteHeaderUser } from "@/components/header";
-import { Footer } from "@/components/footer";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { PageHero } from "@/components/ui/page-hero";
-import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
+import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n-client";
 import { DEFAULT_CURRENCY, type CurrencyCode } from "@/lib/currency";
 import type { PortfolioDTO } from "@/lib/types";
 import { CaseCard } from "./case-card";
@@ -18,11 +17,18 @@ export function PortfolioView({
   locale = DEFAULT_LOCALE,
   currency = DEFAULT_CURRENCY,
   user = null,
+  footer,
 }: {
   cases: PortfolioDTO[];
   locale?: Locale;
   currency?: CurrencyCode;
   user?: SiteHeaderUser | null;
+  /** <Footer/>, rendered by the server page (app/portfolio/page.tsx) and
+   *  passed down instead of imported here — Footer is a plain Server
+   *  Component used by many pure-server pages (bundle audit 2026-07-31);
+   *  importing it directly into this Client Component would force it into
+   *  every page's client bundle, not just this one. */
+  footer: ReactNode;
 }) {
   const t = makeUI(locale);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
@@ -68,7 +74,7 @@ export function PortfolioView({
         </div>
       </main>
 
-      <Footer locale={locale} currency={currency} />
+      {footer}
 
       <CaseLightbox
         cases={cases}

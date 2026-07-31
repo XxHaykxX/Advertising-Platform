@@ -26,7 +26,7 @@ import type { PersonSuggestion } from "@/lib/data/actors";
 import { allSpellings, pickPersonName } from "@/lib/person-name";
 import { matchesAnyNameQuery } from "@/lib/translit";
 import { cn } from "@/lib/utils";
-import { DEFAULT_LOCALE, type makeUI, type Locale } from "@/lib/i18n";
+import { DEFAULT_LOCALE, type makeUI, type Locale } from "@/lib/i18n-client";
 
 // Controlled cast/crew section (#20²). Rows are owned by the parent ProjectForm —
 // cast/crew save together with the main project in a single submit; the parent

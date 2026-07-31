@@ -3,8 +3,18 @@ import sharp from "sharp";
 
 /** Post-upload image optimization (#images, 2026-07-20). Every uploaded or
  *  AI-generated image is resized + recompressed to one of three targets so the
- *  site stays consistent and light. `images.unoptimized` is on (Next does not
- *  touch images), so this is the single place sizing/compression happens.
+ *  site stays consistent and light. This is the single place that decides the
+ *  STORED file — its weight on disk, its crop, its aspect ratio — regardless
+ *  of what Next does with it afterwards.
+ *
+ *  Next's own image optimizer was switched on in next.config.ts on 2026-07-31
+ *  (it used to run with `unoptimized: true`); that's a *separate*, runtime
+ *  pass — it re-encodes per `sizes`/breakpoint for network transfer on the way
+ *  out, it does not touch the file on disk, and it never crops or normalizes
+ *  aspect ratio the way this module does. The two are complementary, not
+ *  redundant: skipping this pass would mean storing (and re-optimizing on
+ *  every cache miss) whatever multi-megabyte, arbitrary-aspect original a
+ *  phone or screenshot tool produced.
  *
  *   - avatar / logo → 512×512 (1:1), fit "contain" on a transparent canvas so a
  *     logo is never clipped.

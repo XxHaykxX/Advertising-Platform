@@ -1,7 +1,7 @@
 import "server-only";
 import { prisma } from "@/lib/prisma";
 import type { ActorDTO } from "@/lib/types";
-import { DEFAULT_LOCALE, type Locale } from "@/lib/i18n";
+import { DEFAULT_LOCALE, type Locale } from "@/lib/i18n-base";
 import { pickPersonName } from "@/lib/person-name";
 import { parseRolesInput } from "@/app/admin/(panel)/projects/form-shared";
 

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { GenreBadge } from "@/components/ui/badge";
 import { daysUntil, formatFullDate, isArchived } from "@/lib/data/format";
 import { cn } from "@/lib/utils";
-import { intlLocale, localizeValue, makeUI, type Locale } from "@/lib/i18n";
+import { intlLocale, makeUI, useLocalizer, type Locale } from "@/lib/i18n-client";
 import type { BrandFavoriteDTO } from "@/lib/data/brand-favorites";
 import { RemoveFavoriteButton } from "./remove-favorite-button";
 
@@ -20,6 +20,10 @@ type SortKey = "added" | "price" | "deadline";
  *  (would need a DB migration for a new column — flagged in the handoff). */
 export function FavoritesView({ favorites, locale }: { favorites: BrandFavoriteDTO[]; locale: Locale }) {
   const t = makeUI(locale);
+  // Read the dictionary once here: the genre badge below renders inside
+  // favorites.map(), and a context-reading helper called per item would make
+  // the hook count track the list length.
+  const localize = useLocalizer(locale);
   const [sort, setSort] = useState<SortKey>("added");
 
   const sorted = useMemo(() => {
@@ -169,7 +173,7 @@ export function FavoritesView({ favorites, locale }: { favorites: BrandFavoriteD
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
                 <h3 className="font-semibold text-foreground">{favorite.project.title}</h3>
-                <GenreBadge>{localizeValue(locale, "genre", favorite.project.genre)}</GenreBadge>
+                <GenreBadge>{localize("genre", favorite.project.genre)}</GenreBadge>
               </div>
               <p className="mt-2 text-xs text-muted-foreground">
                 {t("account.brand.favoritedOn", {

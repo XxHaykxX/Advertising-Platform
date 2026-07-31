@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, Film, X } from "lucide-react";
-import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
+import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n-client";
 import type { PortfolioDTO } from "@/lib/types";
-import { localizeMetricLabel, parseMetrics } from "./metrics";
+import { useMetricLabeler, parseMetrics } from "./metrics";
 
 export function CaseLightbox({
   cases,
@@ -22,6 +22,7 @@ export function CaseLightbox({
   locale?: Locale;
 }) {
   const t = makeUI(locale);
+  const metricLabel = useMetricLabeler(locale);
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -134,7 +135,7 @@ export function CaseLightbox({
                       className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary"
                     >
                       {value}
-                      <span className="font-normal text-primary/70">{localizeMetricLabel(locale, key)}</span>
+                      <span className="font-normal text-primary/70">{metricLabel(key)}</span>
                     </span>
                   ))}
                 </div>

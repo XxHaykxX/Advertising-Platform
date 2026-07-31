@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import { LayoutDashboard, FolderKanban, FileUp, Bell, User, LogOut, Inbox } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutButton } from "@/components/logout-button";
-import type { Locale } from "@/lib/i18n";
+import type { Locale } from "@/lib/i18n-client";
 import { getUnreadNotificationCount } from "@/lib/actions/notifications";
 import { getPendingOfferCountForMe } from "@/app/account/interests/actions";
 

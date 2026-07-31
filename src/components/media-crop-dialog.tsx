@@ -64,9 +64,10 @@ export function MediaCropDialog({
     apply: "Apply",
   },
 }: {
-  /** null keeps the dialog mounted-but-closed so its own state (crop/zoom)
-   *  resets cleanly the next time a file comes in, rather than being torn
-   *  down and rebuilt by the caller each time. */
+  /** The caller (MediaField) only mounts this component — via next/dynamic,
+   *  see media-field.tsx — once there's a real file to crop, so `file` is
+   *  effectively never null in practice; the null branch below just stays as
+   *  a defensive no-render rather than assuming every caller mounts this way. */
   file: File | null;
   aspect: number;
   onCancel: () => void;

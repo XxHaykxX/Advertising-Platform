@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { SmoothScroll } from "@/components/smooth-scroll";
 import { getLocale } from "@/lib/data/locale";
+import { clientDict } from "@/lib/i18n";
+import { I18nProvider } from "@/lib/i18n-client";
 import "./globals.css";
 
 const inter = Inter({
@@ -51,7 +53,9 @@ export default async function RootLayout({
   return (
     <html lang={locale}>
       <body className={`${inter.variable} font-sans antialiased`}>
-        <SmoothScroll>{children}</SmoothScroll>
+        <I18nProvider locale={locale} dicts={{ [locale]: clientDict(locale) }}>
+          <SmoothScroll>{children}</SmoothScroll>
+        </I18nProvider>
       </body>
     </html>
   );

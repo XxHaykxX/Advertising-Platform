@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Download, Loader2, X } from "lucide-react";
 import { listUploads, uploadImage, type MediaFile } from "@/lib/actions/uploads";
 import { listMemberUploads, uploadMemberImage } from "@/lib/actions/member-uploads";
-import { makeUI, type Locale } from "@/lib/i18n";
+import { makeUI, type Locale } from "@/lib/i18n-client";
 import { captureVideoPoster, isPosterPath, posterPathFor } from "@/lib/video-poster";
 import { Dropzone, DropzoneEmptyState } from "@/components/ui/dropzone";
 
@@ -62,6 +62,10 @@ export function MediaPicker({
   const [items, setItems] = useState<MediaFile[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Set alongside a successful upload (#16, 2026-07-31) — e.g. an mp4 the host
+  // couldn't compress server-side. The file IS stored; kept separate from
+  // `error` so it doesn't read as a rejection.
+  const [warning, setWarning] = useState<string | null>(null);
   const [filter, setFilter] = useState<string>("__all__");
   const [pending, startTransition] = useTransition();
 
@@ -125,6 +129,7 @@ export function MediaPicker({
   function handleFiles(picked: File[]) {
     if (!picked.length) return;
     setError(null);
+    setWarning(null);
     startTransition(async () => {
       const added: MediaFile[] = [];
       for (const file of picked) {
@@ -154,7 +159,7 @@ export function MediaPicker({
         // drop) used to reject this promise inside startTransition: no message,
         // no thrown error the user could see — the dialog just sat there and
         // "MP4 upload doesn't work". Surface it instead.
-        let res: { path?: string; error?: string };
+        let res: { path?: string; error?: string; warning?: string };
         try {
           res = await upload(fd);
         } catch {
@@ -166,6 +171,7 @@ export function MediaPicker({
           setError(res.error);
           continue;
         }
+        if (res.warning) setWarning(res.warning);
         if (res.path) added.push({ path: res.path, size: file.size, mtime: Date.now() });
       }
       if (added.length) setItems((prev) => [...added, ...prev]);
@@ -247,6 +253,7 @@ export function MediaPicker({
             wheel unless a scroller opts out. */}
         <div data-lenis-prevent className="min-h-[200px] flex-1 overflow-y-auto p-5">
           {error && <p className="mb-3 text-xs text-primary">{error}</p>}
+          {warning && <p className="mb-3 text-xs text-muted-foreground">{warning}</p>}
           {loading ? (
             <div className="flex items-center justify-center py-16 text-muted-foreground">
               <Loader2 className="h-5 w-5 animate-spin" />

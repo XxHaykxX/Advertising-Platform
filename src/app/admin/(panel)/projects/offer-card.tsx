@@ -20,7 +20,7 @@ import { ConfirmDialog } from "@/components/confirm-dialog";
 import { MediaField } from "@/components/media-field";
 import { BulletListEditor } from "@/components/ui/bullet-list-editor";
 import type { MediaPickerScope } from "@/components/media-picker";
-import type { makeUI, Locale } from "@/lib/i18n";
+import type { makeUI, Locale } from "@/lib/i18n-client";
 
 /**
  * Shared pieces of the two "offer" editors — product placements

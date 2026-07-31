@@ -5,7 +5,7 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MediaField } from "@/components/media-field";
 import { PhoneInput } from "@/components/ui/phone-input";
-import { makeUI, type Locale } from "@/lib/i18n";
+import { makeUI, type Locale } from "@/lib/i18n-client";
 import { updateCreatorProfile, type CreatorProfileFormState } from "../actions";
 
 const initialState: CreatorProfileFormState = {};

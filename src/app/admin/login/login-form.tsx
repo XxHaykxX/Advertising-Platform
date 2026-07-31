@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Loader2, Lock } from "lucide-react";
 import { login, type ActionState } from "@/app/admin/actions";
 import { PasswordInput } from "@/components/ui/password-input";
-import { makeUI, type Locale } from "@/lib/i18n";
+import { makeUI, type Locale } from "@/lib/i18n-client";
 
 export function LoginForm({
   from,

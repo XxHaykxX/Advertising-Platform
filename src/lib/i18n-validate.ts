@@ -17,7 +17,7 @@
 
 // Relative sibling imports (not the `@/` alias) so the tsx scripts under
 // scripts/ can import this module without tsconfig-path resolution.
-import { LOCALES, type Locale } from "./i18n";
+import { LOCALES, type Locale } from "./i18n-base";
 import { CYRILLIC, placeholders } from "./i18n-csv";
 
 /** The three values of one dictionary entry. */

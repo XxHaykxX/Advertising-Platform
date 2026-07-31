@@ -1,6 +1,6 @@
 "use client";
 
-import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
+import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n-client";
 import { PageHero } from "@/components/ui/page-hero";
 
 export function AboutHero({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {

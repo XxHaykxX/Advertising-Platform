@@ -4,7 +4,7 @@ import { useActionState } from "react";
 import { CheckCircle, Loader2, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { submitLead, type LeadState } from "@/lib/actions/leads";
-import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
+import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n-client";
 import type { ProjectListDTO } from "@/lib/types";
 
 const initialState: LeadState = { ok: false };

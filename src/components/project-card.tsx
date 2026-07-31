@@ -1,3 +1,5 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -12,10 +14,16 @@ import { Button } from "@/components/ui/button";
 import { FavoriteHeart } from "@/components/favorite-heart";
 import { daysUntil, formatFullDate, formatMonthYear, parseStringArray, splitCountries } from "@/lib/data/format";
 import { cn } from "@/lib/utils";
-import { DEFAULT_LOCALE, intlLocale, localizeValue, makeUI, type Locale } from "@/lib/i18n";
+import { DEFAULT_LOCALE, intlLocale, makeUI, useLocalizer, type Locale } from "@/lib/i18n-client";
 import type { SiteHeaderUser } from "@/components/header";
 import type { ProjectListDTO } from "@/lib/types";
 
+/** Explicitly "use client" (bundle audit 2026-07-31): its only two callers
+ *  (catalog-view.tsx, browse-view.tsx) render it in a loop over
+ *  client-side-filtered/sorted project arrays, so it always runs in the
+ *  browser anyway — marking it avoids it silently falling back to
+ *  server-only i18n imports that would break the moment it's rendered from a
+ *  Client Component. */
 export function ProjectCard({
   project,
   locale = DEFAULT_LOCALE,
@@ -32,6 +40,10 @@ export function ProjectCard({
   signedIn?: boolean;
 }) {
   const t = makeUI(locale);
+  // One hook call up front — shownExtraGenres.map() below (variable-length,
+  // depends on the project) calls this per item; localizeValue() itself
+  // reads context and can't be called inside a loop.
+  const localize = useLocalizer(locale);
   const countries = splitCountries(project.countries);
   const shownCountries = countries.slice(0, 3);
   const extraCountries = countries.length - shownCountries.length;
@@ -74,7 +86,7 @@ export function ProjectCard({
           </div>
         )}
         <div className="absolute left-3 top-3">
-          <GenreBadge>{localizeValue(locale, "genre", project.genre)}</GenreBadge>
+          <GenreBadge>{localize("genre", project.genre)}</GenreBadge>
         </div>
         <FavoriteHeart
           projectId={project.id}
@@ -90,7 +102,7 @@ export function ProjectCard({
         <div className="flex flex-wrap items-center gap-2">
           <h3 className="text-lg font-semibold text-foreground md:text-xl">{project.title}</h3>
           {shownExtraGenres.map((g) => (
-            <GenreBadge key={g}>{localizeValue(locale, "genre", g)}</GenreBadge>
+            <GenreBadge key={g}>{localize("genre", g)}</GenreBadge>
           ))}
           {moreGenres > 0 ? <GenreBadge>+{moreGenres}</GenreBadge> : null}
           {project.slotsTotal > 0 ? (

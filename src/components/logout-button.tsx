@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition, type ButtonHTMLAttributes } from "react";
 import { createPortal } from "react-dom";
-import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
+import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n-client";
 import { Button } from "@/components/ui/button";
 import { useModalDialog } from "@/lib/use-modal-dialog";
 

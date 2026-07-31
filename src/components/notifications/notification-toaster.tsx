@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Bell, Heart, Megaphone, X } from "lucide-react";
-import { makeUI, type Locale } from "@/lib/i18n";
+import { makeUI, type Locale } from "@/lib/i18n-client";
 import { renderNotification, parseNotificationData } from "@/lib/notifications";
 import { getUnreadNotificationsPreview, markNotificationRead } from "@/lib/actions/notifications";
 
@@ -29,6 +29,9 @@ export function NotificationToaster({ locale }: { locale: Locale }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const seen = useRef<Set<number>>(new Set());
   const seeded = useRef(false);
+  // makeUI() reads React context now, so it has to be called during render —
+  // the effect below (which runs outside render) just closes over the result.
+  const t = makeUI(locale);
 
   const remove = useCallback((id: number) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
@@ -47,7 +50,6 @@ export function NotificationToaster({ locale }: { locale: Locale }) {
       seeded.current = true;
     }
 
-    const t = makeUI(locale);
     let alive = true;
 
     async function poll() {

@@ -3,19 +3,27 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { AnimatePresence, motion } from "framer-motion";
+import dynamic from "next/dynamic";
 import { LayoutDashboard, LogIn, LogOut, Menu, X } from "lucide-react";
 import type { Role } from "@prisma/client";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { LogoutButton } from "@/components/logout-button";
-import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
+import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n-client";
 import { DEFAULT_CURRENCY, type CurrencyCode } from "@/lib/currency";
 import { PORTFOLIO_ENABLED } from "@/lib/feature-flags";
 import { cn } from "@/lib/utils";
 import { logout as staffLogout } from "@/app/admin/actions";
 import { logout as memberLogout } from "@/app/account/actions";
+
+// framer-motion (~131 KB) lives entirely in mobile-nav-panel.tsx now, loaded
+// only once someone actually opens the mobile menu — see the "Mobile
+// slide-down panel" section below (bundle audit 2026-07-31).
+const MobileNavPanel = dynamic(
+  () => import("@/components/mobile-nav-panel").then((m) => m.MobileNavPanel),
+  { ssr: false },
+);
 
 /** The subset of the signed-in user the header needs to render the avatar +
  *  dropdown. Loaded server-side by `SiteHeader` (see site-header.tsx) since
@@ -72,7 +80,9 @@ function initials(name: string, email: string): string {
   return email ? email[0].toUpperCase() : "?";
 }
 
-function Avatar({ user, onDark }: { user: SiteHeaderUser; onDark: boolean }) {
+/** Exported for mobile-nav-panel.tsx, which the desktop header lazy-loads
+ *  separately (see the MobileNavPanel dynamic import above). */
+export function Avatar({ user, onDark }: { user: SiteHeaderUser; onDark: boolean }) {
   const ring = onDark ? "ring-2 ring-white/25" : "ring-2 ring-border";
   if (user.avatar) {
     // eslint-disable-next-line @next/next/no-img-element -- small avatar, arbitrary user-uploaded URL
@@ -204,6 +214,11 @@ export function Header({
 }) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  // Stays false until the mobile menu is opened for the first time, so
+  // MobileNavPanel (and the framer-motion chunk behind it) is only mounted —
+  // and only then fetched — once it's actually needed. AnimatePresence needs
+  // it to stay mounted after that to animate subsequent closes.
+  const [menuEverOpened, setMenuEverOpened] = useState(false);
   const pathname = usePathname();
   const t = makeUI(locale);
   const NAV = useNav(t);
@@ -288,7 +303,10 @@ export function Header({
           {/* Mobile toggle */}
           <button
             type="button"
-            onClick={() => setMenuOpen((v) => !v)}
+            onClick={() => {
+              setMenuOpen((v) => !v);
+              setMenuEverOpened(true);
+            }}
             aria-expanded={menuOpen}
             aria-label={menuOpen ? t("nav.closeMenu") : t("nav.openMenu")}
             className={cn(
@@ -301,80 +319,28 @@ export function Header({
         </div>
       </Container>
 
-      {/* Mobile slide-down panel */}
-      <AnimatePresence>
-        {menuOpen && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-            className="overflow-hidden border-b border-border bg-background lg:hidden"
-          >
-            <Container className="flex flex-col gap-1 py-4">
-              {!isMember &&
-                NAV.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setMenuOpen(false)}
-                    className="rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-                  >
-                    {item.label}
-                  </Link>
-                ))}
-              {!isMember && (
-                <div className="mt-2 flex items-center gap-2 border-t border-border pt-4">
-                  <div className="ml-auto flex items-center gap-2">
-                    <LocaleSwitcher current={locale} />
-                  </div>
-                </div>
-              )}
-              {user ? (
-                <div className="flex flex-col gap-2 border-t border-border pt-4">
-                  <Link
-                    // Audit 5.9: this used to hardcode /admin for every staff
-                    // role, sending a TRANSLATOR through an extra redirect hop
-                    // (the dashboard bounces that role straight to /admin/i18n
-                    // anyway). cabinetHrefFor is the same helper the desktop
-                    // UserMenu/Wordmark already use — go there directly.
-                    href={cabinetHrefFor(user.role)}
-                    onClick={() => setMenuOpen(false)}
-                    className="flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-primary/10"
-                  >
-                    <Avatar user={user} onDark={false} />
-                    <span className="min-w-0">
-                      <span className="block truncate text-sm font-semibold text-foreground">
-                        {user.name || user.email}
-                      </span>
-                      <span className="block truncate text-xs text-muted-foreground">
-                        {t("nav.cabinet")}
-                      </span>
-                    </span>
-                  </Link>
-                  <LogoutButton
-                    action={STAFF_ROLES.includes(user.role) ? staffLogout : memberLogout}
-                    locale={locale}
-                    className={cn(buttonVariants({ variant: "secondary", size: "sm" }), "w-full gap-2")}
-                  >
-                    <LogOut className="h-4 w-4" />
-                    {t("nav.logout")}
-                  </LogoutButton>
-                </div>
-              ) : (
-                <div className="flex flex-col gap-2 pt-2">
-                  <Button asChild variant="primary" size="sm" onClick={() => setMenuOpen(false)}>
-                    <Link href={loginHref} className="group gap-2">
-                      <LogIn className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
-                      {t("nav.signInUp")}
-                    </Link>
-                  </Button>
-                </div>
-              )}
-            </Container>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Mobile slide-down panel — unmounted (and framer-motion un-fetched)
+          until the toggle above is pressed for the first time. */}
+      {menuEverOpened && (
+        <MobileNavPanel
+          open={menuOpen}
+          nav={NAV}
+          isMember={isMember}
+          user={user}
+          locale={locale}
+          loginHref={loginHref}
+          // Audit 5.9: this used to hardcode /admin for every staff role,
+          // sending a TRANSLATOR through an extra redirect hop (the dashboard
+          // bounces that role straight to /admin/i18n anyway). cabinetHrefFor
+          // is the same helper the desktop UserMenu/Wordmark already use.
+          cabinetHref={user ? cabinetHrefFor(user.role) : ""}
+          logoutAction={user && STAFF_ROLES.includes(user.role) ? staffLogout : memberLogout}
+          signInLabel={t("nav.signInUp")}
+          cabinetLabel={t("nav.cabinet")}
+          logoutLabel={t("nav.logout")}
+          onNavigate={() => setMenuOpen(false)}
+        />
+      )}
     </header>
   );
 }

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Check, ChevronDown, Globe } from "lucide-react";
-import { LOCALES, type Locale } from "@/lib/i18n";
+import { LOCALES, type Locale } from "@/lib/i18n-client";
 import { setLocale } from "@/lib/actions/locale";
 import { cn } from "@/lib/utils";
 

@@ -4,7 +4,7 @@ import { useActionState } from "react";
 import { CheckCircle2, Loader2, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { requestPasswordReset, type ForgotState } from "./actions";
-import { makeUI, type Locale } from "@/lib/i18n";
+import { makeUI, type Locale } from "@/lib/i18n-client";
 
 export function ForgotForm({ locale }: { locale: Locale }) {
   const t = makeUI(locale);

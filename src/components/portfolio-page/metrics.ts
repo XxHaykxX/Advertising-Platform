@@ -2,7 +2,7 @@
 // PortfolioDTO.metrics). Keys vary per case (views, recall, ctr, ...), so we
 // parse defensively and derive a human label from the key instead of hardcoding.
 
-import { localizeValue, type Locale } from "@/lib/i18n";
+import { useLocalizer, type Locale } from "@/lib/i18n-client";
 
 export function parseMetrics(json: string): Record<string, string> {
   try {
@@ -27,13 +27,21 @@ export function formatMetricLabel(key: string): string {
     .join(" ");
 }
 
-/** Localized metric label: prefers a `metric.<key>` i18n token, falling back to
+/** Localized metric labels: prefers a `metric.<key>` i18n token, falling back to
    the derived English label (formatMetricLabel) for any key not in the dict so
    future/unknown metric keys still render sensibly. Metric VALUES ("310K",
-   "+34%") are locale-neutral and rendered as-is by callers. */
-export function localizeMetricLabel(locale: Locale, key: string): string {
-  const token = localizeValue(locale, "metric", key);
-  // localizeValue echoes the raw key when there's no token — detect that and
-  // fall back to the human-readable derived label instead.
-  return token === key ? formatMetricLabel(key) : token;
+   "+34%") are locale-neutral and rendered as-is by callers.
+
+   Call this once at the top of a component and use the returned function per
+   metric: the dictionary lives in React context, and a card renders one label
+   per entry of a per-case metrics object, so reading context inside that loop
+   would tie the hook count to how many metrics a case happens to have. */
+export function useMetricLabeler(locale: Locale): (key: string) => string {
+  const localize = useLocalizer(locale);
+  return function localizeMetricLabel(key: string): string {
+    const token = localize("metric", key);
+    // localize() echoes the raw key when there's no token — detect that and
+    // fall back to the human-readable derived label instead.
+    return token === key ? formatMetricLabel(key) : token;
+  };
 }

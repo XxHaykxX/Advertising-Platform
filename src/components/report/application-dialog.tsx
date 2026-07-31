@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { useModalDialog } from "@/lib/use-modal-dialog";
 import { submitApplication } from "@/app/account/brand/actions";
-import type { makeUI } from "@/lib/i18n";
+import type { makeUI } from "@/lib/i18n-client";
 import { NO_OFFER_KEY, offerValue, parseOfferValue } from "@/lib/offer-value";
 
 /** Application popup (#23) for the report page's Express Interest button —

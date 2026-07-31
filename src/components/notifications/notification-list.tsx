@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Bell, Heart, Clapperboard, CheckCircle2, XCircle, CheckCheck, Megaphone } from "lucide-react";
-import { makeUI, type Locale } from "@/lib/i18n";
+import { makeUI, type Locale } from "@/lib/i18n-client";
 import {
   renderNotification,
   parseNotificationData,

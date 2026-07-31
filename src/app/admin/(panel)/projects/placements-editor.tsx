@@ -19,7 +19,7 @@ import {
   useSortableRows,
 } from "./offer-card";
 import type { MediaPickerScope } from "@/components/media-picker";
-import type { makeUI, Locale } from "@/lib/i18n";
+import type { makeUI, Locale } from "@/lib/i18n-client";
 
 // Controlled Product Placements section (owner correction 2026-07-28): the
 // brand appearing INSIDE the story (a scene, a prop, the hero's car) — a

@@ -1,8 +1,17 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
-import { ReactLenis } from "lenis/react";
+
+// Lazy — lenis (~20 KB) has no reason to ship on /admin and /account, where
+// `appLike` below always short-circuits before this is ever rendered (bundle
+// audit 2026-07-31). Suspense's fallback is `children` itself, so the public
+// pages that DO use it aren't left blank while the chunk streams in — they
+// just render without smooth scroll for that first paint, same as the
+// reduced-motion/appLike branches already do.
+const ReactLenis = lazy(() =>
+  import("lenis/react").then((m) => ({ default: m.ReactLenis })),
+);
 
 /* Lenis smooth scrolling, for the marketing side only.
  *
@@ -36,8 +45,10 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
   if (reducedMotion || appLike) return <>{children}</>;
 
   return (
-    <ReactLenis root options={{ lerp: 0.1, duration: 1.2, smoothWheel: true }}>
-      {children}
-    </ReactLenis>
+    <Suspense fallback={children}>
+      <ReactLenis root options={{ lerp: 0.1, duration: 1.2, smoothWheel: true }}>
+        {children}
+      </ReactLenis>
+    </Suspense>
   );
 }

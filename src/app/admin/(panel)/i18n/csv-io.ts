@@ -8,7 +8,7 @@
    insert helper columns, and Мариам shouldn't have to keep them in order. */
 
 import { CSV_HEADER, csvLine, parseCsv } from "@/lib/i18n-csv";
-import { LOCALES, type Locale } from "@/lib/i18n";
+import { LOCALES, type Locale } from "@/lib/i18n-base";
 import type { Values } from "@/lib/i18n-validate";
 import { parseMarkCell, type Mark } from "./mark";
 

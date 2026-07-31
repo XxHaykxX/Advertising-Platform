@@ -4,7 +4,7 @@ import { useActionState, useEffect, useState } from "react";
 import { Building2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { completeRegister, type CompleteState } from "./actions";
-import { makeUI, type Locale } from "@/lib/i18n";
+import { makeUI, type Locale } from "@/lib/i18n-client";
 import { cn } from "@/lib/utils";
 
 export function CompleteForm({

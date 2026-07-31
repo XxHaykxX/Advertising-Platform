@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import type { InterestStatus } from "@prisma/client";
-import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
+import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n-client";
 import { ApplicationDialog, type ApplicationOffer } from "@/components/report/application-dialog";
 import { NO_OFFER_KEY } from "@/lib/offer-value";
 

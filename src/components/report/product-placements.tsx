@@ -46,7 +46,6 @@ export function ProductPlacements({
                       fill
                       className="object-cover"
                       sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
-                      unoptimized
                     />
                   </div>
                 ) : null}

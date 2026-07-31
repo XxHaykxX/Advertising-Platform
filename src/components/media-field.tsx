@@ -2,15 +2,24 @@
 
 import { useRef, useState, type ReactNode } from "react";
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import { FileVideo, ImageIcon } from "lucide-react";
 import { MediaPicker, isVideoPath, type MediaPickerAccept, type MediaPickerScope } from "@/components/media-picker";
-import { MediaCropDialog } from "@/components/media-crop-dialog";
 import { UploadProgress } from "@/components/ui/upload-progress";
 import { holdProgress, uploadViaXhr } from "@/lib/upload-xhr";
 import { captureVideoPoster, posterPathFor } from "@/lib/video-poster";
 import { Dropzone, DropzoneEmptyState, DropzonePreview } from "@/components/ui/dropzone";
-import type { Locale } from "@/lib/i18n";
+import type { Locale } from "@/lib/i18n-client";
 import { imageSizeHint } from "@/lib/images/size-hint";
+
+/** react-easy-crop (~37 KB) is only needed by fields with `cropAspect`, and
+ *  only once a file actually needs cropping — loaded on demand instead of
+ *  shipping in every page that renders a MediaField (bundle audit
+ *  2026-07-31). ssr:false since Cropper reads canvas/Image at mount. */
+const MediaCropDialog = dynamic(
+  () => import("@/components/media-crop-dialog").then((m) => m.MediaCropDialog),
+  { ssr: false },
+);
 
 /** Mirror of MAX_BYTES / MAX_BYTES_VIDEO in lib/uploads-store.ts. Checked before
  *  the round trip: past the framework body limit the request is cut off
@@ -110,6 +119,10 @@ export function MediaField({
   // upload, but the form itself had no target to drag a file onto — most of all
   // on the video field, where the file is the whole point.
   const [dropError, setDropError] = useState<string | null>(null);
+  // Set alongside a successful upload (#16, 2026-07-31) — e.g. an mp4 the host
+  // couldn't compress server-side. The file IS stored; this is informational,
+  // hence its own state and styling rather than reusing dropError.
+  const [dropWarning, setDropWarning] = useState<string | null>(null);
   const [job, setJob] = useState<UploadJob | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const uploading = job !== null;
@@ -129,6 +142,7 @@ export function MediaField({
   // on a home connection used to be a spinner and nothing else.
   async function uploadFile(file: File, kind: "image" | "video") {
     setDropError(null);
+    setDropWarning(null);
     const max = MAX_MB[kind];
     if (file.size > max * 1024 * 1024) {
       const mb = Math.round((file.size / (1024 * 1024)) * 10) / 10;
@@ -183,6 +197,7 @@ export function MediaField({
       setJob((current) => (current ? { ...current, loaded: current.total } : current));
       await holdProgress(startedAt);
       setJob(null);
+      if (res.warning) setDropWarning(res.warning);
       update(res.path);
       return;
     }
@@ -313,6 +328,7 @@ export function MediaField({
         </button>
       </div>
       {dropError ? <p className="text-xs text-danger">{dropError}</p> : null}
+      {dropWarning ? <p className="text-xs text-muted-foreground">{dropWarning}</p> : null}
 
       {/* Video fields state the format + the 50 MB per-file cap enforced by
           the upload store (MAX_BYTES_VIDEO) — the old silent limit was half the
@@ -334,7 +350,7 @@ export function MediaField({
         locale={locale}
       />
 
-      {cropAspect ? (
+      {cropAspect && cropFile ? (
         <MediaCropDialog
           file={cropFile}
           aspect={cropAspect}

@@ -16,7 +16,7 @@ import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
 import { Images, Loader2, Sparkles, Upload, X } from "lucide-react";
 import { MediaPicker, type MediaPickerScope } from "@/components/media-picker";
-import type { Locale } from "@/lib/i18n";
+import type { Locale } from "@/lib/i18n-client";
 
 export type PosterGenerateInput = {
   prompt: string;

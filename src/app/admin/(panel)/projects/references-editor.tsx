@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { FileVideo, ImageIcon, Plus, Trash2, X } from "lucide-react";
 import { MediaPicker, isVideoPath, type MediaPickerScope } from "@/components/media-picker";
-import type { Locale, makeUI } from "@/lib/i18n";
+import type { Locale, makeUI } from "@/lib/i18n-client";
 import type { ReferenceRow } from "./form-shared";
 
 // Controlled Reference Projects editor (admin redesign phase 2): a small

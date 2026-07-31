@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { DEFAULT_LOCALE, localizeValue, type Locale } from "@/lib/i18n";
+import { DEFAULT_LOCALE, useLocalizer, type Locale } from "@/lib/i18n-client";
 import { cn } from "@/lib/utils";
 import { useDragScroll } from "@/lib/use-drag-scroll";
 import type { ActorDTO } from "@/lib/types";
@@ -15,11 +15,19 @@ function initials(name: string): string {
 }
 
 function ActorCard({ actor, locale }: { actor: ActorDTO; locale: Locale }) {
+  // A single hook call up front — actor.roles is variable-length, so calling
+  // the (context-reading) localizeValue() once per role inside .map() below
+  // would violate the Rules of Hooks the moment two actors have a different
+  // number of roles.
+  const localize = useLocalizer(locale);
   return (
     <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-4">
       {actor.photo ? (
         <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-full border border-border">
-          <Image src={actor.photo} alt={actor.name} fill className="object-cover" sizes="48px" unoptimized />
+          {/* `unoptimized` dropped 2026-07-31: headshots are stored at 800×800,
+              and this circle is 48px. Letting the optimizer honour `sizes` is
+              the whole point of having it back on. */}
+          <Image src={actor.photo} alt={actor.name} fill className="object-cover" sizes="48px" />
         </div>
       ) : (
         <div
@@ -34,7 +42,7 @@ function ActorCard({ actor, locale }: { actor: ActorDTO; locale: Locale }) {
         <p className="truncate font-semibold text-foreground">{actor.name}</p>
         <p className="truncate text-xs text-muted-foreground">
           {(actor.roles.length ? actor.roles : actor.role ? [actor.role] : [])
-            .map((r) => localizeValue(locale, "role", r))
+            .map((r) => localize("role", r))
             .join(" · ")}
         </p>
       </div>

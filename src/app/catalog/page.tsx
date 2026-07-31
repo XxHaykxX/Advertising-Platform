@@ -5,6 +5,8 @@ import { getCurrency } from "@/lib/data/currency";
 import { getSiteHeaderUser } from "@/lib/data/site-header-user";
 import { getBrandFavoriteSet } from "@/lib/data/favorites";
 import { loadCurrentUser } from "@/lib/auth/require";
+import { allStatusLabels } from "@/lib/i18n";
+import { Footer } from "@/components/footer";
 import { CatalogView } from "./catalog-view";
 
 export const metadata: Metadata = {
@@ -36,6 +38,8 @@ export default async function CatalogPage() {
       favorites={favorites}
       signedIn={currentUser !== null}
       isBrand={currentUser?.role === "BRAND"}
+      statusLabelsAll={allStatusLabels()}
+      footer={<Footer locale={locale} currency={currency} />}
     />
   );
 }
