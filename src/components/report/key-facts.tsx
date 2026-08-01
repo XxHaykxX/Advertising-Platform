@@ -2,7 +2,7 @@ import Link from "next/link";
 import { CalendarClock, CalendarDays, Film, MonitorPlay, Popcorn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/ui/reveal";
-import { formatFullDate, formatMonthYear, isArchived, parseStringArray } from "@/lib/data/format";
+import { formatFullDate, formatReleaseDate, isArchived, parseStringArray } from "@/lib/data/format";
 import { DEFAULT_LOCALE, intlLocale, makeUI, type Locale } from "@/lib/i18n";
 import { ReportInterestButton } from "@/components/report/report-interest-button";
 import type { SiteHeaderUser } from "@/components/header";
@@ -72,8 +72,13 @@ export function KeyFacts({
 }) {
   const t = makeUI(locale);
   const platforms = parseStringArray(project.platforms);
-  const release = formatMonthYear(project.releaseDate, intlLocale(locale));
-  const deadline = formatFullDate(project.applicationDeadline, intlLocale(locale));
+  // The project page shows the full date at DAY precision (unlike the
+  // compact catalog card) — MONTH/YEAR still render at their own precision,
+  // never inventing a day/month the editor didn't actually give (IA-42).
+  const release = formatReleaseDate(project.releaseDate, project.releasePrecision, intlLocale(locale), false);
+  const deadline = project.applicationDeadlineOngoing
+    ? t("deadline.ongoing")
+    : formatFullDate(project.applicationDeadline, intlLocale(locale));
   // Each group hides as a whole when every fact inside it is empty, so a
   // heading never renders above nothing (owner's group order: where it airs →
   // when → what it resembles; "what it is" moved to the hero's deal card).
@@ -87,7 +92,7 @@ export function KeyFacts({
   // Past the placement deadline the project is archived and takes no more
   // offers, so a guest is told that instead of being sent to sign in for a
   // button that would be disabled anyway.
-  const cta = isArchived(project.applicationDeadline) ? (
+  const cta = isArchived(project.applicationDeadline, project.applicationDeadlineOngoing) ? (
     <Button variant="secondary" size="lg" disabled className="w-full whitespace-nowrap sm:w-auto">
       {t("report.offersClosed")}
     </Button>

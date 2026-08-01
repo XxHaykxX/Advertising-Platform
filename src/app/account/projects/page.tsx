@@ -73,6 +73,7 @@ export default async function MyProjectsPage() {
         durationMinutes: p.durationMinutes,
         references: p.references,
         applicationDeadline: p.applicationDeadline,
+        applicationDeadlineOngoing: p.applicationDeadlineOngoing,
         releaseDate: p.releaseDate,
         platforms: p.platforms,
         cinemas: p.cinemas,
@@ -155,7 +156,7 @@ export default async function MyProjectsPage() {
                         because from the creator's side nothing else would
                         explain why the views stopped — moving the deadline in
                         the form brings it back. */}
-                    {isArchived(p.applicationDeadline?.toISOString() ?? null) ? (
+                    {isArchived(p.applicationDeadline?.toISOString() ?? null, p.applicationDeadlineOngoing) ? (
                       <span className="ml-2 inline-block rounded-full border border-border bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
                         {t("account.status.archived")}
                       </span>

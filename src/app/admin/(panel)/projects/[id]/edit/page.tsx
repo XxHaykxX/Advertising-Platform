@@ -16,6 +16,8 @@ import { EntityHistoryPanel } from "@/app/admin/(panel)/history/entity-history-p
 import { updateProject } from "../../actions";
 import {
   formatDateInput,
+  formatReleaseDateInput,
+  normalizeReleasePrecision,
   parsePlatformsInput,
   parseGalleryInput,
   parseBenefitsInput,
@@ -90,7 +92,9 @@ export default async function EditProjectPage({
     // belongs to the drag-and-drop list, and round-tripping it through the
     // form reset it to 0 on every save.
     applicationDeadline: formatDateInput(p.applicationDeadline),
-    releaseDate: formatDateInput(p.releaseDate),
+    applicationDeadlineOngoing: p.applicationDeadlineOngoing,
+    releaseDate: formatReleaseDateInput(p.releaseDate, p.releasePrecision),
+    releasePrecision: normalizeReleasePrecision(p.releasePrecision),
     platforms: parsePlatformsInput(p.platforms),
     tagline: p.tagline ?? "",
     taglineHy: p.taglineHy ?? "",
@@ -122,6 +126,7 @@ export default async function EditProjectPage({
     durationMinutes: p.durationMinutes,
     references: p.references,
     applicationDeadline: p.applicationDeadline,
+    applicationDeadlineOngoing: p.applicationDeadlineOngoing,
     releaseDate: p.releaseDate,
     platforms: p.platforms,
     cinemas: p.cinemas,

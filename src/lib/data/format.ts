@@ -77,6 +77,38 @@ export function formatFullDate(iso: string | null, locale = "en-US"): string {
   return `${day} ${month} ${year}`;
 }
 
+/** Year-only rendering ("2027 թ." in hy, matching the year-first pattern
+   formatMonthYear already uses; a bare number elsewhere). Not exported — only
+   formatReleaseDate needs it. */
+function formatYearOnly(iso: string, locale: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const lang = langKey(locale);
+  const year = d.getUTCFullYear();
+  return lang === "hy" ? `${year} թ.` : String(year);
+}
+
+/** Release date, rendered at exactly the precision the editor entered
+   (IA-42) — never inventing a day/month that wasn't actually saved.
+   `releasePrecision` is the Project column ("DAY" | "MONTH" | "YEAR"); an
+   unrecognized value falls back to DAY (the historical, only precision).
+   `compact` covers only the DAY case: the report page shows the full date,
+   while the catalog/report cards' compact space keeps showing month + year,
+   same as before this precision existed. MONTH and YEAR always render at
+   their own precision regardless of `compact` — there is no finer-grained
+   truth to fall back to. */
+export function formatReleaseDate(
+  iso: string | null,
+  releasePrecision: string,
+  locale = "en-US",
+  compact = false,
+): string {
+  if (!iso) return "";
+  if (releasePrecision === "YEAR") return formatYearOnly(iso, locale);
+  if (releasePrecision === "MONTH") return formatMonthYear(iso, locale);
+  return compact ? formatMonthYear(iso, locale) : formatFullDate(iso, locale);
+}
+
 export function daysUntil(iso: string | null): number | null {
   if (!iso) return null;
   const d = new Date(iso);
@@ -100,10 +132,34 @@ export function daysUntil(iso: string | null): number | null {
  * Callers must run this OUTSIDE the unstable_cache'd project queries — baking
  * "is it past yet?" into a cached row would freeze the answer for the cache
  * lifetime.
+ *
+ * `ongoing` (IA-42) is an open-ended call for offers — applicationDeadline is
+ * always null for these rows, so without this flag they'd read exactly like a
+ * project that simply never got a deadline typed in (also "not archived",
+ * but by accident rather than by design). An ongoing project never archives.
  */
-export function isArchived(applicationDeadline: string | null): boolean {
+export function isArchived(applicationDeadline: string | null, ongoing = false): boolean {
+  if (ongoing) return false;
   const days = daysUntil(applicationDeadline);
   return days !== null && days < 0;
+}
+
+/** Comparator for sorting projects by placement deadline, soonest first
+   (catalog "Deadline soonest" sort, brand favorites' compare table). An
+   Ongoing deadline never expires, so it sorts after every dated project — but
+   a project that simply has no deadline recorded (a data gap, not a
+   deliberate "always open") sorts after even that, so the two read
+   differently in what would otherwise be one flat "no date" group. */
+export function compareDeadline(
+  a: { applicationDeadline: string | null; applicationDeadlineOngoing: boolean },
+  b: { applicationDeadline: string | null; applicationDeadlineOngoing: boolean },
+): number {
+  const rank = (p: typeof a): number => (p.applicationDeadline ? 0 : p.applicationDeadlineOngoing ? 1 : 2);
+  const ra = rank(a);
+  const rb = rank(b);
+  if (ra !== rb) return ra - rb;
+  if (ra !== 0) return 0; // both ongoing, or both truly unset — no date to order them by
+  return new Date(a.applicationDeadline as string).getTime() - new Date(b.applicationDeadline as string).getTime();
 }
 
 /** IA-2: view/metric counts (e.g. ProjectDetailDTO.projViews) are stored as

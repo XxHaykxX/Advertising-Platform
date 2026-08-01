@@ -192,7 +192,19 @@ model Project {
   language         String           @default("") // primary language (Armenian|Russian|English|…); drives the catalog Language filter
 
   applicationDeadline DateTime?
+  // True for an open-ended call for offers — no concrete deadline (IA-42,
+  // 2026-08-01). applicationDeadline stays NULL while this is set; the form
+  // never submits both, and every save forces the pair back into that
+  // agreement server-side (defense in depth).
+  applicationDeadlineOngoing Boolean   @default(false)
   releaseDate         DateTime?
+  // How much of releaseDate the editor actually entered — DAY | MONTH | YEAR
+  // (IA-42, 2026-08-01). The date itself is stored at that precision's
+  // placeholder (YEAR -> YYYY-01-01, MONTH -> YYYY-MM-01), and this column is
+  // what decides how much of it is safe to render: the site must never show a
+  // day/month the editor never gave. Existing rows default to DAY, matching
+  // the exact dates they already carry.
+  releasePrecision    String    @default("DAY")
   streamingSource     String?   @db.Text // JSON/CSV multi (Kinodaran|YouTube|TV|Cinema) — Production Info
   platforms           String?   @db.Text // JSON string[]; nullable — MySQL forbids literal defaults on TEXT columns
 

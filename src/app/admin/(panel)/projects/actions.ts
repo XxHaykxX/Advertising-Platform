@@ -16,10 +16,15 @@ import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
 import {
   KIND_VALUES,
+  RELEASE_PRECISION_VALUES,
+  RELEASE_YEAR_MAX,
+  RELEASE_YEAR_MIN,
   ROLE_VALUES,
   kindForRole,
   parseCsvInput,
   publishBlockers,
+  validateReleaseDateValue,
+  type ReleasePrecision,
 } from "./form-shared";
 
 export type ProjectFormValues = {
@@ -72,7 +77,14 @@ export type ProjectFormValues = {
   // owned solely by reorderProjects() further down.
   // ── Placement parity fields ──
   applicationDeadline: string; // <input type=date> value, "" when unset
-  releaseDate: string; // <input type=date> value, "" when unset
+  // Ongoing (IA-42): an open-ended call for offers, no concrete deadline.
+  // Mutually exclusive with applicationDeadline in the form — checked, the
+  // date input isn't rendered/submitted at all.
+  applicationDeadlineOngoing: boolean;
+  releaseDate: string; // "YYYY-MM-DD" / "YYYY-MM" / "YYYY" depending on releasePrecision, "" when unset
+  // "DAY" | "MONTH" | "YEAR" (IA-42) — how much of releaseDate above the
+  // editor actually entered; see RELEASE_PRECISION_VALUES.
+  releasePrecision: ReleasePrecision;
   platforms: string; // comma-separated in the form; JSON string[] at rest — also the "Available on" field (#29, merged with the old Streaming source)
   // NB: `streamingSource` is gone from the form values too (audit 1.6). #29
   // merged that field into `platforms`; the column stays for the historical
@@ -224,7 +236,9 @@ function buildData(fd: FormData): ProjectFormValues {
     productionBudgetAmd: intOrNull(fd, "productionBudgetAmd"),
     isActive: bool(fd, "isActive"),
     applicationDeadline: str(fd, "applicationDeadline"),
+    applicationDeadlineOngoing: bool(fd, "applicationDeadlineOngoing"),
     releaseDate: str(fd, "releaseDate"),
+    releasePrecision: enumVal(fd, "releasePrecision", RELEASE_PRECISION_VALUES, "DAY"),
     platforms: jsonArray<string>(fd, "platforms").join(", ").slice(0, VARCHAR_MAX),
     tagline: taglineHy || taglineRu || taglineEn, // base/fallback, mirrors synopsis
     taglineHy,
@@ -244,6 +258,18 @@ function validate(data: ProjectFormValues): string | null {
   if (!data.title) return "Enter a title in at least one language.";
   if (data.genres.length === 0) return "Genre is required.";
   if (!data.synopsis) return "Enter a synopsis in at least one language.";
+  // Release date's shape must match the precision it claims (review finding,
+  // 2026-08-02) — a <input type="month"> that degraded to free text (desktop
+  // Firefox/Safari don't implement it) would otherwise reach dateOrNull
+  // unchecked: MONTH silently saves as NULL while releasePrecision still says
+  // MONTH, or a local-time fallback parse lands on the wrong month entirely.
+  const releaseDateError = validateReleaseDateValue(data.releaseDate, data.releasePrecision);
+  if (releaseDateError === "shape") {
+    return "Release date doesn't match the selected precision (exact date / month & year / year).";
+  }
+  if (releaseDateError === "range") {
+    return `Release year must be between ${RELEASE_YEAR_MIN} and ${RELEASE_YEAR_MAX}.`;
+  }
   return null;
 }
 
@@ -266,7 +292,6 @@ async function publishGate(
   if (!data.isActive || wasActive) return null;
   const missing = publishBlockers({
     studio: data.studio,
-    releaseDate: data.releaseDate,
     tagline: data.tagline,
     kind: data.kind,
     episodes: data.episodes,
@@ -628,7 +653,10 @@ export async function createProject(
     synopsisEn: data.synopsisEn || null,
     poster: data.poster || null,
     gallery: galleryToJson(data.gallery),
-    applicationDeadline: dateOrNull(data.applicationDeadline),
+    // Defense in depth: the form never renders the date input while Ongoing
+    // is checked, but a save must not trust that alone — force the pair back
+    // into agreement here too.
+    applicationDeadline: data.applicationDeadlineOngoing ? null : dateOrNull(data.applicationDeadline),
     releaseDate: dateOrNull(data.releaseDate),
     platforms: platformsToJson(data.platforms),
     // #29 merged the old Streaming source field into `platforms`; the
@@ -766,7 +794,10 @@ export async function updateProject(
           synopsisEn: data.synopsisEn || null,
           poster: data.poster || null,
           gallery: galleryToJson(data.gallery),
-          applicationDeadline: dateOrNull(data.applicationDeadline),
+          // Defense in depth: the form never renders the date input while
+          // Ongoing is checked, but a save must not trust that alone — force
+          // the pair back into agreement here too.
+          applicationDeadline: data.applicationDeadlineOngoing ? null : dateOrNull(data.applicationDeadline),
           releaseDate: dateOrNull(data.releaseDate),
           platforms: platformsToJson(data.platforms),
           // #29 merged the old Streaming source field into `platforms`; the

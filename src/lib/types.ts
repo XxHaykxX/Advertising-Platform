@@ -22,7 +22,13 @@ export interface ProjectListDTO {
   // figures aren't lost and bringing the display back is a one-line change.
   boxOfficeDisplay: string;
   applicationDeadline: string | null;
+  // True for an open-ended call for offers (IA-42) — applicationDeadline is
+  // always null alongside this; render an "Ongoing" label instead of a date.
+  applicationDeadlineOngoing: boolean;
   releaseDate: string | null;
+  // How much of releaseDate to actually show — "DAY" | "MONTH" | "YEAR"
+  // (IA-42). Never render a finer grain than this says was saved.
+  releasePrecision: string;
   platforms: string; // JSON string[]; parse with parseStringArray
   // Sums across the project's sponsorship tiers (null slots count as 0) —
   // powers the "X / Y placements available" indicator on the catalog card.

@@ -25,6 +25,7 @@ export function DealCard({
   slotsFree,
   slotsTotal,
   applicationDeadline,
+  ongoing = false,
   daysLeft,
   meta,
   locale = DEFAULT_LOCALE,
@@ -34,15 +35,20 @@ export function DealCard({
   /** What the project IS — the icon row that used to sit under the hero image
    *  as bare values. It lands here, labelled, in the space this card had left
    *  over above the button (owner decision 2026-07-30). */
-  meta: { genre: string; format: string; studio: string; countries: string };
+  meta: { genres: string[]; format: string; studio: string; countries: string };
   /** Cheapest offer on the page (placement or package), preformatted. */
   fromPrice: string | null;
   slotsFree: number;
   slotsTotal: number;
-  /** ISO date; the day itself still counts as open (see isArchived). */
+  /** ISO date; the day itself still counts as open (see isArchived). Always
+   *  null when `ongoing` is true. */
   applicationDeadline: string | null;
+  /** Ongoing (IA-42): an open-ended call for offers — renders in place of a
+   *  date, with no countdown underneath it. */
+  ongoing?: boolean;
   /** Whole days to the deadline, computed on the server — a client-side
-   *  Date.now() here would differ from the server render and flicker. */
+   *  Date.now() here would differ from the server render and flicker. Always
+   *  null when `ongoing` is true (there's nothing to count down to). */
   daysLeft: number | null;
   locale?: Locale;
 }) {
@@ -50,12 +56,18 @@ export function DealCard({
 
   const hasBudget = Boolean(budgetDisplay);
   const hasOffer = Boolean(fromPrice) || slotsTotal > 0;
-  const hasDeadline = Boolean(applicationDeadline);
+  const hasDeadline = Boolean(applicationDeadline) || ongoing;
   // Each fact carries its own label, so an unfamiliar studio name no longer
   // reads as a word with no explanation. Empty ones drop out entirely — a
   // label above nothing is worse than a missing row.
   const metaItems = [
-    { icon: Film, label: t("keyFacts.genre"), value: localizeValue(locale, "genre", meta.genre) },
+    // IA-40: list EVERY genre the project carries, not just the first —
+    // same comma-joined, per-value localization as the countries fact below.
+    {
+      icon: Film,
+      label: t("keyFacts.genre"),
+      value: meta.genres.map((g) => localizeValue(locale, "genre", g)).join(", "),
+    },
     { icon: Clapperboard, label: t("keyFacts.format"), value: meta.format },
     { icon: Building2, label: t("keyFacts.studio"), value: meta.studio },
     { icon: MapPin, label: t("keyFacts.countries"), value: splitCountries(meta.countries).join(", ") },
@@ -114,11 +126,16 @@ export function DealCard({
           <Clock className={cn("mt-0.5 h-4 w-4 shrink-0", urgent ? "text-warn" : "text-primary")} />
           <div className="min-w-0">
             <div className="break-words font-medium text-foreground">
-              {t("report.deal.deadline", {
-                date: formatFullDate(applicationDeadline, intlLocale(locale)),
-              })}
+              {ongoing
+                ? t("deadline.ongoing")
+                : t("report.deal.deadline", {
+                    date: formatFullDate(applicationDeadline, intlLocale(locale)),
+                  })}
             </div>
-            {countdown ? (
+            {/* No countdown for an open call — daysLeft is always null
+                alongside `ongoing`, but the flag is checked directly rather
+                than relying on that always being true. */}
+            {!ongoing && countdown ? (
               <div className={cn("text-xs", urgent ? "text-warn" : "text-muted-foreground")}>
                 {countdown}
               </div>

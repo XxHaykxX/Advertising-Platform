@@ -60,6 +60,9 @@ export type CompletenessInput = {
   tiers: { benefits: string | null }[];
   references: string | null; // JSON [{name,url,media}] or legacy CSV
   applicationDeadline: Date | string | null;
+  // Ongoing (IA-42) counts as a filled-in deadline — it's a deliberate
+  // "always open" choice, not the absence of one.
+  applicationDeadlineOngoing: boolean;
   releaseDate: Date | string | null;
   platforms: string | null; // JSON string[]
   cinemas: string | null; // comma-separated
@@ -83,17 +86,18 @@ function hasJsonListEntry(json: string | null): boolean {
   }
 }
 
-/** Mirrors publishBlockers() (form-shared.ts) exactly: studio, releaseDate,
-   tagline, the runtime/episode fields, and tiers with a benefits list. Studio
-   and runtime have no section of their own on the public page — they are a
-   line in the facts block and the format chip — but they belong here anyway:
-   a checklist that says "everything is filled in" and is then refused at
-   publication is worse than no checklist. */
+/** Mirrors publishBlockers() (form-shared.ts) exactly: studio, tagline, the
+   runtime/episode fields, and tiers with a benefits list. Release date was
+   dropped from this list on 2026-08-01 (IA-42) — it must stay optional and
+   support an imprecise (year/month-only) value, neither of which fits a hard
+   publish gate. Studio and runtime have no section of their own on the public
+   page — they are a line in the facts block and the format chip — but they
+   belong here anyway: a checklist that says "everything is filled in" and is
+   then refused at publication is worse than no checklist. */
 const BLOCKS_PUBLISH: ReadonlySet<CompletenessKey> = new Set([
   "tagline",
   "studio",
   "runtime",
-  "releaseDate",
   "tiers",
 ]);
 
@@ -122,7 +126,7 @@ export function projectCompleteness(input: CompletenessInput): CompletenessItem[
     placements: input.placementsCount > 0,
     tiers: publishableTiers.length > 0,
     references: referenceRows.length > 0,
-    deadline: !!input.applicationDeadline,
+    deadline: !!input.applicationDeadline || input.applicationDeadlineOngoing,
     releaseDate: !!input.releaseDate,
     platforms: hasJsonListEntry(input.platforms),
     cinemas: !!(input.cinemas && input.cinemas.trim()),

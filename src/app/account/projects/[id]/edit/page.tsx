@@ -15,6 +15,8 @@ import { projectCompleteness } from "@/lib/project-completeness";
 import { makeUI } from "@/lib/i18n";
 import {
   formatDateInput,
+  formatReleaseDateInput,
+  normalizeReleasePrecision,
   parsePlatformsInput,
   parseGalleryInput,
   parseBenefitsInput,
@@ -102,7 +104,9 @@ export default async function EditCreatorProjectPage({
     productionBudgetAmd: p.productionBudgetAmd,
     isActive: p.isActive,
     applicationDeadline: formatDateInput(p.applicationDeadline),
-    releaseDate: formatDateInput(p.releaseDate),
+    applicationDeadlineOngoing: p.applicationDeadlineOngoing,
+    releaseDate: formatReleaseDateInput(p.releaseDate, p.releasePrecision),
+    releasePrecision: normalizeReleasePrecision(p.releasePrecision),
     platforms: parsePlatformsInput(p.platforms),
     tagline: p.tagline ?? "",
     taglineHy: p.taglineHy ?? "",
@@ -132,6 +136,7 @@ export default async function EditCreatorProjectPage({
     durationMinutes: p.durationMinutes,
     references: p.references,
     applicationDeadline: p.applicationDeadline,
+    applicationDeadlineOngoing: p.applicationDeadlineOngoing,
     releaseDate: p.releaseDate,
     platforms: p.platforms,
     cinemas: p.cinemas,

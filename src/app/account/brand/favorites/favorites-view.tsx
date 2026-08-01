@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Film, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GenreBadge } from "@/components/ui/badge";
-import { daysUntil, formatFullDate, isArchived } from "@/lib/data/format";
+import { compareDeadline, daysUntil, formatFullDate, isArchived } from "@/lib/data/format";
 import { cn } from "@/lib/utils";
 import { intlLocale, makeUI, useLocalizer, type Locale } from "@/lib/i18n-client";
 import type { BrandFavoriteDTO } from "@/lib/data/brand-favorites";
@@ -37,13 +37,10 @@ export function FavoritesView({ favorites, locale }: { favorites: BrandFavoriteD
         return a.project.priceFromAmd - b.project.priceFromAmd;
       });
     } else if (sort === "deadline") {
-      list.sort((a, b) => {
-        const da = a.project.applicationDeadline;
-        const db = b.project.applicationDeadline;
-        if (!da) return !db ? 0 : 1;
-        if (!db) return -1;
-        return new Date(da).getTime() - new Date(db).getTime();
-      });
+      // An Ongoing project (IA-42) sorts after every dated one, and a
+      // project with no deadline at all sorts after even that — see
+      // compareDeadline.
+      list.sort((a, b) => compareDeadline(a.project, b.project));
     }
     // "added" is already the fetch order (createdAt desc) — nothing to do.
     return list;
@@ -115,7 +112,7 @@ export function FavoritesView({ favorites, locale }: { favorites: BrandFavoriteD
                       {/* A shortlisted project can expire while it sits here.
                           Said outright, so the brand doesn't chase a listing
                           that no longer takes offers. */}
-                      {isArchived(p.applicationDeadline) ? (
+                      {isArchived(p.applicationDeadline, p.applicationDeadlineOngoing) ? (
                         <span className="ml-2 inline-block rounded-full border border-border bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
                           {t("report.offersClosed")}
                         </span>
@@ -133,7 +130,11 @@ export function FavoritesView({ favorites, locale }: { favorites: BrandFavoriteD
                         deadlineUrgent ? "text-warn" : "text-foreground",
                       )}
                     >
-                      {p.applicationDeadline ? formatFullDate(p.applicationDeadline, intlLocale(locale)) : dash}
+                      {p.applicationDeadlineOngoing
+                        ? t("deadline.ongoing")
+                        : p.applicationDeadline
+                          ? formatFullDate(p.applicationDeadline, intlLocale(locale))
+                          : dash}
                     </td>
                     <td className="border-b border-border py-2.5 text-foreground">{p.format || dash}</td>
                   </tr>

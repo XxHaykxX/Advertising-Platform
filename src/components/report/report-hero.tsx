@@ -108,11 +108,15 @@ export function ReportHero({
               slotsFree={deal.slotsFree}
               slotsTotal={deal.slotsTotal}
               applicationDeadline={project.applicationDeadline}
+              ongoing={project.applicationDeadlineOngoing}
               daysLeft={deal.daysLeft}
               // The old icon row under the image, moved into this card's spare
               // space and labelled (owner decision 2026-07-30).
+              // IA-40: a project can carry more than one genre — fall back to
+              // the legacy single `genre` column only when `genres` is empty,
+              // same convention as the catalog card.
               meta={{
-                genre: project.genre,
+                genres: project.genres.length > 0 ? project.genres : [project.genre],
                 format: project.format,
                 studio: project.studio,
                 countries: project.countries,

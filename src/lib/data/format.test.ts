@@ -4,8 +4,10 @@ import {
   splitCountries,
   formatMonthYear,
   formatFullDate,
+  formatReleaseDate,
   daysUntil,
   isArchived,
+  compareDeadline,
 } from "./format";
 
 describe("splitCountries", () => {
@@ -93,6 +95,48 @@ describe("formatFullDate", () => {
   });
 });
 
+// ── formatReleaseDate (IA-42) — precision-aware, all three locales ────────
+// Never inventing a day/month the editor didn't actually save.
+describe("formatReleaseDate", () => {
+  const iso = "2027-07-15T00:00:00.000Z";
+
+  it("DAY renders the full date on the project page (compact=false)", () => {
+    expect(formatReleaseDate(iso, "DAY", "en-US", false)).toBe("July 15, 2027");
+    expect(formatReleaseDate(iso, "DAY", "ru-RU", false)).toBe("15 июля 2027");
+    expect(formatReleaseDate(iso, "DAY", "hy-AM", false)).toBe("15 հուլիսի 2027");
+  });
+
+  it("DAY renders month + year on the compact cards (compact=true) — unchanged from before precision existed", () => {
+    expect(formatReleaseDate(iso, "DAY", "en-US", true)).toBe("July 2027");
+    expect(formatReleaseDate(iso, "DAY", "ru-RU", true)).toBe("июль 2027");
+    expect(formatReleaseDate(iso, "DAY", "hy-AM", true)).toBe("2027 թ. հուլիս");
+  });
+
+  it("MONTH renders month + year regardless of `compact`", () => {
+    expect(formatReleaseDate(iso, "MONTH", "en-US", false)).toBe("July 2027");
+    expect(formatReleaseDate(iso, "MONTH", "en-US", true)).toBe("July 2027");
+    expect(formatReleaseDate(iso, "MONTH", "ru-RU", false)).toBe("июль 2027");
+    expect(formatReleaseDate(iso, "MONTH", "hy-AM", false)).toBe("2027 թ. հուլիս");
+  });
+
+  it("YEAR renders just the year, hy keeping its 'թ.' suffix, regardless of `compact`", () => {
+    expect(formatReleaseDate(iso, "YEAR", "en-US", false)).toBe("2027");
+    expect(formatReleaseDate(iso, "YEAR", "en-US", true)).toBe("2027");
+    expect(formatReleaseDate(iso, "YEAR", "ru-RU", false)).toBe("2027");
+    expect(formatReleaseDate(iso, "YEAR", "hy-AM", false)).toBe("2027 թ.");
+  });
+
+  it("returns '' for null/invalid input at every precision", () => {
+    expect(formatReleaseDate(null, "DAY", "en-US")).toBe("");
+    expect(formatReleaseDate(null, "YEAR", "en-US")).toBe("");
+    expect(formatReleaseDate("not-a-date", "MONTH", "en-US")).toBe("");
+  });
+
+  it("falls back to DAY for an unrecognized precision value", () => {
+    expect(formatReleaseDate(iso, "", "en-US", true)).toBe("July 2027");
+  });
+});
+
 describe("daysUntil", () => {
   it("returns null for null/invalid", () => {
     expect(daysUntil(null)).toBeNull();
@@ -132,5 +176,46 @@ describe("isArchived", () => {
       Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate()),
     ).toISOString();
     expect(isArchived(midnightToday)).toBe(false);
+  });
+
+  // ── IA-42: Ongoing never archives ────────────────────────────────────────
+  it("is false when ongoing, whatever applicationDeadline holds (it's always null in practice)", () => {
+    expect(isArchived(null, true)).toBe(false);
+    const past = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
+    // Defensive: even a stray non-null deadline must not override the flag.
+    expect(isArchived(past, true)).toBe(false);
+  });
+
+  it("defaults to non-ongoing (existing call sites are unaffected)", () => {
+    const past = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
+    expect(isArchived(past)).toBe(true);
+  });
+});
+
+describe("compareDeadline", () => {
+  const dated = (iso: string) => ({ applicationDeadline: iso, applicationDeadlineOngoing: false });
+  const ongoing = { applicationDeadline: null, applicationDeadlineOngoing: true };
+  const unset = { applicationDeadline: null, applicationDeadlineOngoing: false };
+
+  it("sorts dated projects soonest first", () => {
+    const soon = dated("2026-09-01");
+    const later = dated("2026-12-01");
+    expect(compareDeadline(soon, later)).toBeLessThan(0);
+    expect(compareDeadline(later, soon)).toBeGreaterThan(0);
+  });
+
+  it("places Ongoing after every dated project", () => {
+    expect(compareDeadline(ongoing, dated("2026-09-01"))).toBeGreaterThan(0);
+    expect(compareDeadline(dated("2026-09-01"), ongoing)).toBeLessThan(0);
+  });
+
+  it("places a project with no deadline at all after Ongoing", () => {
+    expect(compareDeadline(unset, ongoing)).toBeGreaterThan(0);
+    expect(compareDeadline(ongoing, unset)).toBeLessThan(0);
+  });
+
+  it("treats two Ongoing (or two unset) projects as equal", () => {
+    expect(compareDeadline(ongoing, ongoing)).toBe(0);
+    expect(compareDeadline(unset, unset)).toBe(0);
   });
 });

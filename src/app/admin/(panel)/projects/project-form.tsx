@@ -8,6 +8,9 @@ import {
   AGE_RATING_VALUES,
   FORMAT_CATEGORY_VALUES,
   KIND_VALUES,
+  RELEASE_PRECISION_VALUES,
+  RELEASE_YEAR_MAX,
+  RELEASE_YEAR_MIN,
   parseCsvInput,
   parseReferencesInput,
   parseMilestonesInput,
@@ -90,6 +93,13 @@ const CONTROLLED_NAMES = new Set([
   "milestonesRows",
   "poster",
   "gallery",
+  // IA-42: the precision picker swaps releaseDate between three different
+  // <input> types, and the Ongoing toggle unmounts applicationDeadline
+  // entirely — both need React state, not a plain uncontrolled DOM replay.
+  "releaseDate",
+  "releasePrecision",
+  "applicationDeadlineOngoing",
+  "applicationDeadline",
   // videoFile mirrors through MediaField's own hidden input + React state, so
   // it restores via a keyed remount (like poster/gallery), not a DOM replay.
   "videoFile",
@@ -123,7 +133,9 @@ const EMPTY: ProjectFormInitial = {
   productionBudgetAmd: null,
   isActive: true,
   applicationDeadline: "",
+  applicationDeadlineOngoing: false,
   releaseDate: "",
+  releasePrecision: "DAY",
   platforms: "",
   tagline: "",
   taglineHy: "",
@@ -497,6 +509,35 @@ export function ProjectForm({
   // ── Controlled fields that don't fit a plain <input defaultValue> ──
   const [genres, setGenres] = useState<string[]>(() => data.genres);
   const [kind, setKind] = useState<ProjectFormInitial["kind"]>(() => data.kind);
+  // ── Release date precision (IA-42) ── the picker swaps releaseDate between
+  // three different <input> types (date/month/a bare year), so the raw string
+  // needs to be React state rather than a plain defaultValue — a coarser
+  // switch (DAY -> MONTH -> YEAR) truncates what's already there instead of
+  // inventing the missing part; a finer switch clears it, since there's
+  // nothing to promote from a coarser value.
+  const [releasePrecision, setReleasePrecision] = useState<ProjectFormInitial["releasePrecision"]>(
+    () => data.releasePrecision,
+  );
+  const [releaseDateValue, setReleaseDateValue] = useState<string>(() => data.releaseDate);
+  function truncateReleaseValue(value: string, precision: ProjectFormInitial["releasePrecision"]): string {
+    if (!value) return "";
+    if (precision === "YEAR") return value.slice(0, 4);
+    if (precision === "MONTH") return value.length >= 7 ? value.slice(0, 7) : "";
+    return value.length >= 10 ? value : "";
+  }
+  // ── Placement deadline "Ongoing" toggle (IA-42) ── checked, the date input
+  // unmounts entirely (same "inactive field drops out of the submit" pattern
+  // as the video source tabs above), and the server nulls applicationDeadline.
+  const [deadlineOngoing, setDeadlineOngoing] = useState<boolean>(() => data.applicationDeadlineOngoing);
+  // The date itself has to be React state too, not a plain defaultValue: the
+  // input UNMOUNTS while Ongoing is checked, so a defaultValue would reseed
+  // from the page-load value (or blank, on create) the moment it remounts —
+  // type a new date, tick Ongoing, untick, and the typed value was silently
+  // replaced by whatever was there when the page loaded (review finding,
+  // 2026-08-02). Kept alive across the unmount by living here instead.
+  const [applicationDeadlineValue, setApplicationDeadlineValue] = useState<string>(
+    () => data.applicationDeadline,
+  );
   const [countries, setCountries] = useState<string[]>(() => parseCsvInput(data.countries));
   const [platforms, setPlatforms] = useState<string[]>(() => parseCsvInput(data.platforms));
   const [cinemas, setCinemas] = useState<string[]>(() => parseCsvInput(data.cinemas));
@@ -684,7 +725,22 @@ export function ProjectForm({
     if (isEdit) return;
     scheduleSaveDraft();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [genres, kind, countries, platforms, cinemas, languages, actors, tiers, references, milestones]);
+  }, [
+    genres,
+    kind,
+    countries,
+    platforms,
+    cinemas,
+    languages,
+    actors,
+    tiers,
+    references,
+    milestones,
+    releasePrecision,
+    releaseDateValue,
+    deadlineOngoing,
+    applicationDeadlineValue,
+  ]);
 
   // After a restore bumps restoreNonce, the form has re-rendered with the new
   // controlled state (and any conditional SERIAL fields now exist), so replay
@@ -743,6 +799,15 @@ export function ProjectForm({
     setPlacements(parseArr(obj.placementsRows) as unknown as PlacementRow[]);
     setReferences(parseArr(obj.references) as unknown as ReferenceRow[]);
     setMilestones(parseArr(obj.milestonesRows) as unknown as MilestoneRow[]);
+    // IA-42: release precision/value and the Ongoing toggle are controlled
+    // state now (see CONTROLLED_NAMES above) — restore them directly instead
+    // of relying on the plain-field DOM replay below.
+    setReleasePrecision(
+      obj.releasePrecision === "MONTH" || obj.releasePrecision === "YEAR" ? obj.releasePrecision : "DAY",
+    );
+    setReleaseDateValue(obj.releaseDate ?? "");
+    setDeadlineOngoing(obj.applicationDeadlineOngoing === "on");
+    setApplicationDeadlineValue(obj.applicationDeadline ?? "");
     // Image uploaders remount with the restored paths.
     setPosterInitial(obj.poster ?? "");
     setGalleryInitial(obj.gallery ?? "");
@@ -1410,16 +1475,98 @@ export function ProjectForm({
                 Project.status column itself (with the catalog filter and the
                 report page display it fed) was dropped entirely on 2026-07-31
                 — the production-stage concept no longer exists in the product. */}
+            {/* Release date is optional and can be as imprecise as a bare
+                year (IA-42, owner request 2026-08-01) — a project may be
+                announced years ahead of an exact release day, or the day may
+                simply never be publicized. The precision picker decides which
+                input shows below it; switching to a coarser precision keeps
+                what's already there (truncated), switching to a finer one
+                clears it rather than inventing the missing part. */}
             <Field label={t("projectForm.field.releaseDate")} anchorId="field-releaseDate">
-              <input name="releaseDate" type="date" defaultValue={data.releaseDate} className={inputCls} />
+              <div className="flex flex-col gap-2">
+                <div className="flex flex-wrap gap-4">
+                  {RELEASE_PRECISION_VALUES.map((p) => (
+                    <label
+                      key={`releasePrecision-${p}-${formEpoch}`}
+                      className="inline-flex items-center gap-1.5 text-xs text-muted-foreground"
+                    >
+                      <input
+                        type="radio"
+                        name="releasePrecision"
+                        value={p}
+                        checked={releasePrecision === p}
+                        onChange={() => {
+                          setReleasePrecision(p);
+                          setReleaseDateValue((v) => truncateReleaseValue(v, p));
+                        }}
+                        className="h-3.5 w-3.5 accent-primary"
+                      />
+                      {t(`projectForm.releasePrecision.${p.toLowerCase()}`)}
+                    </label>
+                  ))}
+                </div>
+                {releasePrecision === "YEAR" ? (
+                  <input
+                    key={`releaseDate-year-${formEpoch}`}
+                    name="releaseDate"
+                    type="number"
+                    inputMode="numeric"
+                    min={RELEASE_YEAR_MIN}
+                    max={RELEASE_YEAR_MAX}
+                    placeholder={t("projectForm.releaseYearPlaceholder")}
+                    value={releaseDateValue}
+                    onChange={(e) => setReleaseDateValue(e.target.value)}
+                    className={inputCls}
+                  />
+                ) : releasePrecision === "MONTH" ? (
+                  <input
+                    key={`releaseDate-month-${formEpoch}`}
+                    name="releaseDate"
+                    type="month"
+                    value={releaseDateValue}
+                    onChange={(e) => setReleaseDateValue(e.target.value)}
+                    className={inputCls}
+                  />
+                ) : (
+                  <input
+                    key={`releaseDate-day-${formEpoch}`}
+                    name="releaseDate"
+                    type="date"
+                    value={releaseDateValue}
+                    onChange={(e) => setReleaseDateValue(e.target.value)}
+                    className={inputCls}
+                  />
+                )}
+              </div>
             </Field>
             <Field label={t("projectForm.field.applicationDeadline")} hint={t("projectForm.help.placementDeadline")} anchorId="field-deadline">
-              <input
-                name="applicationDeadline"
-                type="date"
-                defaultValue={data.applicationDeadline}
-                className={inputCls}
-              />
+              <div className="flex flex-col gap-2">
+                {/* Ongoing (IA-42): an open-ended call for offers, no
+                    concrete date. Checked, the date input below unmounts
+                    entirely — same "inactive field drops out of the submit"
+                    pattern as the video source tabs above. */}
+                <label className="inline-flex items-center gap-2 text-sm text-foreground">
+                  <input
+                    key={`deadlineOngoing-${formEpoch}`}
+                    type="checkbox"
+                    name="applicationDeadlineOngoing"
+                    checked={deadlineOngoing}
+                    onChange={(e) => setDeadlineOngoing(e.target.checked)}
+                    className="h-4 w-4 accent-primary"
+                  />
+                  {t("projectForm.field.deadlineOngoing")}
+                </label>
+                {!deadlineOngoing && (
+                  <input
+                    key={`applicationDeadline-${formEpoch}`}
+                    name="applicationDeadline"
+                    type="date"
+                    value={applicationDeadlineValue}
+                    onChange={(e) => setApplicationDeadlineValue(e.target.value)}
+                    className={inputCls}
+                  />
+                )}
+              </div>
             </Field>
             {/* Studio name — was a single free-text input with a <datalist> of
                 past values (so "Sharm Holding" / "Sharm holding" / "SHARM"

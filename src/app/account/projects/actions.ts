@@ -16,10 +16,14 @@ import { addCountries } from "@/lib/actions/countries";
 import { addStudios } from "@/lib/actions/studios";
 import {
   KIND_VALUES,
+  RELEASE_PRECISION_VALUES,
+  RELEASE_YEAR_MAX,
+  RELEASE_YEAR_MIN,
   ROLE_VALUES,
   kindForRole,
   parseCsvInput,
   publishBlockers,
+  validateReleaseDateValue,
 } from "@/app/admin/(panel)/projects/form-shared";
 import type { ProjectFormValues, ProjectFormState } from "@/app/admin/(panel)/projects/actions";
 
@@ -145,7 +149,9 @@ function buildData(fd: FormData): ProjectFormValues {
     // below regardless of what buildData parses here.
     isActive: bool(fd, "isActive"),
     applicationDeadline: str(fd, "applicationDeadline"),
+    applicationDeadlineOngoing: bool(fd, "applicationDeadlineOngoing"),
     releaseDate: str(fd, "releaseDate"),
+    releasePrecision: enumVal(fd, "releasePrecision", RELEASE_PRECISION_VALUES, "DAY"),
     platforms: jsonArray<string>(fd, "platforms").join(", ").slice(0, VARCHAR_MAX),
     tagline: taglineHy || taglineRu || taglineEn,
     taglineHy,
@@ -162,6 +168,13 @@ function validate(data: ProjectFormValues, t: ReturnType<typeof makeUI>): string
   if (!data.title) return t("account.form.errTitleRequired");
   if (data.genres.length === 0) return t("account.form.errGenreRequired");
   if (!data.synopsis) return t("account.form.errSynopsisRequired");
+  // Mirrors the admin action's validate() — see its comment (review finding,
+  // 2026-08-02).
+  const releaseDateError = validateReleaseDateValue(data.releaseDate, data.releasePrecision);
+  if (releaseDateError === "shape") return t("account.form.errReleaseDateShape");
+  if (releaseDateError === "range") {
+    return t("account.form.errReleaseDateRange", { min: RELEASE_YEAR_MIN, max: RELEASE_YEAR_MAX });
+  }
   return null;
 }
 
@@ -178,7 +191,6 @@ function submitGate(
 ): string | null {
   const missing = publishBlockers({
     studio: data.studio,
-    releaseDate: data.releaseDate,
     tagline: data.tagline,
     kind: data.kind,
     episodes: data.episodes,
@@ -506,7 +518,10 @@ export async function createCreatorProject(
     synopsisEn: data.synopsisEn || null,
     poster: data.poster || null,
     gallery: galleryToJson(data.gallery),
-    applicationDeadline: dateOrNull(data.applicationDeadline),
+    // Defense in depth: the form never renders the date input while Ongoing
+    // is checked, but a save must not trust that alone — force the pair back
+    // into agreement here too.
+    applicationDeadline: data.applicationDeadlineOngoing ? null : dateOrNull(data.applicationDeadline),
     releaseDate: dateOrNull(data.releaseDate),
     platforms: platformsToJson(data.platforms),
     // #29 merged the old Streaming source field into `platforms`; the
@@ -663,7 +678,10 @@ export async function updateCreatorProject(
           synopsisEn: data.synopsisEn || null,
           poster: data.poster || null,
           gallery: galleryToJson(data.gallery),
-          applicationDeadline: dateOrNull(data.applicationDeadline),
+          // Defense in depth: the form never renders the date input while
+          // Ongoing is checked, but a save must not trust that alone — force
+          // the pair back into agreement here too.
+          applicationDeadline: data.applicationDeadlineOngoing ? null : dateOrNull(data.applicationDeadline),
           releaseDate: dateOrNull(data.releaseDate),
           platforms: platformsToJson(data.platforms),
           tagline: data.tagline || null,

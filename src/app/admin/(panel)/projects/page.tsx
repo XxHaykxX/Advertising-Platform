@@ -63,7 +63,7 @@ export default async function ProjectsAdminPage() {
     ownerName: p.owner.company || p.owner.name,
     // Derived here rather than queried: the archive is "the placement deadline
     // is behind us", with no column and no cron job to keep in sync.
-    archived: isArchived(p.applicationDeadline?.toISOString() ?? null),
+    archived: isArchived(p.applicationDeadline?.toISOString() ?? null, p.applicationDeadlineOngoing),
     incomplete: missingCount(
       projectCompleteness({
         tagline: p.tagline ?? "",
@@ -82,6 +82,7 @@ export default async function ProjectsAdminPage() {
         durationMinutes: p.durationMinutes,
         references: p.references,
         applicationDeadline: p.applicationDeadline,
+        applicationDeadlineOngoing: p.applicationDeadlineOngoing,
         releaseDate: p.releaseDate,
         platforms: p.platforms,
         cinemas: p.cinemas,

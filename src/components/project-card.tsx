@@ -12,7 +12,7 @@ import {
 import { GenreBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FavoriteHeart } from "@/components/favorite-heart";
-import { daysUntil, formatFullDate, formatMonthYear, parseStringArray, splitCountries } from "@/lib/data/format";
+import { daysUntil, formatFullDate, formatReleaseDate, parseStringArray, splitCountries } from "@/lib/data/format";
 import { cn } from "@/lib/utils";
 import { DEFAULT_LOCALE, intlLocale, makeUI, useLocalizer, type Locale } from "@/lib/i18n-client";
 import type { SiteHeaderUser } from "@/components/header";
@@ -40,7 +40,7 @@ export function ProjectCard({
   signedIn?: boolean;
 }) {
   const t = makeUI(locale);
-  // One hook call up front — shownExtraGenres.map() below (variable-length,
+  // One hook call up front — shownGenres.map() below (variable-length,
   // depends on the project) calls this per item; localizeValue() itself
   // reads context and can't be called inside a loop.
   const localize = useLocalizer(locale);
@@ -48,17 +48,24 @@ export function ProjectCard({
   const shownCountries = countries.slice(0, 3);
   const extraCountries = countries.length - shownCountries.length;
   const platforms = parseStringArray(project.platforms);
-  const releaseLabel = formatMonthYear(project.releaseDate, intlLocale(locale));
+  // Compact card: month + year at DAY precision (unchanged from before
+  // precision existed), month + year at MONTH, bare year at YEAR — never
+  // inventing a day/month the editor didn't actually give (IA-42).
+  const releaseLabel = formatReleaseDate(project.releaseDate, project.releasePrecision, intlLocale(locale), true);
   const deadlineDays = daysUntil(project.applicationDeadline);
   const deadlineUrgent = deadlineDays !== null && deadlineDays <= 45;
-  // 5.6: the poster overlay keeps showing genres[0] only (unchanged), but a
-  // project can carry more than one genre — surface those too instead of
-  // silently dropping them. Cap the extra chips at 2 and collapse the rest
-  // into a "+N" pill, same convention as the country list above.
-  const allGenres = project.genres.length > 0 ? project.genres : [project.genre];
-  const extraGenres = allGenres.slice(1);
-  const shownExtraGenres = extraGenres.slice(0, 2);
-  const moreGenres = extraGenres.length - shownExtraGenres.length;
+  // IA-41: the poster overlay used to show genres[0] only and the row under
+  // the title started at genres[1] to avoid repeating it. The overlay is gone
+  // now (it covered the image and still dropped every genre past the first),
+  // so the row under the title starts at genres[0] and carries all of them.
+  // Cap at 3 badges and collapse the rest into a "+N" pill, same convention
+  // as the country list above.
+  // .filter(Boolean): a project with neither `genres` nor a legacy `genre`
+  // (both empty) fell back to [""], rendering an empty grey pill — exactly
+  // the "chip with no value" bug IA-41 was about (review finding, 2026-08-02).
+  const allGenres = (project.genres.length > 0 ? project.genres : [project.genre]).filter(Boolean);
+  const shownGenres = allGenres.slice(0, 3);
+  const moreGenres = allGenres.length - shownGenres.length;
   // Language is a CSV of one or more values (admin redesign phase 1) — used to
   // only drive the filter and was never shown on the card itself.
 
@@ -85,9 +92,6 @@ export function ProjectCard({
             <Film className="h-10 w-10 text-primary/40" />
           </div>
         )}
-        <div className="absolute left-3 top-3">
-          <GenreBadge>{localize("genre", project.genre)}</GenreBadge>
-        </div>
         <FavoriteHeart
           projectId={project.id}
           initialFavorite={favorited}
@@ -101,7 +105,7 @@ export function ProjectCard({
       <div className="flex flex-1 flex-col p-6">
         <div className="flex flex-wrap items-center gap-2">
           <h3 className="text-lg font-semibold text-foreground md:text-xl">{project.title}</h3>
-          {shownExtraGenres.map((g) => (
+          {shownGenres.map((g) => (
             <GenreBadge key={g}>{localize("genre", g)}</GenreBadge>
           ))}
           {moreGenres > 0 ? <GenreBadge>+{moreGenres}</GenreBadge> : null}
@@ -121,41 +125,57 @@ export function ProjectCard({
           ) : null}
         </div>
         <div className="mt-4 flex flex-col gap-2 text-sm text-muted-foreground">
-          <div className="flex items-center gap-2">
-            <Clapperboard className="h-3.5 w-3.5 shrink-0" />
-            <span>{project.format}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <MapPin className="h-3.5 w-3.5 shrink-0" />
-            <span>
-              {shownCountries.join(", ")}
-              {extraCountries > 0 ? ` +${extraCountries}` : ""}
-            </span>
-          </div>
+          {/* IA-41: format and countries used to render unconditionally, so a
+              project missing either printed a bare icon next to an empty
+              string. Same rule as release/deadline below — no value, no row. */}
+          {project.format ? (
+            <div className="flex items-center gap-2">
+              <Clapperboard className="h-3.5 w-3.5 shrink-0" />
+              <span>{project.format}</span>
+            </div>
+          ) : null}
+          {shownCountries.length > 0 ? (
+            <div className="flex items-center gap-2">
+              <MapPin className="h-3.5 w-3.5 shrink-0" />
+              <span>
+                {shownCountries.join(", ")}
+                {extraCountries > 0 ? ` +${extraCountries}` : ""}
+              </span>
+            </div>
+          ) : null}
           {releaseLabel ? (
             <div className="flex items-center gap-2">
               <Calendar className="h-3.5 w-3.5 shrink-0" />
               <span>{t("card.release")}: {releaseLabel}</span>
             </div>
           ) : null}
-          {project.applicationDeadline ? (
+          {project.applicationDeadline || project.applicationDeadlineOngoing ? (
             <div className={cn("flex items-center gap-2", deadlineUrgent ? "text-warn" : undefined)}>
               <Clock className="h-3.5 w-3.5 shrink-0" />
-              <span>{t("card.applicationsUntil")} {formatFullDate(project.applicationDeadline, intlLocale(locale))}</span>
+              <span>
+                {project.applicationDeadlineOngoing
+                  ? t("deadline.ongoing")
+                  : `${t("card.applicationsUntil")} ${formatFullDate(project.applicationDeadline, intlLocale(locale))}`}
+              </span>
             </div>
           ) : null}
         </div>
 
         {platforms.length > 0 ? (
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {platforms.map((p) => (
-              <span
-                key={p}
-                className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
-              >
-                {p}
-              </span>
-            ))}
+          <div className="mt-3">
+            {/* IA-41: the chip row had no label — say what these values ARE
+                before listing them, same as the report page's platform row. */}
+            <span className="text-[11px] font-medium text-muted-foreground">{t("card.availableOn")}</span>
+            <div className="mt-1 flex flex-wrap gap-1.5">
+              {platforms.map((p) => (
+                <span
+                  key={p}
+                  className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
+                >
+                  {p}
+                </span>
+              ))}
+            </div>
           </div>
         ) : null}
 

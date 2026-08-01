@@ -424,6 +424,11 @@ export const UI: Record<string, Dict> = {
     hy: "Համապատասխան նախագիծ չի գտնվել։ Փորձեք փոխել ֆիլտրները։",
   },
   "catalog.until": { ru: "До", en: "Until", hy: "Մինչև" },
+  // One name for "this deadline never expires" (IA-42), reused everywhere a
+  // placement deadline is shown — the catalog card/row, the report page's key
+  // facts and deal card, and the brand's favorites compare table. Same
+  // "one wording, not three" reasoning as report.offerBarCta.
+  "deadline.ongoing": { ru: "Бессрочно", en: "Ongoing", hy: "Ընթացիկ" },
 
   // ── project card / row ──────────────────────
   "card.projectedViews": { ru: "прогноз. просмотров", en: "projected views", hy: "կանխատեսվող դիտում" },
@@ -434,6 +439,10 @@ export const UI: Record<string, Dict> = {
   // a project carries, the way the competing marketplaces do.
   "card.placementsOne": { ru: "вариант размещения", en: "placement", hy: "փլեյսմենթ" },
   "card.placementsMany": { ru: "варианта размещения", en: "placements", hy: "փլեյսմենթ" },
+  // IA-41: the platform chip row (Netflix, cinema, …) had no label — a bare
+  // row of pills with nothing saying what they were. Prefixes that row on
+  // every card that renders it.
+  "card.availableOn": { ru: "Доступен:", en: "Available on:", hy: "Հասանելի՝" },
 
   // ── forms (shared) ──────────────────────────
   "form.name": { ru: "Имя", en: "Name", hy: "Անուն" },
@@ -1562,11 +1571,9 @@ export const UI: Record<string, Dict> = {
     hy: "Նախագիծը հնարավոր չէ հրապարակել — ստեղծողը չի լրացրել․",
   },
   "publish.missing.studio": { ru: "Студия", en: "Studio", hy: "Ստուդիա" },
-  "publish.missing.releaseDate": {
-    ru: "Дата релиза или ожидаемая дата выхода",
-    en: "Release date or expected release date",
-    hy: "Թողարկման կամ սպասվող թողարկման ամսաթիվ",
-  },
+  // publish.missing.releaseDate was removed 2026-08-01 (IA-42) — release date
+  // is no longer a publish requirement (it must stay optional and support an
+  // imprecise year/month-only value).
   "publish.missing.tagline": {
     ru: "Короткое описание (логлайн)",
     en: "Short description (logline)",
@@ -1602,6 +1609,20 @@ export const UI: Record<string, Dict> = {
     ru: "Введите синопсис хотя бы на одном языке.",
     en: "Enter a synopsis in at least one language.",
     hy: "Մուտքագրեք սինոպսիսը գոնե մեկ լեզվով։",
+  },
+  // Release date shape/range checks (IA-42 review finding, 2026-08-02) — a
+  // <input type="month"> that degraded to free text (desktop Firefox/Safari
+  // don't implement it), or a crafted request, could otherwise reach the DB
+  // unchecked. See validateReleaseDateValue in form-shared.ts.
+  "account.form.errReleaseDateShape": {
+    ru: "Дата релиза не соответствует выбранной точности (точная дата / месяц и год / год).",
+    en: "Release date doesn't match the selected precision (exact date / month & year / year).",
+    hy: "Թողարկման ամսաթիվը չի համապատասխանում ընտրված ճշգրտությանը (ճշգրիտ ամսաթիվ / ամիս և տարի / տարի)։",
+  },
+  "account.form.errReleaseDateRange": {
+    ru: "Год релиза должен быть между {min} и {max}.",
+    en: "Release year must be between {min} and {max}.",
+    hy: "Թողարկման տարին պետք է լինի {min}-ի և {max}-ի միջև։",
   },
 
   // ── creator: project submission form — full ProjectForm chrome (#15) ──
@@ -1814,7 +1835,24 @@ export const UI: Record<string, Dict> = {
     hy: "Ընտրեք երկրները…",
   },
   "projectForm.field.applicationDeadline": { ru: "Дедлайн размещения", en: "Placement deadline", hy: "Տեղադրման վերջնաժամկետ" },
+  // Ongoing (IA-42, 2026-08-01): an open-ended call for offers, no concrete
+  // date — for the projects that simply never close (a season pass, an
+  // always-open catalog title). Checking it hides the date input entirely,
+  // same pattern as the video source tabs above.
+  "projectForm.field.deadlineOngoing": {
+    ru: "Бессрочно (без конкретной даты)",
+    en: "Ongoing (no fixed date)",
+    hy: "Ընթացիկ (առանց կոնկրետ ամսաթվի)",
+  },
   "projectForm.field.releaseDate": { ru: "Дата релиза", en: "Release date", hy: "Թողարկման ամսաթիվ" },
+  // Precision picker (IA-42): the editor may not know — or the site may not
+  // publicize — the exact release day, only the year or the month it falls
+  // in. Whichever is picked decides which input shows and how the date
+  // renders everywhere else; the site never invents the missing part.
+  "projectForm.releasePrecision.day": { ru: "Точная дата", en: "Exact date", hy: "Ճշգրիտ ամսաթիվ" },
+  "projectForm.releasePrecision.month": { ru: "Месяц и год", en: "Month & year", hy: "Ամիս և տարի" },
+  "projectForm.releasePrecision.year": { ru: "Только год", en: "Year only", hy: "Միայն տարի" },
+  "projectForm.releaseYearPlaceholder": { ru: "2027", en: "2027", hy: "2027" },
   "projectForm.field.platforms": { ru: "Платформы", en: "Platforms", hy: "Հարթակներ" },
   "projectForm.platformsPlaceholder": { ru: "YouTube, Kinodaran, TV", en: "YouTube, Kinodaran, TV", hy: "YouTube, Kinodaran, TV" },
   "projectForm.field.streamingSource": { ru: "Источник показа", en: "Streaming source", hy: "Հեռարձակման աղբյուր" },

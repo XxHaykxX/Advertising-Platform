@@ -42,6 +42,28 @@ function coerce(data: Snapshot): Snapshot {
   return out;
 }
 
+/** A Project snapshot taken before IA-42 (2026-08-01) has no
+ *  applicationDeadlineOngoing / releasePrecision keys at all — restoring it
+ *  onto a row that has since been marked Ongoing (or a non-DAY precision)
+ *  would otherwise leave the two columns exactly as they are now, out of
+ *  step with the date the restore is bringing back: the site would keep
+ *  showing "Ongoing" over a project that has a concrete deadline again, and
+ *  isArchived() short-circuits on that flag, so it would never leave the
+ *  catalog either. Defaulted here to the pre-IA-42 behaviour (an exact date,
+ *  never ongoing), then the same "ongoing implies no date" pairing every
+ *  server action enforces on save is re-applied — a snapshot FROM after
+ *  IA-42 can (rarely) carry an ongoing=true row with a stray applicationDeadline
+ *  too, if it predates a since-fixed bug, so this isn't purely a legacy-data
+ *  concern. Exported for the unit test; every other caller goes through
+ *  restoreToVersion/restoreDeletedRecord. */
+export function normalizeProjectRestore(data: Snapshot): Snapshot {
+  const out: Snapshot = { ...data };
+  if (out.applicationDeadlineOngoing === undefined) out.applicationDeadlineOngoing = false;
+  if (out.releasePrecision === undefined) out.releasePrecision = "DAY";
+  if (out.applicationDeadlineOngoing) out.applicationDeadline = null;
+  return out;
+}
+
 /** Re-create the cast/tiers/placements/milestones a project snapshot carries.
  *
  *  A cast row points at the Person directory. If that person has since been
@@ -114,7 +136,7 @@ export async function restoreToVersion(
         data.updatedById = author.id;
 
         if (entity === "Project") {
-          await tx.project.update({ where: { id: entityId }, data: data as never });
+          await tx.project.update({ where: { id: entityId }, data: normalizeProjectRestore(data) as never });
           await restoreProjectChildren(tx, entityId, snapshot);
         } else if (entity === "Person") {
           await tx.person.update({ where: { id: entityId }, data: data as never });
@@ -162,7 +184,7 @@ export async function restoreDeletedRecord(
     await prisma.$transaction(
       async (tx) => {
         if (entity === "Project") {
-          const created = await tx.project.create({ data: data as never });
+          const created = await tx.project.create({ data: normalizeProjectRestore(data) as never });
           newId = created.id;
           await restoreProjectChildren(tx, newId, snapshot);
         } else if (entity === "Person") {

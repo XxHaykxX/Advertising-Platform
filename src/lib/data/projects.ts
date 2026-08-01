@@ -162,7 +162,9 @@ const getProjectsCached = unstable_cache(
     ageRating: p.ageRating,
     boxOfficeDisplay: p.boxOfficeAmd != null ? formatMoney(p.boxOfficeAmd, currency, rates, locale) : "",
     applicationDeadline: p.applicationDeadline?.toISOString() ?? null,
+    applicationDeadlineOngoing: p.applicationDeadlineOngoing,
     releaseDate: p.releaseDate?.toISOString() ?? null,
+    releasePrecision: p.releasePrecision,
     platforms: p.platforms ?? "[]",
     slotsAvailable: p.tiers.reduce((sum, tier) => sum + (tier.availableSlots ?? 0), 0),
     slotsTotal: p.tiers.reduce((sum, tier) => sum + (tier.totalSlots ?? 0), 0),
@@ -191,7 +193,7 @@ export async function getProjects(
   // Only for the public view: admin call sites pass activeOnly=false and must
   // keep seeing everything, archived included.
   if (!activeOnly) return rows;
-  return rows.filter((p) => !isArchived(p.applicationDeadline));
+  return rows.filter((p) => !isArchived(p.applicationDeadline, p.applicationDeadlineOngoing));
 }
 
 const getProjectCached = unstable_cache(
@@ -229,7 +231,9 @@ const getProjectCached = unstable_cache(
     ageRating: p.ageRating,
     boxOfficeDisplay: p.boxOfficeAmd != null ? formatMoney(p.boxOfficeAmd, currency, rates, locale) : "",
     applicationDeadline: p.applicationDeadline?.toISOString() ?? null,
+    applicationDeadlineOngoing: p.applicationDeadlineOngoing,
     releaseDate: p.releaseDate?.toISOString() ?? null,
+    releasePrecision: p.releasePrecision,
     platforms: p.platforms ?? "[]",
     actors: p.actors.map((a) => ({
       id: a.id,

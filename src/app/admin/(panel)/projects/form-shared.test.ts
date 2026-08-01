@@ -8,6 +8,7 @@ import {
   groupDigits,
   withExclusive,
   withTotalSlots,
+  validateReleaseDateValue,
   FORMAT_CATEGORY_VALUES,
   ROLE_VALUES,
   type PublishCheckInput,
@@ -95,7 +96,6 @@ describe("kindForRole", () => {
 
 const COMPLETE: PublishCheckInput = {
   studio: "Sharm Holding",
-  releaseDate: "2026-09-01",
   tagline: "One line that sells it",
   kind: "FILM",
   episodes: null,
@@ -113,10 +113,14 @@ describe("publishBlockers", () => {
     expect(publishBlockers({ ...COMPLETE, studio: "  " })).toContain("publish.missing.studio");
   });
 
-  it("flags a missing release date", () => {
-    expect(publishBlockers({ ...COMPLETE, releaseDate: "" })).toContain(
-      "publish.missing.releaseDate",
-    );
+  // IA-42 (2026-08-01): release date must be fully optional — it used to be a
+  // hard publish requirement, but it now also supports an imprecise
+  // (year/month-only) value, so it can no longer block publication.
+  it("no longer requires a release date", () => {
+    expect(publishBlockers(COMPLETE)).not.toContain("publish.missing.releaseDate");
+    // PublishCheckInput doesn't even carry a releaseDate field any more —
+    // COMPLETE above passes with none, confirming the check is fully gone,
+    // not just satisfied by coincidence.
   });
 
   it("requires a logline", () => {
@@ -157,6 +161,47 @@ describe("publishBlockers", () => {
     expect(blockers).toEqual(
       expect.arrayContaining(["publish.missing.studio", "publish.missing.tagline", "publish.missing.tiers"]),
     );
+  });
+});
+
+// ── validateReleaseDateValue (review finding, 2026-08-02) ─────────────────
+// A <input type="month"> that degrades to free text (desktop Firefox/Safari
+// don't implement it), or a crafted request, must not reach dateOrNull —
+// each precision only accepts the exact ISO date-only shape it submits.
+describe("validateReleaseDateValue", () => {
+  it("passes an empty value at every precision — release date is optional", () => {
+    expect(validateReleaseDateValue("", "DAY")).toBeNull();
+    expect(validateReleaseDateValue("", "MONTH")).toBeNull();
+    expect(validateReleaseDateValue("", "YEAR")).toBeNull();
+  });
+
+  it("accepts the exact shape each precision submits", () => {
+    expect(validateReleaseDateValue("2027-07-15", "DAY")).toBeNull();
+    expect(validateReleaseDateValue("2027-07", "MONTH")).toBeNull();
+    expect(validateReleaseDateValue("2027", "YEAR")).toBeNull();
+  });
+
+  it("flags a value that doesn't match its claimed precision's shape", () => {
+    // The concrete trigger: a <input type="month"> degraded to a plain text
+    // box and the editor typed a human date instead of "YYYY-MM".
+    expect(validateReleaseDateValue("Май 2027", "MONTH")).toBe("shape");
+    // A full date where only a month was claimed, and vice versa.
+    expect(validateReleaseDateValue("2027-07-15", "MONTH")).toBe("shape");
+    expect(validateReleaseDateValue("2027-07", "DAY")).toBe("shape");
+    expect(validateReleaseDateValue("2027-07-15", "YEAR")).toBe("shape");
+  });
+
+  it("flags a syntactically fine year outside the sane 1900–2100 window", () => {
+    expect(validateReleaseDateValue("20277", "YEAR")).toBe("shape"); // 5 digits — also fails the shape check
+    expect(validateReleaseDateValue("1899", "YEAR")).toBe("range");
+    expect(validateReleaseDateValue("2101", "YEAR")).toBe("range");
+    expect(validateReleaseDateValue("1900", "YEAR")).toBeNull();
+    expect(validateReleaseDateValue("2100", "YEAR")).toBeNull();
+  });
+
+  it("range-checks the year embedded in a MONTH or DAY value too", () => {
+    expect(validateReleaseDateValue("1899-07", "MONTH")).toBe("range");
+    expect(validateReleaseDateValue("1899-07-15", "DAY")).toBe("range");
   });
 });
 

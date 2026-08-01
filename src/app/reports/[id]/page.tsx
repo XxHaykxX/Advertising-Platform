@@ -185,7 +185,7 @@ export default async function ReportPage({
       // applied — it must read as closed, not invite a fresh application to a
       // project no longer on sale.
       archived={
-        isArchived(project.applicationDeadline) ||
+        isArchived(project.applicationDeadline, project.applicationDeadlineOngoing) ||
         (hasInterestHere && myInterest?.project.isActive === false)
       }
     >

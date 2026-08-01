@@ -18,6 +18,7 @@ const FULL: CompletenessInput = {
   durationMinutes: null,
   references: JSON.stringify([{ name: "Ray", url: "https://example.com", media: "" }]),
   applicationDeadline: "2026-09-01",
+  applicationDeadlineOngoing: false,
   releaseDate: "2026-10-01",
   platforms: JSON.stringify(["YouTube"]),
   cinemas: "Cinema Star",
@@ -43,6 +44,7 @@ const EMPTY: CompletenessInput = {
   durationMinutes: null,
   references: null,
   applicationDeadline: null,
+  applicationDeadlineOngoing: false,
   releaseDate: null,
   platforms: null,
   cinemas: null,
@@ -101,8 +103,16 @@ describe("projectCompleteness", () => {
     const items = projectCompleteness(EMPTY);
     const blocking = items.filter((i) => i.blocksPublish).map((i) => i.key);
     // Mirrors publishBlockers() in form-shared.ts — the checklist must not
-    // say "all filled" for a project publication will then refuse.
-    expect(blocking.sort()).toEqual(["releaseDate", "runtime", "studio", "tagline", "tiers"]);
+    // say "all filled" for a project publication will then refuse. Release
+    // date is NOT in this list (IA-42, 2026-08-01) — it's still shown as a
+    // section, just never blocks publication any more.
+    expect(blocking.sort()).toEqual(["runtime", "studio", "tagline", "tiers"]);
+  });
+
+  // ── IA-42: Ongoing deadline counts as filled ──────────────────────────────
+  it("counts an Ongoing deadline as filled even with no applicationDeadline date", () => {
+    const items = projectCompleteness({ ...EMPTY, applicationDeadlineOngoing: true });
+    expect(items.find((i) => i.key === "deadline")?.filled).toBe(true);
   });
 
   it("counts a reference row with an uploaded still but no title as filled", () => {

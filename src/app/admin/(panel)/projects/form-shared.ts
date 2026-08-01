@@ -4,6 +4,64 @@
 
 export const KIND_VALUES = ["FILM", "SERIAL"] as const;
 
+// How much of `releaseDate` the editor actually entered (IA-42, 2026-08-01) —
+// an exact date, a month + year, or a bare year. The stored date sits at that
+// precision's placeholder (YEAR -> YYYY-01-01, MONTH -> YYYY-MM-01); this is
+// the column that decides how much of it is safe to show, so the site never
+// renders a day/month nobody actually gave it.
+export const RELEASE_PRECISION_VALUES = ["DAY", "MONTH", "YEAR"] as const;
+export type ReleasePrecision = (typeof RELEASE_PRECISION_VALUES)[number];
+
+/** The Project.releasePrecision column is a plain String (no DB enum), so a
+   row somehow carrying anything else falls back to DAY here — same
+   "tolerate bad data, don't crash the edit page" reasoning as parseGenresInput
+   and friends elsewhere in this file. */
+export function normalizeReleasePrecision(v: string): ReleasePrecision {
+  return (RELEASE_PRECISION_VALUES as readonly string[]).includes(v) ? (v as ReleasePrecision) : "DAY";
+}
+
+// Sane bounds for a bare release year — MySQL's DATETIME range is much wider,
+// but nothing about a placement listing needs a year outside a human
+// lifetime either side of now, and it keeps a fat-fingered "20277" (see
+// RELEASE_DATE_SHAPE below — the shape check alone lets it through, since it
+// IS four digits) from reaching dateOrNull and overflowing the column.
+export const RELEASE_YEAR_MIN = 1900;
+export const RELEASE_YEAR_MAX = 2100;
+
+// Exactly the three shapes the precision picker can submit — an ISO date-only
+// form at each precision, which is also the one thing dateOrNull's `new
+// Date(value)` parses as UTC unambiguously (a date-TIME string with no
+// timezone parses in the SERVER's local time instead, per the ECMAScript
+// spec, and Hostinger's server is not UTC). Enforcing the shape here means
+// dateOrNull never has to guess: whatever reaches it is already one of these.
+const RELEASE_DATE_SHAPE: Record<ReleasePrecision, RegExp> = {
+  DAY: /^\d{4}-\d{2}-\d{2}$/,
+  MONTH: /^\d{4}-\d{2}$/,
+  YEAR: /^\d{4}$/,
+};
+
+/** Validate a release-date form value against the precision it claims to be
+   at (review finding, 2026-08-02). Release date is optional — an empty value
+   always passes, precision is irrelevant to a value that isn't there.
+   Returns an error code, or null when the value is fine:
+     "shape" — doesn't match its precision's exact format at all. The
+       concrete trigger: desktop Firefox/Safari don't implement
+       `<input type="month">` and silently degrade it to a plain text box, so
+       whatever the editor typed ("Май 2027") reaches the server unchecked
+       without this. A crafted request hitting the same gap.
+     "range" — syntactically a fine 4-digit year, but outside a sane window
+       (see RELEASE_YEAR_MIN/MAX). */
+export function validateReleaseDateValue(
+  value: string,
+  releasePrecision: ReleasePrecision,
+): "shape" | "range" | null {
+  if (!value) return null;
+  if (!RELEASE_DATE_SHAPE[releasePrecision].test(value)) return "shape";
+  const year = parseInt(value.slice(0, 4), 10);
+  if (year < RELEASE_YEAR_MIN || year > RELEASE_YEAR_MAX) return "range";
+  return null;
+}
+
 // Marketing format bucket (drives the catalog Format filter) — distinct from
 // KIND_VALUES, which only decides episode fields. Labeled via
 // t(`formatCategory.${v}`) / localizeValue(locale, "formatCategory", v).
@@ -124,7 +182,6 @@ export function kindForRole(role: string): "CAST" | "CREW" {
 
 export type PublishCheckInput = {
   studio: string;
-  releaseDate: string; // "YYYY-MM-DD" or ""
   tagline: string; // base/fallback logline (derived from the per-locale fields)
   kind: string; // "FILM" | "SERIAL"
   episodes: number | null;
@@ -137,7 +194,9 @@ export type PublishCheckInput = {
 export function publishBlockers(input: PublishCheckInput): string[] {
   const missing: string[] = [];
   if (!input.studio.trim()) missing.push("publish.missing.studio");
-  if (!input.releaseDate) missing.push("publish.missing.releaseDate");
+  // Release date is deliberately NOT checked here (IA-42, 2026-08-01, owner
+  // request): it must be fully optional and support an imprecise (year- or
+  // month-only) value, so it can no longer be a hard publish requirement.
   if (!input.tagline.trim()) missing.push("publish.missing.tagline");
   if (input.kind === "SERIAL") {
     if (!input.episodes || !input.episodeMinutes) missing.push("publish.missing.episodes");
@@ -158,6 +217,20 @@ export function publishBlockers(input: PublishCheckInput): string[] {
 /** Date | null -> "YYYY-MM-DD" for prefilling an <input type=date>. */
 export function formatDateInput(d: Date | null): string {
   return d ? d.toISOString().slice(0, 10) : "";
+}
+
+/** Release date | null -> the form value matching its saved precision (IA-42):
+   "YYYY-MM-DD" for DAY (<input type=date>), "YYYY-MM" for MONTH (<input
+   type=month>), "YYYY" for YEAR (a plain number input). The stored date
+   already sits at that precision's placeholder (MONTH -> YYYY-MM-01, YEAR ->
+   YYYY-01-01), so slicing the ISO string is enough — nothing is inferred that
+   wasn't already true of the saved value. */
+export function formatReleaseDateInput(d: Date | null, releasePrecision: string): string {
+  if (!d) return "";
+  const iso = d.toISOString();
+  if (releasePrecision === "YEAR") return iso.slice(0, 4);
+  if (releasePrecision === "MONTH") return iso.slice(0, 7);
+  return iso.slice(0, 10);
 }
 
 /** JSON string[] (or null) -> "YouTube, Kinodaran, TV" for the form. */

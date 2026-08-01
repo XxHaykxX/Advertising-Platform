@@ -21,7 +21,7 @@ import { GenreBadge } from "@/components/ui/badge";
 import { ProjectCard } from "@/components/project-card";
 import { FavoriteHeart } from "@/components/favorite-heart";
 import { Header, type SiteHeaderUser } from "@/components/header";
-import { daysUntil, formatFullDate, parseStringArray, splitCountries } from "@/lib/data/format";
+import { compareDeadline, daysUntil, formatFullDate, parseStringArray, splitCountries } from "@/lib/data/format";
 import { FORMAT_CATEGORY_VALUES } from "@/app/admin/(panel)/projects/form-shared";
 import { cn } from "@/lib/utils";
 import { DEFAULT_LOCALE, intlLocale, makeUI, useLocalizer, type Locale } from "@/lib/i18n-client";
@@ -63,7 +63,10 @@ function ProjectRow({
   const deadlineDays = daysUntil(project.applicationDeadline);
   const deadlineUrgent = deadlineDays !== null && deadlineDays <= 45;
   // 5.6: same "first + up to 2 more, then +N" convention as ProjectCard.
-  const allGenres = project.genres.length > 0 ? project.genres : [project.genre];
+  // .filter(Boolean): a project with neither `genres` nor a legacy `genre`
+  // fell back to [""], which the unconditional first badge below then
+  // rendered as an empty grey pill (review finding, 2026-08-02).
+  const allGenres = (project.genres.length > 0 ? project.genres : [project.genre]).filter(Boolean);
   const extraGenres = allGenres.slice(1);
   const shownExtraGenres = extraGenres.slice(0, 2);
   const moreGenres = extraGenres.length - shownExtraGenres.length;
@@ -96,7 +99,7 @@ function ProjectRow({
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <h3 className="text-lg font-semibold text-foreground">{project.title}</h3>
-          <GenreBadge>{localize("genre", allGenres[0])}</GenreBadge>
+          {allGenres[0] ? <GenreBadge>{localize("genre", allGenres[0])}</GenreBadge> : null}
           {shownExtraGenres.map((g) => (
             <GenreBadge key={g}>{localize("genre", g)}</GenreBadge>
           ))}
@@ -106,7 +109,7 @@ function ProjectRow({
         <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
           <span>{project.format}</span>
           <span>{countries.slice(0, 3).join(", ")}</span>
-          {project.applicationDeadline ? (
+          {project.applicationDeadline || project.applicationDeadlineOngoing ? (
             <span
               className={cn(
                 "inline-flex items-center gap-1",
@@ -114,7 +117,9 @@ function ProjectRow({
               )}
             >
               <Clock className="h-3 w-3 shrink-0" />
-              {t("catalog.until")} {formatFullDate(project.applicationDeadline, intlLocale(locale))}
+              {project.applicationDeadlineOngoing
+                ? t("deadline.ongoing")
+                : `${t("catalog.until")} ${formatFullDate(project.applicationDeadline, intlLocale(locale))}`}
             </span>
           ) : null}
         </div>
@@ -447,14 +452,10 @@ export function CatalogView({
         return bt - at;
       });
     } else if (sortBy === "deadline") {
-      // applicationDeadline asc (soonest first), no-deadline projects last.
-      list.sort((a, b) => {
-        const at = a.applicationDeadline ? new Date(a.applicationDeadline).getTime() : null;
-        const bt = b.applicationDeadline ? new Date(b.applicationDeadline).getTime() : null;
-        if (at === null) return bt === null ? 0 : 1;
-        if (bt === null) return -1;
-        return at - bt;
-      });
+      // applicationDeadline asc (soonest first); an Ongoing project (IA-42)
+      // sorts after every dated one, and a project with no deadline at all
+      // sorts after even that — see compareDeadline.
+      list.sort(compareDeadline);
     } else if (sortBy === "title") {
       list.sort((a, b) => a.title.localeCompare(b.title, intlLocale(locale)));
     }

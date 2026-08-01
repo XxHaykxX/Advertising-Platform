@@ -26,6 +26,8 @@ export type BrandFavoriteDTO = {
     slotsAvailable: number;
     slotsTotal: number; // 0 => no tier has a total set, i.e. hide the slots column value
     applicationDeadline: string | null;
+    // True for an open-ended call for offers (IA-42) — see ProjectListDTO.
+    applicationDeadlineOngoing: boolean;
   };
 };
 
@@ -71,6 +73,7 @@ export async function getBrandFavorites(
         slotsAvailable: tiers.reduce((sum, t) => sum + (t.availableSlots ?? 0), 0),
         slotsTotal: tiers.reduce((sum, t) => sum + (t.totalSlots ?? 0), 0),
         applicationDeadline: r.project.applicationDeadline?.toISOString() ?? null,
+        applicationDeadlineOngoing: r.project.applicationDeadlineOngoing,
       },
     };
   });
