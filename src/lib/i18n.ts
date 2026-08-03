@@ -46,7 +46,7 @@ export const UI: Record<string, Dict> = {
   "nav.closeMenu": { ru: "Закрыть меню", en: "Close menu", hy: "Փակել ընտրացանկը" },
 
   // ── logout confirm popup ────────────────────
-  "logout.confirmTitle": { ru: "Выйти из аккаунта?", en: "Log out?", hy: "Դուրս գա՞լ հաշվից" },
+  "logout.confirmTitle": { ru: "Выйти из аккаунта?", en: "Log out?", hy: "Դուրս գալ հաշվից" },
   "logout.confirmMessage": {
     ru: "Вы уверены, что хотите выйти?",
     en: "Are you sure you want to log out?",
@@ -448,7 +448,7 @@ export const UI: Record<string, Dict> = {
   "form.name": { ru: "Имя", en: "Name", hy: "Անուն" },
   "form.namePlaceholder": { ru: "Ваше имя", en: "Your name", hy: "Ձեր անունը" },
   "form.phone": { ru: "Телефон", en: "Phone", hy: "Հեռախոս" },
-  "form.email": { ru: "Email", en: "Email", hy: "Էլ. փոստ" },
+  "form.email": { ru: "Email", en: "Email", hy: "Էլփոստ" },
   "form.company": { ru: "Компания", en: "Company", hy: "Ընկերություն" },
   "form.companyPlaceholder": { ru: "Ваша компания", en: "Your company", hy: "Ձեր ընկերությունը" },
   "form.message": { ru: "Сообщение", en: "Message", hy: "Հաղորդագրություն" },
@@ -482,11 +482,11 @@ export const UI: Record<string, Dict> = {
     hy: "Երաշխավորված վճարումներ և իրավական պաշտպանվածություն",
   },
   "trust.countriesNumber": { ru: "100+", en: "100+", hy: "50+" },
-  "trust.countriesTitle": { ru: "стран охвачено", en: "countries covered", hy: "Վստահելի գործընկերներ" },
+  "trust.countriesTitle": { ru: "стран охвачено", en: "countries covered", hy: "վստահելի գործընկերներ" },
   "trust.countriesCaption": {
     ru: "доступно на крупнейших рынках мира",
     en: "available in major markets worldwide",
-    hy: "Համագործակցություններ ստուգված մեդիա նախագծերի հեղինակների hետ։",
+    hy: "Համագործակցություններ ստուգված մեդիա նախագծերի հեղինակների hետ",
   },
 
   // ── featured productions ──────────────────────
@@ -722,7 +722,7 @@ export const UI: Record<string, Dict> = {
   "contactPage.messagePlaceholder": {
     ru: "Расскажите о своём бренде, целях и конкретных проектах или плейсментах, которые вас интересуют…",
     en: "Tell us about your brand, goals, and any specific projects or placements you're interested in…",
-    hy: "Պատմեք Ձեր նախագծի կամ բրենդի մասին, կամ պարզապես հարցրեք այն, ինչ հետաքրքրում է Ձեզ։",
+    hy: "Պատմեք Ձեր նախագծի կամ բրենդի մասին, կամ պարզապես հարցրեք այն, ինչ հետաքրքրում է։",
   },
   "contactPage.respondNote": {
     ru: "Мы рассмотрим ваше сообщение и ответим на вашу почту в течение 24 часов.",
@@ -1244,12 +1244,20 @@ export const UI: Record<string, Dict> = {
     en: "Your account is awaiting admin approval. We'll let you know once access is granted.",
     hy: "Ձեր հաշիվը սպասում է ադմինի հաստատմանը։ Կտեղեկացնենք, երբ հասանելիությունը բացվի։",
   },
-  "register.errEmailTaken": { ru: "Этот email уже зарегистрирован.", en: "This email is already registered.", hy: "Այս էլ. փոստն արդեն գրանցված է։" },
+  "register.errEmailTaken": {
+    ru: "Этот email уже зарегистрирован.",
+    en: "This email is already registered.",
+    hy: "Այս էլփոստն արդեն գրանցված է։",
+  },
   "register.errFields": { ru: "Заполните все обязательные поля.", en: "Please fill in all required fields.", hy: "Լրացրեք բոլոր պարտադիր դաշտերը։" },
   "register.errPasswordShort": { ru: "Пароль должен быть не короче 8 символов.", en: "Password must be at least 8 characters.", hy: "Գաղտնաբառը պետք է լինի առնվազն 8 նիշ։" },
 
   // ── auth: login errors ──
-  "login.errInvalid": { ru: "Неверный email или пароль.", en: "Incorrect email or password.", hy: "Սխալ էլ. փոստ կամ գաղտնաբառ։" },
+  "login.errInvalid": {
+    ru: "Неверный email или пароль.",
+    en: "Incorrect email or password.",
+    hy: "Սխալ էլփոստ կամ գաղտնաբառ։",
+  },
   "login.errPending": { ru: "Аккаунт ожидает одобрения администратора.", en: "Your account is awaiting admin approval.", hy: "Ձեր հաշիվը սպասում է ադմինի հաստատմանը։" },
   "login.errBlocked": { ru: "Аккаунт заблокирован. Свяжитесь с администрацией.", en: "This account is blocked. Contact the administrator.", hy: "Հաշիվը արգելափակված է։ Կապվեք ադմինի հետ։" },
   "login.errRejected": { ru: "Заявка на регистрацию отклонена.", en: "Your registration was rejected.", hy: "Ձեր գրանցման հայտը մերժվել է։" },
@@ -1258,7 +1266,11 @@ export const UI: Record<string, Dict> = {
   "login.errGoogle": { ru: "Не удалось войти через Google.", en: "Google sign-in failed.", hy: "Google մուտքը ձախողվեց։" },
   "login.errTooManyAttempts": { ru: "Слишком много попыток. Повторите через несколько минут.", en: "Too many attempts. Try again in a few minutes.", hy: "Չափազանց շատ փորձեր։ Կրկնեք մի քանի րոպեից։" },
   "login.errDeactivated": { ru: "Аккаунт деактивирован. Свяжитесь с администратором.", en: "This account has been deactivated. Contact the administrator.", hy: "Հաշիվն ապաակտիվացված է։ Կապվեք ադմինիստրատորի հետ։" },
-  "login.errFillBoth": { ru: "Введите email и пароль.", en: "Please enter your email and password.", hy: "Մուտքագրեք էլ. փոստը և գաղտնաբառը։" },
+  "login.errFillBoth": {
+    ru: "Введите email и пароль.",
+    en: "Please enter your email and password.",
+    hy: "Մուտքագրեք էլփոստը և գաղտնաբառը։",
+  },
   "adminLogin.title": { ru: "Вход в админку", en: "Admin sign-in", hy: "Ադմինի մուտք" },
   "adminLogin.subtitle": { ru: "Войдите под аккаунтом администратора или публикатора.", en: "Sign in with your admin or publisher account.", hy: "Մուտք գործեք ադմինի կամ հրապարակողի հաշվով։" },
   "auth.rememberMe": { ru: "Запомнить меня", en: "Remember me", hy: "Հիշել ինձ" },
@@ -1277,7 +1289,7 @@ export const UI: Record<string, Dict> = {
   "auth.forgotSubtitle": {
     ru: "Укажите email — пришлём ссылку для сброса пароля.",
     en: "Enter your email and we'll send you a password reset link.",
-    hy: "Նշեք ձեր էլ. փոստը՝ գաղտնաբառը վերականգնելու հղում կստանաք։",
+    hy: "Նշեք ձեր էլփոստը՝ գաղտնաբառը վերականգնելու հղում կստանաք։",
   },
   "auth.forgotSubmit": { ru: "Отправить ссылку", en: "Send reset link", hy: "Ուղարկել հղումը" },
   "auth.forgotSent": {
@@ -2106,7 +2118,7 @@ export const UI: Record<string, Dict> = {
     hy: "Հաստատեք, մերժեք կամ արգելափակեք բրենդների և ստեղծագործողների հաշիվները։",
   },
   "admin.registrations.colName": { ru: "Имя", en: "Name", hy: "Անուն" },
-  "admin.registrations.colEmail": { ru: "Email", en: "Email", hy: "Էլ. փոստ" },
+  "admin.registrations.colEmail": { ru: "Email", en: "Email", hy: "Էլփոստ" },
   "admin.registrations.colRole": { ru: "Роль", en: "Role", hy: "Դեր" },
   "admin.registrations.colCompany": { ru: "Компания", en: "Company", hy: "Ընկերություն" },
   "admin.registrations.colStatus": { ru: "Статус", en: "Status", hy: "Կարգավիճակ" },
@@ -2272,7 +2284,7 @@ export const UI: Record<string, Dict> = {
     en: "If the price is on request, name your own",
     hy: "Եթե գինը «հարցումով» է, նշեք ձերը",
   },
-  "apply.contactPlaceholder": { ru: "Email или телефон", en: "Email or phone", hy: "Էլ. փոստ կամ հեռախոս" },
+  "apply.contactPlaceholder": { ru: "Email или телефон", en: "Email or phone", hy: "Էլփոստ կամ հեռախոս" },
   // Required since 2026-07-29 (it was the optional one, with the free-text
   // message mandatory — inverted: without the product the seller cannot tell
   // what the offer is even about).
@@ -2426,7 +2438,7 @@ export const UI: Record<string, Dict> = {
   "account.brand.emailReadonlyNote": {
     ru: "Ваш логин — изменить нельзя",
     en: "Your login email — cannot be changed",
-    hy: "Ձեր մուտքի էլ. փոստը՝ չի կարող փոփոխվել",
+    hy: "Ձեր մուտքի էլփոստը չի կարող փոփոխվել",
   },
   "account.brand.companyDetails": { ru: "Данные компании", en: "Company Details", hy: "Ընկերության տվյալներ" },
   "account.brand.website": { ru: "Веб-сайт", en: "Website", hy: "Կայք" },
