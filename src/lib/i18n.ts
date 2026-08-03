@@ -432,7 +432,7 @@ export const UI: Record<string, Dict> = {
 
   // ── project card / row ──────────────────────
   "card.projectedViews": { ru: "прогноз. просмотров", en: "projected views", hy: "կանխատեսվող դիտում" },
-  "card.release": { ru: "Выход", en: "Release", hy: "C" },
+  "card.release": { ru: "Выход", en: "Release", hy: "Ցուցադրությունը՝" },
   "card.applicationsUntil": { ru: "Заявки до", en: "Applications until", hy: "Հայտեր՝ մինչև" },
   "card.slotsAvailable": { ru: "мест доступно", en: "slots available", hy: "հասանելի տեղ" },
   // Owner request 2026-07-28: say on the card how many placement opportunities
