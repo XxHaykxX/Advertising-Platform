@@ -154,6 +154,7 @@ export const CLIENT_KEYS: readonly string[] = [
   "form.message",
   "form.name",
   "form.namePlaceholder",
+  "form.required",
   "form.send",
   "hero.eyebrow",
   "hero.scrollDown",

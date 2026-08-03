@@ -38,6 +38,10 @@ export async function submitLead(
     return { ok: false, error: t("formErr.emailInvalid"), values };
   }
 
+  // Both contact forms mark this mandatory (the contact page always did, the
+  // landing form joined it on 2026-08-03), so the action agrees rather than
+  // accepting a blank lead from anything that skips the client check.
+  if (!message) return { ok: false, error: t("formErr.message"), values };
   if (message.length > 5000) return { ok: false, error: t("formErr.messageLong"), values };
 
   const projectTitle = String(formData.get("projectTitle") || "").trim().slice(0, 200) || undefined;
@@ -47,7 +51,7 @@ export async function submitLead(
   // but just notifies the admin by email instead. Best-effort: a flaky SMTP
   // hop must not turn into a broken "message sent" screen for the visitor.
   try {
-    await notifyContactMessage({ name, email, message: message || undefined, projectTitle });
+    await notifyContactMessage({ name, email, message, projectTitle });
   } catch (err) {
     console.error("[leads] failed to notify admin of contact message:", err);
   }

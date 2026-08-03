@@ -8,8 +8,19 @@ import { Reveal } from "@/components/ui/reveal";
 import { Button } from "@/components/ui/button";
 import { submitLead, type LeadState } from "@/lib/actions/leads";
 import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n-client";
+import {
+  FIELD_ERROR_CLASS,
+  FieldError,
+  FieldErrorIcon,
+  RequiredMark,
+  focusFirstError,
+  useRequiredFields,
+} from "@/components/ui/field";
+import { cn } from "@/lib/utils";
 
 const initialState: LeadState = { ok: false };
+
+const REQUIRED = ["name", "email", "message"] as const;
 
 const fieldClass =
   "w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20";
@@ -21,6 +32,7 @@ export default function Contact({ locale = DEFAULT_LOCALE }: { locale?: Locale }
     submitLead,
     initialState,
   );
+  const { errors, check, clear, fieldProps } = useRequiredFields(t("form.required"));
 
   return (
     <Section id="contact">
@@ -44,41 +56,86 @@ export default function Contact({ locale = DEFAULT_LOCALE }: { locale?: Locale }
                 </p>
               </div>
             ) : (
-              <form action={formAction} className="space-y-5 rounded-2xl border border-border bg-card p-8 card-lift">
-                <label className="block">
-                  <span className={labelClass}>{t("form.name")}</span>
-                  <input
-                    name="name"
-                    type="text"
-                    autoComplete="name"
-                    defaultValue={state.values?.name}
-                    placeholder={t("form.namePlaceholder")}
-                    className={fieldClass}
-                  />
-                </label>
+              <form
+                action={formAction}
+                // Own validation instead of the browser's: see field.tsx.
+                noValidate
+                onSubmit={(e) => {
+                  const form = e.currentTarget;
+                  if (!check(new FormData(form), REQUIRED)) {
+                    e.preventDefault();
+                    focusFirstError(form, REQUIRED);
+                  }
+                }}
+                className="space-y-5 rounded-2xl border border-border bg-card p-8 card-lift"
+              >
+                <div>
+                  <label className="block">
+                    <span className={labelClass}>
+                      {t("form.name")}
+                      <RequiredMark />
+                    </span>
+                    <div className="relative">
+                      <input
+                        name="name"
+                        type="text"
+                        autoComplete="name"
+                        defaultValue={state.values?.name}
+                        placeholder={t("form.namePlaceholder")}
+                        onInput={() => clear("name")}
+                        {...fieldProps("name")}
+                        className={cn(fieldClass, errors.name && FIELD_ERROR_CLASS)}
+                      />
+                      {errors.name && <FieldErrorIcon />}
+                    </div>
+                  </label>
+                  <FieldError id="name-error" message={errors.name} />
+                </div>
 
-                <label className="block">
-                  <span className={labelClass}>{t("form.email")}</span>
-                  <input
-                    name="email"
-                    type="email"
-                    autoComplete="email"
-                    defaultValue={state.values?.email}
-                    placeholder="you@example.com"
-                    className={fieldClass}
-                  />
-                </label>
+                <div>
+                  <label className="block">
+                    <span className={labelClass}>
+                      {t("form.email")}
+                      <RequiredMark />
+                    </span>
+                    <div className="relative">
+                      <input
+                        name="email"
+                        type="email"
+                        autoComplete="email"
+                        defaultValue={state.values?.email}
+                        placeholder="you@example.com"
+                        onInput={() => clear("email")}
+                        {...fieldProps("email")}
+                        className={cn(fieldClass, errors.email && FIELD_ERROR_CLASS)}
+                      />
+                      {errors.email && <FieldErrorIcon />}
+                    </div>
+                  </label>
+                  <FieldError id="email-error" message={errors.email} />
+                </div>
 
-                <label className="block">
-                  <span className={labelClass}>{t("form.message")}</span>
-                  <textarea
-                    name="message"
-                    rows={5}
-                    defaultValue={state.values?.message}
-                    placeholder={t("contact.messagePlaceholder")}
-                    className={`${fieldClass} resize-none`}
-                  />
-                </label>
+                <div>
+                  <label className="block">
+                    <span className={labelClass}>
+                      {t("form.message")}
+                      <RequiredMark />
+                    </span>
+                    <div className="relative">
+                      <textarea
+                        name="message"
+                        rows={5}
+                        defaultValue={state.values?.message}
+                        placeholder={t("contact.messagePlaceholder")}
+                        onInput={() => clear("message")}
+                        {...fieldProps("message")}
+                        className={cn(fieldClass, "resize-none", errors.message && FIELD_ERROR_CLASS)}
+                      />
+                      {errors.message && <FieldErrorIcon position="textarea" />}
+                    </div>
+                  </label>
+                  <FieldError id="message-error" message={errors.message} />
+                </div>
 
                 {state.error && (
                   <p className="text-sm text-danger">{state.error}</p>

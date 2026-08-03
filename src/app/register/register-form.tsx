@@ -8,6 +8,18 @@ import { GoogleButton } from "@/components/google-button";
 import { makeUI, type Locale } from "@/lib/i18n-client";
 import { cn } from "@/lib/utils";
 import { PasswordInput } from "@/components/ui/password-input";
+import {
+  FIELD_ERROR_CLASS,
+  FieldError,
+  FieldErrorIcon,
+  RequiredMark,
+  focusFirstError,
+  useRequiredFields,
+} from "@/components/ui/field";
+
+const REQUIRED = ["name", "email", "password"] as const;
+const inputClass =
+  "w-full rounded-xl border border-border bg-background py-3 pl-10 pr-4 text-sm text-foreground outline-none transition-colors focus:border-primary/50";
 
 export function RegisterForm({
   locale,
@@ -35,6 +47,7 @@ export function RegisterForm({
   // plaintext password); instead it's kept controlled client-side so React
   // 19's post-action uncontrolled-input reset doesn't wipe it on error.
   const [password, setPassword] = useState("");
+  const { errors, check, clear, fieldProps } = useRequiredFields(t("form.required"));
 
   // Registration signs the member in immediately (no moderation queue) and
   // reports success + a destination instead of redirecting server-side: the
@@ -67,7 +80,19 @@ export function RegisterForm({
           </div>
         </div>
       )}
-      <form action={formAction} className={cn("space-y-5", googleEnabled ? "mt-4" : "mt-8")}>
+      <form
+        action={formAction}
+        // Own validation instead of the browser's: see field.tsx.
+        noValidate
+        onSubmit={(e) => {
+          const form = e.currentTarget;
+          if (!check(new FormData(form), REQUIRED)) {
+            e.preventDefault();
+            focusFirstError(form, REQUIRED);
+          }
+        }}
+        className={cn("space-y-5", googleEnabled ? "mt-4" : "mt-8")}
+      >
       <input type="hidden" name="type" value={type} />
       {from && <input type="hidden" name="from" value={from} />}
 
@@ -113,53 +138,80 @@ export function RegisterForm({
         </div>
       </div>
 
-      <label className="block">
-        <span className="mb-1.5 block text-sm font-semibold text-foreground">{t("register.fullName")}</span>
-        <div className="relative">
-          <User className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            name="name"
-            type="text"
-            required
-            defaultValue={state.values?.name}
-            placeholder={t("register.fullNamePlaceholder")}
-            className="w-full rounded-xl border border-border bg-background py-3 pl-10 pr-4 text-sm text-foreground outline-none transition-colors focus:border-primary/50"
-          />
-        </div>
-      </label>
+      <div>
+        <label className="block">
+          <span className="mb-1.5 block text-sm font-semibold text-foreground">
+            {t("register.fullName")}
+            <RequiredMark />
+          </span>
+          <div className="relative">
+            <User className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              name="name"
+              type="text"
+              defaultValue={state.values?.name}
+              placeholder={t("register.fullNamePlaceholder")}
+              onInput={() => clear("name")}
+              {...fieldProps("name")}
+              className={cn(inputClass, errors.name && FIELD_ERROR_CLASS)}
+            />
+            {errors.name && <FieldErrorIcon />}
+          </div>
+        </label>
+        <FieldError id="name-error" message={errors.name} />
+      </div>
 
-      <label className="block">
-        <span className="mb-1.5 block text-sm font-semibold text-foreground">{t("register.workEmail")}</span>
-        <div className="relative">
-          <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            name="email"
-            type="email"
-            required
-            defaultValue={state.values?.email}
-            placeholder={type === "brand" ? t("register.emailPlaceholderBrand") : t("register.emailPlaceholderCreator")}
-            className="w-full rounded-xl border border-border bg-background py-3 pl-10 pr-4 text-sm text-foreground outline-none transition-colors focus:border-primary/50"
-          />
-        </div>
-      </label>
+      <div>
+        <label className="block">
+          <span className="mb-1.5 block text-sm font-semibold text-foreground">
+            {t("register.workEmail")}
+            <RequiredMark />
+          </span>
+          <div className="relative">
+            <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              name="email"
+              type="email"
+              defaultValue={state.values?.email}
+              placeholder={type === "brand" ? t("register.emailPlaceholderBrand") : t("register.emailPlaceholderCreator")}
+              onInput={() => clear("email")}
+              {...fieldProps("email")}
+              className={cn(inputClass, errors.email && FIELD_ERROR_CLASS)}
+            />
+            {errors.email && <FieldErrorIcon />}
+          </div>
+        </label>
+        <FieldError id="email-error" message={errors.email} />
+      </div>
 
-      <label className="block">
-        <span className="mb-1.5 block text-sm font-semibold text-foreground">{t("register.password")}</span>
-        <div className="relative">
-          <Lock className="pointer-events-none absolute left-3.5 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <PasswordInput
-            name="password"
-            required
-            autoComplete="new-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder={t("register.passwordPlaceholder")}
-            showLabel={t("auth.passwordShow")}
-            hideLabel={t("auth.passwordHide")}
-            className="w-full rounded-xl border border-border bg-background py-3 pl-10 pr-4 text-sm text-foreground outline-none transition-colors focus:border-primary/50"
-          />
-        </div>
-      </label>
+      <div>
+        <label className="block">
+          <span className="mb-1.5 block text-sm font-semibold text-foreground">
+            {t("register.password")}
+            <RequiredMark />
+          </span>
+          <div className="relative">
+            <Lock className="pointer-events-none absolute left-3.5 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <PasswordInput
+              name="password"
+              autoComplete="new-password"
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                clear("password");
+              }}
+              placeholder={t("register.passwordPlaceholder")}
+              showLabel={t("auth.passwordShow")}
+              hideLabel={t("auth.passwordHide")}
+              {...fieldProps("password")}
+              className={cn(inputClass, errors.password && FIELD_ERROR_CLASS)}
+            />
+            {/* Sits left of the show/hide eye, which owns the right edge. */}
+            {errors.password && <FieldErrorIcon position="trailing-control" />}
+          </div>
+        </label>
+        <FieldError id="password-error" message={errors.password} />
+      </div>
 
       <label className="block">
         <span className="mb-1.5 block text-sm font-semibold text-foreground">

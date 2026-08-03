@@ -8,6 +8,7 @@ import { useModalDialog } from "@/lib/use-modal-dialog";
 import { submitApplication } from "@/app/account/brand/actions";
 import type { makeUI } from "@/lib/i18n-client";
 import { NO_OFFER_KEY, offerValue, parseOfferValue } from "@/lib/offer-value";
+import { RequiredMark } from "@/components/ui/field";
 
 /** Application popup (#23) for the report page's Express Interest button —
  *  same accessible-overlay shape as LogoutConfirmDialog (logout-button.tsx):
@@ -296,6 +297,7 @@ export function ApplicationDialog({
             <div>
               <label htmlFor="apply-product" className={labelClass}>
                 {t("apply.productLabel")}
+                <RequiredMark />
               </label>
               <input
                 id="apply-product"
@@ -402,6 +404,7 @@ export function ApplicationDialog({
               <div>
                 <label htmlFor="apply-phone" className={labelClass}>
                   {t("apply.phoneLabel")}
+                  <RequiredMark />
                 </label>
                 {/* Country picker with the flag and dial code (2026-07-29) —
                     the field used to be a bare text box where the whole

@@ -7,8 +7,21 @@ import { MediaField } from "@/components/media-field";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { makeUI, type Locale } from "@/lib/i18n-client";
 import { updateCreatorProfile, type CreatorProfileFormState } from "../actions";
+import {
+  FIELD_ERROR_CLASS,
+  FieldError,
+  FieldErrorIcon,
+  RequiredMark,
+  focusFirstError,
+  useRequiredFields,
+} from "@/components/ui/field";
+import { cn } from "@/lib/utils";
 
 const initialState: CreatorProfileFormState = {};
+
+// The action rejects a blank display name (account/actions.ts) — flag it in
+// the form instead of only after the round-trip.
+const REQUIRED = ["name"] as const;
 
 const fieldClass =
   "w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition-colors focus:border-primary/50";
@@ -46,6 +59,8 @@ export function ProfileForm({
     updateCreatorProfile,
     initialState,
   );
+  const { errors, check, clear, fieldProps } = useRequiredFields(t("form.required"));
+  const hasErrors = Object.keys(errors).length > 0;
 
   useEffect(() => {
     if (!state.ok || state.website === undefined) return;
@@ -64,20 +79,43 @@ export function ProfileForm({
         </label>
       </div>
 
-      <form action={formAction} className="flex flex-col gap-6">
+      <form
+        action={formAction}
+        // Own validation instead of the browser's: see field.tsx.
+        noValidate
+        onSubmit={(e) => {
+          const form = e.currentTarget;
+          if (!check(new FormData(form), REQUIRED)) {
+            e.preventDefault();
+            focusFirstError(form, REQUIRED);
+          }
+        }}
+        className="flex flex-col gap-6"
+      >
         <div className={cardClass}>
           <h2 className="text-lg font-semibold text-foreground">{t("account.profile")}</h2>
 
-          <label className="mt-4 block max-w-md">
-            <span className={labelClass}>{t("form.name")}</span>
-            <input
-              name="name"
-              type="text"
-              defaultValue={name}
-              placeholder={t("form.name")}
-              className={fieldClass}
-            />
-          </label>
+          <div className="mt-4 max-w-md">
+            <label className="block">
+              <span className={labelClass}>
+                {t("form.name")}
+                <RequiredMark />
+              </span>
+              <div className="relative">
+                <input
+                  name="name"
+                  type="text"
+                  defaultValue={name}
+                  placeholder={t("form.name")}
+                  onInput={() => clear("name")}
+                  {...fieldProps("name")}
+                  className={cn(fieldClass, errors.name && FIELD_ERROR_CLASS)}
+                />
+                {errors.name && <FieldErrorIcon />}
+              </div>
+            </label>
+            <FieldError id="name-error" message={errors.name} />
+          </div>
 
           <div className="mt-4">
             <span className={labelClass}>{t("account.profile.avatar")}</span>
@@ -134,7 +172,10 @@ export function ProfileForm({
             {pending && <Loader2 className="h-4 w-4 animate-spin" />}
             {t("account.brand.saveChanges")}
           </Button>
-          {state.ok && !pending ? (
+          {/* Blocked submits never reach the action, so `state.ok` still holds
+              the previous save — without this the green "Saved" would sit next
+              to a red "please fill in this field" from the attempt just made. */}
+          {state.ok && !pending && !hasErrors ? (
             <span className="text-sm font-medium text-success">{t("account.brand.saved")}</span>
           ) : null}
         </div>

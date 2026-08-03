@@ -453,6 +453,14 @@ export const UI: Record<string, Dict> = {
   "form.companyPlaceholder": { ru: "Ваша компания", en: "Your company", hy: "Ձեր ընկերությունը" },
   "form.message": { ru: "Сообщение", en: "Message", hy: "Հաղորդագրություն" },
   "form.send": { ru: "Отправить", en: "Send", hy: "Ուղարկել" },
+  // Shown under a mandatory field left empty. Replaces the browser's own
+  // `required` bubble, which is rendered in the browser's UI language rather
+  // than the site's (2026-08-03).
+  "form.required": {
+    ru: "Пожалуйста, заполните поле",
+    en: "Please fill in this field",
+    hy: "Խնդրում ենք լրացնել դաշտը",
+  },
   "form.consent": {
     ru: "Я согласен на обработку персональных данных",
     en: "I agree to the processing of my personal data",
@@ -1170,6 +1178,7 @@ export const UI: Record<string, Dict> = {
   "formErr.email": { ru: "Введите вашу эл. почту.", en: "Please enter your email.", hy: "Մուտքագրեք ձեր էլ. փոստը։" },
   "formErr.emailLong": { ru: "Эл. почта слишком длинная.", en: "Email is too long.", hy: "Էլ. փոստը չափազանց երկար է։" },
   "formErr.emailInvalid": { ru: "Введите корректный адрес эл. почты.", en: "Please enter a valid email address.", hy: "Մուտքագրեք վավեր էլ. փոստի հասցե։" },
+  "formErr.message": { ru: "Введите сообщение.", en: "Please enter a message.", hy: "Մուտքագրեք հաղորդագրությունը։" },
   "formErr.messageLong": { ru: "Сообщение слишком длинное.", en: "Message is too long.", hy: "Հաղորդագրությունը չափազանց երկար է։" },
   "formErr.consent": { ru: "Подтвердите согласие на обратную связь.", en: "Please confirm you agree to be contacted.", hy: "Հաստատեք, որ համաձայն եք կապ հաստատելուն։" },
   "formErr.rateLimit": { ru: "Слишком много запросов. Попробуйте позже.", en: "Too many requests. Please try again later.", hy: "Չափազանց շատ հարցումներ։ Փորձեք ավելի ուշ։" },

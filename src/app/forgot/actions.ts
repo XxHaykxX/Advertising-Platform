@@ -46,6 +46,13 @@ export async function requestPasswordReset(
 
   const email = String(formData.get("email") ?? "").trim();
   if (!email) return { error: t("register.errFields"), email };
+  // Format is checked here, not just client-side: a typo like "user@" used to
+  // fall through to the generic "check your inbox" reply, so nothing was sent
+  // and the visitor had no way to tell why. Saying the address is malformed
+  // leaks nothing about whether an account exists — unlike the reply below.
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return { error: t("register.errFields"), email };
+  }
 
   const rawToken = await createPasswordResetToken(email);
   if (rawToken) {

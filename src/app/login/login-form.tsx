@@ -9,6 +9,18 @@ import { GoogleButton } from "@/components/google-button";
 import { makeUI, type Locale } from "@/lib/i18n-client";
 import { cn } from "@/lib/utils";
 import { PasswordInput } from "@/components/ui/password-input";
+import {
+  FIELD_ERROR_CLASS,
+  FieldError,
+  FieldErrorIcon,
+  RequiredMark,
+  focusFirstError,
+  useRequiredFields,
+} from "@/components/ui/field";
+
+const REQUIRED = ["email", "password"] as const;
+const inputClass =
+  "w-full rounded-xl border border-border bg-background py-3 pl-10 pr-4 text-sm text-foreground outline-none transition-colors focus:border-primary/50";
 
 export function LoginForm({
   locale,
@@ -34,6 +46,7 @@ export function LoginForm({
   // uncontrolled input skips onChange, leaving PasswordInput's eye toggle
   // stuck enabled on a field that looks empty (IA-4).
   const [password, setPassword] = useState("");
+  const { errors, check, clear, fieldProps } = useRequiredFields(t("form.required"));
 
   // Navigate on the client with a fresh full request, so the just-set
   // session cookie is carried and the auth gate sees it (see actions.ts).
@@ -63,50 +76,81 @@ export function LoginForm({
           </div>
         </div>
       )}
-      <form action={formAction} className={cn("space-y-5", googleEnabled ? "mt-4" : "mt-8")}>
+      <form
+        action={formAction}
+        // Own validation instead of the browser's: see field.tsx.
+        noValidate
+        onSubmit={(e) => {
+          const form = e.currentTarget;
+          if (!check(new FormData(form), REQUIRED)) {
+            e.preventDefault();
+            focusFirstError(form, REQUIRED);
+          }
+        }}
+        className={cn("space-y-5", googleEnabled ? "mt-4" : "mt-8")}
+      >
       {from && <input type="hidden" name="from" value={from} />}
-      <label className="block">
-        <span className="mb-1.5 block text-sm font-semibold text-foreground">{t("form.email")}</span>
-        <div className="relative">
-          <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            name="email"
-            type="email"
-            required
-            autoComplete="username"
-            placeholder={t("login.emailPlaceholder")}
-            // Echoed back from the server action's state so it survives
-            // React's automatic form reset after a failed submit (the
-            // action re-renders with the submitted email in `state`, so the
-            // reset picks up this defaultValue instead of clearing to "").
-            defaultValue={state.email ?? ""}
-            className="w-full rounded-xl border border-border bg-background py-3 pl-10 pr-4 text-sm text-foreground outline-none transition-colors focus:border-primary/50"
-          />
-        </div>
-      </label>
+      <div>
+        <label className="block">
+          <span className="mb-1.5 block text-sm font-semibold text-foreground">
+            {t("form.email")}
+            <RequiredMark />
+          </span>
+          <div className="relative">
+            <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              name="email"
+              type="email"
+              autoComplete="username"
+              placeholder={t("login.emailPlaceholder")}
+              // Echoed back from the server action's state so it survives
+              // React's automatic form reset after a failed submit (the
+              // action re-renders with the submitted email in `state`, so the
+              // reset picks up this defaultValue instead of clearing to "").
+              defaultValue={state.email ?? ""}
+              onInput={() => clear("email")}
+              {...fieldProps("email")}
+              className={cn(inputClass, errors.email && FIELD_ERROR_CLASS)}
+            />
+            {errors.email && <FieldErrorIcon />}
+          </div>
+        </label>
+        <FieldError id="email-error" message={errors.email} />
+      </div>
 
-      <label className="block">
-        <div className="mb-1.5 flex items-center justify-between">
-          <span className="text-sm font-semibold text-foreground">{t("login.password")}</span>
-          <Link href="/forgot" className="text-xs font-medium text-primary hover:underline">
-            {t("auth.forgotLink")}
-          </Link>
-        </div>
-        <div className="relative">
-          <Lock className="pointer-events-none absolute left-3.5 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <PasswordInput
-            name="password"
-            required
-            autoComplete="current-password"
-            placeholder="••••••••"
-            showLabel={t("auth.passwordShow")}
-            hideLabel={t("auth.passwordHide")}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-xl border border-border bg-background py-3 pl-10 pr-4 text-sm text-foreground outline-none transition-colors focus:border-primary/50"
-          />
-        </div>
-      </label>
+      <div>
+        <label className="block">
+          <div className="mb-1.5 flex items-center justify-between">
+            <span className="text-sm font-semibold text-foreground">
+              {t("login.password")}
+              <RequiredMark />
+            </span>
+            <Link href="/forgot" className="text-xs font-medium text-primary hover:underline">
+              {t("auth.forgotLink")}
+            </Link>
+          </div>
+          <div className="relative">
+            <Lock className="pointer-events-none absolute left-3.5 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <PasswordInput
+              name="password"
+              autoComplete="current-password"
+              placeholder="••••••••"
+              showLabel={t("auth.passwordShow")}
+              hideLabel={t("auth.passwordHide")}
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                clear("password");
+              }}
+              {...fieldProps("password")}
+              className={cn(inputClass, errors.password && FIELD_ERROR_CLASS)}
+            />
+            {/* Sits left of the show/hide eye, which owns the right edge. */}
+            {errors.password && <FieldErrorIcon position="trailing-control" />}
+          </div>
+        </label>
+        <FieldError id="password-error" message={errors.password} />
+      </div>
 
       {message && (
         <p className="rounded-xl border border-danger/40 bg-danger/10 px-4 py-2.5 text-sm text-danger">
