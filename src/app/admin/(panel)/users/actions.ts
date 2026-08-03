@@ -1,7 +1,6 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -14,6 +13,12 @@ import { makeUI } from "@/lib/i18n";
 export type FormState = {
   error?: string;
   values?: { email: string; name: string };
+  // Success is REPORTED, not acted on: createMember must not call redirect()
+  // itself — see the redirect contract in ../partners/actions.ts. The account
+  // was created either way, so a thrown NEXT_REDIRECT that the client turns
+  // into "something went wrong" is a lie about a write that succeeded.
+  ok?: boolean;
+  redirect?: string;
 };
 export type ResetState = { ok?: boolean; error?: string };
 export type RoleState = { ok?: boolean; error?: string };
@@ -66,7 +71,7 @@ export async function createMember(_p: FormState, fd: FormData): Promise<FormSta
   }
 
   revalidatePath("/admin/users");
-  redirect("/admin/users");
+  return { ok: true, redirect: "/admin/users" };
 }
 
 /** Deactivate/reactivate a user. Deactivation is instant — requireUser() checks

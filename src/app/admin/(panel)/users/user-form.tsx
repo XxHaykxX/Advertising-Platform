@@ -26,6 +26,32 @@ export function UserForm({
   // React 19's automatic reset of the form after a failed submit.
   const [password, setPassword] = useState("");
 
+  // Full page load rather than a server-side redirect() — the action
+  // revalidates /admin/users across a layout boundary, and the 303 + RSC
+  // payload that redirect() answers the POST with fails on prod, surfacing as
+  // a generic error even though the account was created. See the redirect
+  // contract in ../partners/actions.ts.
+  // Drives the disabled/spinner state below. Separate from `state.ok` so that
+  // coming BACK to this page can clear it: bfcache restores the component with
+  // `state.ok` still true and no state change to re-run the effect, which left
+  // the button disabled and spinning forever until a manual reload.
+  const [leaving, setLeaving] = useState(false);
+
+  useEffect(() => {
+    if (state.ok && state.redirect) {
+      setLeaving(true);
+      window.location.assign(state.redirect);
+    }
+  }, [state]);
+
+  useEffect(() => {
+    function onPageShow(e: PageTransitionEvent) {
+      if (e.persisted) setLeaving(false);
+    }
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, []);
+
   return (
     <form action={formAction} className="max-w-xl space-y-6">
       <section className="space-y-4 rounded-2xl border border-border bg-card p-6 shadow-sm">
@@ -87,10 +113,13 @@ export function UserForm({
       <div className="flex items-center gap-3">
         <button
           type="submit"
-          disabled={pending}
+          // Stays disabled after a successful create too: the navigation above
+          // is a full page load, so the button would otherwise be live again
+          // for a beat and a second click would fail on the duplicate email.
+          disabled={pending || leaving}
           className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-[--primary-hover] disabled:opacity-70"
         >
-          {pending && <Loader2 className="h-4 w-4 animate-spin" />}
+          {(pending || leaving) && <Loader2 className="h-4 w-4 animate-spin" />}
           Create member
         </button>
         <Link href="/admin/users" className="text-sm text-muted-foreground hover:text-foreground">
