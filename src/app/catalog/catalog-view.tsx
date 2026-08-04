@@ -248,7 +248,6 @@ export function CatalogView({
 
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [selectedFormats, setSelectedFormats] = useState<string[]>([]);
-  const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
   const [search, setSearch] = useState("");
@@ -277,7 +276,6 @@ export function CatalogView({
       const f = JSON.parse(raw);
       if (Array.isArray(f.genres)) setSelectedGenres(f.genres);
       if (Array.isArray(f.formats)) setSelectedFormats(f.formats);
-      if (Array.isArray(f.languages)) setSelectedLanguages(f.languages);
       if (Array.isArray(f.platforms)) setSelectedPlatforms(f.platforms);
       if (Array.isArray(f.countries)) setSelectedCountries(f.countries);
       if (typeof f.search === "string") setSearch(f.search);
@@ -298,7 +296,6 @@ export function CatalogView({
         JSON.stringify({
           genres: selectedGenres,
           formats: selectedFormats,
-          languages: selectedLanguages,
           platforms: selectedPlatforms,
           countries: selectedCountries,
           search,
@@ -312,7 +309,6 @@ export function CatalogView({
   }, [
     selectedGenres,
     selectedFormats,
-    selectedLanguages,
     selectedPlatforms,
     selectedCountries,
     search,
@@ -330,7 +326,6 @@ export function CatalogView({
   }, [
     selectedGenres,
     selectedFormats,
-    selectedLanguages,
     selectedPlatforms,
     selectedCountries,
     search,
@@ -342,7 +337,6 @@ export function CatalogView({
   const activeFilterCount =
     selectedGenres.length +
     selectedFormats.length +
-    selectedLanguages.length +
     selectedPlatforms.length +
     selectedCountries.length;
 
@@ -359,7 +353,6 @@ export function CatalogView({
   const hasFilters =
     selectedGenres.length > 0 ||
     selectedFormats.length > 0 ||
-    selectedLanguages.length > 0 ||
     selectedPlatforms.length > 0 ||
     selectedCountries.length > 0 ||
     search !== "";
@@ -367,7 +360,6 @@ export function CatalogView({
   const clearAll = () => {
     setSelectedGenres([]);
     setSelectedFormats([]);
-    setSelectedLanguages([]);
     setSelectedPlatforms([]);
     setSelectedCountries([]);
     setSearch("");
@@ -381,7 +373,6 @@ export function CatalogView({
 
   const toggleGenre = makeToggle(setSelectedGenres);
   const toggleFormat = makeToggle(setSelectedFormats);
-  const toggleLanguage = makeToggle(setSelectedLanguages);
   const togglePlatform = makeToggle(setSelectedPlatforms);
   const toggleCountry = makeToggle(setSelectedCountries);
 
@@ -400,13 +391,6 @@ export function CatalogView({
       // the "Unspecified" bucket (its value is the empty string), so a blank
       // row never disappears silently — it just requires an explicit opt-in.
       if (selectedFormats.length > 0 && !selectedFormats.includes(p.formatCategory)) return false;
-      if (selectedLanguages.length > 0) {
-        // Language is now a CSV of one or more values (admin redesign phase 1,
-        // was a single select) — match if ANY of the project's languages is
-        // in the selected filter set.
-        const langs = splitCountries(p.language);
-        if (!selectedLanguages.some((s) => langs.includes(s))) return false;
-      }
       if (selectedPlatforms.length > 0) {
         const pls = parseStringArray(p.platforms);
         if (!selectedPlatforms.some((s) => pls.includes(s))) return false;
@@ -430,7 +414,6 @@ export function CatalogView({
     projects,
     selectedGenres,
     selectedFormats,
-    selectedLanguages,
     selectedPlatforms,
     selectedCountries,
     search,
@@ -493,9 +476,11 @@ export function CatalogView({
 
       {/* Platform only appears when the catalog actually carries such values —
           an empty facet would render a bare header with no options. The
-          Language and Country facets were removed on 2026-07-27 (content
-          review); the state below still parses them from a saved/shared URL so
-          old links keep working, it just isn't offered as a control. */}
+          Country facet was removed on 2026-07-27 (content review); the state
+          below still parses it from a saved/shared URL so old links keep
+          working, it just isn't offered as a control. (The Language facet
+          removed the same day was dropped for good on 2026-08-04, along with
+          the Project.language column it read — see prisma/schema.prisma.) */}
       {platformOptions.length > 0 ? (
         <CheckboxFilter
           label={t("catalog.platform")}

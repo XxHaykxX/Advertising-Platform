@@ -58,7 +58,13 @@ export async function getBrandFavorites(
 
   return rows.map((r) => {
     const tiers = r.project.tiers;
-    const priceFromAmd = tiers.length === 0 ? null : Math.min(...tiers.map((t) => t.priceAmd));
+    // Only priced tiers count toward "from X" — an unset priceAmd (2026-08-04:
+    // now nullable, "on request") must not be mixed into Math.min, where a
+    // bare null coerces to 0 and would show the whole project as free. A
+    // project whose tiers are ALL unpriced has no "from" figure at all, same
+    // as one with no tiers.
+    const pricedTiers = tiers.filter((t): t is typeof t & { priceAmd: number } => t.priceAmd != null);
+    const priceFromAmd = pricedTiers.length === 0 ? null : Math.min(...pricedTiers.map((t) => t.priceAmd));
     return {
       id: r.id,
       createdAt: r.createdAt.toISOString(),

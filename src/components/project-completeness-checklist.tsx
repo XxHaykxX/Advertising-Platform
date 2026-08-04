@@ -29,20 +29,33 @@ const ANCHORS: Record<CompletenessKey, string> = {
   // would be missing from the DOM whenever another tab is open. The section
   // holds three fields — close enough to read at a glance.
   tagline: "sec-about",
+  // Same reasoning as tagline above — translations is the "all three locales"
+  // check on those same per-locale About tabs, so it points at the same section.
+  translations: "sec-about",
   studio: "field-studio",
   runtime: "field-runtime",
   poster: "field-poster",
   video: "field-video",
   gallery: "field-gallery",
   cast: "sec-cast",
+  // Same section as `cast` — the photo field lives on each row within it, and
+  // (like tagline/sec-about) the section is close enough to read at a glance.
+  castPhotos: "sec-cast",
   milestones: "sec-milestones",
   placements: "sec-placements",
+  // Same section as `placements` — price is a per-row field within it.
+  placementPricing: "sec-placements",
   tiers: "sec-tiers",
   references: "sec-references",
   deadline: "field-deadline",
   releaseDate: "field-releaseDate",
   platforms: "field-platforms",
   cinemas: "field-cinemas",
+  // NB: no "field-countries" anchor exists yet — the Countries field
+  // (project-form.tsx, the "General" section) has no anchorId, so this key
+  // falls through to the plain-text (non-link) render below until one's
+  // added. See the report back to the form owner.
+  countries: "field-countries",
   budget: "field-budget",
   ageRating: "field-ageRating",
   formatCategory: "field-formatCategory",
@@ -111,7 +124,10 @@ export function ProjectCompletenessChecklist({
                   <span className="text-muted-foreground">{label}</span>
                 )}
                 {!item.filled && item.blocksPublish && (
-                  <span className="inline-flex items-center rounded-full border border-warn/40 bg-warn/10 px-2 py-0.5 text-xs font-medium text-warn">
+                  // `text-amber-700`, not the `--warn` token: #f59e0b on this
+                  // pale tint lands near 2.2:1 and fails the 4.5:1 floor for
+                  // text. The tint and border still carry the token's hue.
+                  <span className="inline-flex items-center rounded-full border border-warn/40 bg-warn/10 px-2 py-0.5 text-xs font-medium text-amber-700">
                     {t("completeness.blocks")}
                   </span>
                 )}

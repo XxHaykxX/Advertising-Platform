@@ -121,8 +121,8 @@ export default async function ReportPage({
       .filter((p) => p.priceAmd != null && p.priceAmd > 0 && p.priceDisplay != null)
       .map((p) => ({ amd: p.priceAmd as number, display: p.priceDisplay as string })),
     ...project.tiers
-      .filter((tier) => tier.priceAmd > 0)
-      .map((tier) => ({ amd: tier.priceAmd, display: tier.priceDisplay })),
+      .filter((tier) => tier.priceAmd != null && tier.priceAmd > 0 && tier.priceDisplay != null)
+      .map((tier) => ({ amd: tier.priceAmd as number, display: tier.priceDisplay as string })),
   ];
   const cheapestOffer = pricedOffers.reduce<{ amd: number; display: string } | null>(
     (min, offer) => (min == null || offer.amd < min.amd ? offer : min),

@@ -76,11 +76,10 @@ export function BrowseView({
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   // 4.4 — parity with the public /catalog filter set (format, country,
-  // language, production stage), plus a brand-only "open slots" toggle. Genre
-  // is deliberately left out of this pass — the card already surfaces it via
+  // production stage), plus a brand-only "open slots" toggle. Genre is
+  // deliberately left out of this pass — the card already surfaces it via
   // the GenreBadge and the free-text search already matches on it.
   const [selectedFormats, setSelectedFormats] = useState<string[]>([]);
-  const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
   const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
   const [slotsOnly, setSlotsOnly] = useState(false);
 
@@ -100,16 +99,13 @@ export function BrowseView({
     (setter: React.Dispatch<React.SetStateAction<string[]>>) => (value: string) =>
       setter((prev) => (prev.includes(value) ? prev.filter((x) => x !== value) : [...prev, value]));
   const toggleFormat = makeToggle(setSelectedFormats);
-  const toggleLanguage = makeToggle(setSelectedLanguages);
   const toggleCountry = makeToggle(setSelectedCountries);
 
-  const activeFilterCount =
-    selectedFormats.length + selectedLanguages.length + selectedCountries.length + (slotsOnly ? 1 : 0);
+  const activeFilterCount = selectedFormats.length + selectedCountries.length + (slotsOnly ? 1 : 0);
 
   const hasFilters = activeFilterCount > 0;
   const clearAll = () => {
     setSelectedFormats([]);
-    setSelectedLanguages([]);
     setSelectedCountries([]);
     setSlotsOnly(false);
   };
@@ -118,10 +114,6 @@ export function BrowseView({
     const term = search.trim().toLowerCase();
     return projects.filter((p) => {
       if (selectedFormats.length > 0 && !selectedFormats.includes(p.formatCategory)) return false;
-      if (selectedLanguages.length > 0) {
-        const langs = splitCountries(p.language);
-        if (!selectedLanguages.some((s) => langs.includes(s))) return false;
-      }
       if (selectedCountries.length > 0) {
         const cs = splitCountries(p.countries);
         if (!selectedCountries.some((s) => cs.includes(s))) return false;
@@ -134,10 +126,10 @@ export function BrowseView({
       if (term && !`${p.title} ${p.genre} ${p.countries} ${p.synopsis}`.toLowerCase().includes(term)) return false;
       return true;
     });
-  }, [projects, search, selectedFormats, selectedLanguages, selectedCountries, slotsOnly]);
+  }, [projects, search, selectedFormats, selectedCountries, slotsOnly]);
 
-  // Language and Country facets removed 2026-07-27 (content review) — the
-  // filter state stays so nothing downstream has to change shape.
+  // The Country facet's UI control was removed 2026-07-27 (content review) —
+  // the filter state stays so nothing downstream has to change shape.
   const filterGroups = (
     <>
       <CheckboxFilter

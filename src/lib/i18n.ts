@@ -1888,12 +1888,12 @@ export const UI: Record<string, Dict> = {
   "projectForm.releaseYearPlaceholder": { ru: "2027", en: "2027", hy: "2027" },
   "projectForm.field.platforms": { ru: "Платформы", en: "Platforms", hy: "Հարթակներ" },
   "projectForm.platformsPlaceholder": { ru: "YouTube, Kinodaran, TV", en: "YouTube, Kinodaran, TV", hy: "YouTube, Kinodaran, TV" },
-  "projectForm.field.streamingSource": { ru: "Источник показа", en: "Streaming source", hy: "Հեռարձակման աղբյուր" },
-  "projectForm.streamingSourcePlaceholder": {
-    ru: "Выберите источники…",
-    en: "Select sources…",
-    hy: "Ընտրեք աղբյուրները…",
-  },
+  // projectForm.field.streamingSource / .streamingSourcePlaceholder removed
+  // 2026-08-04 together with the Project.streamingSource column. The field was
+  // merged into "Available on" (platforms) back in #29 and the keys had been
+  // orphaned since; leaving them in only gives the translator dead strings to
+  // maintain in three languages. The StreamingSource dictionary table itself
+  // is untouched — it still feeds the platforms picker.
   "projectForm.field.priceNote": { ru: "Примечание к цене (необязательно)", en: "Price note (optional caption)", hy: "Գնի նշում (ոչ պարտադիր)" },
   "projectForm.priceNotePlaceholder": { ru: "/ сцена", en: "/ scene", hy: "/ տեսարան" },
   "projectForm.field.priceMin": { ru: "Цена мин. (AMD)", en: "Price min (AMD)", hy: "Գին նվազ. (AMD)" },
@@ -2477,6 +2477,367 @@ export const UI: Record<string, Dict> = {
     hy: "Ներբեռնեք ձեր պրոֆիլի և հայտնված հետաքրքրությունների JSON արտահանումը։",
   },
   "account.brand.downloadData": { ru: "Скачать мои данные (JSON)", en: "Download my data (JSON)", hy: "Ներբեռնել իմ տվյալները (JSON)" },
+  // ── live publish-gap highlighting in the project form ──────────────────
+  "publish.gapNote": {
+    ru: "Без этого проект не отправится на модерацию.",
+    en: "The project can't be submitted for review without this.",
+    hy: "Առանց սրա նախագիծը չի ուղարկվի մոդերացիայի։",
+  },
+  "publish.missing.poster": { ru: "Постер", en: "Poster", hy: "Պաստառ" },
+  "publish.missing.placements": {
+    ru: "Хотя бы один продакт-плейсмент",
+    en: "At least one product placement",
+    hy: "Առնվազն մեկ փրոդակթ փլեյսմենթ",
+  },
+  "publish.missing.formatCategory": { ru: "Формат", en: "Format", hy: "Ձևաչափ" },
+  "publish.missing.deadline": {
+    ru: "Дедлайн заявок или отметка «Приём открыт постоянно»",
+    en: "An application deadline, or the Ongoing flag",
+    hy: "Հայտերի վերջնաժամկետ կամ «Մշտապես բաց է» նշումը",
+  },
+  "completeness.item.translations": {
+    ru: "Переводы на все языки (hy/ru/en)",
+    en: "Translations in every language (hy/ru/en)",
+    hy: "Թարգմանություններ բոլոր լեզուներով (hy/ru/en)",
+  },
+  "completeness.item.castPhotos": {
+    ru: "Фото актёров и создателей",
+    en: "Cast & crew photos",
+    hy: "Դերասանների և ստեղծագործողների լուսանկարներ",
+  },
+  "completeness.item.countries": { ru: "Страны", en: "Countries", hy: "Երկրներ" },
+  "completeness.item.placementPricing": {
+    ru: "Цены на продакт-плейсмент",
+    en: "Product placement pricing",
+    hy: "Փրոդակթ փլեյսմենթի գներ",
+  },
+  // ── /for-creators guide page ──────────────────────────────────────────
+  // Label for every link that points AT the guide (how-it-works, the cabinet,
+  // the submit form header) — one key so the entry points can't drift apart.
+  "forCreators.entryLink": {
+    ru: "Что нужно подготовить",
+    en: "What you'll need to prepare",
+    hy: "Ինչ է պետք նախապատրաստել",
+  },
+  "forCreators.field.milestones.desc": {
+    ru: "Этапы производства — препродакшн, съёмки, монтаж, релиз. Отметьте, на каком этапе проект сейчас: бренду важно понимать, успевает ли он войти в съёмки. Показывается на странице проекта полосой этапов.",
+    en: "Production stages — pre-production, shooting, post, release. Mark which one you are on now: a brand needs to know whether it can still get into the shoot. Shown on the project page as a timeline.",
+    hy: "Արտադրության փուլերը՝ նախապատրաստում, նկարահանումներ, մոնտաժ, թողարկում։ Նշեք, թե որ փուլում է նախագիծը հիմա. բրենդի համար կարևոր է հասկանալ՝ կհասցնի՞ մտնել նկարահանումներ։ Ցուցադրվում է նախագծի էջում որպես փուլերի շերտ։",
+  },
+  "forCreators.field.milestones.example": {
+    ru: "Съёмки — март 2026, идёт сейчас",
+    en: "Shooting — March 2026, in progress",
+    hy: "Նկարահանումներ — մարտ 2026, ընթացքի մեջ է",
+  },
+  "forCreators.hero.eyebrow": { ru: "Создателям", en: "For Creators", hy: "Ստեղծագործողների համար" },
+  "forCreators.hero.title": { ru: "Что мы ждём от вашего проекта", en: "What we need from your project", hy: "Ինչ ենք ակնկալում ձեր նախագծից" },
+  "forCreators.hero.subtitle": {
+    ru: "Полный список данных для витрины, требования к медиа и порядок модерации — до того как вы начнёте заполнять форму.",
+    en: "The full list of storefront data, media requirements and the moderation process — before you open the submission form.",
+    hy: "Ցուցափեղկի տվյալների ամբողջական ցանկը, մեդիայի պահանջները և մոդերացիայի կարգը՝ նախքան հայտի ձևը լրացնելը։",
+  },
+  "forCreators.hero.ctaSubmit": { ru: "Подать проект", en: "Submit a project", hy: "Ներկայացնել նախագիծ" },
+  "forCreators.hero.ctaPrepare": { ru: "Что нужно подготовить", en: "What to prepare", hy: "Ինչ պետք է պատրաստել" },
+
+  "forCreators.legend.title": { ru: "Три уровня обязательности", en: "Three levels of requirement", hy: "Պարտադրության երեք մակարդակ" },
+  "forCreators.legend.subtitle": {
+    ru: "Каждое поле в чек-листе ниже помечено одним из трёх уровней — вот что они значат.",
+    en: "Every field in the checklist below carries one of these three labels — here's what each one means.",
+    hy: "Ստորև՝ ստուգաթերթի յուրաքանչյուր դաշտ նշված է այս երեք մակարդակներից մեկով, ահա թե ինչ են դրանք նշանակում։",
+  },
+
+  "forCreators.tier.required.label": { ru: "Обязательно", en: "Required", hy: "Պարտադիր" },
+  "forCreators.tier.required.desc": {
+    ru: "Без этого поля проект вообще не сохранится — форма откажется его принять.",
+    en: "Without this field the project can't even be saved — the form refuses to accept it.",
+    hy: "Առանց այս դաշտի նախագիծը չի պահպանվի ընդհանրապես, ձևը կմերժի այն ընդունել։",
+  },
+  "forCreators.tier.publish.label": { ru: "Нужно для публикации", en: "Required to publish", hy: "Անհրաժեշտ է հրապարակման համար" },
+  "forCreators.tier.publish.desc": {
+    ru: "Проект сохранится и без этого поля, но не уйдёт на модерацию и не появится в каталоге, пока оно пустое.",
+    en: "The project saves fine without this field, but it won't go to moderation or appear in the catalog until it's filled in.",
+    hy: "Նախագիծը կպահպանվի առանց այս դաշտի, բայց չի ուղարկվի մոդերացիայի և չի հայտնվի կատալոգում, քանի դեռ այն դատարկ է։",
+  },
+  "forCreators.tier.optional.label": { ru: "Желательно", en: "Recommended", hy: "Ցանկալի է" },
+
+  "forCreators.steps.title": { ru: "Что подготовить", en: "What to prepare", hy: "Ինչ պատրաստել" },
+  "forCreators.steps.subtitle": {
+    ru: "Пять шагов от текстов о проекте до того, что вы продаёте бренду. Разверните любой пункт, чтобы увидеть требования и пример.",
+    en: "Five steps, from the project's texts to what you're selling a brand. Open any row to see the requirements and an example.",
+    hy: "Հինգ քայլ՝ նախագծի տեքստերից մինչև այն, ինչ վաճառում եք բրենդին։ Բացեք ցանկացած կետ՝ պահանջներն ու օրինակը տեսնելու համար։",
+  },
+  "forCreators.expandAll": { ru: "Развернуть всё", en: "Expand all", hy: "Բացել բոլորը" },
+  "forCreators.collapseAll": { ru: "Свернуть всё", en: "Collapse all", hy: "Ծալել բոլորը" },
+  "forCreators.exampleLabel": { ru: "Например", en: "Example", hy: "Օրինակ" },
+
+  "forCreators.step.texts.title": { ru: "Тексты о проекте", en: "Texts about the project", hy: "Նախագծի տեքստեր" },
+  "forCreators.step.texts.subtitle": {
+    ru: "Название, синопсис, логлайн и жанры — на любом из трёх языков, остальные можно добавить позже.",
+    en: "Title, synopsis, logline and genres — in any one of the three languages; the rest can be added later.",
+    hy: "Վերնագիր, սինոպսիս, կարգախոս և ժանրեր՝ երեք լեզուներից որևէ մեկով, մնացածը կարող եք ավելացնել ավելի ուշ։",
+  },
+  "forCreators.step.pressKit.title": { ru: "Пресс-кит", en: "Press kit", hy: "Մամուլի հավաքածու" },
+  "forCreators.step.pressKit.subtitle": {
+    ru: "Постер, галерея кадров и видео — то, что бренд видит первым.",
+    en: "Poster, stills gallery and video — the first things a brand sees.",
+    hy: "Պաստառ, կադրերի պատկերասրահ և վիդեո՝ այն, ինչ բրենդն առաջինն է տեսնում։",
+  },
+  "forCreators.step.cast.title": { ru: "Каст и команда", en: "Cast & crew", hy: "Դերասաններ և թիմ" },
+  "forCreators.step.cast.subtitle": {
+    ru: "Кто снимается и кто снимает — с фото и ролями.",
+    en: "Who's on screen and who's behind the camera — with photos and roles.",
+    hy: "Ով է նկարահանվում և ով է նկարահանում՝ լուսանկարներով և դերերով։",
+  },
+  "forCreators.step.production.title": { ru: "Данные о производстве", en: "Production details", hy: "Արտադրության տվյալներ" },
+  "forCreators.step.production.subtitle": {
+    ru: "Формат, хронометраж, студия, релиз и всё, что описывает проект как продукт.",
+    en: "Format, runtime, studio, release and everything that describes the project as a product.",
+    hy: "Ձևաչափ, տևողություն, ստուդիա, թողարկում և այն ամենը, ինչ նկարագրում է նախագիծը որպես արտադրանք։",
+  },
+  "forCreators.step.offer.title": { ru: "Что вы продаёте бренду", en: "What you're selling a brand", hy: "Ինչ եք վաճառում բրենդին" },
+  "forCreators.step.offer.subtitle": {
+    ru: "Пакеты спонсорства, продакт-плейсменты и референсы — витрина вашего предложения.",
+    en: "Sponsorship packages, product placements and references — the storefront of your offer.",
+    hy: "Հովանավորության փաթեթներ, փրոդակթ փլեյսմենթներ և նմանատիպ նախագծեր՝ ձեր առաջարկի ցուցափեղկը։",
+  },
+
+  "forCreators.field.video.label": { ru: "Видео", en: "Video", hy: "Վիդեո" },
+  "forCreators.field.runtime.label": { ru: "Хронометраж", en: "Runtime", hy: "Տևողություն" },
+
+  "forCreators.field.title.desc": {
+    ru: "До 191 символа. Заполните хотя бы на одном языке — армянском, русском или английском; остальные можно дописать позже.",
+    en: "Up to 191 characters. Fill in at least one of the three languages (Armenian, Russian or English) — the rest can wait.",
+    hy: "Մինչև 191 նիշ։ Լրացրեք գոնե մեկ լեզվով՝ հայերեն, ռուսերեն կամ անգլերեն, մնացածը կարող եք ավելացնել հետո։",
+  },
+  "forCreators.field.synopsis.desc": {
+    ru: "Длина не ограничена. Поддерживает простую разметку: **жирный**, *курсив*, [текст](ссылка) и переносы строк.",
+    en: "No length limit. Supports simple formatting: **bold**, *italic*, [text](link) and line breaks.",
+    hy: "Երկարությունը սահմանափակված չէ։ Աջակցում է պարզ ձևաչափում՝ **թավ**, *շեղ*, [տեքստ](հղում) և նոր տողեր։",
+  },
+  "forCreators.field.logline.desc": {
+    ru: "Одна фраза, строго до 140 символов — показывается в шапке страницы проекта.",
+    en: "One sentence, strictly under 140 characters — shown in the project page's hero.",
+    hy: "Մեկ նախադասություն, խստորեն մինչև 140 նիշ, ցուցադրվում է նախագծի էջի վերևում։",
+  },
+  "forCreators.field.genres.desc": {
+    ru: "Выбирается только из готового списка жанров — добавить свой вариант нельзя.",
+    en: "Picked from the fixed genre list only — you can't add a custom one.",
+    hy: "Ընտրվում է միայն պատրաստի ժանրերի ցանկից, սեփական տարբերակ ավելացնել հնարավոր չէ։",
+  },
+  "forCreators.field.poster.desc": {
+    ru: "Соотношение 16:9, рекомендуем 1600×900, до 8 МБ, JPG/PNG/WebP/GIF/AVIF. Вертикальный постер будет обрезан по центру до 16:9 — заранее подготовьте горизонтальный кадр.",
+    en: "16:9 aspect ratio, 1600×900 recommended, up to 8 MB, JPG/PNG/WebP/GIF/AVIF. A portrait poster gets centre-cropped to 16:9 — prepare a landscape frame ahead of time.",
+    hy: "16:9 հարաբերակցություն, խորհուրդ է տրվում 1600×900, մինչև 8 ՄԲ, JPG/PNG/WebP/GIF/AVIF։ Ուղղաձիգ պաստառը կենտրոնից կկտրվի մինչև 16:9 — նախապես պատրաստեք հորիզոնական կադր։",
+  },
+  "forCreators.field.gallery.desc": {
+    ru: "Те же лимиты, что у постера. Можно загрузить несколько кадров — они показываются лентой на странице проекта.",
+    en: "Same limits as the poster. You can upload several stills — they're shown as a strip on the project page.",
+    hy: "Նույն սահմանափակումները, ինչ պաստառինը։ Կարող եք վերբեռնել մի քանի կադր, որոնք ցուցադրվում են նախագծի էջում շարքով։",
+  },
+  "forCreators.field.video.desc": {
+    ru: "Заполняется одно из двух: ссылка на YouTube или Vimeo (до 191 символа), либо файл MP4/WebM до 50 МБ. Заполнили одно — вторая вкладка обнуляется.",
+    en: "Fill in exactly one of the two: a YouTube or Vimeo link (up to 191 characters), or an MP4/WebM file up to 50 MB. Filling one clears the other tab.",
+    hy: "Լրացվում է երկուսից միայն մեկը՝ YouTube կամ Vimeo հղում (մինչև 191 նիշ), կամ MP4/WebM ֆայլ մինչև 50 ՄԲ։ Մեկը լրացնելիս մյուս ներդիրը մաքրվում է։",
+  },
+  "forCreators.field.castPhoto.desc": {
+    ru: "Квадратное фото 800×800, обрезка по центру, до 8 МБ.",
+    en: "A square 800×800 photo, centre-cropped, up to 8 MB.",
+    hy: "Քառակուսի լուսանկար 800×800, կենտրոնից կտրված, մինչև 8 ՄԲ։",
+  },
+  "forCreators.field.castName.desc": {
+    ru: "Без имени строка не сохранится. Поиск идёт по общему справочнику людей — можно вписать и нового человека.",
+    en: "A row without a name won't save. Search runs against the shared people directory — you can also type in a new person.",
+    hy: "Առանց անվան տողը չի պահպանվի։ Փնտրումը կատարվում է մարդկանց ընդհանուր տեղեկագրով, կարող եք մուտքագրել նաև նոր անձի անուն։",
+  },
+  "forCreators.field.castRoles.desc": {
+    ru: "Мультивыбор из 18 значений. Первая выбранная роль определяет, попадёт человек в «Каст» или в «Команду».",
+    en: "Multi-select from 18 values. The first role you pick decides whether the person lands in Cast or in Crew.",
+    hy: "Բազմակի ընտրություն՝ 18 արժեքից։ Ընտրված առաջին դերը որոշում է՝ մարդը կհայտնվի «Դերասաններ», թե «Թիմ» բաժնում։",
+  },
+  "forCreators.field.kind.desc": {
+    ru: "Фильм или сериал — от выбора зависит, какие поля хронометража появятся ниже.",
+    en: "Film or series — this decides which runtime fields appear below.",
+    hy: "Ֆիլմ կամ սերիալ, ընտրությունից է կախված, թե ստորև ինչ տևողության դաշտեր կհայտնվեն։",
+  },
+  "forCreators.field.runtime.desc": {
+    ru: "Для сериала — количество серий и минут в серии; для фильма — общая длительность в минутах.",
+    en: "For a series — the number of episodes and minutes per episode; for a film — total runtime in minutes.",
+    hy: "Սերիալի համար՝ սերիաների քանակը և րոպեները մեկ սերիայում, ֆիլմի համար՝ ընդհանուր տևողությունը րոպեներով։",
+  },
+  "forCreators.field.studio.desc": {
+    ru: "Название продакшн-студии или компании, выпускающей проект.",
+    en: "The name of the production studio or company behind the project.",
+    hy: "Նախագիծը թողարկող պրոդակշն ստուդիայի կամ ընկերության անվանումը։",
+  },
+  "forCreators.field.formatCategory.desc": {
+    ru: "Категория для фильтра «Формат» в каталоге. Пусто — проект просто не попадёт в этот фильтр.",
+    en: "The bucket used by the catalog's Format filter. Left empty, the project simply won't show up in that filter.",
+    hy: "Կատալոգի «Ձևաչափ» զտիչի կատեգորիան։ Եթե դատարկ է, նախագիծը պարզապես չի հայտնվի այդ զտիչում։",
+  },
+  "forCreators.field.countries.desc": {
+    ru: "Страны происхождения контента. Можно выбрать из списка или вписать свою страну.",
+    en: "The content's countries of origin. Pick from the list or type your own.",
+    hy: "Բովանդակության ծագման երկրները։ Կարող եք ընտրել ցանկից կամ մուտքագրել ձերը։",
+  },
+  "forCreators.field.ageRating.desc": {
+    ru: "Возрастной значок на постере: от 0+ до 18+.",
+    en: "The age badge shown on the poster: 0+ through 18+.",
+    hy: "Պաստառի վրայի տարիքային նշանը՝ 0+-ից մինչև 18+։",
+  },
+  "forCreators.field.budget.desc": {
+    ru: "Бюджет производства в драмах — необязательное поле.",
+    en: "The production budget in AMD — an optional field.",
+    hy: "Արտադրության բյուջեն դրամով, ոչ պարտադիր դաշտ։",
+  },
+  "forCreators.field.releaseDate.desc": {
+    ru: "Точность на выбор: точная дата, месяц и год, или только год — сайт никогда не показывает то, что вы не указали.",
+    en: "Pick the precision: an exact date, month and year, or year only — the site never shows more than you gave it.",
+    hy: "Ընտրեք ճշգրտությունը՝ ճշգրիտ ամսաթիվ, ամիս և տարի, կամ միայն տարի, կայքը երբեք ցույց չի տալիս այն, ինչ չեք նշել։",
+  },
+  "forCreators.field.deadline.desc": {
+    ru: "Либо конкретная дата, до которой бренд может подать заявку, либо флаг «принимаем постоянно» — одно из двух нужно указать явно.",
+    en: "Either a concrete date brands can apply until, or the “accepting continuously” flag — one of the two must be set explicitly.",
+    hy: "Կամ կոնկրետ ամսաթիվ, մինչև որը բրենդը կարող է դիմել, կամ «ընդունում ենք մշտապես» դրոշը, երկուսից մեկը պետք է հստակորեն նշվի։",
+  },
+  "forCreators.field.platforms.desc": {
+    ru: "Стриминги или онлайн-площадки, где идёт проект. Показывается брендам и работает в фильтре каталога.",
+    en: "Streaming or online platforms where the project is watchable. Shown to brands and used by the catalog filter.",
+    hy: "Սթրիմինգներ կամ առցանց հարթակներ, որտեղ հասանելի է նախագիծը։ Ցուցադրվում է բրենդներին և աշխատում է կատալոգի զտիչում։",
+  },
+  "forCreators.field.cinemas.desc": {
+    ru: "Кинотеатры, где идёт или шёл показ, если он есть.",
+    en: "Cinemas the project screens or screened in, if any.",
+    hy: "Կինոթատրոնները, որտեղ ցուցադրվում է կամ ցուցադրվել է նախագիծը, եթե այդպիսիք կան։",
+  },
+  "forCreators.field.tiers.desc": {
+    ru: "Минимум один пакет с названием и списком бенефитов (по пункту на строку). Можно указать цену в AMD, картинку, число слотов и флаг «эксклюзив» (принудительно 1 слот).",
+    en: "At least one package with a name and a list of benefits (one per line). You can add a price in AMD, an image, a slot count and an “exclusive” flag (forces the slot count to 1).",
+    hy: "Առնվազն մեկ փաթեթ՝ անվանումով և առավելությունների ցանկով (մեկը՝ մեկ տողում)։ Կարող եք նշել գին AMD-ով, նկար, տեղերի քանակ և «էքսկլյուզիվ» դրոշ (հարկադրաբար՝ 1 տեղ)։",
+  },
+  "forCreators.field.placements.desc": {
+    ru: "Это и есть витрина товара: название, описание списком, картинка, слоты. Цена в AMD или пусто — тогда на сайте будет «по запросу».",
+    en: "This is the actual product showcase: a name, a bulleted description, an image, slots. Price in AMD, or leave it empty for “on request” on the site.",
+    hy: "Սա հենց ապրանքի ցուցափեղկն է՝ անվանում, ցանկով նկարագրություն, նկար, տեղեր։ Գին AMD-ով, կամ դատարկ թողեք, կայքում կցուցադրվի «հարցումով»։",
+  },
+  "forCreators.field.references.desc": {
+    ru: "Похожие прошлые проекты — название, ссылка, изображение или клип.",
+    en: "Comparable past projects — a name, a link, an image or a clip.",
+    hy: "Նմանատիպ նախկին նախագծեր՝ անվանում, հղում, նկար կամ տեսահոլովակ։",
+  },
+
+  "forCreators.fileReq.title": { ru: "Требования к файлам", en: "File requirements", hy: "Ֆայլերի պահանջներ" },
+  "forCreators.fileReq.subtitle": {
+    ru: "Сводная таблица лимитов по каждому типу медиа.",
+    en: "A quick reference table of the limits for each media type.",
+    hy: "Յուրաքանչյուր մեդիա տեսակի սահմանափակումների ամփոփ աղյուսակ։",
+  },
+  "forCreators.fileReq.col.type": { ru: "Тип", en: "Type", hy: "Տեսակ" },
+  "forCreators.fileReq.col.ratio": { ru: "Соотношение", en: "Aspect ratio", hy: "Հարաբերակցություն" },
+  "forCreators.fileReq.col.maxSize": { ru: "Макс. размер", en: "Max size", hy: "Առավելագույն չափ" },
+  "forCreators.fileReq.col.formats": { ru: "Форматы", en: "Formats", hy: "Ֆորմատներ" },
+  "forCreators.fileReq.col.consequence": { ru: "Что произойдёт", en: "What happens", hy: "Ինչ կլինի" },
+  "forCreators.fileReq.poster.consequence": {
+    ru: "Вертикальный кадр обрезается по центру до 16:9.",
+    en: "A portrait frame gets centre-cropped to 16:9.",
+    hy: "Ուղղաձիգ կադրը կենտրոնից կկտրվի մինչև 16:9։",
+  },
+  "forCreators.fileReq.gallery.consequence": {
+    ru: "Каждый кадр показывается как есть, без принудительной обрезки.",
+    en: "Each still is shown as-is, with no forced cropping.",
+    hy: "Յուրաքանչյուր կադր ցուցադրվում է առանց հարկադիր կտրման։",
+  },
+  "forCreators.fileReq.castPhoto.consequence": {
+    ru: "Кадр обрезается по центру до квадрата.",
+    en: "The frame is centre-cropped to a square.",
+    hy: "Կադրը կենտրոնից կկտրվի մինչև քառակուսի։",
+  },
+  "forCreators.fileReq.videoFile.consequence": {
+    ru: "Файл больше лимита не загрузится — сожмите его заранее.",
+    en: "A file over the limit won't upload — compress it beforehand.",
+    hy: "Սահմանից մեծ ֆայլը չի վերբեռնվի, նախապես սեղմեք այն։",
+  },
+  "forCreators.fileReq.videoLink.note": {
+    ru: "Ссылка на YouTube или Vimeo — до 191 символа, без ограничений по размеру файла.",
+    en: "A YouTube or Vimeo link — up to 191 characters, no file-size limit.",
+    hy: "YouTube կամ Vimeo հղում՝ մինչև 191 նիշ, առանց ֆայլի չափի սահմանափակման։",
+  },
+
+  "forCreators.example.title": { ru: "Пример заполненного проекта", en: "Example of a filled-in project", hy: "Ամբողջությամբ լրացված նախագծի օրինակ" },
+  "forCreators.example.subtitle": {
+    ru: "Так выглядит проект, где заполнено всё — от постера до пакетов спонсорства.",
+    en: "This is what a project looks like when everything is filled in — from the poster to the sponsorship packages.",
+    hy: "Այսպես է երևում նախագիծը, երբ ամեն ինչ լրացված է՝ պաստառից մինչև հովանավորության փաթեթներ։",
+  },
+  "forCreators.example.cta": { ru: "Смотреть проект", en: "View the project", hy: "Դիտել նախագիծը" },
+
+  "forCreators.moderation.title": { ru: "Что дальше: модерация", en: "What's next: moderation", hy: "Հաջորդը՝ մոդերացիա" },
+  "forCreators.moderation.subtitle": {
+    ru: "После отправки проект проходит проверку модератора — обычно до двух рабочих дней.",
+    en: "After submission the project goes through a moderator's review — usually within two business days.",
+    hy: "Ուղարկելուց հետո նախագիծը անցնում է մոդերատորի ստուգում՝ սովորաբար մինչև երկու աշխատանքային օրում։",
+  },
+  "forCreators.moderation.step1.title": { ru: "Вы отправляете", en: "You submit", hy: "Դուք ուղարկում եք" },
+  "forCreators.moderation.step1.desc": {
+    ru: "Все обязательные для публикации поля заполнены — форма пропускает проект дальше.",
+    en: "Every field required to publish is filled in — the form lets the project through.",
+    hy: "Հրապարակման համար պարտադիր բոլոր դաշտերը լրացված են, ձևը թույլ է տալիս նախագծին անցնել հետագա։",
+  },
+  "forCreators.moderation.step2.title": { ru: "Модератор проверяет", en: "A moderator reviews it", hy: "Մոդերատորը ստուգում է" },
+  "forCreators.moderation.step2.desc": {
+    ru: "Проверяются данные, медиа и корректность заявленных условий размещения.",
+    en: "The data, media and the terms of the placement offer are checked for accuracy.",
+    hy: "Ստուգվում են տվյալները, մեդիան և տեղադրման հայտարարված պայմանների ճշտությունը։",
+  },
+  "forCreators.moderation.step3.title": { ru: "Решение", en: "The decision", hy: "Որոշում" },
+  "forCreators.moderation.step3.desc": {
+    ru: "Одобрено — проект публикуется в каталоге. Возвращено — вы получаете список причин и правите.",
+    en: "Approved — the project goes live in the catalog. Sent back — you get a list of reasons and fix them.",
+    hy: "Հաստատված է՝ նախագիծը հրապարակվում է կատալոգում։ Վերադարձված է՝ ստանում եք պատճառների ցանկը և ուղղում եք։",
+  },
+  "forCreators.moderation.step4.title": { ru: "Проект в каталоге", en: "Live in the catalog", hy: "Կատալոգում է" },
+  "forCreators.moderation.step4.desc": {
+    ru: "Бренды видят проект и могут подавать заявки на пакеты и плейсменты.",
+    en: "Brands can now see the project and apply for packages and placements.",
+    hy: "Բրենդները տեսնում են նախագիծը և կարող են դիմել փաթեթների ու փլեյսմենթների համար։",
+  },
+  "forCreators.moderation.reasons.title": { ru: "Частые причины возврата", en: "Common reasons for a return", hy: "Վերադարձի հաճախակի պատճառներ" },
+  "forCreators.moderation.reasons.item1": {
+    ru: "Нет ни одного пакета спонсорства с названием и бенефитами.",
+    en: "No sponsorship package with a name and a benefits list.",
+    hy: "Անվանումով ու առավելություններով հովանավորության ոչ մի փաթեթ չկա։",
+  },
+  "forCreators.moderation.reasons.item2": {
+    ru: "Не указаны студия или хронометраж.",
+    en: "Studio or runtime is missing.",
+    hy: "Չի նշված ստուդիան կամ տևողությունը։",
+  },
+  "forCreators.moderation.reasons.item3": {
+    ru: "Логлайн длиннее 140 символов или отсутствует.",
+    en: "The logline is missing or longer than 140 characters.",
+    hy: "Կարգախոսը բացակայում է կամ գերազանցում է 140 նիշը։",
+  },
+  "forCreators.moderation.reasons.item4": {
+    ru: "Постер вертикальный и плохо смотрится после обрезки до 16:9.",
+    en: "The poster is portrait and looks wrong after the 16:9 crop.",
+    hy: "Պաստառը ուղղաձիգ է և վատ տեսք ունի 16:9-ի կտրումից հետո։",
+  },
+  "forCreators.moderation.editWarning": {
+    ru: "Важно: любое изменение уже опубликованного проекта возвращает его на повторную модерацию и снимает с витрины до одобрения.",
+    en: "Important: editing an already-published project sends it back for another review and pulls it off the storefront until it's approved again.",
+    hy: "Կարևոր է․ արդեն հրապարակված նախագծի ցանկացած փոփոխություն այն կրկին ուղարկում է մոդերացիայի և հանում ցուցափեղկից՝ մինչև նոր հաստատումը։",
+  },
+
+  "forCreators.finalCta.title": { ru: "Готовы начать?", en: "Ready to start?", hy: "Պատրա՞ստ եք սկսելու" },
+  "forCreators.finalCta.subtitle": {
+    // No "takes about 15 minutes" promise here: the form is ~30 fields plus
+    // poster, gallery, video and cast photos, and the honest answer depends
+    // entirely on whether the materials already exist. Only the moderation
+    // turnaround (two working days) is a commitment we actually made.
+    ru: "Соберите материалы по чек-листу выше — и подавайте проект.",
+    en: "Gather the materials from the checklist above, then submit your project.",
+    hy: "Հավաքեք վերևի ստուգաթերթի նյութերը և ներկայացրեք ձեր նախագիծը։",
+  },
+  "forCreators.finalCta.button": { ru: "Подать проект", en: "Submit a project", hy: "Ներկայացնել նախագիծ" },
 };
 
 /** Build a UI translator bound to a locale. Supports `{token}` interpolation

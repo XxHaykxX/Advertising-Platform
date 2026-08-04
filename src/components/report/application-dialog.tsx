@@ -28,7 +28,8 @@ export type ApplicationOffer = {
   kind: "PLACEMENT" | "TIER";
   name: string;
   /** Formatted in AMD — the currency the creator priced in. Null for a
-   *  placement left unpriced, which the picker shows as "on request". */
+   *  placement or tier left unpriced (2026-08-04), which the picker shows as
+   *  "on request". */
   priceNative: string | null;
   /** The same price in the visitor's currency, or null when they are already
    *  browsing in AMD (nothing to convert) or the price is on request. Shown as

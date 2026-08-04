@@ -1,9 +1,9 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState, useTransition } from "react";
+import { createContext, useActionState, useContext, useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { Languages, Loader2, RotateCcw, Sparkles, X } from "lucide-react";
+import { AlertTriangle, Languages, Loader2, RotateCcw, Sparkles, X } from "lucide-react";
 import {
   AGE_RATING_VALUES,
   FORMAT_CATEGORY_VALUES,
@@ -84,7 +84,6 @@ const CONTROLLED_NAMES = new Set([
   "countries",
   "platforms",
   "cinemas",
-  "language",
   "kind",
   "actorsRows",
   "tiersRows",
@@ -122,7 +121,6 @@ const EMPTY: ProjectFormInitial = {
   poster: "",
   gallery: "",
   formatCategory: "",
-  language: "",
   studio: "",
   kind: "FILM",
   episodes: null,
@@ -164,6 +162,42 @@ function numOrEmpty(n: number | null): number | string {
   return n ?? "";
 }
 
+// ── "Not filled in yet" highlighting ───────────────────────────────────────
+// The sidebar checklist ("what a brand sees") only reflects the SAVED row, so
+// until you hit Save nothing on the form itself says which of the publish
+// requirements are still empty — the creator learned that only by being
+// refused at submit. This marks those fields in place, live, while typing.
+//
+// Only publication blockers light up. Marking every empty optional field would
+// paint most of an ~11 000px form amber and teach people to ignore the colour.
+//
+// The set holds ANCHOR IDS (`field-…` / `sec-…`), the same ids the checklist
+// already jumps to, so a field opts in simply by having an `anchorId` — there
+// is no second registry of field names to keep in sync.
+type PublishGaps = { anchors: ReadonlySet<string>; note: string };
+const PublishGapContext = createContext<PublishGaps>({ anchors: new Set(), note: "" });
+
+function usePublishGap(anchorId?: string): string | null {
+  const { anchors, note } = useContext(PublishGapContext);
+  return anchorId && anchors.has(anchorId) ? note : null;
+}
+
+/** Amber, never red: the field is incomplete, not wrong. Colour alone is not
+ *  the signal (a11y) — there is an icon and a sentence saying what is missing.
+ *  `text-amber-700` rather than the `--warn` token because #f59e0b on white is
+ *  ~2.2:1 and fails the 4.5:1 text-contrast floor. */
+function PublishGapNote({ note }: { note: string }) {
+  return (
+    <p className="mt-1 flex items-start gap-1.5 text-xs font-medium text-amber-700">
+      <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+      {note}
+    </p>
+  );
+}
+
+/** Ring + tint applied to a field/section that is still empty. */
+const GAP_SHELL = "ring-1 ring-amber-400/70 bg-amber-50/50";
+
 // NB: a plain <div>, NOT a <label>. Several fields wrap composite controls
 // (ImageUploader's file <input>, the MultiSelect, radio groups, the poster
 // panel). A <label> wrapping those makes a click ANYWHERE in the field —
@@ -188,11 +222,16 @@ function Field({
   anchorId?: string;
   children: React.ReactNode;
 }) {
+  const gap = usePublishGap(anchorId);
   return (
-    <div id={anchorId} className="block scroll-mt-28 rounded-lg">
+    <div
+      id={anchorId}
+      className={`block scroll-mt-28 rounded-lg ${gap ? `-mx-2 px-2 py-2 ${GAP_SHELL}` : ""}`}
+    >
       <span className={labelCls}>{label}</span>
       {children}
       {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
+      {gap && <PublishGapNote note={gap} />}
     </div>
   );
 }
@@ -218,11 +257,18 @@ function MediaCard({
   anchorId?: string;
   children: React.ReactNode;
 }) {
+  const gap = usePublishGap(anchorId);
   return (
-    <div id={anchorId} className="space-y-3 scroll-mt-28 rounded-lg border border-border bg-background p-4">
+    <div
+      id={anchorId}
+      className={`space-y-3 scroll-mt-28 rounded-lg border p-4 ${
+        gap ? `border-amber-300 ${GAP_SHELL}` : "border-border bg-background"
+      }`}
+    >
       <div>
         <h3 className="text-base font-semibold text-foreground">{heading}</h3>
         <p className="text-xs text-muted-foreground">{hint}</p>
+        {gap && <PublishGapNote note={gap} />}
       </div>
       {children}
     </div>
@@ -249,6 +295,7 @@ export function ProjectForm({
   translateAction = translateProjectAction,
   posterAction,
   completeness,
+  placementsRequired,
 }: {
   action: (prev: ProjectFormState, fd: FormData) => Promise<ProjectFormState>;
   initial?: ProjectFormInitial;
@@ -320,6 +367,13 @@ export function ProjectForm({
    *  the SAVED row (see src/lib/project-completeness.ts). Unset on create:
    *  there's nothing saved yet to check, so the panel doesn't render at all. */
   completeness?: CompletenessItem[];
+  /** Whether "at least one product placement" applies to THIS project. The
+   *  requirement is grandfathered: projects created before it shipped are
+   *  exempt (see PLACEMENTS_REQUIRED_FROM in form-shared.ts), so the edit
+   *  pages decide per row and pass the answer down. Undefined means "decide
+   *  from the form alone": a project being created now is always subject to
+   *  it, an existing row is left alone until its page says otherwise. */
+  placementsRequired?: boolean;
 }) {
   // Admin panel chrome stays English-only (#21/#15) — mode="creator" is the
   // only side that follows the caller's locale; admin ignores it entirely so
@@ -347,6 +401,9 @@ export function ProjectForm({
   // `EMPTY`; a returned `state.values` always wins once present.
   const data: ProjectFormInitial = state.values ?? initial ?? EMPTY;
   const isEdit = !!initial;
+  // See the prop's doc comment: an unanswered prop means "a project being
+  // created now is subject to the requirement, an existing one is not".
+  const placementsNeeded = placementsRequired ?? !isEdit;
 
   // The action returns { ok, redirect } instead of calling redirect() itself
   // (see actions.ts). CREATE navigates to the redirect once the save succeeds
@@ -449,6 +506,7 @@ export function ProjectForm({
   function handleFormInput() {
     recomputeDirty();
     scheduleSaveDraft();
+    recomputePublishGaps();
   }
 
   // ── Leaving with unsaved work ─────────────────────────────────────────
@@ -541,7 +599,6 @@ export function ProjectForm({
   const [countries, setCountries] = useState<string[]>(() => parseCsvInput(data.countries));
   const [platforms, setPlatforms] = useState<string[]>(() => parseCsvInput(data.platforms));
   const [cinemas, setCinemas] = useState<string[]>(() => parseCsvInput(data.cinemas));
-  const [languages, setLanguages] = useState<string[]>(() => parseCsvInput(data.language));
   // Global Streaming Source dictionary (Ф2/#25) — seeded from the server, then
   // kept in sync client-side as options are deleted via the dropdown's "×".
   // Now powers the merged "Available on" field (Platforms + Streaming source).
@@ -663,6 +720,72 @@ export function ProjectForm({
     setAboutFilled((prev) => (prev[l] === has ? prev : { ...prev, [l]: has }));
   }
 
+  // ── Live publish-gap highlighting ──────────────────────────────────────
+  // Mirrors publishBlockers() in form-shared.ts. It is deliberately a mirror
+  // and not a shared import: that function reads a saved DB row, while this
+  // reads a half-typed form where the same values live in three different
+  // places (uncontrolled inputs, refs behind hidden locale tabs, and React
+  // state for the repeaters). The server stays the authority — this only
+  // decides what to paint. The guard test in creator-guide.guard.test.ts keeps
+  // the two lists from drifting apart.
+  const [publishGaps, setPublishGaps] = useState<ReadonlySet<string>>(() => new Set());
+
+  /** Tiers, placements and the About block are whole <section>s rather than
+   *  single Fields, so they can't pick the highlight up from Field/MediaCard —
+   *  they take the same treatment on the section shell instead. */
+  const SECTION_CLS = "scroll-mt-24 space-y-3 rounded-xl border p-4";
+  const sectionCls = (anchor: string) =>
+    publishGaps.has(anchor)
+      ? `${SECTION_CLS} border-amber-300 ${GAP_SHELL}`
+      : `${SECTION_CLS} border-border bg-card`;
+  const sectionNote = (anchor: string) =>
+    publishGaps.has(anchor) ? <PublishGapNote note={t("publish.gapNote")} /> : null;
+
+  function recomputePublishGaps() {
+    const form = formRef.current;
+    if (!form) return;
+    const fd = new FormData(form);
+    const field = (k: string) => String(fd.get(k) ?? "").trim();
+    const next = new Set<string>();
+
+    // Tagline: publishBlockers checks the single derived base value, which is
+    // filled from whichever locale has one — so ANY locale satisfies it.
+    if (!ABOUT_LANGS.some((l) => (taglineRefs[l].current?.value || "").trim())) next.add("sec-about");
+    if (studioValues.filter((s) => s.trim()).length === 0) next.add("field-studio");
+    const runtimeFilled =
+      kind === "SERIAL" ? !!field("episodes") && !!field("episodeMinutes") : !!field("durationMinutes");
+    if (!runtimeFilled) next.add("field-runtime");
+    if (!field("poster")) next.add("field-poster");
+    if (!field("formatCategory")) next.add("field-formatCategory");
+    // Either a real date or the explicit "we accept applications continuously"
+    // choice counts; what is refused is having made no choice at all.
+    if (!deadlineOngoing && !applicationDeadlineValue.trim()) next.add("field-deadline");
+    // A package needs BOTH a name and a benefits list to count, same as the gate.
+    if (!tiers.some((tier) => tier.name.trim() && tier.benefits.trim())) next.add("sec-tiers");
+    if (placementsNeeded && placements.length === 0) next.add("sec-placements");
+
+    setPublishGaps((prev) => {
+      if (prev.size === next.size && [...next].every((a) => prev.has(a))) return prev;
+      return next;
+    });
+  }
+
+  // Repeaters and dictionary pickers are React state, so they never fire the
+  // form's native "input" event that drives everything else here.
+  useEffect(() => {
+    recomputePublishGaps();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    tiers,
+    placements,
+    studioValues,
+    kind,
+    deadlineOngoing,
+    applicationDeadlineValue,
+    placementsNeeded,
+    formEpoch,
+  ]);
+
 
   // ── Autosave draft (#20², create only) ─────────────────────────────────
   const formRef = useRef<HTMLFormElement>(null);
@@ -731,7 +854,6 @@ export function ProjectForm({
     countries,
     platforms,
     cinemas,
-    languages,
     actors,
     tiers,
     references,
@@ -793,7 +915,6 @@ export function ProjectForm({
     setCountries(parseArr(obj.countries));
     setPlatforms(parseArr(obj.platforms));
     setCinemas(parseArr(obj.cinemas));
-    setLanguages(parseArr(obj.language));
     setActors(parseArr(obj.actorsRows) as unknown as ActorRow[]);
     setTiers(parseArr(obj.tiersRows) as unknown as TierRow[]);
     setPlacements(parseArr(obj.placementsRows) as unknown as PlacementRow[]);
@@ -885,6 +1006,9 @@ export function ProjectForm({
   }
 
   return (
+    <PublishGapContext.Provider
+      value={{ anchors: publishGaps, note: t("publish.gapNote") }}
+    >
     <form
       ref={formRef}
       action={formAction}
@@ -899,11 +1023,12 @@ export function ProjectForm({
       {/* Reference Projects (Ф2): a repeatable {name,url} list, same "hidden
           JSON mirror" pattern as actorsRows/tiersRows above. */}
       <input type="hidden" name="references" value={JSON.stringify(references)} />
-      {/* Production Timeline (Ф4/#27) — admin-only, so only mirrored in admin
-          mode; the creator action never reads/writes milestones. */}
-      {mode !== "creator" && (
-        <input type="hidden" name="milestonesRows" value={JSON.stringify(milestones)} />
-      )}
+      {/* Production Timeline (Ф4/#27) — opened to creators on 2026-08-04 (owner
+          request): the stages drive the timeline a brand reads to judge whether
+          it can still get into the shoot, and staff were never going to fill
+          them in on the creator's behalf (one milestone row existed across the
+          whole of production). Mirrored in both modes now. */}
+      <input type="hidden" name="milestonesRows" value={JSON.stringify(milestones)} />
 
 
       {/* ── Sticky Save bar ── pinned so Submit/dirty-state is reachable
@@ -979,11 +1104,14 @@ export function ProjectForm({
               split into hy/ru/en TABS. All three panels stay MOUNTED (inactive ones
               are just `hidden`) so the uncontrolled refs + hidden mirrors + the
               Translate button keep working exactly as before. */}
-          <section id="sec-about" className="scroll-mt-24 space-y-3 rounded-xl border border-border bg-card p-4">
+          <section id="sec-about" className={sectionCls("sec-about")}>
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">
-                {t("projectForm.section.about")}
-              </h2>
+              <div>
+                <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">
+                  {t("projectForm.section.about")}
+                </h2>
+                {sectionNote("sec-about")}
+              </div>
               <button
                 type="button"
                 onClick={handleTranslate}
@@ -1247,14 +1375,16 @@ export function ProjectForm({
           {/* ── Product placements (owner correction 2026-07-28) — the brand
               inside the story, sitting above Sponsors (the logo-on-materials
               deal, which kept the old "Placement(s)" data/section id below). ── */}
-          <section id="sec-placements" className="scroll-mt-24 space-y-3 rounded-xl border border-border bg-card p-4">
+          <section id="sec-placements" className={sectionCls("sec-placements")}>
             <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">{t("projectForm.section.placements")}</h2>
+            {sectionNote("sec-placements")}
             <PlacementsSection value={placements} onChange={setPlacements} t={t} scope={uploaderScope} locale={locale} />
           </section>
 
           {/* ── Sponsors (was "Placement(s)"/"Sponsorship tiers") ── */}
-          <section id="sec-tiers" className="scroll-mt-24 space-y-3 rounded-xl border border-border bg-card p-4">
+          <section id="sec-tiers" className={sectionCls("sec-tiers")}>
             <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">{t("projectForm.section.sponsorshipTiers")}</h2>
+            {sectionNote("sec-tiers")}
             <TiersSection
               value={tiers}
               onChange={setTiers}
@@ -1279,22 +1409,20 @@ export function ProjectForm({
             />
           </section>
 
-          {/* ── Production Timeline (Ф4/#27) ── admin-only: a repeatable list of
-              production stages rendered as a horizontal timeline on the report
-              page. Hidden for the creator form (mode="creator"). */}
-          {mode !== "creator" && (
-            <section id="sec-milestones" className="scroll-mt-24 space-y-3 rounded-xl border border-border bg-card p-4">
-              <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">{t("projectForm.section.milestones")}</h2>
-              <MilestonesSection value={milestones} onChange={setMilestones} t={t} />
-            </section>
-          )}
+          {/* ── Production Timeline (Ф4/#27) ── a repeatable list of production
+              stages rendered as a horizontal timeline on the report page. Open
+              to creators since 2026-08-04 (see the hidden mirror above). */}
+          <section id="sec-milestones" className="scroll-mt-24 space-y-3 rounded-xl border border-border bg-card p-4">
+            <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">{t("projectForm.section.milestones")}</h2>
+            <MilestonesSection value={milestones} onChange={setMilestones} t={t} />
+          </section>
         </div>
         {/* ══ Meta sidebar ══ */}
         <div className="min-w-0 space-y-4">
           {/* ── General ── classification meta: Format (was "Kind"), the
               episodes/episode-length block (Series only, right after Format),
-              Genre, Language, Studio, Countries and Age rating — the latter two
-              folded in here from the old Status&release / Audience&value cards. */}
+              Genre, Studio, Countries and Age rating — the latter two folded
+              in here from the old Status&release / Audience&value cards. */}
           <section id="sec-general" className="scroll-mt-24 space-y-3 rounded-xl border border-border bg-card p-4">
             <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">{t("projectForm.section.general")}</h2>
             {/* Project code is auto-generated and intentionally never shown (#2 —
@@ -1398,26 +1526,22 @@ export function ProjectForm({
                 removeLabel={t("ui.remove")}
               />
             </Field>
-            {/* The Language field was removed on 2026-07-27 (content review).
-                The column and the value a project already carries stay — this
-                hidden input round-trips it — but nobody is asked to fill it in
-                any more, and it is not shown or filtered on anywhere. */}
-            <input type="hidden" name="language" value={JSON.stringify(languages)} />
             {/* Studio name moved to Production Info, next to "Available on"
                 (owner request 2026-07-27): who made it and where it plays are
                 one question, and it sat here between the poster and the money
                 fields for no reason. */}
-            {/* Box office was removed on 2026-07-27 (owner request): it is a
-                past-performance number, not part of what a brand is buying, and
-                it was the only money figure on the card competing with the
-                package price. The column stays with its data; nothing asks for
-                it or shows it. */}
+            {/* Box office was removed from the form on 2026-07-27 (owner
+                request): it is a past-performance number, not part of what a
+                brand is buying, and it was the only money figure on the card
+                competing with the package price. The Project.boxOfficeAmd
+                column itself was dropped on 2026-08-04 — it had held no data
+                on any live project since the field was removed here. */}
             {/* Was a free-text field: every editor typed their own spelling
                 ("US" / "USA" / "United States") and the catalog counted them as
                 three countries. Now a closed list, picked the same way as Genre
                 (2026-07-27). A value a project already carries stays as a chip
                 even if it isn't on the list. */}
-            <Field label={t("projectForm.field.countries")}>
+            <Field label={t("projectForm.field.countries")} anchorId="field-countries">
               <MultiSelect
                 options={countryOptions}
                 value={countries}
@@ -1795,5 +1919,6 @@ export function ProjectForm({
         }}
       />
     </form>
+    </PublishGapContext.Provider>
   );
 }

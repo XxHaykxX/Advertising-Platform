@@ -71,15 +71,15 @@ export type InterestInboxDTO = {
   tier: {
     id: number;
     name: string;
-    priceAmd: number;
+    priceAmd: number | null; // null -> "on request" (2026-08-04), same contract as placement.priceAmd below
     isExclusive: boolean;
     availableSlots: number | null;
     totalSlots: number | null;
   } | null;
   // Product placement the brand applied for (2026-07-29) — mutually exclusive
   // with tier above in practice (one picker over both lists). priceAmd is
-  // nullable here (unlike tier's): a creator can list a placement "on
-  // request".
+  // nullable here too (2026-08-04): a creator can list a placement or a
+  // package "on request".
   placement: {
     id: number;
     title: string;

@@ -84,12 +84,6 @@ export const FORMAT_CATEGORY_VALUES = [
   "SHORT",
 ] as const;
 
-// Primary-language bucket. The Language field and its catalog facet were
-// removed on 2026-07-27 (content review), so nothing offers these as a choice
-// any more — the list stays because the `language` column still holds the
-// values entered before that, and a future field would use the same set.
-export const LANGUAGE_VALUES = ["Armenian", "Russian", "English", "Georgian", "Other"] as const;
-
 // Fall back to a sensible Format bucket when a row has no explicit
 // formatCategory. That column was added late (default "") so every pre-existing
 // and seed row is blank — without this the catalog Format filter matches nothing
@@ -188,7 +182,35 @@ export type PublishCheckInput = {
   episodeMinutes: number | null;
   durationMinutes: number | null;
   tiers: { name: string; benefits: string }[];
+  poster: string | null;
+  // Count, not rows — every caller already has the row count for free (the
+  // form's parsed placementsRows, or a DB _count), and publishBlockers only
+  // ever needs to know whether it's zero.
+  placementsCount: number;
+  formatCategory: string | null;
+  applicationDeadline: Date | string | null;
+  applicationDeadlineOngoing: boolean;
+  // Grandfathers the placements requirement below — see PLACEMENTS_REQUIRED_FROM.
+  // null for a project being CREATED right now (never grandfathered, there is
+  // no "before" to exempt); a Date for an existing row, taken from its saved
+  // createdAt.
+  createdAt: Date | null;
 };
+
+// The eight projects already live on prod when the placements requirement
+// shipped were all built on sponsorship tiers alone — the placement feature
+// had no adoption in practice, and two of the eight already fail today's tier
+// gate on an unrelated field (blank benefits). Refusing all eight at their
+// next re-approval was the owner's explicit call NOT to make (2026-08-04); a
+// blank poster, formatCategory or deadline decision gets no such exemption —
+// only placements does. The cutoff is a dated constant, not a hardcoded id
+// list, so it reads as a decision anyone can find later, not a mystery
+// exception: anything CREATED before this ships is exempt, anything created
+// at or after it is held to the requirement like every other field.
+// NB: nudge this if the ship date slips — it must land AFTER this code goes
+// live, or a project created between the two dates would wrongly dodge the
+// requirement.
+export const PLACEMENTS_REQUIRED_FROM = new Date("2026-08-05T00:00:00Z");
 
 /** Everything that still blocks publication, as i18n keys (empty = publishable). */
 export function publishBlockers(input: PublishCheckInput): string[] {
@@ -210,6 +232,32 @@ export function publishBlockers(input: PublishCheckInput): string[] {
     // CSV requires both a Placement Name and a Placement Description; the
     // description is the tier's benefits list.
     missing.push("publish.missing.tierBenefits");
+  }
+  // A blank poster is invisible on the storefront's own terms, not just an
+  // incomplete-looking page: the catalog card and every hero on the report
+  // page have nothing to render where the poster goes (the `return null`
+  // guards project-completeness.ts's header comment points at), so a brand
+  // scrolling the catalog sees a gap in the grid where this listing should be.
+  if (!input.poster || !input.poster.trim()) missing.push("publish.missing.poster");
+  // Zero placements is the hole project-completeness.ts's header comment
+  // names outright: a placement is the project's actual PRODUCT — the thing a
+  // brand is here to buy — and nothing above this line ever checked for one.
+  // Without this, a project could publish as a storefront with nothing on the
+  // shelf. Grandfathered for anything that already existed when this shipped
+  // — see PLACEMENTS_REQUIRED_FROM.
+  const placementsRequired = input.createdAt == null || input.createdAt >= PLACEMENTS_REQUIRED_FROM;
+  if (placementsRequired && input.placementsCount <= 0) missing.push("publish.missing.placements");
+  // A blank formatCategory doesn't just look empty on the page — it drops the
+  // project out of the catalog's Format filter (Feature/Series/…) entirely,
+  // so a brand filtering by format never sees it, not even as
+  // "Uncategorized".
+  if (!input.formatCategory || !input.formatCategory.trim()) missing.push("publish.missing.formatCategory");
+  // Neither a concrete deadline nor the explicit Ongoing flag: the report
+  // page's placement-window copy has nothing to show, which reads as "is this
+  // still taking offers?" rather than a deliberate always-open listing. One of
+  // the two must be a real decision the editor made, not both left blank.
+  if (!input.applicationDeadline && !input.applicationDeadlineOngoing) {
+    missing.push("publish.missing.deadline");
   }
   return missing;
 }

@@ -25,6 +25,12 @@ export const MEMBER_ALLOWED_PUBLIC_PREFIXES = [
   "/portfolio",
   "/about",
   "/faq",
+  // /for-creators (2026-08-04): the guide to what a project submission needs.
+  // It is linked from inside the cabinet and from the submit form's own header,
+  // so leaving it off this list meant the two links a signed-in creator is most
+  // likely to click both bounced them straight back to /account — the reader it
+  // is written for was the one reader who could not open it.
+  "/for-creators",
 ];
 
 function hasPrefix(pathname: string, prefix: string): boolean {

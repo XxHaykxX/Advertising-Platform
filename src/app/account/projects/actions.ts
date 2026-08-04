@@ -131,9 +131,6 @@ function buildData(fd: FormData): ProjectFormValues {
     poster: str(fd, "poster", VARCHAR_MAX),
     gallery: str(fd, "gallery"),
     formatCategory: str(fd, "formatCategory", VARCHAR_MAX),
-    // Language is now a MultiSelect (admin redesign phase 1) — same CSV
-    // storage convention as genres/countries/platforms/cinemas.
-    language: jsonArray<string>(fd, "language").join(", ").slice(0, VARCHAR_MAX),
     // Studio became a MultiSelect over a dictionary (2026-07-27) — same CSV
     // storage convention as genres/countries/platforms, so a co-production can
     // list every company instead of cramming them into one text field.
@@ -187,6 +184,10 @@ function validate(data: ProjectFormValues, t: ReturnType<typeof makeUI>): string
 function submitGate(
   data: ProjectFormValues,
   tierRows: { name: string; benefits: string }[],
+  placementsCount: number,
+  // null on create (nothing to grandfather yet); the existing row's createdAt
+  // on a resubmit — see PLACEMENTS_REQUIRED_FROM in form-shared.ts.
+  createdAt: Date | null,
   t: ReturnType<typeof makeUI>,
 ): string | null {
   const missing = publishBlockers({
@@ -197,6 +198,12 @@ function submitGate(
     episodeMinutes: data.episodeMinutes,
     durationMinutes: data.durationMinutes,
     tiers: tierRows,
+    poster: data.poster,
+    placementsCount,
+    formatCategory: data.formatCategory,
+    applicationDeadline: data.applicationDeadline,
+    applicationDeadlineOngoing: data.applicationDeadlineOngoing,
+    createdAt,
   });
   if (missing.length === 0) return null;
   return `${t("publish.blockedSubmit")} ${missing.map((key) => t(key)).join(", ")}.`;
@@ -208,7 +215,7 @@ type ActorInput = { name?: string; roles?: string[]; kind?: string; photo?: stri
 type TierInput = {
   dbId?: number; // existing SponsorshipTier.id, absent for a newly added row
   name?: string;
-  priceAmd?: number;
+  priceAmd?: number | null; // null -> "on request" (2026-08-04), same contract as PlacementInput.priceAmd
   benefits?: string;
   image?: string;
   isExclusive?: boolean;
@@ -224,6 +231,7 @@ type PlacementInput = {
   availableSlots?: number | null;
   totalSlots?: number | null;
 };
+type MilestoneInput = { label?: string; date?: string; note?: string; active?: boolean };
 
 /** "line 1\nline 2" -> JSON string[] (trimmed, blanks dropped) for the
    benefits @db.Text column. */
@@ -354,14 +362,16 @@ async function snapshotPersonNames(
   });
 }
 
-/** Rows for prisma.sponsorshipTier.createMany (projectId added by the caller). */
+/** Rows for prisma.sponsorshipTier.createMany (projectId added by the
+   caller). Price is optional (null -> "on request", 2026-08-04), same
+   contract as parsePlacementRows below. */
 function parseTierRows(fd: FormData) {
   return jsonArray<TierInput>(fd, "tiersRows")
     .filter((r) => (r.name || "").trim())
     .map((r, i) => ({
       dbId: typeof r.dbId === "number" ? r.dbId : null,
       name: (r.name || "").trim().slice(0, VARCHAR_MAX),
-      priceAmd: Math.max(0, Number(r.priceAmd) || 0),
+      priceAmd: r.priceAmd == null ? null : Math.max(0, Number(r.priceAmd) || 0),
       benefits: benefitsToJson(r.benefits || ""),
       image: (r.image || "").trim() || null,
       isExclusive: !!r.isExclusive,
@@ -399,9 +409,9 @@ async function saveTierRows(
 }
 
 /** Rows for prisma.placement (projectId added by the caller). Price is
-   optional (null -> "on request"), unlike a tier's priceAmd. Deliberately
-   duplicated from admin/(panel)/projects/actions.ts, same trust-boundary
-   reason as parseTierRows/saveTierRows above. */
+   optional (null -> "on request"), same as a tier's priceAmd since
+   2026-08-04. Deliberately duplicated from admin/(panel)/projects/actions.ts,
+   same trust-boundary reason as parseTierRows/saveTierRows above. */
 function parsePlacementRows(fd: FormData) {
   return jsonArray<PlacementInput>(fd, "placementsRows")
     .filter((r) => (r.title || "").trim())
@@ -438,6 +448,28 @@ async function savePlacementRows(
       await tx.placement.create({ data: { ...data, projectId } });
     }
   }
+}
+
+/** Rows for prisma.productionMilestone.createMany (projectId added by the
+   caller). Same shape as the admin action's parseMilestoneRows (deliberately
+   duplicated, same trust-boundary reason as the rest of this file): blank-label
+   rows are dropped, array order -> sortOrder, and only the first `active` row
+   is kept marked. */
+function parseMilestoneRows(fd: FormData) {
+  let activeSeen = false;
+  return jsonArray<MilestoneInput>(fd, "milestonesRows")
+    .filter((r) => (r.label || "").trim())
+    .map((r, i) => {
+      const active = !!r.active && !activeSeen;
+      if (active) activeSeen = true;
+      return {
+        label: (r.label || "").trim().slice(0, VARCHAR_MAX),
+        date: dateOrNull((r.date || "").trim()),
+        note: (r.note || "").trim().slice(0, VARCHAR_MAX),
+        isActive: active,
+        sortOrder: i,
+      };
+    });
 }
 
 // ── Auto Code generation (#PP-YYYY-NNNN) ───────────────────────────────────
@@ -486,8 +518,9 @@ export async function createCreatorProject(
 
   // Persist any custom Available-on values into the global Streaming Source
   // dictionary (Ф2/#25) so future projects offer them too — never blocks the
-  // save. The dictionary used to seed from `streamingSource`; #29 merged that
-  // field into `platforms`, so it's the source now.
+  // save. #29 merged the old per-project Streaming source field into
+  // `platforms`, so that's the source now (the dictionary itself is unaffected
+  // by the 2026-08-04 removal of the Project.streamingSource column).
   try {
     await addStreamingSources(parseCsvInput(data.platforms));
     // Same for the country dictionary: a country typed into this project is
@@ -506,8 +539,11 @@ export async function createCreatorProject(
   const actorRows = parseActorRows(fd);
   const tierRows = parseTierRows(fd);
   const placementRows = parsePlacementRows(fd);
+  const milestoneRows = parseMilestoneRows(fd);
 
-  const blocked = submitGate(data, tierRows, t);
+  // A brand-new project has no "before" to grandfather against — see
+  // PLACEMENTS_REQUIRED_FROM.
+  const blocked = submitGate(data, tierRows, placementRows.length, null, t);
   if (blocked) return { error: blocked, values: data };
 
   const projectData = {
@@ -524,8 +560,6 @@ export async function createCreatorProject(
     applicationDeadline: data.applicationDeadlineOngoing ? null : dateOrNull(data.applicationDeadline),
     releaseDate: dateOrNull(data.releaseDate),
     platforms: platformsToJson(data.platforms),
-    // #29 merged the old Streaming source field into `platforms`; the
-    // `streamingSource` column is not written any more (audit 1.6).
     tagline: data.tagline || null,
     taglineHy: data.taglineHy || null,
     taglineRu: data.taglineRu || null,
@@ -570,8 +604,14 @@ export async function createCreatorProject(
             data: placementRows.map(({ dbId: _dbId, ...r }) => ({ ...r, projectId: project.id })),
           });
         }
-        // After cast/tiers/placements have landed, so the snapshot captures
-        // the full aggregate the moderator will see, not just the bare row.
+        if (milestoneRows.length) {
+          await tx.productionMilestone.createMany({
+            data: milestoneRows.map((r) => ({ ...r, projectId: project.id })),
+          });
+        }
+        // After cast/tiers/placements/milestones have landed, so the snapshot
+        // captures the full aggregate the moderator will see, not just the
+        // bare row.
         await recordVersion(tx, "Project", project.id, "CREATE", { id: user.id, name: user.name });
         return project;
       }, { timeout: 15000 });
@@ -630,9 +670,10 @@ export async function updateCreatorProject(
 
   // 404 for both "doesn't exist" and "not yours" — a Creator must not be able
   // to distinguish the two (same reasoning as admin's updateProject).
+  // createdAt feeds submitGate's placements grandfather clause below.
   const existing = await prisma.project.findUnique({
     where: { id },
-    select: { ownerId: true },
+    select: { ownerId: true, createdAt: true },
   });
   if (!existing) notFound();
   if (existing.ownerId !== user.id) notFound();
@@ -658,15 +699,17 @@ export async function updateCreatorProject(
   const actorRows = parseActorRows(fd);
   const tierRows = parseTierRows(fd);
   const placementRows = parsePlacementRows(fd);
+  const milestoneRows = parseMilestoneRows(fd);
 
-  const blocked = submitGate(data, tierRows, t);
+  const blocked = submitGate(data, tierRows, placementRows.length, existing.createdAt, t);
   if (blocked) return { error: blocked, values: data };
 
   try {
-    // #20²: update the project and fully replace its cast/crew + tiers in one
-    // transaction (delete-all then re-insert, same as admin's updateProject).
-    // Milestones are untouched — the creator form never submits milestonesRows
-    // (admin-only section), so there's nothing to replace here.
+    // #20²: update the project and fully replace its cast/crew + tiers + the
+    // production timeline in one transaction (delete-all then re-insert, same
+    // as admin's updateProject). The Production Timeline section was opened
+    // to creators on 2026-08-04 (owner request), so milestonesRows is now
+    // submitted from this side too.
     await prisma.$transaction(async (tx) => {
       await tx.project.update({
         where: { id },
@@ -713,6 +756,10 @@ export async function updateCreatorProject(
       }
       await saveTierRows(tx, id, tierRows);
       await savePlacementRows(tx, id, placementRows);
+      await tx.productionMilestone.deleteMany({ where: { projectId: id } });
+      if (milestoneRows.length) {
+        await tx.productionMilestone.createMany({ data: milestoneRows.map((r) => ({ ...r, projectId: id })) });
+      }
       // After the full replace, so the snapshot reflects the saved aggregate.
       await recordVersion(tx, "Project", id, "UPDATE", { id: user.id, name: user.name });
     }, { timeout: 15000 });

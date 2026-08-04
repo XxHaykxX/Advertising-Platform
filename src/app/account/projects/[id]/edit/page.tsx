@@ -32,9 +32,9 @@ import { generateCreatorPosterAction } from "../../poster-action";
  *  owner decision C.6). Twin of admin/(panel)/projects/[id]/edit/page.tsx, but
  *  scoped to the owning creator and wired to updateCreatorProject instead of
  *  the admin action — same "reuse ProjectForm, don't fork it" reasoning as
- *  account/projects/new/page.tsx. Milestones are intentionally never loaded:
- *  that section is admin-only (see project-form.tsx), so there's nothing for
- *  this page to seed. */
+ *  account/projects/new/page.tsx. Milestones are loaded and seeded like every
+ *  other relation: the Production Timeline section was opened to creators on
+ *  2026-08-04 (owner request), so this page is no longer admin-only for it. */
 export default async function EditCreatorProjectPage({
   params,
 }: {
@@ -54,11 +54,8 @@ export default async function EditCreatorProjectPage({
       actors: { orderBy: { sortOrder: "asc" } },
       tiers: { orderBy: { sortOrder: "asc" } },
       placements: { orderBy: { sortOrder: "asc" } },
+      milestones: { orderBy: { sortOrder: "asc" } },
       owner: { select: { avatar: true } },
-      // Milestones are admin-only (the form has no section for them here —
-      // see project-form.tsx), so only the count is needed: the completeness
-      // checklist below still has to know whether an admin already added any.
-      _count: { select: { milestones: true } },
     },
   });
   // 404 for "doesn't exist", "not a CREATOR" and "not yours" alike — a member
@@ -93,7 +90,6 @@ export default async function EditCreatorProjectPage({
     poster: p.poster ?? "",
     gallery: parseGalleryInput(p.gallery),
     formatCategory: p.formatCategory,
-    language: p.language,
     studio: p.studio,
     kind: p.kind,
     episodes: p.episodes,
@@ -126,7 +122,7 @@ export default async function EditCreatorProjectPage({
     videoFile: p.videoFile,
     gallery: p.gallery,
     castCount: p.actors.length,
-    milestonesCount: p._count.milestones,
+    milestonesCount: p.milestones.length,
     placementsCount: p.placements.length,
     tiers: p.tiers,
     studio: p.studio,
@@ -143,6 +139,21 @@ export default async function EditCreatorProjectPage({
     productionBudgetAmd: p.productionBudgetAmd,
     ageRating: p.ageRating,
     formatCategory: p.formatCategory,
+    countries: p.countries,
+    castPhotoCount: p.actors.filter((a) => a.photo).length,
+    titleHy: p.titleHy,
+    titleRu: p.titleRu,
+    titleEn: p.titleEn,
+    synopsisHy: p.synopsisHy,
+    synopsisRu: p.synopsisRu,
+    synopsisEn: p.synopsisEn,
+    taglineHy: p.taglineHy,
+    taglineRu: p.taglineRu,
+    taglineEn: p.taglineEn,
+    placementPricing: p.placements.map((pl) => ({ priceAmd: pl.priceAmd })),
+    // Feeds the placements grandfather clause (PLACEMENTS_REQUIRED_FROM) so
+    // this checklist's "blocks publication" badge agrees with the actual gate.
+    createdAt: p.createdAt,
   });
 
   const action = updateCreatorProject.bind(null, pid);
@@ -198,6 +209,12 @@ export default async function EditCreatorProjectPage({
             priceAmd: pl.priceAmd,
             availableSlots: pl.availableSlots,
             totalSlots: pl.totalSlots,
+          }))}
+          initialMilestones={p.milestones.map((m) => ({
+            label: m.label,
+            date: formatDateInput(m.date),
+            note: m.note,
+            active: m.isActive,
           }))}
           mode="creator"
           locale={locale}

@@ -50,7 +50,6 @@ export type ProjectFormValues = {
   // the catalog's Format chip) intact. Duration/episodes below are the admin's
   // only format inputs now.
   formatCategory: string; // marketing format bucket (FEATURE|SERIES|…); "" when unset
-  language: string; // primary language (Armenian|Russian|…); "" when unset
   studio: string;
   // ── Film/Serial (#19) ──
   kind: ProjectKind;
@@ -63,11 +62,6 @@ export type ProjectFormValues = {
   // enum fallback over the stored value on every save.
   countries: string;
   ageRating: string; // content rating badge ("16+", "18+"); "" when unset
-  // NB: `boxOfficeAmd` is deliberately NOT a form value (owner request
-  // 2026-07-27 — the field was removed from both editors and from the
-  // storefront). The column stays for the data it holds; parsing it here would
-  // write null over that on every save, the same way `format` and `sortOrder`
-  // were quietly wiped before.
   productionBudgetAmd: number | null; // production budget — the CSV schema's "Budget" (owner decision C.3)
   isActive: boolean;
   // NB: `sortOrder` is deliberately NOT part of the form values (audit 1.2).
@@ -86,10 +80,6 @@ export type ProjectFormValues = {
   // editor actually entered; see RELEASE_PRECISION_VALUES.
   releasePrecision: ReleasePrecision;
   platforms: string; // comma-separated in the form; JSON string[] at rest — also the "Available on" field (#29, merged with the old Streaming source)
-  // NB: `streamingSource` is gone from the form values too (audit 1.6). #29
-  // merged that field into `platforms`; the column stays for the historical
-  // data it still holds, but every save used to force it to null, which is
-  // just a slow wipe. Nothing writes it now.
   // ── Press-kit fields (Aram, 2026-07-09) ──
   tagline: string; // one-line logline (hero) — base/fallback, derived from the per-locale fields
   taglineHy: string; // per-locale logline (mirrors synopsisHy/Ru/En)
@@ -220,9 +210,6 @@ function buildData(fd: FormData): ProjectFormValues {
     poster: str(fd, "poster", VARCHAR_MAX),
     gallery: str(fd, "gallery"),
     formatCategory: str(fd, "formatCategory", VARCHAR_MAX),
-    // Language is now a MultiSelect (admin redesign phase 1) — same CSV
-    // storage convention as genres/countries/platforms/cinemas.
-    language: jsonArray<string>(fd, "language").join(", ").slice(0, VARCHAR_MAX),
     // Studio became a MultiSelect over a dictionary (2026-07-27) — same CSV
     // storage convention as genres/countries/platforms, so a co-production can
     // list every company instead of cramming them into one text field.
@@ -287,6 +274,12 @@ function validate(data: ProjectFormValues): string | null {
 async function publishGate(
   data: ProjectFormValues,
   tierRows: { name: string; benefits: string }[],
+  placementsCount: number,
+  // null on create; the existing row's createdAt on an edit — feeds
+  // publishBlockers' placements grandfather clause (PLACEMENTS_REQUIRED_FROM,
+  // form-shared.ts). Only matters when the gate actually runs (wasActive
+  // false below) — a project already live skips the gate entirely regardless.
+  createdAt: Date | null = null,
   wasActive = false,
 ): Promise<string | null> {
   if (!data.isActive || wasActive) return null;
@@ -298,6 +291,12 @@ async function publishGate(
     episodeMinutes: data.episodeMinutes,
     durationMinutes: data.durationMinutes,
     tiers: tierRows,
+    poster: data.poster,
+    placementsCount,
+    formatCategory: data.formatCategory,
+    applicationDeadline: data.applicationDeadline,
+    applicationDeadlineOngoing: data.applicationDeadlineOngoing,
+    createdAt,
   });
   if (missing.length === 0) return null;
   const t = makeUI(await getLocale());
@@ -316,7 +315,7 @@ type ActorInput = { name?: string; roles?: string[]; kind?: string; photo?: stri
 type TierInput = {
   dbId?: number; // existing SponsorshipTier.id, absent for a newly added row
   name?: string;
-  priceAmd?: number;
+  priceAmd?: number | null; // null -> "on request" (2026-08-04), same contract as PlacementInput.priceAmd
   benefits?: string;
   image?: string;
   isExclusive?: boolean;
@@ -451,14 +450,16 @@ async function snapshotPersonNames(
 }
 
 /** Rows for prisma.sponsorshipTier (projectId added by the caller). `dbId`
-   marks a row that already exists — see saveTierRows for why that matters. */
+   marks a row that already exists — see saveTierRows for why that matters.
+   Price is optional (null -> "on request", 2026-08-04), same contract as a
+   placement's priceAmd — see parsePlacementRows below. */
 function parseTierRows(fd: FormData) {
   return jsonArray<TierInput>(fd, "tiersRows")
     .filter((r) => (r.name || "").trim())
     .map((r, i) => ({
       dbId: typeof r.dbId === "number" ? r.dbId : null,
       name: (r.name || "").trim().slice(0, VARCHAR_MAX),
-      priceAmd: Math.max(0, Number(r.priceAmd) || 0),
+      priceAmd: r.priceAmd == null ? null : Math.max(0, Number(r.priceAmd) || 0),
       benefits: benefitsToJson(r.benefits || ""),
       image: (r.image || "").trim() || null,
       isExclusive: !!r.isExclusive,
@@ -500,7 +501,8 @@ async function saveTierRows(
 
 /** Rows for prisma.placement (projectId added by the caller). `dbId` marks a
    row that already exists — see savePlacementRows for why that matters. Price
-   is optional (null -> "on request"), unlike a tier's priceAmd. */
+   is optional (null -> "on request"), same as a tier's priceAmd since
+   2026-08-04. */
 function parsePlacementRows(fd: FormData) {
   return jsonArray<PlacementInput>(fd, "placementsRows")
     .filter((r) => (r.title || "").trim())
@@ -617,8 +619,9 @@ export async function createProject(
 
   // Persist any custom Available-on values into the global Streaming Source
   // dictionary (Ф2/#25) so future projects offer them too — never blocks the
-  // save. The dictionary used to seed from `streamingSource`; #29 merged that
-  // field into `platforms`, so it's the source now.
+  // save. #29 merged the old per-project Streaming source field into
+  // `platforms`, so that's the source now (the dictionary itself is unaffected
+  // by the 2026-08-04 removal of the Project.streamingSource column).
   try {
     await addStreamingSources(parseCsvInput(data.platforms));
     // Same for the country dictionary: a country typed into this project is
@@ -641,7 +644,7 @@ export async function createProject(
   const placementRows = parsePlacementRows(fd);
   const milestoneRows = parseMilestoneRows(fd);
 
-  const blocked = await publishGate(data, tierRows);
+  const blocked = await publishGate(data, tierRows, placementRows.length);
   if (blocked) return { error: blocked, values: data };
 
   // Project columns shared across code-retry attempts (code is added per-attempt).
@@ -659,9 +662,6 @@ export async function createProject(
     applicationDeadline: data.applicationDeadlineOngoing ? null : dateOrNull(data.applicationDeadline),
     releaseDate: dateOrNull(data.releaseDate),
     platforms: platformsToJson(data.platforms),
-    // #29 merged the old Streaming source field into `platforms`; the
-    // `streamingSource` column is simply not written any more (audit 1.6 —
-    // it used to be force-cleared on every save).
     tagline: data.tagline || null,
     taglineHy: data.taglineHy || null,
     taglineRu: data.taglineRu || null,
@@ -741,8 +741,9 @@ export async function updateProject(
   const existing = await prisma.project.findUnique({
     where: { id },
     // isActive feeds publishGate below: an already-live project isn't
-    // re-validated, only one being taken live.
-    select: { ownerId: true, isActive: true },
+    // re-validated, only one being taken live. createdAt feeds the placements
+    // grandfather clause inside that same gate (PLACEMENTS_REQUIRED_FROM).
+    select: { ownerId: true, isActive: true, createdAt: true },
   });
   // 404 for both "doesn't exist" and "not yours" — a Publisher must not be
   // able to distinguish the two.
@@ -755,8 +756,9 @@ export async function updateProject(
 
   // Persist any custom Available-on values into the global Streaming Source
   // dictionary (Ф2/#25) so future projects offer them too — never blocks the
-  // save. The dictionary used to seed from `streamingSource`; #29 merged that
-  // field into `platforms`, so it's the source now.
+  // save. #29 merged the old per-project Streaming source field into
+  // `platforms`, so that's the source now (the dictionary itself is unaffected
+  // by the 2026-08-04 removal of the Project.streamingSource column).
   try {
     await addStreamingSources(parseCsvInput(data.platforms));
     // Same for the country dictionary: a country typed into this project is
@@ -773,7 +775,7 @@ export async function updateProject(
   const placementRows = parsePlacementRows(fd);
   const milestoneRows = parseMilestoneRows(fd);
 
-  const blocked = await publishGate(data, tierRows, existing.isActive);
+  const blocked = await publishGate(data, tierRows, placementRows.length, existing.createdAt, existing.isActive);
   if (blocked) return { error: blocked, values: data };
 
   try {
@@ -800,8 +802,6 @@ export async function updateProject(
           applicationDeadline: data.applicationDeadlineOngoing ? null : dateOrNull(data.applicationDeadline),
           releaseDate: dateOrNull(data.releaseDate),
           platforms: platformsToJson(data.platforms),
-          // #29 merged the old Streaming source field into `platforms`; the
-          // `streamingSource` column is not written any more (audit 1.6).
           tagline: data.tagline || null,
           taglineHy: data.taglineHy || null,
           taglineRu: data.taglineRu || null,

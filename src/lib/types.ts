@@ -11,16 +11,9 @@ export interface ProjectListDTO {
   poster: string;
   format: string;
   formatCategory: string; // marketing format bucket (FEATURE|SERIES|…); "" when unset
-  language: string; // primary language (Armenian|Russian|…); "" when unset
   studio: string;
   countries: string;
   ageRating: string; // content rating badge ("16+", "18+"); "" when unset
-  // Preformatted (converted + symbol) by the data layer — a single formatting
-  // point so display components never touch currency math. "" when unset.
-  // NOT rendered anywhere since 2026-07-27 (the field was removed from the
-  // editors and the storefront at the owner's request); kept so the stored
-  // figures aren't lost and bringing the display back is a one-line change.
-  boxOfficeDisplay: string;
   applicationDeadline: string | null;
   // True for an open-ended call for offers (IA-42) — applicationDeadline is
   // always null alongside this; render an "Ongoing" label instead of a date.
@@ -52,8 +45,9 @@ export interface ProjectDetailDTO extends ProjectListDTO {
   // reference with a url renders as a link.
   references: ReferenceDTO[];
   cinemas: string[]; // exhibition venues, parsed from the comma list
-  // Production budget, preformatted in the visitor's currency. Distinct from
-  // boxOfficeDisplay (gross receipts) — owner decision C.3. "" when unset.
+  // Production budget, preformatted in the visitor's currency (owner decision
+  // C.3, distinct from the box-office gross column dropped on 2026-08-04).
+  // "" when unset.
   productionBudgetDisplay: string;
   tiers: TierDTO[]; // sponsorship packages (the productised offer)
   // Product placement (owner correction 2026-07-28) — the brand INSIDE the
@@ -84,13 +78,16 @@ export interface ActorDTO {
 export interface TierDTO {
   id: number;
   name: string;
-  priceAmd: number; // raw AMD — lets the offer summary compare tiers with placements
-  priceDisplay: string; // preformatted in the visitor's currency
+  // Nullable since 2026-08-04 — same contract as PlacementDTO.priceAmd
+  // below: null means the creator left it unpriced and the storefront shows
+  // "on request" instead of a made-up number.
+  priceAmd: number | null; // raw AMD — lets the offer summary compare tiers with placements
+  priceDisplay: string | null; // preformatted in the visitor's currency; null when priceAmd is null
   // The same price in AMD — the currency the creator actually set. The
   // converted figure is fine for browsing, but an application is a commitment,
   // so the popup quotes the deal currency (2 500 000 ֏, not €5 988, a number
   // that would read differently tomorrow).
-  priceNative: string;
+  priceNative: string | null; // null when priceAmd is null
   benefits: string[]; // parsed from the JSON benefits column
   image: string | null; // uploaded still path ("/uploads/…"), same contract as PlacementDTO.image; null when none
   isExclusive: boolean;

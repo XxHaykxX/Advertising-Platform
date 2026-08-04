@@ -155,10 +155,7 @@ model Project {
   ageRating      String        @default("") // content rating badge on the poster: "16+", "18+", "12+", …
   // Money — admin enters AMD only; the public site converts + formats for
   // display in the visitor's chosen currency (see src/lib/currency).
-  boxOfficeAmd   Int? // box-office gross (кассовый сбор) — informational only, optional
-  // Production budget, the CSV schema's "Budget". Distinct from boxOfficeAmd
-  // above (gross receipts): the audit found the two conflated, and the owner
-  // decided on 2026-07-26 to keep both as separate figures (decision C.3).
+  // Production budget, the CSV schema's "Budget" (owner decision C.3).
   productionBudgetAmd Int?
   isActive       Boolean       @default(true)
   sortOrder      Int           @default(0)
@@ -189,7 +186,6 @@ model Project {
   durationMinutes  Int? // total runtime for a Single (FILM); Series uses episodes × episodeMinutes
   genres           String?          @db.Text // JSON string[] multi-genre; nullable, same pattern as platforms/cinemas — `genre` above stays as the primary display value
   formatCategory   String           @default("") // marketing format bucket (FEATURE|SERIES|SITCOM|…), separate from `kind`; drives the catalog Format filter
-  language         String           @default("") // primary language (Armenian|Russian|English|…); drives the catalog Language filter
 
   applicationDeadline DateTime?
   // True for an open-ended call for offers — no concrete deadline (IA-42,
@@ -205,7 +201,6 @@ model Project {
   // day/month the editor never gave. Existing rows default to DAY, matching
   // the exact dates they already carry.
   releasePrecision    String    @default("DAY")
-  streamingSource     String?   @db.Text // JSON/CSV multi (Kinodaran|YouTube|TV|Cinema) — Production Info
   platforms           String?   @db.Text // JSON string[]; nullable — MySQL forbids literal defaults on TEXT columns
 
   // ── Real press-kit fields (added for the Aram title, 2026-07-09) ──
@@ -282,11 +277,12 @@ model Actor {
 // section (/admin/cast); powers the per-project Cast & Crew autocomplete. The
 // per-project Actor rows above keep their own name/role/photo snapshot, so
 // editing/deleting a Person never mutates already-attached project cast.
-// Global, editable dictionary of streaming-source options (Production Info field).
-// Admin adds custom values in the project form; they persist here so every future
-// project offers them, and deleting one removes it from the pool for all projects
-// (user request 2026-07-25). Distinct from the free-text CSV stored per project on
-// Project.streamingSource — this is only the reusable option list.
+// Global, editable dictionary of streaming-source options ("Available on" /
+// Production Info field). Admin adds custom values in the project form; they
+// persist here so every future project offers them, and deleting one removes
+// it from the pool for all projects (user request 2026-07-25). #29 merged the
+// old per-project Streaming source column into Project.platforms — this
+// dictionary is only the reusable option list, unaffected by that merge.
 model StreamingSource {
   id        Int    @id @default(autoincrement())
   name      String @unique
@@ -343,7 +339,12 @@ model SponsorshipTier {
   id        Int     @id @default(autoincrement())
   projectId Int
   name      String // "Official Sponsor" | "General Sponsor" (+ per-locale later)
-  priceAmd  Int // 20000000 / 30000000 / 40000000
+  // Optional since 2026-08-04 (bug fix): a creator who hasn't priced a
+  // package yet leaves it empty and the storefront shows "on request" — same
+  // contract as Placement.priceAmd below. Was a non-null Int that a form
+  // clamp silently stored as 0, which read to a brand as a real price of
+  // 0 AMD ("free"). See docs/prod-migrations/2026-08-04-tier-price-nullable.sql.
+  priceAmd  Int? // 20000000 / 30000000 / 40000000; null -> "on request"
   benefits  String  @db.Text // JSON string[] — the included-benefits bullet list
   image     String? // 16:9 still shown atop the card, same contract as Placement.image
   isExclusive Boolean @default(false) // shared (non-competing brands only) vs exclusive placement (CSV "Is Exclusive")

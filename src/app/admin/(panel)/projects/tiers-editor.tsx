@@ -42,7 +42,7 @@ export type TierRow = {
    *  place instead. */
   dbId?: number;
   name: string;
-  priceAmd: number;
+  priceAmd: number | null; // null -> "on request" (2026-08-04, same contract as PlacementRow.priceAmd)
   benefits: string;
   /** Still shown on top of the package card ("/uploads/…" or "" — unset).
    *  Optional, same as a placement's. */
@@ -58,7 +58,7 @@ export type TierTemplate = { name: string; benefits: string; uses: number };
 
 export const EMPTY_TIER: TierRow = {
   name: "",
-  priceAmd: 0,
+  priceAmd: null,
   benefits: "",
   image: "",
   isExclusive: false,
@@ -117,7 +117,8 @@ export function TiersSection({
     expand(id);
   }
 
-  const priceLabel = (r: TierRow) => (r.priceAmd ? `${groupDigits(String(r.priceAmd))} AMD` : "");
+  const priceLabel = (r: TierRow) =>
+    r.priceAmd == null ? t("projectForm.placements.priceOnRequest") : `${groupDigits(String(r.priceAmd))} AMD`;
   const slotsLabel = (r: TierRow) =>
     r.totalSlots != null && r.totalSlots > 0 ? `${r.availableSlots ?? 0} / ${r.totalSlots}` : "";
 
@@ -244,9 +245,10 @@ export function TiersSection({
                     <OfferNumbersRow>
                       <OfferPriceField
                         value={r.priceAmd}
-                        onChange={(priceAmd) => rows.patchAt(i, { priceAmd: priceAmd ?? 0 })}
+                        onChange={(priceAmd) => rows.patchAt(i, { priceAmd })}
                         label={t("projectForm.tiers.price")}
                         t={t}
+                        allowOnRequest
                       />
                       {/* Total is locked at 1 while Exclusive is on — the
                           checkbox owns the number, so leaving it editable would

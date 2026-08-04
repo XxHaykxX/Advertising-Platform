@@ -381,6 +381,7 @@ export const CLIENT_KEYS: readonly string[] = [
   "projectForm.video.tabEmbed",
   "projectForm.video.tabUpload",
   "projectForm.videoEmbedPlaceholder",
+  "publish.gapNote",
   "push.blockedBody",
   "push.blockedTitle",
   "push.enable",

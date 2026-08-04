@@ -188,7 +188,9 @@ export default async function InterestsAdminPage() {
                     <>
                       <p className="mt-1 text-sm font-medium text-foreground">{interest.tier.name}</p>
                       <p className="text-xs text-muted-foreground">
-                        {formatMoney(interest.tier.priceAmd, "AMD", AMD_ONLY, locale)}
+                        {interest.tier.priceAmd != null
+                          ? formatMoney(interest.tier.priceAmd, "AMD", AMD_ONLY, locale)
+                          : t("report.priceOnRequest")}
                       </p>
                     </>
                   ) : (

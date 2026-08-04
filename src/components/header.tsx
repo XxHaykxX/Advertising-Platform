@@ -56,6 +56,7 @@ const DARK_HERO_PATHS = new Set([
   "/portfolio",
   "/contact",
   "/how-it-works",
+  "/for-creators",
   "/privacy",
   "/terms",
 ]);

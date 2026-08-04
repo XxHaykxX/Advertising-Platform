@@ -11,6 +11,7 @@ import {
   validateReleaseDateValue,
   FORMAT_CATEGORY_VALUES,
   ROLE_VALUES,
+  PLACEMENTS_REQUIRED_FROM,
   type PublishCheckInput,
 } from "./form-shared";
 
@@ -102,6 +103,14 @@ const COMPLETE: PublishCheckInput = {
   episodeMinutes: null,
   durationMinutes: 95,
   tiers: [{ name: "Official Sponsor", benefits: "Logo in credits" }],
+  poster: "/uploads/projects/poster.jpg",
+  placementsCount: 1,
+  formatCategory: "FEATURE",
+  applicationDeadline: "2026-09-01",
+  applicationDeadlineOngoing: false,
+  // Created after the cutoff — the placements requirement applies (most of
+  // the grandfather-clause tests below flip this to check the exemption).
+  createdAt: new Date(PLACEMENTS_REQUIRED_FROM.getTime() + 24 * 60 * 60 * 1000),
 };
 
 describe("publishBlockers", () => {
@@ -161,6 +170,84 @@ describe("publishBlockers", () => {
     expect(blockers).toEqual(
       expect.arrayContaining(["publish.missing.studio", "publish.missing.tagline", "publish.missing.tiers"]),
     );
+  });
+
+  // ── Four requirements added 2026-08-04 ────────────────────────────────────
+  it("requires a poster", () => {
+    expect(publishBlockers({ ...COMPLETE, poster: "" })).toContain("publish.missing.poster");
+    expect(publishBlockers({ ...COMPLETE, poster: null })).toContain("publish.missing.poster");
+  });
+
+  it("requires at least one placement — a storefront must have a product", () => {
+    expect(publishBlockers({ ...COMPLETE, placementsCount: 0 })).toContain("publish.missing.placements");
+  });
+
+  // ── Placements grandfather clause (owner decision 2026-08-04) ────────────
+  // Prod already carries 8 published projects built entirely on sponsorship
+  // tiers with zero placements — the owner's call was to exempt exactly those
+  // (anything that existed before the requirement shipped), not to refuse them
+  // at their next re-approval. Poster/formatCategory/deadline get no such
+  // exemption.
+  describe("placements grandfather clause", () => {
+    it("exempts a project created before the cutoff, even with zero placements", () => {
+      const grandfathered: PublishCheckInput = {
+        ...COMPLETE,
+        placementsCount: 0,
+        createdAt: new Date(PLACEMENTS_REQUIRED_FROM.getTime() - 24 * 60 * 60 * 1000),
+      };
+      expect(publishBlockers(grandfathered)).not.toContain("publish.missing.placements");
+    });
+
+    it("requires it for a project created exactly at or after the cutoff", () => {
+      const atCutoff: PublishCheckInput = {
+        ...COMPLETE,
+        placementsCount: 0,
+        createdAt: new Date(PLACEMENTS_REQUIRED_FROM),
+      };
+      expect(publishBlockers(atCutoff)).toContain("publish.missing.placements");
+    });
+
+    it("requires it for a brand-new project (createdAt null — nothing to grandfather yet)", () => {
+      const brandNew: PublishCheckInput = { ...COMPLETE, placementsCount: 0, createdAt: null };
+      expect(publishBlockers(brandNew)).toContain("publish.missing.placements");
+    });
+
+    it("does not exempt poster/formatCategory/deadline for an old project", () => {
+      const old = new Date(PLACEMENTS_REQUIRED_FROM.getTime() - 24 * 60 * 60 * 1000);
+      const blockers = publishBlockers({
+        ...COMPLETE,
+        createdAt: old,
+        poster: "",
+        formatCategory: "",
+        applicationDeadline: null,
+        applicationDeadlineOngoing: false,
+      });
+      expect(blockers).toEqual(
+        expect.arrayContaining([
+          "publish.missing.poster",
+          "publish.missing.formatCategory",
+          "publish.missing.deadline",
+        ]),
+      );
+    });
+  });
+
+  it("requires a formatCategory — an empty one drops the project from the catalog's Format filter", () => {
+    expect(publishBlockers({ ...COMPLETE, formatCategory: "" })).toContain("publish.missing.formatCategory");
+    expect(publishBlockers({ ...COMPLETE, formatCategory: null })).toContain("publish.missing.formatCategory");
+  });
+
+  it("requires an explicit deadline decision — a date OR the Ongoing flag", () => {
+    expect(
+      publishBlockers({ ...COMPLETE, applicationDeadline: null, applicationDeadlineOngoing: false }),
+    ).toContain("publish.missing.deadline");
+    // Either half of the pair satisfies it.
+    expect(
+      publishBlockers({ ...COMPLETE, applicationDeadline: null, applicationDeadlineOngoing: true }),
+    ).not.toContain("publish.missing.deadline");
+    expect(
+      publishBlockers({ ...COMPLETE, applicationDeadline: "2026-09-01", applicationDeadlineOngoing: false }),
+    ).not.toContain("publish.missing.deadline");
   });
 });
 

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, HelpCircle } from "lucide-react";
 import { Reveal } from "@/components/ui/reveal";
 import { requireMember } from "@/lib/auth/require";
 import { prisma } from "@/lib/prisma";
@@ -59,7 +59,19 @@ export default async function NewProjectPage() {
         <h1 className="mb-2 mt-4 text-3xl font-bold text-foreground md:text-4xl">
           {t("account.submitProject")}
         </h1>
-        <p className="mb-6 text-muted-foreground">{t("account.submitProjectSubtitle")}</p>
+        <p className="mb-2 text-muted-foreground">{t("account.submitProjectSubtitle")}</p>
+        {/* Opens in a new tab on purpose: this form autosaves a draft but a
+            same-tab navigation away from a half-filled 30-field form is still
+            the last thing anyone wants mid-submission. */}
+        <a
+          href="/for-creators"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mb-6 inline-flex items-center gap-1.5 text-sm text-primary underline-offset-2 hover:underline"
+        >
+          <HelpCircle className="h-4 w-4" aria-hidden="true" />
+          {t("forCreators.entryLink")}
+        </a>
       </Reveal>
 
       <Reveal delay={0.05}>

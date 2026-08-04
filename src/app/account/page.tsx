@@ -50,6 +50,14 @@ export default async function AccountPage() {
             <Button asChild variant="primary" size="md" className="mt-6">
               <Link href="/account/projects/new">{t("account.submitProject")}</Link>
             </Button>
+            {/* Quiet second door: the form asks for ~30 fields and several
+                assets, and there was nowhere to find that out beforehand. */}
+            <Link
+              href="/for-creators"
+              className="mt-3 text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+            >
+              {t("forCreators.entryLink")}
+            </Link>
           </div>
         </Reveal>
 

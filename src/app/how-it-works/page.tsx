@@ -117,6 +117,17 @@ export default async function HowItWorksPage() {
                   </Reveal>
                 ))}
               </div>
+
+              {/* This column described the creator's four steps but offered no
+                  way to act on them — the section's only button sent everyone to
+                  the catalog, which is the brand's path. */}
+              <Reveal delay={0.5}>
+                <div className="mt-10">
+                  <Button asChild variant="secondary" size="md">
+                    <Link href="/for-creators">{t("forCreators.entryLink")}</Link>
+                  </Button>
+                </div>
+              </Reveal>
             </div>
           </div>
         </Container>

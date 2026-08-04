@@ -61,7 +61,17 @@ export async function approveProject(projectId: number): Promise<{ ok: true } | 
       episodes: true,
       episodeMinutes: true,
       durationMinutes: true,
+      poster: true,
+      formatCategory: true,
+      applicationDeadline: true,
+      applicationDeadlineOngoing: true,
+      // Feeds the placements grandfather clause below (PLACEMENTS_REQUIRED_FROM,
+      // form-shared.ts) — a re-approval of a pre-existing project must not be
+      // refused for a requirement that didn't exist when it was created.
+      createdAt: true,
       tiers: { select: { name: true, benefits: true } },
+      // Row content is irrelevant here — publishBlockers only needs the count.
+      _count: { select: { placements: true } },
     },
   });
   if (!before) return { error: "Project not found." };
@@ -79,6 +89,12 @@ export async function approveProject(projectId: number): Promise<{ ok: true } | 
       name: tier.name,
       benefits: parseJsonList(tier.benefits).join(""),
     })),
+    poster: before.poster,
+    placementsCount: before._count.placements,
+    formatCategory: before.formatCategory,
+    applicationDeadline: before.applicationDeadline,
+    applicationDeadlineOngoing: before.applicationDeadlineOngoing,
+    createdAt: before.createdAt,
   });
   if (missing.length > 0) {
     const t = makeUI(await getLocale());

@@ -78,7 +78,6 @@ export default async function EditProjectPage({
     poster: p.poster ?? "",
     gallery: parseGalleryInput(p.gallery),
     formatCategory: p.formatCategory,
-    language: p.language,
     studio: p.studio,
     kind: p.kind,
     episodes: p.episodes,
@@ -133,6 +132,21 @@ export default async function EditProjectPage({
     productionBudgetAmd: p.productionBudgetAmd,
     ageRating: p.ageRating,
     formatCategory: p.formatCategory,
+    countries: p.countries,
+    castPhotoCount: p.actors.filter((a) => a.photo).length,
+    titleHy: p.titleHy,
+    titleRu: p.titleRu,
+    titleEn: p.titleEn,
+    synopsisHy: p.synopsisHy,
+    synopsisRu: p.synopsisRu,
+    synopsisEn: p.synopsisEn,
+    taglineHy: p.taglineHy,
+    taglineRu: p.taglineRu,
+    taglineEn: p.taglineEn,
+    placementPricing: p.placements.map((pl) => ({ priceAmd: pl.priceAmd })),
+    // Feeds the placements grandfather clause (PLACEMENTS_REQUIRED_FROM) so
+    // this checklist's "blocks publication" badge agrees with the actual gate.
+    createdAt: p.createdAt,
   });
 
   const action = updateProject.bind(null, pid);

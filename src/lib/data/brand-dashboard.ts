@@ -73,8 +73,15 @@ function parseBudgetRangeAmd(value: string): { min: number; max: number } | null
  *  floor is what determines whether the project is "affordable" for them,
  *  not the priciest (exclusive) tier or some blended figure. Infinity when
  *  the project has no tiers yet (never counts as affordable). */
-function minTierPriceAmd(tiers: { priceAmd: number }[]): number {
-  return tiers.length === 0 ? Infinity : Math.min(...tiers.map((t) => t.priceAmd));
+function minTierPriceAmd(tiers: { priceAmd: number | null }[]): number {
+  // Unpriced tiers ("on request", 2026-08-04) are excluded before Math.min —
+  // a bare null there coerces to 0 and would make every project with even one
+  // unpriced package look free, which is worse than "affordable": it would
+  // rank above projects that are genuinely cheap. A project with no PRICED
+  // tier at all (whether it has zero tiers or only unpriced ones) never
+  // counts as affordable, same as before.
+  const priced = tiers.filter((t): t is { priceAmd: number } => t.priceAmd != null);
+  return priced.length === 0 ? Infinity : Math.min(...priced.map((t) => t.priceAmd));
 }
 
 /** Whether a project's cheapest tier fits inside the brand's selected budget

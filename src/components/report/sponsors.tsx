@@ -48,7 +48,14 @@ export function Sponsors({
                     <h3 className="text-lg font-semibold text-foreground">{tier.name}</h3>
                     {tier.isExclusive ? <AccentBadge>{t("report.exclusive")}</AccentBadge> : null}
                   </div>
-                  <p className="mt-1 text-xl font-extrabold text-foreground">{tier.priceDisplay}</p>
+                  {/* No price is a deliberate state, not a missing one. */}
+                  <p className="mt-1 text-xl font-extrabold text-foreground">
+                    {tier.priceDisplay ?? (
+                      <span className="text-base font-semibold text-muted-foreground">
+                        {t("report.priceOnRequest")}
+                      </span>
+                    )}
+                  </p>
                   {tier.totalSlots != null && tier.totalSlots > 0 ? (
                     <p className="mt-1 text-xs text-muted-foreground">
                       {tier.availableSlots ?? 0} / {tier.totalSlots} {t("report.slotsAvailable")}
