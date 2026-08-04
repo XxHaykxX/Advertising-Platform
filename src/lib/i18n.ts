@@ -1240,7 +1240,7 @@ export const UI: Record<string, Dict> = {
   "register.typeBrandHint": {
     ru: "Хочу разместить бренд в проектах",
     en: "Place my brand in productions",
-    hy: "Տեղադրել իմ բրենդը նախագծերում։",
+    hy: "Ներկայացնել իմ բրենդը նախագծերում։",
   },
   "register.typeCreatorHint": {
     ru: "Монетизирую свой контент плейсментом",
@@ -1273,7 +1273,7 @@ export const UI: Record<string, Dict> = {
   "login.errPending": { ru: "Аккаунт ожидает одобрения администратора.", en: "Your account is awaiting admin approval.", hy: "Ձեր հաշիվը սպասում է ադմինի հաստատմանը։" },
   "login.errBlocked": { ru: "Аккаунт заблокирован. Свяжитесь с администрацией.", en: "This account is blocked. Contact the administrator.", hy: "Հաշիվը արգելափակված է։ Կապվեք ադմինի հետ։" },
   "login.errRejected": { ru: "Заявка на регистрацию отклонена.", en: "Your registration was rejected.", hy: "Ձեր գրանցման հայտը մերժվել է։" },
-  "login.noAccount": { ru: "Нет аккаунта?", en: "No account?", hy: "Չունե՞ք հաշիվ" },
+  "login.noAccount": { ru: "Нет аккаунта?", en: "No account?", hy: "Չունե՞ք հաշիվ։" },
   "login.registerLink": { ru: "Зарегистрироваться", en: "Register", hy: "Գրանցվել" },
   "login.errGoogle": { ru: "Не удалось войти через Google.", en: "Google sign-in failed.", hy: "Google մուտքը ձախողվեց։" },
   "login.errTooManyAttempts": { ru: "Слишком много попыток. Повторите через несколько минут.", en: "Too many attempts. Try again in a few minutes.", hy: "Չափազանց շատ փորձեր։ Կրկնեք մի քանի րոպեից։" },
@@ -2154,7 +2154,7 @@ export const UI: Record<string, Dict> = {
   // account.title, account.logout, nav.browseProjects)
   "account.brand.navInterests": { ru: "Мои предложения", en: "My offers", hy: "Իմ առաջարկները" },
   "account.brand.navFavorites": { ru: "Избранное", en: "Favorites", hy: "Ընտրանի" },
-  "account.brand.navProfile": { ru: "Мой профиль", en: "My Profile", hy: "Իմ պրոֆիլը" },
+  "account.brand.navProfile": { ru: "Мой профиль", en: "My Profile", hy: "Իմ հաշիվը" },
   "account.brand.navNotifications": { ru: "Уведомления", en: "Notifications", hy: "Ծանուցումներ" },
   "account.brand.soon": { ru: "Скоро", en: "Soon", hy: "Շուտով" },
 
@@ -2345,11 +2345,11 @@ export const UI: Record<string, Dict> = {
   // ── dashboard ──
   "account.brand.welcomeBack": { ru: "С возвращением, {name}", en: "Welcome back, {name}", hy: "Բարի վերադարձ, {name}" },
   "account.brand.activeInterests": { ru: "Активные интересы", en: "Active Interests", hy: "Ակտիվ հետաքրքրություններ" },
-  "account.brand.noInterestsTitle": { ru: "Пока нет интересов", en: "No interests yet", hy: "Հետաքրքրություններ դեռ չկան" },
+  "account.brand.noInterestsTitle": { ru: "Пока нет интересов", en: "No interests yet", hy: "Առաջարկներ դեռ չկան" },
   "account.brand.noInterestsDashboardBody": {
     ru: "Вы ещё не проявили интерес ни к одному проекту. Просмотрите каталог, чтобы найти возможности.",
     en: "You haven't expressed interest in any projects yet. Browse the catalog to find opportunities.",
-    hy: "Դուք դեռ որևէ նախագծի հանդեպ հետաքրքրություն չեք հայտնել։ Դիտեք կատալոգը՝ հնարավորություններ գտնելու համար։",
+    hy: "Դիտարկե՛ք հասանելի նախագծերը և ուղարկե՛ք ձեր առաջին առաջարկը։",
   },
   "account.brand.recommended": { ru: "Рекомендовано для вас", en: "Recommended for You", hy: "Առաջարկվում է ձեզ համար" },
   "account.brand.recommendedBasedOn": {
@@ -2368,7 +2368,7 @@ export const UI: Record<string, Dict> = {
   "account.brand.interestsSubtitle": {
     ru: "Проекты, которым вы отправили предложение",
     en: "Projects you have sent an offer to",
-    hy: "Նախագծեր, որոնց ուղարկել եք առաջարկ",
+    hy: "Ձեր ուղարկած բոլոր առաջարկները մեկ տեղում։",
   },
   "account.brand.noInterestsPageBody": {
     ru: "Просмотрите каталог и отправьте предложение проектам, подходящим вашему бренду.",
