@@ -2153,8 +2153,8 @@ export const UI: Record<string, Dict> = {
   // (sidebar nav Dashboard/Log Out/Browse Projects reuse existing base keys —
   // account.title, account.logout, nav.browseProjects)
   "account.brand.navInterests": { ru: "Мои предложения", en: "My offers", hy: "Իմ առաջարկները" },
-  "account.brand.navFavorites": { ru: "Избранное", en: "Favorites", hy: "Ընտրանի" },
-  "account.brand.navProfile": { ru: "Мой профиль", en: "My Profile", hy: "Իմ հաշիվը" },
+  "account.brand.navFavorites": { ru: "Избранное", en: "Favorites", hy: "Նախընտրելի նախագծեր" },
+  "account.brand.navProfile": { ru: "Мой профиль", en: "My Profile", hy: "Պրոֆիլի կարգավորումներ" },
   "account.brand.navNotifications": { ru: "Уведомления", en: "Notifications", hy: "Ծանուցումներ" },
   "account.brand.soon": { ru: "Скоро", en: "Soon", hy: "Շուտով" },
 
@@ -2344,8 +2344,8 @@ export const UI: Record<string, Dict> = {
 
   // ── dashboard ──
   "account.brand.welcomeBack": { ru: "С возвращением, {name}", en: "Welcome back, {name}", hy: "Բարի վերադարձ, {name}" },
-  "account.brand.activeInterests": { ru: "Активные интересы", en: "Active Interests", hy: "Ակտիվ հետաքրքրություններ" },
-  "account.brand.noInterestsTitle": { ru: "Пока нет интересов", en: "No interests yet", hy: "Առաջարկներ դեռ չկան" },
+  "account.brand.activeInterests": { ru: "Активные интересы", en: "Active Interests", hy: "Ընթացիկ հայտեր" },
+  "account.brand.noInterestsTitle": { ru: "Пока нет интересов", en: "No interests yet", hy: "Ակտիվ հայտեր դեռ չկան" },
   "account.brand.noInterestsDashboardBody": {
     ru: "Вы ещё не проявили интерес ни к одному проекту. Просмотрите каталог, чтобы найти возможности.",
     en: "You haven't expressed interest in any projects yet. Browse the catalog to find opportunities.",
@@ -2384,13 +2384,13 @@ export const UI: Record<string, Dict> = {
   "account.brand.favoritesSubtitle": {
     ru: "Проекты, которые вы сохранили",
     en: "Projects you saved",
-    hy: "Ձեր պահած նախագծերը",
+    hy: "Ձեր պահպանած մեդիա նախագծերը",
   },
-  "account.brand.noFavoritesTitle": { ru: "Пока нет избранного", en: "No favorites yet", hy: "Ընտրանին դատարկ է" },
+  "account.brand.noFavoritesTitle": { ru: "Пока нет избранного", en: "No favorites yet", hy: "Ցանկը դատարկ է" },
   "account.brand.noFavoritesBody": {
     ru: "Нажмите на сердечко на проекте, чтобы сохранить его сюда.",
     en: "Tap the heart on a project to save it here.",
-    hy: "Սեղմեք նախագծի սրտիկը՝ այն այստեղ պահելու համար։",
+    hy: "Սեղմեք սրտիկի պատկերակին նախագիծը ցանկում ավելացնելու համար։",
   },
   "account.brand.favoritedOn": { ru: "Сохранено {date}", en: "Saved on {date}", hy: "Պահված է {date}" },
 
@@ -2428,8 +2428,8 @@ export const UI: Record<string, Dict> = {
     en: "Only with open slots",
     hy: "Միայն ազատ տեղերով",
   },
-  "account.brand.filtersToggle": { ru: "Фильтры", en: "Filters", hy: "Զտիչներ" },
-  "account.brand.filtersClose": { ru: "Свернуть фильтры", en: "Hide filters", hy: "Փակել զտիչները" },
+  "account.brand.filtersToggle": { ru: "Фильтры", en: "Filters", hy: "Ֆիլտրներ" },
+  "account.brand.filtersClose": { ru: "Свернуть фильтры", en: "Hide filters", hy: "Փակել ֆիլտրները" },
 
   // ── favorites comparison (4.7) ──
   "account.brand.sortLabel": { ru: "Сортировка", en: "Sort by", hy: "Դասավորել" },
@@ -2446,14 +2446,14 @@ export const UI: Record<string, Dict> = {
 
   // ── my profile ──
   "account.brand.profileSubtitle": { ru: "Управляйте профилем бренда", en: "Manage your brand profile", hy: "Կառավարեք ձեր բրենդի պրոֆիլը" },
-  "account.brand.accountSection": { ru: "Аккаунт", en: "Account", hy: "Հաշիվ" },
+  "account.brand.accountSection": { ru: "Аккаунт", en: "Account", hy: "Մուտքի տվյալներ" },
   "account.brand.emailReadonlyNote": {
     ru: "Ваш логин — изменить нельзя",
     en: "Your login email — cannot be changed",
-    hy: "Ձեր մուտքի էլփոստը չի կարող փոփոխվել",
+    hy: "Ձեր մուտքի էլփոստը չի կարող փոփոխվել։",
   },
   "account.brand.companyDetails": { ru: "Данные компании", en: "Company Details", hy: "Ընկերության տվյալներ" },
-  "account.brand.website": { ru: "Веб-сайт", en: "Website", hy: "Կայք" },
+  "account.brand.website": { ru: "Веб-сайт", en: "Website", hy: "Վեբկայք" },
   "account.brand.websitePlaceholder": { ru: "https://…", en: "https://…", hy: "https://…" },
   "account.brand.websiteInvalid": {
     ru: "Проверьте адрес сайта — должна получиться ссылка на http:// или https://.",
@@ -2462,14 +2462,14 @@ export const UI: Record<string, Dict> = {
   },
   "account.brand.saveChanges": { ru: "Сохранить изменения", en: "Save Changes", hy: "Պահպանել փոփոխությունները" },
   "account.brand.saved": { ru: "Сохранено", en: "Saved", hy: "Պահպանված է" },
-  "account.brand.brandProfileSection": { ru: "Профиль бренда", en: "Brand Profile", hy: "Բրենդի պրոֆիլ" },
-  "account.brand.categories": { ru: "Категории", en: "Categories", hy: "Կատեգորիաներ" },
+  "account.brand.brandProfileSection": { ru: "Профиль бренда", en: "Brand Profile", hy: "Նախընտրություններ" },
+  "account.brand.categories": { ru: "Категории", en: "Categories", hy: "Գործունեության ոլորտ" },
   "account.brand.categoriesHint": {
     ru: "Выберите категории, соответствующие вашему бренду.",
     en: "Tap to add categories that match your brand.",
-    hy: "Ընտրեք ձեր բրենդին համապատասխան կատեգորիաները։",
+    hy: "Նշեք Ձեզ համապատասխան ոլորտները անհատականացված առաջարկների համար։",
   },
-  "account.brand.budgetSelectPlaceholder": { ru: "Выберите диапазон", en: "Select a range", hy: "Ընտրեք միջակայք" },
+  "account.brand.budgetSelectPlaceholder": { ru: "Выберите диапазон", en: "Select a range", hy: "Ընտրել միջակայք" },
   "account.brand.yourDataSection": { ru: "Ваши данные", en: "Your data", hy: "Ձեր տվյալները" },
   "account.brand.yourDataBody": {
     ru: "Скачайте JSON-выгрузку вашего профиля и проявленных интересов.",
