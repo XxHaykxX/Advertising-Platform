@@ -1436,6 +1436,10 @@ export const UI: Record<string, Dict> = {
     en: "Brand offers on your projects: package, terms and your answer.",
     hy: "Բրենդների առաջարկները ձեր նախագծերի վերաբերյալ՝ փաթեթ, պայմաններ և ձեր պատասխանը։",
   },
+  /* The admin panel already says whose offers these are (it lists every one on
+     the platform), so the "Brand" prefix is noise there — owner decision
+     2026-08-05. The member-side title keeps it. */
+  "interests.titleAdmin": { ru: "Предложения", en: "Offers", hy: "Առաջարկներ" },
   "interests.subtitleAdmin": {
     ru: "Все предложения брендов на площадке.",
     en: "Every brand offer on the platform.",
@@ -1449,11 +1453,6 @@ export const UI: Record<string, Dict> = {
   "interests.message": { ru: "Сообщение", en: "Message", hy: "Հաղորդագրություն" },
   "interests.brandBudget": { ru: "Бюджет бренда", en: "Brand budget", hy: "Բրենդի բյուջեն" },
   "interests.product": { ru: "Что размещаем", en: "What is being placed", hy: "Ի՞նչ ենք տեղադրում" },
-  "interests.timing": { ru: "Желаемые сроки", en: "Preferred timing", hy: "Ցանկալի ժամկետները" },
-  "interests.deal": { ru: "Форма оплаты", en: "Deal type", hy: "Վճարման ձևը" },
-  "interests.dealCASH": { ru: "Оплата", en: "Cash", hy: "Վճարում" },
-  "interests.dealBARTER": { ru: "Бартер", en: "Barter", hy: "Բարտեր" },
-  "interests.dealBOTH": { ru: "Оплата и бартер", en: "Cash and barter", hy: "Վճարում և բարտեր" },
   "interests.brandBudgetUnset": { ru: "Не указан", en: "Not specified", hy: "Նշված չէ" },
   "interests.brandCategories": { ru: "Категории бренда", en: "Brand categories", hy: "Բրենդի կատեգորիաները" },
   "interests.history": { ru: "История обращений", en: "History", hy: "Դիմումների պատմություն" },
@@ -1507,7 +1506,6 @@ export const UI: Record<string, Dict> = {
   // everywhere.
   "interests.packagePlacement": { ru: "Продакт-плейсмент", en: "Product placement", hy: "Փրոդակթ փլեյսմենթ" },
   "interests.packageSponsorship": { ru: "Спонсорский пакет", en: "Sponsorship package", hy: "Հովանավորության փաթեթ" },
-  "interests.offerAmount": { ru: "Предложенная сумма", en: "Offered amount", hy: "Առաջարկվող գումարը" },
   "account.brandOnlyNotice": {
     ru: "Подача проектов доступна только для аккаунтов создателей.",
     en: "Submitting projects is only available for creator accounts.",
@@ -2290,25 +2288,12 @@ export const UI: Record<string, Dict> = {
   // own currency is shown as an aside, marked as a rate that moves, so nobody
   // reads "€5 988" as the sum being agreed.
   "apply.approxRate": { ru: "≈ {x} по курсу на сегодня", en: "≈ {x} at today's rate", hy: "≈ {x}՝ այսօրվա փոխարժեքով" },
-  "apply.offerAmountLabel": { ru: "Ваша цена, ֏", en: "Your price, ֏", hy: "Ձեր գինը, ֏" },
-  "apply.offerAmountHint": {
-    ru: "Если цена «по запросу» — назовите свою сумму",
-    en: "If the price is on request, name your own",
-    hy: "Եթե գինը «հարցումով» է, նշեք ձերը",
-  },
   "apply.contactPlaceholder": { ru: "Email или телефон", en: "Email or phone", hy: "Էլփոստ կամ հեռախոս" },
   // Required since 2026-07-29 (it was the optional one, with the free-text
   // message mandatory — inverted: without the product the seller cannot tell
   // what the offer is even about).
   "apply.productLabel": { ru: "Что размещаем", en: "What is being placed", hy: "Ի՞նչ ենք տեղադրում" },
   "apply.productPlaceholder": { ru: "Товар, услуга или бренд для размещения", en: "Product, service or brand to place", hy: "Ապրանք, ծառայություն կամ բրենդ տեղադրման համար" },
-  "apply.timingLabel": { ru: "Желаемые сроки", en: "Preferred timing", hy: "Ցանկալի ժամկետները" },
-  "apply.timingPlaceholder": { ru: "Например: осень 2026", en: "For example: autumn 2026", hy: "Օրինակ՝ 2026-ի աշուն" },
-  "apply.dealLabel": { ru: "Форма оплаты", en: "Deal type", hy: "Վճարման ձևը" },
-  "apply.dealUnset": { ru: "Не указано", en: "Not specified", hy: "Նշված չէ" },
-  "apply.dealCash": { ru: "Оплата", en: "Cash", hy: "Վճարում" },
-  "apply.dealBarter": { ru: "Бартер", en: "Barter", hy: "Բարտեր" },
-  "apply.dealBoth": { ru: "Оплата и бартер", en: "Cash and barter", hy: "Վճարում և բարտեր" },
   "apply.messageTooShort": { ru: "Необязательно, но если пишете — минимум {n} символов", en: "Optional, but once you start writing, use at least {n} characters", hy: "Ըստ ցանկության է, բայց եթե գրում եք՝ նվազագույնը {n} նիշ" },
   "apply.productRequiredHint": {
     ru: "Обязательное поле — без этого продавец не поймёт, что вы хотите разместить",

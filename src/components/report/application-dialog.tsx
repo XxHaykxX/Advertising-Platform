@@ -64,15 +64,6 @@ export function isValidPhone(value: string): boolean {
   return cleaned.length >= 8 && cleaned.length <= 16;
 }
 
-/** Digits only, grouped in threes with a non-breaking space — 2 500 000 reads
- *  as a price, 2500000 reads as a serial number. Same treatment the admin
- *  price fields got (form-shared.groupDigits); duplicated rather than imported
- *  so the public bundle doesn't pull in an admin module. */
-function formatAmount(digits: string): string {
-  // NBSP, not a plain space — a price must not wrap mid-number.
-  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, "\u00A0");
-}
-
 export function ApplicationDialog({
   projectId,
   offers = [],
@@ -114,16 +105,14 @@ export function ApplicationDialog({
   // field starts on Armenia's dial code, so the expected format is obvious.
   const hasProfilePhone = isValidPhone(brandPhone);
   const [phone, setPhone] = useState(hasProfilePhone ? brandPhone : DEFAULT_DIAL_CODE);
-  // The brief (2026-07-26): what is being placed, when, and how the brand
-  // intends to pay. "What is being placed" is the one the seller cannot work
-  // without, so since 2026-07-29 it is the required field and the free-text
-  // message is the optional one — it used to be the other way round.
+  // What is being placed — the one fact the seller cannot answer without, so
+  // it is the required field and the free-text message is the optional one.
+  // The other three the brief used to ask for (the brand's own price, the deal
+  // type and the preferred timing) were dropped on the owner's call
+  // 2026-08-05: they belong in the negotiation that follows, not in the form
+  // that starts it. Anything the brand wants to say up front goes in the
+  // message.
   const [productInfo, setProductInfo] = useState("");
-  const [desiredTiming, setDesiredTiming] = useState("");
-  const [dealType, setDealType] = useState("");
-  // What the brand is prepared to pay, digits only, in AMD. Kept as a string
-  // so the field can be genuinely empty ("didn't say") rather than 0.
-  const [offerAmount, setOfferAmount] = useState("");
   const placements = useMemo(() => offers.filter((o) => o.kind === "PLACEMENT"), [offers]);
   const tiers = useMemo(() => offers.filter((o) => o.kind === "TIER"), [offers]);
   // Preselected by the card the visitor clicked; failing that, when there is
@@ -167,10 +156,7 @@ export function ApplicationDialog({
     startTransition(async () => {
       const res = await submitApplication(projectId, message, phone, parseOfferValue(selected), {
         productInfo,
-        desiredTiming,
-        dealType,
         phone,
-        offerAmountAmd: offerAmount ? Number(offerAmount) : null,
       });
       if (!res.ok) {
         setError(res.error ?? t("apply.error"));
@@ -315,58 +301,6 @@ export function ApplicationDialog({
               {trimmedProduct.length === 0 ? (
                 <p className="mt-1 text-xs text-muted-foreground">{t("apply.productRequiredHint")}</p>
               ) : null}
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <label htmlFor="apply-offer-amount" className={labelClass}>
-                  {t("apply.offerAmountLabel")}
-                </label>
-                <input
-                  id="apply-offer-amount"
-                  type="text"
-                  inputMode="numeric"
-                  value={formatAmount(offerAmount)}
-                  // Digits only: the grouping spaces are display, and a stray
-                  // letter would reach the server as NaN.
-                  onChange={(e) => setOfferAmount(e.target.value.replace(/\D/g, "").slice(0, 12))}
-                  placeholder="0"
-                  className={inputClass}
-                />
-                {/* The reason this field exists: a placement priced "on
-                    request" is an invitation for the brand to name a sum. */}
-                <p className="mt-1 text-xs text-muted-foreground">{t("apply.offerAmountHint")}</p>
-              </div>
-              <div>
-                <label htmlFor="apply-deal" className={labelClass}>
-                  {t("apply.dealLabel")}
-                </label>
-                <select
-                  id="apply-deal"
-                  value={dealType}
-                  onChange={(e) => setDealType(e.target.value)}
-                  className={inputClass}
-                >
-                  <option value="">{t("apply.dealUnset")}</option>
-                  <option value="CASH">{t("apply.dealCash")}</option>
-                  <option value="BARTER">{t("apply.dealBarter")}</option>
-                  <option value="BOTH">{t("apply.dealBoth")}</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="apply-timing" className={labelClass}>
-                {t("apply.timingLabel")}
-              </label>
-              <input
-                id="apply-timing"
-                type="text"
-                value={desiredTiming}
-                onChange={(e) => setDesiredTiming(e.target.value)}
-                placeholder={t("apply.timingPlaceholder")}
-                className={inputClass}
-              />
             </div>
 
             <div>

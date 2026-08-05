@@ -19,15 +19,6 @@ function budgetLabel(value: string): string {
   return BUDGET_RANGES.find((b) => b.value === value)?.label ?? value;
 }
 
-/** CASH | BARTER | BOTH → the localized label. Anything else (an old row, a
- *  value added later) falls back to the raw code rather than an empty cell. */
-function dealLabel(t: ReturnType<typeof makeUI>, value: string): string {
-  if (value === "CASH" || value === "BARTER" || value === "BOTH") {
-    return t(`interests.deal${value}` as Parameters<typeof t>[0]);
-  }
-  return value;
-}
-
 /* Wave 2 of the audit (2.1) — the creator's own applications inbox. Before
    this page a CREATOR got an "brand X is interested" notification with no
    text, no contact and no way to answer (the Interest was write-only); this
@@ -205,49 +196,21 @@ export default async function AccountInterestsPage() {
                     ) : (
                       <p className="mt-1 text-sm text-muted-foreground">{t("interests.noPackage")}</p>
                     )}
-                    {/* The sum the brand offers to pay (2026-07-29) — always in
-                        AMD, the currency the seller priced in, never converted
-                        to the reader's currency (that drift was the bug). */}
-                    {interest.offerAmountAmd != null ? (
-                      <p className="mt-2 text-xs text-muted-foreground">
-                        {t("interests.offerAmount")}:{" "}
-                        <span className="font-medium text-foreground">
-                          {formatMoney(interest.offerAmountAmd, "AMD", AMD_ONLY, locale)}
-                        </span>
-                      </p>
-                    ) : null}
                   </div>
                 </div>
 
                 {/* The brief (2026-07-26). Shown above the free-text message
-                    because these three answer the seller's first questions —
-                    what, when, and paid how — while the message is context. */}
-                {interest.productInfo || interest.desiredTiming || interest.dealType ? (
-                  <div className="mt-4 grid grid-cols-1 gap-4 rounded-xl border border-border/60 bg-muted/30 p-4 sm:grid-cols-3">
-                    {interest.productInfo ? (
-                      <div>
-                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                          {t("interests.product")}
-                        </p>
-                        <p className="mt-1 whitespace-pre-wrap text-sm text-foreground">{interest.productInfo}</p>
-                      </div>
-                    ) : null}
-                    {interest.desiredTiming ? (
-                      <div>
-                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                          {t("interests.timing")}
-                        </p>
-                        <p className="mt-1 text-sm text-foreground">{interest.desiredTiming}</p>
-                      </div>
-                    ) : null}
-                    {interest.dealType ? (
-                      <div>
-                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                          {t("interests.deal")}
-                        </p>
-                        <p className="mt-1 text-sm text-foreground">{dealLabel(t, interest.dealType)}</p>
-                      </div>
-                    ) : null}
+                    because it answers the seller's first question — what is
+                    being placed — while the message is context. The other
+                    three answers it used to carry (the brand's price, the deal
+                    type and the timing) left the application form on
+                    2026-08-05. */}
+                {interest.productInfo ? (
+                  <div className="mt-4 rounded-xl border border-border/60 bg-muted/30 p-4">
+                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      {t("interests.product")}
+                    </p>
+                    <p className="mt-1 whitespace-pre-wrap text-sm text-foreground">{interest.productInfo}</p>
                   </div>
                 ) : null}
 
@@ -281,12 +244,6 @@ export default async function AccountInterestsPage() {
                             {event.kind === "APPLICATION" ? t("interests.eventApplication") : t("interests.eventResponse")}
                           </span>{" "}
                           · {formatFullDate(event.createdAt, intlLocale(locale))}
-                          {event.offerAmountAmd != null ? (
-                            <>
-                              {" "}
-                              · {t("interests.offerAmount")}: {formatMoney(event.offerAmountAmd, "AMD", AMD_ONLY, locale)}
-                            </>
-                          ) : null}
                           {event.body ? (
                             <p className="mt-0.5 whitespace-pre-wrap text-foreground">{event.body}</p>
                           ) : null}

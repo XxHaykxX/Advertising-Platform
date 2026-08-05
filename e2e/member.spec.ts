@@ -67,11 +67,10 @@ test.describe("brand — sends an offer (V8)", () => {
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible({ timeout: 10000 });
 
-    // The brief (2026-07-26) — optional fields, filled here so the flow is
-    // covered end to end.
+    // The brief (2026-07-26) — down to this one field since 2026-08-05, when
+    // the brand's own price, the deal type and the preferred timing left the
+    // form for the negotiation that follows it.
     await dialog.locator("#apply-product").fill("E2E тестовый продукт");
-    await dialog.locator("#apply-timing").fill("осень 2026");
-    await dialog.locator("#apply-deal").selectOption("CASH");
     // A fresh account has no phone on file, so the field is asked for and
     // starts on the +374 dial code alone — which isn't a number yet.
     await typePhone(dialog);

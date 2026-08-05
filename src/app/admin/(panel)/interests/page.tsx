@@ -16,12 +16,6 @@ function budgetLabel(value: string): string {
   return BUDGET_RANGES.find((b) => b.value === value)?.label ?? value;
 }
 
-const DEAL_LABEL: Record<string, string> = {
-  CASH: "Cash",
-  BARTER: "Barter",
-  BOTH: "Cash and barter",
-};
-
 /* Wave 2 of the audit (2.1) — the admin half of the applications inbox that
    was deleted in cd7fb5a, which is what made a brand's Interest write-only:
    the message and contact were saved but no admin page ever read them back.
@@ -57,7 +51,7 @@ export default async function InterestsAdminPage() {
   return (
     <div>
       <div>
-        <h1 className="text-2xl font-bold text-foreground">{t("interests.title")}</h1>
+        <h1 className="text-2xl font-bold text-foreground">{t("interests.titleAdmin")}</h1>
         <p className="mt-1 text-sm text-muted-foreground">{t("interests.subtitleAdmin")}</p>
       </div>
 
@@ -196,45 +190,20 @@ export default async function InterestsAdminPage() {
                   ) : (
                     <p className="mt-1 text-sm text-muted-foreground">{t("interests.noPackage")}</p>
                   )}
-                  {/* The sum the brand offers to pay (2026-07-29) — always AMD,
-                      never converted to a visitor currency (that drift was the
-                      bug the owner reported). */}
-                  {interest.offerAmountAmd != null ? (
-                    <p className="mt-2 text-xs text-muted-foreground">
-                      {t("interests.offerAmount")}:{" "}
-                      <span className="font-medium text-foreground">
-                        {formatMoney(interest.offerAmountAmd, "AMD", AMD_ONLY, locale)}
-                      </span>
-                    </p>
-                  ) : null}
                 </div>
               </div>
 
-              {/* The brief (2026-07-26) — admin panel stays English-only. */}
-              {interest.productInfo || interest.desiredTiming || interest.dealType ? (
-                <div className="mt-4 grid grid-cols-1 gap-4 rounded-xl border border-border/60 bg-muted/30 p-4 sm:grid-cols-3">
-                  {interest.productInfo ? (
-                    <div>
-                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                        What is being placed
-                      </p>
-                      <p className="mt-1 whitespace-pre-wrap text-sm text-foreground">{interest.productInfo}</p>
-                    </div>
-                  ) : null}
-                  {interest.desiredTiming ? (
-                    <div>
-                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                        Preferred timing
-                      </p>
-                      <p className="mt-1 text-sm text-foreground">{interest.desiredTiming}</p>
-                    </div>
-                  ) : null}
-                  {interest.dealType ? (
-                    <div>
-                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Deal type</p>
-                      <p className="mt-1 text-sm text-foreground">{DEAL_LABEL[interest.dealType] ?? interest.dealType}</p>
-                    </div>
-                  ) : null}
+              {/* The brief (2026-07-26) — admin panel stays English-only. Down
+                  to one field since 2026-08-05: the brand's own price, the deal
+                  type and the timing left the application form. The price of
+                  the offer being applied FOR is still above, next to its
+                  name — that is the creator's figure, not the brand's. */}
+              {interest.productInfo ? (
+                <div className="mt-4 rounded-xl border border-border/60 bg-muted/30 p-4">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    What is being placed
+                  </p>
+                  <p className="mt-1 whitespace-pre-wrap text-sm text-foreground">{interest.productInfo}</p>
                 </div>
               ) : null}
 
@@ -268,12 +237,6 @@ export default async function InterestsAdminPage() {
                           {event.kind === "APPLICATION" ? t("interests.eventApplication") : t("interests.eventResponse")}
                         </span>{" "}
                         · {formatFullDate(event.createdAt, intlLocale(locale))}
-                        {event.offerAmountAmd != null ? (
-                          <>
-                            {" "}
-                            · {t("interests.offerAmount")}: {formatMoney(event.offerAmountAmd, "AMD", AMD_ONLY, locale)}
-                          </>
-                        ) : null}
                         {event.body ? <p className="mt-0.5 whitespace-pre-wrap text-foreground">{event.body}</p> : null}
                       </li>
                     ))}

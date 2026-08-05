@@ -118,28 +118,21 @@ export async function getInterestCount(): Promise<number> {
  *  resets status back to SENT, since a fresh application is meant to reopen
  *  the conversation. Always notifies (not just on a brand-new row): the
  *  brand may be resubmitting with new details the admin should see. */
-/** The three brief fields the popup asks for on top of the free-text message
- *  (2026-07-26). All optional; unknown dealType values are dropped rather than
- *  stored, so a crafted POST can't put arbitrary text where the UI shows a
- *  fixed label. */
+/** What the popup asks for on top of the free-text message. The brief used to
+ *  carry three more answers — the brand's own price, the deal type and the
+ *  preferred timing — dropped on the owner's call 2026-08-05 as belonging to
+ *  the negotiation rather than to the form that opens it. Anything still sent
+ *  under those names by a stale client is ignored, not stored. */
 export type ApplicationBrief = {
   productInfo?: string;
-  desiredTiming?: string;
-  dealType?: string;
   /** Required since 2026-07-26 — the seller must be able to call back. */
   phone?: string;
-  /** What the brand offers to pay, in AMD (2026-07-29). Optional, and the
-   *  only way to make an offer at all on a placement the creator priced "on
-   *  request". */
-  offerAmountAmd?: number | null;
 };
 
 /** Which of the two things on sale the application is for. Product placement
  *  and sponsorship are separate rows in separate tables, so the id alone would
  *  be ambiguous. */
 export type ApplicationOfferRef = { kind: "PLACEMENT" | "TIER"; id: number };
-
-const DEAL_TYPES = ["CASH", "BARTER", "BOTH"];
 
 /** Exact national-number lengths per dial code — Armenia is always 8 digits
  *  after +374 (+37499105115), so one digit off is a typo, and a typo'd number
@@ -204,18 +197,6 @@ export async function submitApplication(
   // here too, not only in the popup, so a direct POST can't produce a lead
   // that says nothing about the product.
   if (!productInfo) return { ok: false, error: t("account.brand.applyProductRequired") };
-  const desiredTiming = (brief?.desiredTiming ?? "").trim().slice(0, 191) || null;
-  const dealTypeRaw = (brief?.dealType ?? "").trim();
-  const dealType = DEAL_TYPES.includes(dealTypeRaw) ? dealTypeRaw : null;
-
-  // What the brand offers to pay for THIS deal. Digits only, and capped well
-  // under the Int column: a number typed with an extra zero row is a data
-  // error, not a bid.
-  const rawOffer = brief?.offerAmountAmd;
-  const offerAmountAmd =
-    typeof rawOffer === "number" && Number.isInteger(rawOffer) && rawOffer > 0 && rawOffer <= 2_000_000_000
-      ? rawOffer
-      : null;
 
   // What the brand is applying for (audit 2.3 — an application used to say
   // nothing about which placement or price it was about). Since 2026-07-29
@@ -269,9 +250,6 @@ export async function submitApplication(
         tierId: resolvedTierId,
         placementId: resolvedPlacementId,
         productInfo,
-        desiredTiming,
-        dealType,
-        offerAmountAmd,
       },
       // A resend for the SAME offer reopens that conversation: back to SENT,
       // new message, and any slot the previous answer had taken is released
@@ -282,9 +260,6 @@ export async function submitApplication(
         message: trimmedMessage,
         contact: trimmedContact,
         productInfo,
-        desiredTiming,
-        dealType,
-        offerAmountAmd,
         respondedAt: null,
         responseNote: null,
       },
@@ -309,9 +284,6 @@ export async function submitApplication(
         // Snapshot the brief with the round it was sent in, so resending with
         // new terms doesn't rewrite what was originally offered.
         productInfo,
-        desiredTiming,
-        dealType,
-        offerAmountAmd,
         authorId: user.id,
       },
     });
@@ -409,12 +381,9 @@ export async function submitApplication(
           brandName: user.name,
           tierName,
           placementName,
-          offerAmountAmd: offerAmountAmd ?? undefined,
           message: trimmedMessage ?? undefined,
           contact: trimmedContact ?? user.email,
           productInfo: productInfo ?? undefined,
-          desiredTiming: desiredTiming ?? undefined,
-          dealType: dealType ?? undefined,
           brandBudget: budgetLabel,
         },
         project.owner.email,

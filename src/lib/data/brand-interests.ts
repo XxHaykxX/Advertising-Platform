@@ -27,12 +27,6 @@ export type BrandInterestDTO = {
   // its own cabinet showed a status pill and nothing about what was asked for.
   message: string;
   productInfo: string;
-  desiredTiming: string;
-  dealType: string;
-  // What the brand offered to pay, in AMD (2026-07-29) — null when the brand
-  // left the sum for negotiation, or on an application sent before the field
-  // existed.
-  offerAmountAmd: number | null;
   project: {
     id: number;
     title: string;
@@ -75,9 +69,6 @@ export async function getBrandInterests(brandId: number, locale: Locale): Promis
     placementTitle: r.placement?.title ?? "",
     message: r.message ?? "",
     productInfo: r.productInfo ?? "",
-    desiredTiming: r.desiredTiming ?? "",
-    dealType: r.dealType ?? "",
-    offerAmountAmd: r.offerAmountAmd ?? null,
     project: {
       id: r.project.id,
       title: pickTitle(locale, r.project),

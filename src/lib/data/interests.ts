@@ -22,10 +22,6 @@ export type InterestEventDTO = {
   status: InterestStatus | null;
   body: string;
   contact: string;
-  // What the brand offered to pay in AMD in THIS round (2026-07-29) — see
-  // Interest.offerAmountAmd below. Null on RESPONSE rows and on any round sent
-  // before the field existed.
-  offerAmountAmd: number | null;
   createdAt: string;
 };
 
@@ -37,16 +33,10 @@ export type InterestInboxDTO = {
   responseNote: string;
   message: string;
   contact: string;
-  /** The brief the brand filled in (2026-07-26): what is being placed, when,
-   *  and whether the offer is cash, barter or both. Empty for applications
-   *  sent before the fields existed. */
+  /** What the brand says it wants placed. Empty for applications sent before
+   *  the field existed. The brief's other three answers — the brand's price,
+   *  the deal type and the timing — left the form on 2026-08-05. */
   productInfo: string;
-  desiredTiming: string;
-  dealType: string;
-  // What the brand offers to pay, in AMD (2026-07-29) — null when unset, same
-  // as tierId/placementId below (applications sent before the field existed,
-  // or one where the brand left the sum for negotiation).
-  offerAmountAmd: number | null;
   brand: {
     id: number;
     name: string;
@@ -146,9 +136,6 @@ function toDTO(locale: Locale, r: InterestRow): InterestInboxDTO {
     message: r.message ?? "",
     contact: r.contact ?? "",
     productInfo: r.productInfo ?? "",
-    desiredTiming: r.desiredTiming ?? "",
-    dealType: r.dealType ?? "",
-    offerAmountAmd: r.offerAmountAmd ?? null,
     brand: {
       id: r.brand.id,
       name: r.brand.name,
@@ -191,7 +178,6 @@ function toDTO(locale: Locale, r: InterestRow): InterestInboxDTO {
       status: e.status,
       body: e.body ?? "",
       contact: e.contact ?? "",
-      offerAmountAmd: e.offerAmountAmd ?? null,
       createdAt: e.createdAt.toISOString(),
     })),
   };
