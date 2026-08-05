@@ -26,10 +26,10 @@ import {
   parseCsvInput,
   publishBlockers,
   validateReleaseDateValue,
-  safeUploadPath,
 } from "@/app/admin/(panel)/projects/form-shared";
 import { revalidateStorefront } from "@/lib/data/revalidate-storefront";
 import type { ProjectFormValues, ProjectFormState } from "@/app/admin/(panel)/projects/actions";
+import { safeUploadPath } from "@/lib/uploads-path";
 
 /* #16 (expanded 2026-07-16): the Creator self-serve submission form
    (/account/projects/new) now reuses admin/(panel)/projects/project-form.tsx
@@ -132,7 +132,10 @@ function buildData(fd: FormData): ProjectFormValues {
     synopsisHy,
     synopsisRu,
     synopsisEn,
-    poster: str(fd, "poster", VARCHAR_MAX),
+    // Every stored file path is checked on the way in — the upload endpoint
+    // decides where a file may be written, this decides what a save may claim
+    // was written. See src/lib/uploads-path.ts.
+    poster: safeUploadPath(str(fd, "poster", VARCHAR_MAX)),
     gallery: str(fd, "gallery"),
     presentationPdf: safeUploadPath(str(fd, "presentationPdf", VARCHAR_MAX)),
     // Derived from Type when the editor leaves it alone (2026-08-05). Format
@@ -171,7 +174,7 @@ function buildData(fd: FormData): ProjectFormValues {
     references: str(fd, "references"),
     cinemas: jsonArray<string>(fd, "cinemas").join(", "),
     videoEmbedUrl: str(fd, "videoEmbedUrl", VARCHAR_MAX),
-    videoFile: str(fd, "videoFile", VARCHAR_MAX),
+    videoFile: safeUploadPath(str(fd, "videoFile", VARCHAR_MAX)),
   };
 }
 
@@ -307,7 +310,7 @@ function parseActorRows(fd: FormData) {
           : (ACTOR_KIND_VALUES as readonly string[]).includes(r.kind ?? "")
             ? r.kind!
             : "CAST",
-        photo: (r.photo || "").trim() || null,
+        photo: safeUploadPath(r.photo) || null,
         sortOrder: i,
         personId: typeof r.personId === "number" ? r.personId : null,
       };
@@ -441,7 +444,7 @@ function parseTierRows(fd: FormData) {
         benefitsHy: benefitsHyRaw.trim() ? benefitsToJson(benefitsHyRaw) : null,
         benefitsRu: benefitsRuRaw.trim() ? benefitsToJson(benefitsRuRaw) : null,
         benefitsEn: benefitsEnRaw.trim() ? benefitsToJson(benefitsEnRaw) : null,
-        image: (r.image || "").trim() || null,
+        image: safeUploadPath(r.image) || null,
         isExclusive: !!r.isExclusive,
         availableSlots: r.availableSlots == null ? null : Math.max(0, Number(r.availableSlots) || 0),
         totalSlots: r.totalSlots == null ? null : Math.max(0, Number(r.totalSlots) || 0),
@@ -524,7 +527,7 @@ function parsePlacementRows(fd: FormData) {
         descriptionHy: descriptionHyRaw.trim() ? benefitsToJson(descriptionHyRaw) : null,
         descriptionRu: descriptionRuRaw.trim() ? benefitsToJson(descriptionRuRaw) : null,
         descriptionEn: descriptionEnRaw.trim() ? benefitsToJson(descriptionEnRaw) : null,
-        image: (r.image || "").trim() || null,
+        image: safeUploadPath(r.image) || null,
         priceAmd: r.priceAmd == null ? null : Math.max(0, Number(r.priceAmd) || 0),
         availableSlots: r.availableSlots == null ? null : Math.max(0, Number(r.availableSlots) || 0),
         totalSlots: r.totalSlots == null ? null : Math.max(0, Number(r.totalSlots) || 0),

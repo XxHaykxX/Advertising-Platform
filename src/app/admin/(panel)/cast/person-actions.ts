@@ -7,6 +7,7 @@ import { recordVersion } from "@/lib/history/record";
 import type { PersonRow } from "@/lib/data/persons";
 import { guessNameLocale } from "@/lib/person-name";
 import { TranslateError, transliterateName, type TranslateErrorCode } from "@/lib/translate";
+import { safeUploadPath } from "@/lib/uploads-path";
 
 const CAST_PATH = "/admin/cast";
 
@@ -89,6 +90,10 @@ export async function updatePerson(id: number, patch: PersonPatchInput): Promise
   });
   if (!current) return;
   const data = withBaseName(patch, current);
+  // The headshot is a path the client hands us, and it ends up as an <img src>
+  // in the public cast strip — see src/lib/uploads-path.ts for why that has to
+  // be checked here and not only where the file was written.
+  if ("photo" in data) data.photo = safeUploadPath(data.photo) || null;
   await prisma.person.update({ where: { id }, data });
   if ("name" in data) await syncActorNames(id);
   await recordVersion(prisma, "Person", id, "UPDATE", { id: user.id, name: user.name });

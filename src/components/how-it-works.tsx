@@ -82,18 +82,14 @@ export default function HowItWorks({ locale = DEFAULT_LOCALE }: { locale?: Local
             </div>
           </div>
 
-          {/* Converging card at bottom center */}
-          <Reveal delay={0.6}>
-            <div className="mx-auto mt-16 max-w-sm rounded-lg border border-primary/30 bg-primary/5 px-6 py-8 text-center btn-glow">
-              <div className="mb-2 inline-flex items-center justify-center rounded-full bg-primary/20 px-3 py-1.5">
-                <span className="text-xs font-semibold text-primary">→</span>
-              </div>
-              <h4 className="text-lg font-bold text-foreground">{t("landingHow.matchTitle")}</h4>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {t("landingHow.matchCaption")}
-              </p>
-            </div>
-          </Reveal>
+          {/* The converging "Matching & Deal" card that used to sit here was
+              removed on the owner's request (2026-08-05). It restated what the
+              two columns above already say and ended the section on a claim
+              rather than on an action — the two ladders now close the block
+              themselves. The landingHow.matchTitle / matchCaption keys are
+              left in the dictionary: they cost nothing and Мариам edits that
+              file through /admin/i18n, where a disappearing row reads as data
+              loss. */}
         </div>
       </Container>
     </Section>

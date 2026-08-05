@@ -7,6 +7,7 @@ import { requireSuperadmin } from "@/lib/auth/require";
 import { recordVersion } from "@/lib/history/record";
 import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
+import { safeUploadPath } from "@/lib/uploads-path";
 
 // MySQL caps a plain (non-@db.Text) Prisma String column at VarChar(191);
 // anything longer throws an unhandled P2000 ("value too long"). Truncate at
@@ -36,7 +37,7 @@ export type PartnerFormState = {
 function buildData(fd: FormData): PartnerFormValues {
   return {
     name: str(fd, "name", VARCHAR_MAX),
-    logo: str(fd, "logo", VARCHAR_MAX),
+    logo: safeUploadPath(str(fd, "logo", VARCHAR_MAX)),
     url: str(fd, "url", VARCHAR_MAX),
   };
 }

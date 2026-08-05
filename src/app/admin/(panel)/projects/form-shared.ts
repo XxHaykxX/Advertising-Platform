@@ -529,20 +529,3 @@ export const DEFAULT_TIER_SET: { hy: string; ru: string; en: string }[] = [
   { hy: "Գլխավոր հովանավոր", ru: "Генеральный спонсор", en: "General sponsor" },
   { hy: "Պաշտոնական հովանավոր", ru: "Официальный спонсор", en: "Official sponsor" },
 ];
-
-/** Keep an uploaded-file path pointing INSIDE our own uploads root (IA-44).
-
-   `presentationPdf` differs from the other upload fields in one way that
-   matters: the project page renders it as a link the reader clicks, so a
-   crafted save could otherwise park an arbitrary URL — or a traversal out of
-   the uploads tree — behind a "Download presentation" button on a real
-   listing. The upload endpoint already decides WHERE a file may be written;
-   this decides what the form is allowed to claim was written. "" means the
-   editor detached the file, and stays "". */
-export function safeUploadPath(value: string): string {
-  const v = value.trim();
-  if (!v) return "";
-  if (!v.startsWith("/uploads/")) return "";
-  if (v.includes("..") || v.includes("\\")) return "";
-  return v;
-}
