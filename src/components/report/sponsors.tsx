@@ -51,47 +51,49 @@ export function Sponsors({
           {project.tiers.map((tier, i) => (
             <Reveal key={tier.id} delay={i * 0.05}>
               <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card">
-                {tier.image ? (
-                  <div className="relative aspect-video w-full bg-muted">
-                    <Image
-                      src={tier.image}
-                      alt=""
-                      fill
-                      className="object-cover"
-                      sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
-                    />
-                  </div>
-                ) : (
-                  // No cover chosen in the media library yet — a quiet
-                  // typographic header rather than a blank stub, echoing the
-                  // numeral treatment of the editorial covers themselves.
-                  <div className="relative flex aspect-video w-full items-end overflow-hidden bg-muted px-6 pb-5">
-                    <span
-                      aria-hidden
-                      className="pointer-events-none absolute -top-8 right-0 select-none font-serif text-[8rem] leading-none text-muted-foreground/15"
-                    >
-                      {toRoman(i + 1)}
-                    </span>
-                    <div className="h-px w-8 bg-border" />
-                  </div>
-                )}
-
-                <div className="flex flex-1 flex-col p-7">
-                  {/* The exclusivity mark is an eyebrow above the name, not a
-                      chip beside it (owner request 2026-08-05). Two reasons:
-                      it is the one thing on the card that has to be noticed
-                      before the price, and sharing a row with the name squeezed
-                      it — Armenian package names run long, and the h3 was
-                      wrapping to make room for a badge three words wide.
-                      The accent ring + tinted wash is what makes it read as a
-                      seal on the card rather than another muted caption; the
-                      rotated square is drawn, not an icon import. */}
+                {/* The exclusivity mark rides on the cover, in the corner
+                    (owner request 2026-08-05). It was an eyebrow above the
+                    name, which only exclusive cards carried — so those cards
+                    pushed their name and price a row lower than the rest and
+                    nothing in the grid lined up. On the cover it is outside
+                    the text flow entirely, so every card in a row starts its
+                    name at the same height whether it is exclusive or not.
+                    Same treatment as the age-rating badge over the poster in
+                    the hero: a dark pill stays legible over any still. */}
+                <div className="relative">
+                  {tier.image ? (
+                    <div className="relative aspect-video w-full bg-muted">
+                      <Image
+                        src={tier.image}
+                        alt=""
+                        fill
+                        className="object-cover"
+                        sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+                      />
+                    </div>
+                  ) : (
+                    // No cover chosen in the media library yet — a quiet
+                    // typographic header rather than a blank stub, echoing the
+                    // numeral treatment of the editorial covers themselves.
+                    <div className="relative flex aspect-video w-full items-end overflow-hidden bg-muted px-6 pb-5">
+                      <span
+                        aria-hidden
+                        className="pointer-events-none absolute -top-8 right-0 select-none font-serif text-[8rem] leading-none text-muted-foreground/15"
+                      >
+                        {toRoman(i + 1)}
+                      </span>
+                      <div className="h-px w-8 bg-border" />
+                    </div>
+                  )}
                   {tier.isExclusive ? (
-                    <span className="mb-3 inline-flex w-fit items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-primary">
-                      <span aria-hidden className="h-1.5 w-1.5 rotate-45 bg-primary" />
+                    <span className="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-black/70 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-white shadow-sm ring-1 ring-white/25 backdrop-blur-sm">
+                      <span aria-hidden className="h-1.5 w-1.5 rotate-45 bg-white" />
                       {t("report.exclusive")}
                     </span>
                   ) : null}
+                </div>
+
+                <div className="flex flex-1 flex-col p-7">
                   {/* Bigger and calmer than before — a regular weight at
                       display size reads as considered, not shouted. */}
                   <h3 className="text-2xl font-normal tracking-tight text-foreground">
