@@ -1,5 +1,6 @@
 import { Building2, Clapperboard, Clock, Film, Layers, MapPin, Wallet } from "lucide-react";
 import { DealCta } from "@/components/report/deal-cta";
+import { PresentationDownload } from "@/components/report/presentation-download";
 import { formatFullDate, splitCountries } from "@/lib/data/format";
 import { cn } from "@/lib/utils";
 import { DEFAULT_LOCALE, intlLocale, localizeValue, makeUI, type Locale } from "@/lib/i18n";
@@ -28,6 +29,7 @@ export function DealCard({
   ongoing = false,
   daysLeft,
   meta,
+  presentationPdf,
   locale = DEFAULT_LOCALE,
 }: {
   /** Production budget, preformatted in the visitor's currency. */
@@ -50,6 +52,9 @@ export function DealCard({
    *  Date.now() here would differ from the server render and flicker. Always
    *  null when `ongoing` is true (there's nothing to count down to). */
   daysLeft: number | null;
+  /** `project.presentationPdf`; empty string when the creator never uploaded
+   *  one — the link under the CTA below then renders nothing. */
+  presentationPdf: string;
   locale?: Locale;
 }) {
   const t = makeUI(locale);
@@ -164,7 +169,15 @@ export function DealCard({
       {/* mt-auto: the button sits on the card's bottom edge whatever the rows
           above add up to, so it lines up with the video next to it instead of
           floating in the middle of the column. */}
-      <div className="mt-auto pt-1">
+      <div className="mt-auto space-y-2 pt-1">
+        {/* Above the apply button, not under it (owner decision 2026-08-05):
+            the deck is what a brand reaches for BEFORE it is ready to apply —
+            to read the offer properly, or to forward it to whoever signs off.
+            Buried under the CTA it read as an afterthought nobody scrolled to.
+            It still carries less weight than the apply button so the primary
+            action stays primary. This is the deck's only place on the page —
+            a second copy above the footer was cut as noise. */}
+        <PresentationDownload href={presentationPdf} locale={locale} />
         <DealCta label={t("report.offerBarCta")} />
       </div>
     </div>

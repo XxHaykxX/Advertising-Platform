@@ -12,7 +12,6 @@ import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ReportHero } from "@/components/report/report-hero";
 import { KeyFacts } from "@/components/report/key-facts";
-import { PresentationDownload } from "@/components/report/presentation-download";
 import { Cast } from "@/components/report/cast";
 import { ProductPlacements } from "@/components/report/product-placements";
 import { Sponsors } from "@/components/report/sponsors";
@@ -219,7 +218,6 @@ export default async function ReportPage({
             PosterSlider. The standalone ReportVideo section was removed so it
             isn't shown twice (user request 2026-07-25). */}
         <KeyFacts project={project} locale={locale} user={user} />
-        <PresentationDownload project={project} locale={locale} />
       </div>
       <div id="production" className="scroll-mt-24">
         <ProductionTimeline project={project} locale={locale} />

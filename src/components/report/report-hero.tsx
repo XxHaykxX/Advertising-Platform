@@ -121,6 +121,7 @@ export function ReportHero({
                 studio: project.studio,
                 countries: project.countries,
               }}
+              presentationPdf={project.presentationPdf}
               locale={locale}
             />
           </div>
