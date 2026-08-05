@@ -42,6 +42,17 @@ export interface ProjectListDTO {
    *  every placement and package is "on request" — and the card says so
    *  rather than printing a bare currency symbol. */
   priceFromDisplay: string;
+  /** The same "from" figure, split by what it actually buys (2026-08-05). The
+   *  card sells two different things — an in-story placement and a sponsorship
+   *  package — and one combined minimum could not say which of them cost that
+   *  much, while the slot counter next to it came from the packages alone. Each
+   *  product line now carries its own count and its own price. "" when that
+   *  line has nothing priced. */
+  placementsPriceFromDisplay: string;
+  tiersPriceFromDisplay: string;
+  /** How many sponsorship packages the project sells — the companion to
+   *  placementsCount above. */
+  tiersCount: number;
 }
 
 export interface ProjectDetailDTO extends ProjectListDTO {

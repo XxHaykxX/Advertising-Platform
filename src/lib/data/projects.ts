@@ -187,8 +187,21 @@ const getProjectsCached = unstable_cache(
     slotsAvailable: p.tiers.reduce((sum, tier) => sum + (tier.availableSlots ?? 0), 0),
     slotsTotal: p.tiers.reduce((sum, tier) => sum + (tier.totalSlots ?? 0), 0),
     placementsCount: p.placements.length,
+    tiersCount: p.tiers.length,
     priceFromDisplay: formatPriceFrom(
       [...p.placements, ...p.tiers].map((o) => o.priceAmd),
+      currency,
+      rates,
+      locale,
+    ),
+    placementsPriceFromDisplay: formatPriceFrom(
+      p.placements.map((o) => o.priceAmd),
+      currency,
+      rates,
+      locale,
+    ),
+    tiersPriceFromDisplay: formatPriceFrom(
+      p.tiers.map((o) => o.priceAmd),
       currency,
       rates,
       locale,
@@ -306,8 +319,21 @@ const getProjectCached = unstable_cache(
       totalSlots: pl.totalSlots,
     })),
     placementsCount: p.placements.length,
+    tiersCount: p.tiers.length,
     priceFromDisplay: formatPriceFrom(
       [...p.placements, ...p.tiers].map((o) => o.priceAmd),
+      currency,
+      rates,
+      locale,
+    ),
+    placementsPriceFromDisplay: formatPriceFrom(
+      p.placements.map((o) => o.priceAmd),
+      currency,
+      rates,
+      locale,
+    ),
+    tiersPriceFromDisplay: formatPriceFrom(
+      p.tiers.map((o) => o.priceAmd),
       currency,
       rates,
       locale,

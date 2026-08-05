@@ -9,6 +9,7 @@ import {
   Film,
   MapPin,
   Megaphone,
+  Award,
 } from "lucide-react";
 import { GenreBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,59 @@ import { DEFAULT_LOCALE, intlLocale, makeUI, useLocalizer, type Locale } from "@
 import { NO_OFFER_KEY } from "@/lib/offer-value";
 import type { SiteHeaderUser } from "@/components/header";
 import type { ProjectListDTO } from "@/lib/types";
+
+/** One product the project sells: what it is, how much of it is left, and what
+ *  it starts at.
+ *
+ *  Stacked in two rows rather than three columns. A catalog card is ~260px
+ *  wide at the grid's narrowest, and a single row put the product name, the
+ *  count and the price in competition for it — the name lost and truncated
+ *  away to nothing, which is exactly the confusion this line exists to fix.
+ *  The name gets its own row; the count and the price share the one below,
+ *  pushed to opposite edges so the prices still line up between products.
+ *
+ *  tabular-nums on the price: three cards sit side by side in the catalog grid,
+ *  and proportional digits make the figures jitter out of line. */
+function OfferLine({
+  icon,
+  label,
+  detail,
+  detailClass,
+  price,
+  fromLabel,
+  onRequestLabel,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  detail: string;
+  detailClass?: string;
+  /** "" when nothing in this product line carries a price. */
+  price: string;
+  fromLabel: string;
+  onRequestLabel: string;
+}) {
+  return (
+    <div className="mt-2 text-xs">
+      <p className="flex items-center gap-1.5 font-semibold text-foreground">
+        <span className="shrink-0 text-muted-foreground">{icon}</span>
+        {label}
+      </p>
+      <p className="mt-0.5 flex items-baseline justify-between gap-2 pl-5">
+        <span className={cn("text-muted-foreground", detailClass)}>{detail}</span>
+        <span className="shrink-0 tabular-nums">
+          {price ? (
+            <>
+              <span className="text-muted-foreground">{fromLabel} </span>
+              <span className="font-bold text-foreground">{price}</span>
+            </>
+          ) : (
+            <span className="text-muted-foreground">{onRequestLabel}</span>
+          )}
+        </span>
+      </p>
+    </div>
+  );
+}
 
 /** Explicitly "use client" (bundle audit 2026-07-31): its only two callers
  *  (catalog-view.tsx, browse-view.tsx) render it in a loop over
@@ -234,52 +288,64 @@ export function ProjectCard({
             entirely, so a brand could not compare two listings without opening
             both. */}
         <div className="mt-auto pt-4">
-          {/* Capacity, as a bar rather than the "8 / 10 · 5 placements" run-on
-              it used to be (2026-08-05). The filled part is what is already
-              TAKEN, so a project fills up visibly as deals land, and the
-              wording underneath states the same thing in words — colour alone
-              never carries it. */}
-          {project.slotsTotal > 0 ? (
-            <div>
-              <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                <div
-                  className={cn("h-full rounded-full transition-[width]", slotsLow ? "bg-warn" : "bg-primary")}
-                  style={{ width: `${slotsTakenPct}%` }}
-                />
-              </div>
-              <p
-                className={cn(
-                  "mt-1.5 text-xs font-medium",
-                  slotsLow ? "text-warn" : "text-muted-foreground",
-                )}
-              >
-                {t("card.slotsLeft")
-                  .replace("{n}", String(project.slotsAvailable))
-                  .replace("{total}", String(project.slotsTotal))}
-              </p>
-            </div>
-          ) : null}
-          {/* Placements are a count, not a ratio — they get their own line with
-              an icon instead of being glued to the slots with a "·". */}
+          {/* What the project actually sells, one named line per product
+              (2026-08-05). It used to be a slot counter, a placement counter
+              and a single "from" price with nothing tying any number to any
+              offer — the slots came from the sponsorship packages alone, while
+              the price was the cheaper of the two products, so a reader could
+              not tell what the figure bought. */}
           {project.placementsCount > 0 ? (
-            <p className="mt-1.5 flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-              <Megaphone className="h-3.5 w-3.5 shrink-0" />
-              {project.placementsCount}{" "}
-              {t(project.placementsCount === 1 ? "card.placementsOne" : "card.placementsMany")}
-            </p>
+            <OfferLine
+              icon={<Megaphone className="h-3.5 w-3.5 shrink-0" />}
+              label={t("card.offerPlacements")}
+              detail={
+                project.placementsCount === 1
+                  ? t("card.offerOptionsOne")
+                  : t("card.offerOptions").replace("{n}", String(project.placementsCount))
+              }
+              price={project.placementsPriceFromDisplay}
+              fromLabel={t("card.priceFrom")}
+              onRequestLabel={t("card.priceOnRequest")}
+            />
           ) : null}
-          {/* tabular-nums: three cards sit side by side in the catalog grid,
-              and proportional digits make their prices jitter out of line. */}
-          <p className="mt-1 text-base font-bold tabular-nums text-foreground">
-            {project.priceFromDisplay ? (
-              <>
-                <span className="text-xs font-medium text-muted-foreground">{t("card.priceFrom")} </span>
-                {project.priceFromDisplay}
-              </>
-            ) : (
-              <span className="text-sm font-medium text-muted-foreground">{t("card.priceOnRequest")}</span>
-            )}
-          </p>
+          {project.tiersCount > 0 ? (
+            <>
+              <OfferLine
+                icon={<Award className="h-3.5 w-3.5 shrink-0" />}
+                label={t("card.offerSponsorship")}
+                detail={
+                  project.slotsTotal > 0
+                    ? t("card.slotsLeft")
+                        .replace("{n}", String(project.slotsAvailable))
+                        .replace("{total}", String(project.slotsTotal))
+                    : project.tiersCount === 1
+                      ? t("card.offerOptionsOne")
+                      : t("card.offerOptions").replace("{n}", String(project.tiersCount))
+                }
+                detailClass={slotsLow ? "text-warn" : undefined}
+                price={project.tiersPriceFromDisplay}
+                fromLabel={t("card.priceFrom")}
+                onRequestLabel={t("card.priceOnRequest")}
+              />
+              {/* The bar sits under sponsorship because that is the only thing
+                  slotsTotal counts. Filled = already taken, so a project fills
+                  up visibly as deals land; the wording above says the same in
+                  words, since colour alone must never carry it. */}
+              {project.slotsTotal > 0 ? (
+                <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                  <div
+                    className={cn("h-full rounded-full transition-[width]", slotsLow ? "bg-warn" : "bg-primary")}
+                    style={{ width: `${slotsTakenPct}%` }}
+                  />
+                </div>
+              ) : null}
+            </>
+          ) : null}
+          {/* Neither product exists yet — say the price is on request rather
+              than leave the card silent about money altogether. */}
+          {project.placementsCount === 0 && project.tiersCount === 0 ? (
+            <p className="text-sm font-medium text-muted-foreground">{t("card.priceOnRequest")}</p>
+          ) : null}
           <div className="relative z-20 mt-3">
             {/* A brand goes straight to the application; everyone else — a
                 guest, a creator, staff — gets the report, which is all they can

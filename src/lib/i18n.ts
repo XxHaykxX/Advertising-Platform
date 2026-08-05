@@ -450,11 +450,22 @@ export const UI: Record<string, Dict> = {
   "card.priceFrom": { ru: "от", en: "from", hy: "սկսած" },
   // Under the capacity bar. Says how many are LEFT, not how many are gone —
   // the buyer is deciding whether there is still room for them.
+  // Kept short on purpose: it shares a line with the price, and the wordier
+  // "осталось {n} из {total}" wrapped onto two lines inside a catalog card.
   "card.slotsLeft": {
-    ru: "Осталось {n} из {total} мест",
-    en: "{n} of {total} slots left",
-    hy: "Մնացել է {total}-ից {n} տեղ",
+    ru: "{n} из {total} свободно",
+    en: "{n} of {total} free",
+    hy: "{n}/{total} ազատ",
   },
+  // The two things a project sells, named on the card (2026-08-05). Before
+  // this the card showed a slot counter, a placement counter and one combined
+  // "from" price with nothing saying which number belonged to which offer —
+  // the slots came from the packages alone while the price was the minimum
+  // across both. Each line now carries its own count and its own price.
+  "card.offerPlacements": { ru: "Продакт-плейсмент", en: "Product placement", hy: "Փրոդակթ փլեյսմենթ" },
+  "card.offerSponsorship": { ru: "Спонсорство", en: "Sponsorship", hy: "Հովանավորություն" },
+  "card.offerOptions": { ru: "{n} вариантов", en: "{n} options", hy: "{n} տարբերակ" },
+  "card.offerOptionsOne": { ru: "1 вариант", en: "1 option", hy: "1 տարբերակ" },
   // Shown instead when every placement and package on the project is unpriced.
   "card.priceOnRequest": { ru: "Цена по запросу", en: "Price on request", hy: "Գինը՝ հարցումով" },
   // Replaces the bare deadline date once the deadline is close: a countdown
