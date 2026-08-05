@@ -5,30 +5,25 @@ import { OfferApplyButton } from "@/components/report/offer-apply-button";
 import { offerValue } from "@/lib/offer-value";
 import type { ProjectDetailDTO } from "@/lib/types";
 
-// A tier that hasn't been given a cover in the media library still needs a
-// considered header rather than an empty stub. A quiet roman numeral, in the
-// same voice as the editorial covers editors pick from, fills that space
-// without inventing copy that would need its own i18n keys.
-function toRoman(num: number): string {
-  const table: [number, string][] = [
-    [1000, "M"], [900, "CM"], [500, "D"], [400, "CD"],
-    [100, "C"], [90, "XC"], [50, "L"], [40, "XL"],
-    [10, "X"], [9, "IX"], [5, "V"], [4, "IV"], [1, "I"],
-  ];
-  let n = num;
-  let out = "";
-  for (const [value, sym] of table) {
-    while (n >= value) {
-      out += sym;
-      n -= value;
-    }
-  }
-  return out;
-}
-
-// Sponsorship packages — priced tiers a brand can buy into. Each package
-// shows its price, its benefits list, and — when set on the tier — how many
-// placements are still open ("X / Y") plus an Exclusive mark (T23).
+// Sponsorship packages — priced tiers a brand can buy into. Each package shows
+// its cover (when the editor picked one), its name, its price and the benefits
+// it includes, plus an Exclusive mark (T23).
+//
+// Two rules this card has been through several rounds over (owner decisions,
+// 2026-08-05) — keep them in mind before moving anything:
+//
+//   1. No cover means NO media area at all. A placeholder block was tried and
+//      dropped: it filled a third of the card with grey for nothing.
+//   2. Every card in a grid row must line up. That rules out anything that
+//      only exclusive tiers render inside the text flow — an eyebrow row above
+//      the name, or a chip sharing the name's line that makes long Armenian
+//      names wrap. Both were tried; both pushed the price and the rule of
+//      those cards a row lower than their neighbours.
+//
+// The mark therefore rides in the price row, which every card has and which is
+// always exactly one line (the price is `whitespace-nowrap`, so a long figure
+// cannot wrap and add height). It sits next to the money, which is where
+// exclusivity actually means something to a buyer.
 export function Sponsors({
   project,
   locale = DEFAULT_LOCALE,
@@ -51,57 +46,53 @@ export function Sponsors({
           {project.tiers.map((tier, i) => (
             <Reveal key={tier.id} delay={i * 0.05}>
               <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card">
-                {/* The exclusivity mark rides on the cover, in the corner
-                    (owner request 2026-08-05). It was an eyebrow above the
-                    name, which only exclusive cards carried — so those cards
-                    pushed their name and price a row lower than the rest and
-                    nothing in the grid lined up. On the cover it is outside
-                    the text flow entirely, so every card in a row starts its
-                    name at the same height whether it is exclusive or not.
-                    Same treatment as the age-rating badge over the poster in
-                    the hero: a dark pill stays legible over any still. */}
-                <div className="relative">
-                  {tier.image ? (
-                    <div className="relative aspect-video w-full bg-muted">
-                      <Image
-                        src={tier.image}
-                        alt=""
-                        fill
-                        className="object-cover"
-                        sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
-                      />
-                    </div>
-                  ) : (
-                    // No cover chosen in the media library yet — a quiet
-                    // typographic header rather than a blank stub, echoing the
-                    // numeral treatment of the editorial covers themselves.
-                    <div className="relative flex aspect-video w-full items-end overflow-hidden bg-muted px-6 pb-5">
-                      <span
-                        aria-hidden
-                        className="pointer-events-none absolute -top-8 right-0 select-none font-serif text-[8rem] leading-none text-muted-foreground/15"
-                      >
-                        {toRoman(i + 1)}
-                      </span>
-                      <div className="h-px w-8 bg-border" />
-                    </div>
-                  )}
-                  {tier.isExclusive ? (
-                    <span className="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-black/70 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-white shadow-sm ring-1 ring-white/25 backdrop-blur-sm">
-                      <span aria-hidden className="h-1.5 w-1.5 rotate-45 bg-white" />
-                      {t("report.exclusive")}
-                    </span>
-                  ) : null}
-                </div>
+                {tier.image ? (
+                  <div className="relative aspect-video w-full bg-muted">
+                    <Image
+                      src={tier.image}
+                      alt=""
+                      fill
+                      className="object-cover"
+                      sizes="(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw"
+                    />
+                  </div>
+                ) : null}
 
                 <div className="flex flex-1 flex-col p-7">
+                  {/* The exclusivity mark gets its own line ABOVE the name, and
+                      that line is rendered on every card — `invisible` (not
+                      absent) on the ones that aren't exclusive. That is the
+                      whole trick, and it is deliberate: the mark is the only
+                      thing on this card that some tiers have and others don't,
+                      so anything that gives it space only when it is present
+                      pushes that card's name, price and rule out of step with
+                      its neighbours. Sharing the price's line was tried and it
+                      is worse than it looks — the pair fits at 1280 and at
+                      768, but not at 1024 (three columns in a narrower
+                      container: 254px needed, 249px available), so it wrapped
+                      on exactly one breakpoint and broke the row there. A
+                      reserved line costs ~26px on every card and cannot break
+                      at any width. `visibility: hidden` also keeps it out of
+                      the accessibility tree, so nothing reads a phantom
+                      "exclusive" on an ordinary package. */}
+                  <span
+                    className={`mb-3 inline-flex w-fit items-center gap-1.5 rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] ${
+                      tier.isExclusive
+                        ? "border-primary/40 bg-primary/10 text-primary"
+                        : "invisible border-transparent"
+                    }`}
+                  >
+                    <span aria-hidden className="h-1.5 w-1.5 rotate-45 bg-current" />
+                    {t("report.exclusive")}
+                  </span>
                   {/* Bigger and calmer than before — a regular weight at
                       display size reads as considered, not shouted. */}
                   <h3 className="text-2xl font-normal tracking-tight text-foreground">
                     {tier.name}
                   </h3>
                   {/* No price is a deliberate state, not a missing one. Price
-                      is the dominant figure on the card — bigger and heavier
-                      than the name above it. */}
+                      is the dominant figure on the card, and it now has the
+                      line to itself. */}
                   <p className="mt-2 text-3xl font-extrabold tracking-tight text-foreground">
                     {tier.priceDisplay ?? (
                       <span className="text-base font-semibold text-foreground/80">
