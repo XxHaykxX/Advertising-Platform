@@ -865,18 +865,18 @@ export const UI: Record<string, Dict> = {
   // Product placement, shown ABOVE the sponsorship packages on the report:
   // the brand inside the story, with a still of the scene. A placement whose
   // price the creator left empty says "on request" instead of a number.
-  "report.placementsTitle": { ru: "Продакт-плейсмент", en: "Product placement", hy: "Փրոդակթ փլեյսմենթ" },
+  "report.placementsTitle": { ru: "Продакт-плейсмент", en: "Product placement", hy: "Փրոդաքթ փլեյսմենթ" },
   "report.placementsSubtitle": {
     ru: "Где бренд появляется в самой истории",
     en: "Where the brand appears inside the story itself",
-    hy: "Որտեղ է բրենդը հայտնվում հենց պատմության մեջ",
+    hy: "Բրենդի օրգանական ինտեգրում կադրում և պատմության մեջ",
   },
   "report.priceOnRequest": { ru: "Цена по запросу", en: "Price on request", hy: "Գինը՝ հարցումով" },
-  "investment.sponsorsTitle": { ru: "Пакеты спонсорства", en: "Sponsorship Packages", hy: "Հովանավորության փաթեթներ" },
+  "investment.sponsorsTitle": { ru: "Пакеты спонсорства", en: "Sponsorship Packages", hy: "Հովանավորչական փաթեթներ" },
   "investment.sponsorsSubtitle": {
     ru: "Выберите уровень спонсорства проекта",
     en: "Choose a sponsorship level for the project",
-    hy: "Ընտրեք նախագծի հովանավորության մակարդակ",
+    hy: "Համագործակցության տարբերակներ և բրենդինգի հնարավորություններ",
   },
   "report.slotsAvailable": { ru: "мест доступно", en: "slots available", hy: "հասանելի տեղ" },
   "report.exclusive": { ru: "Эксклюзив", en: "Exclusive", hy: "Բացառիկ" },
@@ -2336,7 +2336,7 @@ export const UI: Record<string, Dict> = {
     en: "You haven't expressed interest in any projects yet. Browse the catalog to find opportunities.",
     hy: "Դիտարկե՛ք հասանելի նախագծերը և ուղարկե՛ք ձեր առաջին առաջարկը։",
   },
-  "account.brand.recommended": { ru: "Рекомендовано для вас", en: "Recommended for You", hy: "Առաջարկվում է ձեզ համար" },
+  "account.brand.recommended": { ru: "Рекомендовано для вас", en: "Recommended for You", hy: "Առաջարկվող նախագծեր" },
   "account.brand.recommendedBasedOn": {
     ru: "На основе вашего профиля: {categories}",
     en: "Based on your profile: {categories}",
@@ -2345,7 +2345,7 @@ export const UI: Record<string, Dict> = {
   "account.brand.recommendedEmpty": {
     ru: "Заполните профиль бренда, чтобы получать персональные рекомендации.",
     en: "Complete your brand profile to get personalized recommendations.",
-    hy: "Լրացրեք ձեր բրենդի պրոֆիլը՝ անհատականացված առաջարկներ ստանալու համար։",
+    hy: "Ամբողջացրեք Ձեր պրոֆիլը անհատականացված առաջարկներ ստանալու համար։",
   },
   "account.brand.recentlyAdded": { ru: "Недавно добавленные", en: "Recently Added", hy: "Վերջերս ավելացված" },
 
@@ -2353,7 +2353,7 @@ export const UI: Record<string, Dict> = {
   "account.brand.interestsSubtitle": {
     ru: "Проекты, которым вы отправили предложение",
     en: "Projects you have sent an offer to",
-    hy: "Ձեր ուղարկած բոլոր առաջարկները մեկ տեղում։",
+    hy: "Ձեր ուղարկած բոլոր առաջարկները մեկ տեղում",
   },
   "account.brand.noInterestsPageBody": {
     ru: "Просмотрите каталог и отправьте предложение проектам, подходящим вашему бренду.",
