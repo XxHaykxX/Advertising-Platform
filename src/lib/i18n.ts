@@ -59,21 +59,21 @@ export const UI: Record<string, Dict> = {
   "about.heroSubtitle": {
     ru: "iGovazd — маркетплейс, который соединяет бренды с создателями фильмов и контента для честного product placement.",
     en: "iGovazd is a marketplace connecting brands with film and content creators for authentic product placement.",
-    hy: "iGovazd-ը շուկա է, որ կապում է բրենդներին ֆիլմերի ու բովանդակության ստեղծագործողների հետ՝ ազնիվ ապրանքի տեղաբաշխման համար։",
+    hy: "iGovazd-ը շուկա է, որ կապում է բրենդներին ֆիլմերի ու բովանդակության հեղինակների հետ՝ ազնիվ ապրանքի տեղաբաշխման համար։",
   },
   "about.missionTitle": { ru: "Наша миссия", en: "Our mission", hy: "Մեր առաքելությունը" },
   "about.missionBody": {
     ru: "Мы делаем размещение брендов в кино и контенте простым, прозрачным и доступным. Бренды находят подходящие проекты, а создатели получают финансирование — без посредников и лишних сложностей.",
     en: "We make brand placement in film and content simple, transparent and accessible. Brands find the right projects, creators get funding — without middlemen or friction.",
-    hy: "Մենք բրենդների տեղաբաշխումը կինոյում ու բովանդակության մեջ դարձնում ենք պարզ, թափանցիկ և հասանելի։ Բրենդները գտնում են հարմար նախագծեր, ստեղծագործողները՝ ֆինանսավորում՝ առանց միջնորդների ու ավելորդ բարդությունների։",
+    hy: "Մենք բրենդների տեղաբաշխումը կինոյում ու բովանդակության մեջ դարձնում ենք պարզ, թափանցիկ և հասանելի։ Բրենդները գտնում են հարմար նախագծեր, հեղինակները՝ ֆինանսավորում՝ առանց միջնորդների ու ավելորդ բարդությունների։",
   },
   "about.forBrandsTitle": { ru: "Для брендов", en: "For brands", hy: "Բրենդների համար" },
   "about.forBrandsBody": {
     ru: "Просматривайте проекты, выбирайте подходящие форматы и связывайтесь с создателями напрямую. Ваш продукт — в руках любимых героев зрителей.",
     en: "Browse projects, pick the right formats and reach creators directly. Your product — in the hands of the characters audiences love.",
-    hy: "Դիտեք նախագծերը, ընտրեք հարմար ձևաչափերը և ուղիղ կապվեք ստեղծագործողների հետ։ Ձեր ապրանքը՝ հանդիսատեսի սիրելի հերոսների ձեռքում։",
+    hy: "Դիտեք նախագծերը, ընտրեք հարմար ձևաչափերը և ուղիղ կապվեք հեղինակների հետ։ Ձեր ապրանքը՝ հանդիսատեսի սիրելի հերոսների ձեռքում։",
   },
-  "about.forCreatorsTitle": { ru: "Для создателей", en: "For creators", hy: "Ստեղծագործողների համար" },
+  "about.forCreatorsTitle": { ru: "Для создателей", en: "For creators", hy: "Հեղինակների համար" },
   "about.forCreatorsBody": {
     ru: "Разместите свой проект, покажите возможности для брендов и получайте финансирование под съёмки — сохраняя творческий контроль.",
     en: "List your project, showcase opportunities for brands and secure funding for production — while keeping creative control.",
@@ -113,7 +113,7 @@ export const UI: Record<string, Dict> = {
   "about.pillar3Body": {
     ru: "Бренды и создатели общаются напрямую — быстрее сделки, честнее условия.",
     en: "Brands and creators talk directly — faster deals, fairer terms.",
-    hy: "Բրենդներն ու ստեղծագործողները շփվում են ուղիղ՝ ավելի արագ գործարքներ, ավելի արդար պայմաններ։",
+    hy: "Բրենդներն ու հեղինակները շփվում են ուղիղ՝ ավելի արագ գործարքներ, ավելի արդար պայմաններ։",
   },
 
   // ── hero ────────────────────────────────────
@@ -204,7 +204,7 @@ export const UI: Record<string, Dict> = {
   "poster.generating": { ru: "Генерация…", en: "Generating…", hy: "Ստեղծվում է…" },
   "poster.useThis": { ru: "Использовать", en: "Use this", hy: "Օգտագործել" },
   "poster.regenerate": { ru: "Сгенерировать снова", en: "Regenerate", hy: "Ստեղծել կրկին" },
-  "poster.withLogo": { ru: "Логотип создателя на постере", en: "Creator logo on poster", hy: "Ստեղծագործողի լոգոն պաստառի վրա" },
+  "poster.withLogo": { ru: "Логотип создателя на постере", en: "Creator logo on poster", hy: "Հեղինակի լոգոն պաստառի վրա" },
   "poster.noAvatarHint": {
     ru: "Сначала загрузите аватар в профиле",
     en: "Upload an avatar in your profile first",
@@ -443,6 +443,27 @@ export const UI: Record<string, Dict> = {
   // row of pills with nothing saying what they were. Prefixes that row on
   // every card that renders it.
   "card.availableOn": { ru: "Доступен:", en: "Available on:", hy: "Հասանելի՝" },
+  // ── Catalog card, 2026-08-05 ──
+  // The cheapest offer on the project. A marketplace listing without a price
+  // cannot be compared or shortlisted without opening it, which was the single
+  // biggest gap on this card.
+  "card.priceFrom": { ru: "от", en: "from", hy: "սկսած" },
+  // Under the capacity bar. Says how many are LEFT, not how many are gone —
+  // the buyer is deciding whether there is still room for them.
+  "card.slotsLeft": {
+    ru: "Осталось {n} из {total} мест",
+    en: "{n} of {total} slots left",
+    hy: "Մնացել է {total}-ից {n} տեղ",
+  },
+  // Shown instead when every placement and package on the project is unpriced.
+  "card.priceOnRequest": { ru: "Цена по запросу", en: "Price on request", hy: "Գինը՝ հարցումով" },
+  // Replaces the bare deadline date once the deadline is close: a countdown
+  // presses harder than a date the reader has to subtract today from.
+  "card.deadlineDaysLeft": { ru: "осталось {n} дн.", en: "{n} days left", hy: "մնաց {n} օր" },
+  "card.deadlineLastDay": { ru: "последний день", en: "last day", hy: "վերջին օրը" },
+  // The apply button on the card itself. Distinct from btn.viewReport, which
+  // is what everyone who cannot apply still sees.
+  "card.applyCta": { ru: "Подать заявку", en: "Apply", hy: "Ներկայացնել հայտ" },
 
   // ── forms (shared) ──────────────────────────
   "form.name": { ru: "Имя", en: "Name", hy: "Անուն" },
@@ -568,12 +589,12 @@ export const UI: Record<string, Dict> = {
   "why.paragraph1": {
     ru: "Продакт-плейсмент десятилетиями оставался несовершенной системой. Создатели с трудом монетизируют свои истории, а бренды блуждают по непрозрачным сетям, переплачивая за плейсменты, которые могут никогда не выйти на экран. Всё делается вручную, неэффективно и доступно лишь через личные связи.",
     en: "Product placement has been broken for decades. Creators struggle to monetize their stories while brands stumble through opaque networks, paying inflated premiums for placements that may never see the light of day. It's manual, inefficient, and gated behind relationship networks.",
-    hy: "Փրոդակթ փլեյսմենթը տասնամյակներ շարունակ մնացել է խափանված համակարգ։ Ստեղծագործողները դժվարանում են մոնետիզացնել իրենց պատմությունները, իսկ բրենդները շրջում են անթափանց ցանցերում՝ վճարելով գերագնահատված գումարներ այն տեղադրումների համար, որոնք գուցե երբեք չհասնեն էկրան։ Ամեն ինչ արվում է ձեռքով, անարդյունավետ և հասանելի է միայն կապերի միջոցով։",
+    hy: "Փրոդակթ փլեյսմենթը տասնամյակներ շարունակ մնացել է խափանված համակարգ։ Հեղինակները դժվարանում են մոնետիզացնել իրենց պատմությունները, իսկ բրենդները շրջում են անթափանց ցանցերում՝ վճարելով գերագնահատված գումարներ այն տեղադրումների համար, որոնք գուցե երբեք չհասնեն էկրան։ Ամեն ինչ արվում է ձեռքով, անարդյունավետ և հասանելի է միայն կապերի միջոցով։",
   },
   "why.paragraph2": {
     ru: "Мы создали iGovazd, чтобы это изменить. Делая плейсмент прозрачным, основанным на данных и доступным, мы даём создателям возможность контролировать свою судьбу и помогаем брендам делать более разумный, аутентичный выбор о том, где появляется их продукт.",
     en: "We built iGovazd to change that. By making placement transparent, data-driven, and accessible, we empower creators to control their own destiny and help brands make smarter, more authentic choices about where their products appear.",
-    hy: "Մենք ստեղծել ենք iGovazd-ը՝ դա փոխելու համար։ Դարձնելով տեղադրումը թափանցիկ, տվյալահեն և հասանելի, մենք հնարավորություն ենք տալիս ստեղծագործողներին վերահսկել իրենց ճակատագիրը և օգնում ենք բրենդներին ավելի խելացի, ինքնատիպ ընտրություն կատարել այն մասին, թե որտեղ է հայտնվում իրենց ապրանքը։",
+    hy: "Մենք ստեղծել ենք iGovazd-ը՝ դա փոխելու համար։ Դարձնելով տեղադրումը թափանցիկ, տվյալահեն և հասանելի, մենք հնարավորություն ենք տալիս հեղինակներին վերահսկել իրենց ճակատագիրը և օգնում ենք բրենդներին ավելի խելացի, ինքնատիպ ընտրություն կատարել այն մասին, թե որտեղ է հայտնվում իրենց ապրանքը։",
   },
   "why.paragraph3": {
     ru: "Наша миссия проста: создать более справедливый рынок, где отличные истории встречаются с отличными брендами, и выигрывают все.",
@@ -739,7 +760,7 @@ export const UI: Record<string, Dict> = {
   "hiw.heroSubtitle": {
     ru: "iGovazd связывает бренды с создателями через прозрачный, честный процесс. Узнайте, как начать всего за четыре простых шага.",
     en: "iGovazd connects brands with creators through a transparent, fair process. Discover how to get started in just four simple steps.",
-    hy: "iGovazd-ը կապում է բրենդներին ստեղծագործողների հետ թափանցիկ, արդար գործընթացի միջոցով։ Իմացեք, թե ինչպես սկսել ընդամենը չորս պարզ քայլով։",
+    hy: "iGovazd-ը կապում է բրենդներին հեղինակների հետ թափանցիկ, արդար գործընթացի միջոցով։ Իմացեք, թե ինչպես սկսել ընդամենը չորս պարզ քայլով։",
   },
   "hiw.forBrandsTitle": { ru: "Для брендов", en: "For Brands", hy: "Բրենդների համար" },
   "hiw.forBrandsSubtitle": {
@@ -747,7 +768,7 @@ export const UI: Record<string, Dict> = {
     en: "Find authentic placement opportunities in premium film and TV productions.",
     hy: "Գտեք ինքնատիպ տեղադրման հնարավորություններ պրեմիում ֆիլմերում և հեռուստասերիալներում։",
   },
-  "hiw.forCreatorsTitle": { ru: "Для создателей", en: "For Creators", hy: "Ստեղծագործողների համար" },
+  "hiw.forCreatorsTitle": { ru: "Для создателей", en: "For Creators", hy: "Հեղինակների համար" },
   "hiw.forCreatorsSubtitle": {
     ru: "Откройте возможности финансирования, монетизируя плейсмент в своих проектах.",
     en: "Unlock funding opportunities by monetizing placement in your projects.",
@@ -769,7 +790,7 @@ export const UI: Record<string, Dict> = {
   "hiw.brand3Desc": {
     ru: "Отправляйте требования к плейсменту и данные о бюджете создателям. Сотрудничайте напрямую, чтобы создать аутентичный плейсмент под ваш бренд.",
     en: "Submit placement requirements and budget details to creators. Collaborate directly to craft authentic placements that fit your brand.",
-    hy: "Ուղարկեք տեղադրման պահանջներն ու բյուջեի մանրամասները ստեղծագործողներին։ Համագործակցեք ուղղակիորեն՝ ձեր բրենդին համապատասխան ինքնատիպ տեղադրումներ ստեղծելու համար։",
+    hy: "Ուղարկեք տեղադրման պահանջներն ու բյուջեի մանրամասները հեղինակներին։ Համագործակցեք ուղղակիորեն՝ ձեր բրենդին համապատասխան ինքնատիպ տեղադրումներ ստեղծելու համար։",
   },
   "hiw.brand4Title": { ru: "Заключайте сделку", en: "Close the Deal", hy: "Կնքեք գործարքը" },
   "hiw.brand4Desc": {
@@ -781,7 +802,7 @@ export const UI: Record<string, Dict> = {
   "hiw.film1Desc": {
     ru: "Создайте профиль создателя и подтвердите свои данные. Откройте доступ к партнёрству с брендами и возможностям финансирования.",
     en: "Create your creator profile and verify your credentials. Unlock access to brand partnerships and funding opportunities.",
-    hy: "Ստեղծեք ձեր ստեղծագործողի պրոֆիլը և հաստատեք ձեր տվյալները։ Բացեք հասանելիություն բրենդային գործընկերությանը և ֆինանսավորման հնարավորություններին։",
+    hy: "Ստեղծեք ձեր հեղինակի պրոֆիլը և հաստատեք ձեր տվյալները։ Բացեք հասանելիություն բրենդային գործընկերությանը և ֆինանսավորման հնարավորություններին։",
   },
   "hiw.film2Title": { ru: "Разместите проект и возможности плейсмента", en: "List Project & Placement Opportunities", hy: "Ավելացրեք նախագիծը և տեղադրման հնարավորությունները" },
   "hiw.film2Desc": {
@@ -805,7 +826,7 @@ export const UI: Record<string, Dict> = {
   "hiw.trustBody": {
     ru: "iGovazd построен на прозрачности и доверии. Никаких скрытых комиссий для брендов, творческий контроль для создателей и комиссия платформы — только при закрытии сделок.",
     en: "iGovazd is built on transparency and trust. No hidden fees for brands, creative control for creators, and platform fees only when deals close.",
-    hy: "iGovazd-ը կառուցված է թափանցիկության և վստահության վրա։ Ոչ մի թաքնված վճար բրենդների համար, ստեղծագործական վերահսկողություն ստեղծագործողների համար, և հարթակի վճարներ միայն գործարքների կնքման դեպքում։",
+    hy: "iGovazd-ը կառուցված է թափանցիկության և վստահության վրա։ Ոչ մի թաքնված վճար բրենդների համար, ստեղծագործական վերահսկողություն հեղինակների համար, և հարթակի վճարներ միայն գործարքների կնքման դեպքում։",
   },
 
   // ── portfolio page ─────────────────────────────
@@ -986,7 +1007,7 @@ export const UI: Record<string, Dict> = {
   "completeness.item.poster": { ru: "Постер", en: "Poster", hy: "Պաստառ" },
   "completeness.item.video": { ru: "Видео или трейлер", en: "Video or trailer", hy: "Վիդեո կամ թրեյլեր" },
   "completeness.item.gallery": { ru: "Галерея кадров", en: "Stills gallery", hy: "Կադրերի պատկերասրահ" },
-  "completeness.item.cast": { ru: "Актёры и создатели", en: "Cast & creators", hy: "Դերասաններ և ստեղծագործողներ" },
+  "completeness.item.cast": { ru: "Актёры и создатели", en: "Cast & creators", hy: "Դերասաններ և հեղինակներ" },
   "completeness.item.milestones": { ru: "Этапы производства", en: "Production stages", hy: "Արտադրության փուլեր" },
   "completeness.item.placements": { ru: "Продакт-плейсмент", en: "Product placement", hy: "Փրոդակթ փլեյսմենթ" },
   "completeness.item.tiers": { ru: "Пакеты спонсорства", en: "Sponsorship packages", hy: "Հովանավորության փաթեթներ" },
@@ -1014,7 +1035,7 @@ export const UI: Record<string, Dict> = {
   "hiw.flowSubtitle": {
     ru: "Бренд идёт с одной стороны, создатель — с другой. Сходятся они на заявке.",
     en: "The brand comes from one side, the creator from the other. They meet at the application.",
-    hy: "Բրենդը գալիս է մի կողմից, ստեղծագործողը՝ մյուսից։ Նրանք հանդիպում են հայտի վրա։",
+    hy: "Բրենդը գալիս է մի կողմից, հեղինակը՝ մյուսից։ Նրանք հանդիպում են հայտի վրա։",
   },
   "hiw.flow.brand": { ru: "Бренд", en: "Brand", hy: "Բրենդ" },
   "hiw.flow.brandDesc": {
@@ -1028,7 +1049,7 @@ export const UI: Record<string, Dict> = {
     en: "Brand profile, budget and categories",
     hy: "Բրենդի պրոֆիլ, բյուջե և կատեգորիաներ",
   },
-  "hiw.flow.creator": { ru: "Создатель", en: "Creator", hy: "Ստեղծագործող" },
+  "hiw.flow.creator": { ru: "Создатель", en: "Creator", hy: "Հեղինակ" },
   "hiw.flow.creatorDesc": {
     ru: "Снимает фильм или сериал",
     en: "Making a film or a series",
@@ -1044,7 +1065,7 @@ export const UI: Record<string, Dict> = {
   "hiw.flow.hubDesc": {
     ru: "Бренд подаёт заявку, создатель отвечает",
     en: "The brand applies, the creator answers",
-    hy: "Բրենդը ներկայացնում է հայտ, ստեղծագործողը պատասխանում է",
+    hy: "Բրենդը ներկայացնում է հայտ, հեղինակը պատասխանում է",
   },
   "hiw.flow.deal": { ru: "Сделка", en: "Deal", hy: "Գործարք" },
   "hiw.flow.dealDesc": {
@@ -1063,8 +1084,8 @@ export const UI: Record<string, Dict> = {
   "format.serialEpisodes": { ru: "{n} эп. × {m} мин", en: "{n} ep × {m} min", hy: "{n} սերիա × {m} րոպե" },
   "format.filmMinutes": { ru: "{m} мин", en: "{m} min", hy: "{m} րոպե" },
 
-  "cast.title": { ru: "Актёры и создатели", en: "Cast & Creators", hy: "Դերասաններ և ստեղծագործողներ" },
-  "cast.subtitle": { ru: "Актёры и создатели, задействованные в проекте", en: "Actors and creators attached to this project", hy: "Այս նախագծին կցված դերասաններ և ստեղծագործողներ" },
+  "cast.title": { ru: "Актёры и создатели", en: "Cast & Creators", hy: "Դերասաններ և հեղինակներ" },
+  "cast.subtitle": { ru: "Актёры и создатели, задействованные в проекте", en: "Actors and creators attached to this project", hy: "Այս նախագծին կցված դերասաններ և հեղինակներ" },
 
   "keyFacts.release": { ru: "Выход", en: "Release", hy: "Ցուցադրությունը՝" },
   "keyFacts.applicationDeadline": { ru: "Срок подачи предложений", en: "Offer deadline", hy: "Առաջարկների ընդունման վերջնաժամկետ" },
@@ -1200,7 +1221,7 @@ export const UI: Record<string, Dict> = {
 
   // ── login / register ───────────────────────────
   "login.title": { ru: "Вход", en: "Sign In", hy: "Մուտք" },
-  "login.subtitle": { ru: "Войдите в аккаунт бренда или создателя.", en: "Sign in to your brand or creator account.", hy: "Մուտք գործեք ձեր բրենդի կամ ստեղծագործողի հաշիվ։" },
+  "login.subtitle": { ru: "Войдите в аккаунт бренда или создателя.", en: "Sign in to your brand or creator account.", hy: "Մուտք գործեք ձեր բրենդի կամ հեղինակի հաշիվ։" },
   "login.emailPlaceholder": { ru: "you@brand.com", en: "you@brand.com", hy: "you@company.com" },
   "login.password": { ru: "Пароль", en: "Password", hy: "Գաղտնաբառ" },
   "login.signIn": { ru: "Войти", en: "Sign In", hy: "Մուտք" },
@@ -1236,7 +1257,7 @@ export const UI: Record<string, Dict> = {
   // ── auth: register (brand + creator self-serve) ──
   "register.accountType": { ru: "Тип аккаунта", en: "Account type", hy: "Հաշվի տեսակ" },
   "register.typeBrand": { ru: "Бренд", en: "Brand", hy: "Բրենդ" },
-  "register.typeCreator": { ru: "Создатель", en: "Creator", hy: "Ստեղծագործող" },
+  "register.typeCreator": { ru: "Создатель", en: "Creator", hy: "Հեղինակ" },
   "register.typeBrandHint": {
     ru: "Хочу разместить бренд в проектах",
     en: "Place my brand in productions",
@@ -1333,7 +1354,7 @@ export const UI: Record<string, Dict> = {
   "account.profile.subtitle": {
     ru: "Управляйте своим профилем создателя",
     en: "Manage your creator profile",
-    hy: "Կառավարեք ձեր ստեղծագործողի պրոֆիլը",
+    hy: "Կառավարեք ձեր հեղինակի պրոֆիլը",
   },
   "account.profile.avatar": { ru: "Аватар", en: "Avatar", hy: "Ավատար" },
   "account.profile.avatarHint": {
@@ -1358,7 +1379,7 @@ export const UI: Record<string, Dict> = {
   "account.profile.projectsApproved": { ru: "Одобрено", en: "Approved", hy: "Հաստատված" },
   "account.company": { ru: "Компания", en: "Company", hy: "Ընկերություն" },
   "account.roleBrand": { ru: "Бренд", en: "Brand", hy: "Բրենդ" },
-  "account.roleCreator": { ru: "Создатель", en: "Creator", hy: "Ստեղծագործող" },
+  "account.roleCreator": { ru: "Создатель", en: "Creator", hy: "Հեղինակ" },
   "account.statusApproved": { ru: "Одобрен", en: "Approved", hy: "Հաստատված" },
   "account.logout": { ru: "Выйти", en: "Log out", hy: "Դուրս գալ" },
 
@@ -1509,7 +1530,7 @@ export const UI: Record<string, Dict> = {
   "account.brandOnlyNotice": {
     ru: "Подача проектов доступна только для аккаунтов создателей.",
     en: "Submitting projects is only available for creator accounts.",
-    hy: "Նախագծերի ներկայացումը հասանելի է միայն ստեղծագործողների հաշիվների համար։",
+    hy: "Նախագծերի ներկայացումը հասանելի է միայն հեղինակների հաշիվների համար։",
   },
 
   // ── creator: submission form fields ──
@@ -2125,7 +2146,7 @@ export const UI: Record<string, Dict> = {
   "admin.registrations.subtitle": {
     ru: "Одобряйте, отклоняйте или блокируйте аккаунты брендов и создателей.",
     en: "Approve, reject, or block brand and creator accounts.",
-    hy: "Հաստատեք, մերժեք կամ արգելափակեք բրենդների և ստեղծագործողների հաշիվները։",
+    hy: "Հաստատեք, մերժեք կամ արգելափակեք բրենդների և հեղինակների հաշիվները։",
   },
   "admin.registrations.colName": { ru: "Имя", en: "Name", hy: "Անուն" },
   "admin.registrations.colEmail": { ru: "Email", en: "Email", hy: "Էլփոստ" },
@@ -2273,7 +2294,7 @@ export const UI: Record<string, Dict> = {
   "apply.replaceWarning": {
     ru: "На это предложение у вас уже есть заявка. Отправка обновит её — ответ создателя не сохранится. Чтобы подать ещё одну заявку, выберите другое предложение.",
     en: "You already have an application for this offer. Sending will update it — the creator's answer will not be kept. To send a separate application, pick a different offer.",
-    hy: "Այս առաջարկի համար դուք արդեն ունեք հայտ։ Ուղարկելը կթարմացնի այն — ստեղծագործողի պատասխանը չի պահպանվի։ Առանձին հայտ ներկայացնելու համար ընտրեք այլ առաջարկ։",
+    hy: "Այս առաջարկի համար դուք արդեն ունեք հայտ։ Ուղարկելը կթարմացնի այն — հեղինակի պատասխանը չի պահպանվի։ Առանձին հայտ ներկայացնելու համար ընտրեք այլ առաջարկ։",
   },
   "apply.tierLabel": { ru: "Спонсорский пакет", en: "Sponsorship package", hy: "Հովանավորության փաթեթ" },
   "apply.tierNone": { ru: "Не выбран — обсудим", en: "Not selected — let's discuss", hy: "Ընտրված չէ — կքննարկենք" },
@@ -2438,6 +2459,15 @@ export const UI: Record<string, Dict> = {
     hy: "Ձեր մուտքի էլփոստը չի կարող փոփոխվել։",
   },
   "account.brand.companyDetails": { ru: "Данные компании", en: "Company Details", hy: "Ընկերության տվյալներ" },
+  // The brand's picture (2026-08-05). Called a logo, not an avatar: on this
+  // side of the cabinet the account is a company, and the creator's own field
+  // keeps the "avatar" wording for a person.
+  "account.brand.logo": { ru: "Логотип", en: "Logo", hy: "Լոգոն" },
+  "account.brand.logoHint": {
+    ru: "Квадратное изображение, его увидят создатели рядом с вашей заявкой.",
+    en: "A square image — creators see it next to your application.",
+    hy: "Քառակուսի պատկեր՝ հեղինակները այն կտեսնեն ձեր հայտի կողքին։",
+  },
   "account.brand.website": { ru: "Веб-сайт", en: "Website", hy: "Վեբկայք" },
   "account.brand.websitePlaceholder": { ru: "https://…", en: "https://…", hy: "https://…" },
   "account.brand.websiteInvalid": {
@@ -2488,7 +2518,7 @@ export const UI: Record<string, Dict> = {
   "completeness.item.castPhotos": {
     ru: "Фото актёров и создателей",
     en: "Cast & crew photos",
-    hy: "Դերասանների և ստեղծագործողների լուսանկարներ",
+    hy: "Դերասանների և հեղինակների լուսանկարներ",
   },
   "completeness.item.countries": { ru: "Страны", en: "Countries", hy: "Երկրներ" },
   "completeness.item.placementPricing": {
@@ -2514,7 +2544,7 @@ export const UI: Record<string, Dict> = {
     en: "Shooting — March 2026, in progress",
     hy: "Նկարահանումներ — մարտ 2026, ընթացքի մեջ է",
   },
-  "forCreators.hero.eyebrow": { ru: "Создателям", en: "For Creators", hy: "Ստեղծագործողների համար" },
+  "forCreators.hero.eyebrow": { ru: "Создателям", en: "For Creators", hy: "Հեղինակների համար" },
   "forCreators.hero.title": { ru: "Что мы ждём от вашего проекта", en: "What we need from your project", hy: "Ինչ ենք ակնկալում ձեր նախագծից" },
   "forCreators.hero.subtitle": {
     ru: "Полный список данных для витрины, требования к медиа и порядок модерации — до того как вы начнёте заполнять форму.",

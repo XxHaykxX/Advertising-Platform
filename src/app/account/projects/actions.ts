@@ -20,11 +20,13 @@ import {
   RELEASE_YEAR_MAX,
   RELEASE_YEAR_MIN,
   ROLE_VALUES,
+  deriveFormatCategory,
   kindForRole,
   parseCsvInput,
   publishBlockers,
   validateReleaseDateValue,
 } from "@/app/admin/(panel)/projects/form-shared";
+import { revalidateStorefront } from "@/lib/data/revalidate-storefront";
 import type { ProjectFormValues, ProjectFormState } from "@/app/admin/(panel)/projects/actions";
 
 /* #16 (expanded 2026-07-16): the Creator self-serve submission form
@@ -130,7 +132,16 @@ function buildData(fd: FormData): ProjectFormValues {
     synopsisEn,
     poster: str(fd, "poster", VARCHAR_MAX),
     gallery: str(fd, "gallery"),
-    formatCategory: str(fd, "formatCategory", VARCHAR_MAX),
+    // Derived from Type when the editor leaves it alone (2026-08-05). Format
+    // is a publish blocker, but it asks the same question as the Type radio
+    // right above it, so a project could sit refused over a field whose answer
+    // the form already had — and the public catalog was meanwhile deriving it
+    // anyway (deriveFormatCategory in projects.ts). The picker still wins when
+    // it is set: only Type cannot tell a mini-series from a series, or a
+    // documentary from a feature.
+    formatCategory:
+      str(fd, "formatCategory", VARCHAR_MAX) ||
+      deriveFormatCategory("", kind, `${str(fd, "format", VARCHAR_MAX)} ${genres.join(" ")}`),
     // Studio became a MultiSelect over a dictionary (2026-07-27) — same CSV
     // storage convention as genres/countries/platforms, so a co-production can
     // list every company instead of cramming them into one text field.
@@ -631,6 +642,7 @@ export async function createCreatorProject(
       updateTag("projects");
       revalidatePath("/account/projects");
       revalidatePath("/admin/moderation");
+      revalidateStorefront();
       return { ok: true, redirect: "/account/projects" };
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
@@ -783,5 +795,6 @@ export async function updateCreatorProject(
   updateTag("projects");
   revalidatePath("/account/projects");
   revalidatePath("/admin/moderation");
+  revalidateStorefront();
   return { ok: true, redirect: "/account/projects" };
 }

@@ -26,6 +26,7 @@ import { FORMAT_CATEGORY_VALUES } from "@/app/admin/(panel)/projects/form-shared
 import { cn } from "@/lib/utils";
 import { DEFAULT_LOCALE, intlLocale, makeUI, useLocalizer, type Locale } from "@/lib/i18n-client";
 import { DEFAULT_CURRENCY, type CurrencyCode } from "@/lib/currency";
+import { NO_OFFER_KEY } from "@/lib/offer-value";
 import type { ProjectListDTO } from "@/lib/types";
 
 type ViewMode = "grid" | "list";
@@ -62,14 +63,16 @@ function ProjectRow({
   const countries = splitCountries(project.countries);
   const deadlineDays = daysUntil(project.applicationDeadline);
   const deadlineUrgent = deadlineDays !== null && deadlineDays <= 45;
-  // 5.6: same "first + up to 2 more, then +N" convention as ProjectCard.
+  // 5.6: same convention as ProjectCard — two genres, then "+N". Switching
+  // between the grid and this list must not change which facts a project
+  // appears to have, so the 2026-08-05 card rules apply here too.
   // .filter(Boolean): a project with neither `genres` nor a legacy `genre`
   // fell back to [""], which the unconditional first badge below then
   // rendered as an empty grey pill (review finding, 2026-08-02).
   const allGenres = (project.genres.length > 0 ? project.genres : [project.genre]).filter(Boolean);
-  const extraGenres = allGenres.slice(1);
-  const shownExtraGenres = extraGenres.slice(0, 2);
-  const moreGenres = extraGenres.length - shownExtraGenres.length;
+  const shownGenres = allGenres.slice(0, 2);
+  const moreGenres = allGenres.length - shownGenres.length;
+  const canApply = canFavorite;
   return (
     <div className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 card-lift sm:flex-row sm:items-center">
       <div className="relative aspect-video w-full shrink-0 overflow-hidden rounded-lg sm:w-48">
@@ -86,6 +89,13 @@ function ProjectRow({
             <Film className="h-8 w-8 text-primary/40" />
           </div>
         )}
+        {/* Same solid plate as the card's — see ProjectCard for why it is not
+            translucent. */}
+        {project.ageRating ? (
+          <span className="absolute left-2 top-2 z-[5] rounded-md bg-black/75 px-1.5 py-0.5 text-[11px] font-bold text-white">
+            {project.ageRating}
+          </span>
+        ) : null}
         <FavoriteHeart
           projectId={project.id}
           initialFavorite={favorited}
@@ -97,10 +107,10 @@ function ProjectRow({
       </div>
 
       <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <h3 className="text-lg font-semibold text-foreground">{project.title}</h3>
-          {allGenres[0] ? <GenreBadge>{localize("genre", allGenres[0])}</GenreBadge> : null}
-          {shownExtraGenres.map((g) => (
+        {/* The title owns its line here too (2026-08-05). */}
+        <h3 className="text-lg font-semibold text-foreground">{project.title}</h3>
+        <div className="mt-1.5 flex flex-wrap items-center gap-2">
+          {shownGenres.map((g) => (
             <GenreBadge key={g}>{localize("genre", g)}</GenreBadge>
           ))}
           {moreGenres > 0 ? <GenreBadge>+{moreGenres}</GenreBadge> : null}
@@ -119,15 +129,35 @@ function ProjectRow({
               <Clock className="h-3 w-3 shrink-0" />
               {project.applicationDeadlineOngoing
                 ? t("deadline.ongoing")
-                : `${t("catalog.until")} ${formatFullDate(project.applicationDeadline, intlLocale(locale))}`}
+                : deadlineUrgent && deadlineDays !== null
+                  ? deadlineDays <= 0
+                    ? t("card.deadlineLastDay")
+                    : t("card.deadlineDaysLeft").replace("{n}", String(deadlineDays))
+                  : `${t("catalog.until")} ${formatFullDate(project.applicationDeadline, intlLocale(locale))}`}
             </span>
           ) : null}
         </div>
       </div>
 
-      <div className="flex shrink-0 flex-col gap-2 sm:flex-row sm:gap-3">
+      <div className="flex shrink-0 flex-col gap-2 sm:items-end">
+        {/* Price, the fact this row never carried (2026-08-05) — a list view
+            is where comparing listings actually happens. */}
+        <p className="text-base font-bold tabular-nums text-foreground">
+          {project.priceFromDisplay ? (
+            <>
+              <span className="text-xs font-medium text-muted-foreground">{t("card.priceFrom")} </span>
+              {project.priceFromDisplay}
+            </>
+          ) : (
+            <span className="text-sm font-medium text-muted-foreground">{t("card.priceOnRequest")}</span>
+          )}
+        </p>
         <Button asChild variant="primary" size="sm" className="w-full sm:w-auto">
-          <Link href={`/reports/${project.id}`}>{t("btn.viewReport")}</Link>
+          <Link
+            href={canApply ? `/reports/${project.id}?offer=${NO_OFFER_KEY}` : `/reports/${project.id}`}
+          >
+            {canApply ? t("card.applyCta") : t("btn.viewReport")}
+          </Link>
         </Button>
       </div>
     </div>

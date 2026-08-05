@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Film, Heart } from "lucide-react";
+import { Film, Handshake } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GenreBadge } from "@/components/ui/badge";
 import { requireMember } from "@/lib/auth/require";
@@ -44,8 +44,12 @@ export default async function BrandInterestsPage() {
 
       {interests.length === 0 ? (
         <div className="mt-10 flex flex-col items-center gap-4 rounded-2xl border border-dashed border-border bg-card px-6 py-16 text-center">
+          {/* IA-43: this is the OFFERS section and its empty state showed a
+              heart — the icon the sidebar uses for Favorites, one row above.
+              The two sections then looked like the same thing. Matches the
+              sidebar's own icon for this entry instead. */}
           <div className="grid h-14 w-14 place-items-center rounded-full bg-muted text-muted-foreground">
-            <Heart className="h-6 w-6" />
+            <Handshake className="h-6 w-6" />
           </div>
           <p className="text-lg font-semibold text-foreground">{t("account.brand.noInterestsTitle")}</p>
           <p className="max-w-sm text-sm text-muted-foreground">{t("account.brand.noInterestsPageBody")}</p>

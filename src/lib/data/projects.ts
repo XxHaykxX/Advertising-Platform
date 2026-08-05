@@ -116,6 +116,23 @@ function localizeCountries(locale: Locale, countries: string): string {
   return localizeCountryList(locale, countries);
 }
 
+/** The cheapest priced offer across a project's placements and packages,
+ *  formatted for the visitor (2026-08-05). Unpriced rows are dropped BEFORE
+ *  the minimum is taken, not coerced to zero — the same mistake that once made
+ *  a project with one unpriced package look free and sort first in the
+ *  favourites comparison and the "recommended" block. "" when nothing here
+ *  carries a price; the card then says "on request" instead. */
+function formatPriceFrom(
+  prices: Array<number | null>,
+  currency: CurrencyCode,
+  rates: Awaited<ReturnType<typeof getRates>>,
+  locale: Locale,
+): string {
+  const priced = prices.filter((p): p is number => p != null && p > 0);
+  if (priced.length === 0) return "";
+  return formatMoney(Math.min(...priced), currency, rates, locale);
+}
+
 // Cache DB-backed reads. On the shared host every uncached request opens a
 // Prisma connection + spins engine threads; caching keeps the DB pool (capped
 // at 2) idle between revalidations and makes pages fast, which is what keeps us
@@ -141,8 +158,11 @@ const getProjectsCached = unstable_cache(
     where: activeOnly ? { isActive: true, moderationStatus: "APPROVED" } : undefined,
     orderBy: { sortOrder: "asc" },
     include: {
-      tiers: { select: { availableSlots: true, totalSlots: true } },
-      _count: { select: { placements: true } },
+      // priceAmd rides along (2026-08-05) so the card can name the cheapest
+      // thing on sale. Both tables are already joined here, so this is one
+      // more column, not one more query.
+      tiers: { select: { availableSlots: true, totalSlots: true, priceAmd: true } },
+      placements: { select: { priceAmd: true } },
     },
   });
   const rates = await getRates();
@@ -166,7 +186,13 @@ const getProjectsCached = unstable_cache(
     platforms: p.platforms ?? "[]",
     slotsAvailable: p.tiers.reduce((sum, tier) => sum + (tier.availableSlots ?? 0), 0),
     slotsTotal: p.tiers.reduce((sum, tier) => sum + (tier.totalSlots ?? 0), 0),
-    placementsCount: p._count.placements,
+    placementsCount: p.placements.length,
+    priceFromDisplay: formatPriceFrom(
+      [...p.placements, ...p.tiers].map((o) => o.priceAmd),
+      currency,
+      rates,
+      locale,
+    ),
   }));
   },
   ["projects-list"],
@@ -280,6 +306,12 @@ const getProjectCached = unstable_cache(
       totalSlots: pl.totalSlots,
     })),
     placementsCount: p.placements.length,
+    priceFromDisplay: formatPriceFrom(
+      [...p.placements, ...p.tiers].map((o) => o.priceAmd),
+      currency,
+      rates,
+      locale,
+    ),
     milestones: p.milestones.map((m) => ({
       id: m.id,
       label: m.label,

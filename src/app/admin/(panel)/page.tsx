@@ -101,23 +101,19 @@ export default async function AdminDashboard() {
         ))}
       </div>
 
-      <div className="mt-8 flex flex-wrap gap-3">
-        {/* A MODERATOR 404s on /admin/projects (content-editor only), so the
-            primary action points at the queue they actually work in — same
-            reasoning as the moderation-queue card above (audit 7 / 3.2). */}
-        <Button asChild>
-          {isModerator ? (
+      {/* "Manage projects" and "Manage users" were removed on 2026-08-05 (owner
+          decision): both duplicate a sidebar entry that is on screen anyway, so
+          the row was a second door to the same two rooms. The moderator's
+          button stays — a MODERATOR 404s on /admin/projects and its sidebar is
+          the shortest in the panel, so this is the one shortcut that earns its
+          place (audit 7 / 3.2). */}
+      {isModerator && (
+        <div className="mt-8 flex flex-wrap gap-3">
+          <Button asChild>
             <Link href="/admin/moderation">{t("admin.dashboard.moderationQueue")}</Link>
-          ) : (
-            <Link href="/admin/projects">Manage projects</Link>
-          )}
-        </Button>
-        {isSuperadmin && (
-          <Button asChild variant="secondary">
-            <Link href="/admin/users">Manage users</Link>
           </Button>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

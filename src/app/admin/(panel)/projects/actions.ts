@@ -20,12 +20,14 @@ import {
   RELEASE_YEAR_MAX,
   RELEASE_YEAR_MIN,
   ROLE_VALUES,
+  deriveFormatCategory,
   kindForRole,
   parseCsvInput,
   publishBlockers,
   validateReleaseDateValue,
   type ReleasePrecision,
 } from "./form-shared";
+import { revalidateStorefront } from "@/lib/data/revalidate-storefront";
 
 export type ProjectFormValues = {
   title: string;
@@ -209,7 +211,16 @@ function buildData(fd: FormData): ProjectFormValues {
     synopsisEn,
     poster: str(fd, "poster", VARCHAR_MAX),
     gallery: str(fd, "gallery"),
-    formatCategory: str(fd, "formatCategory", VARCHAR_MAX),
+    // Derived from Type when the editor leaves it alone (2026-08-05). Format
+    // is a publish blocker, but it asks the same question as the Type radio
+    // right above it, so a project could sit refused over a field whose answer
+    // the form already had — and the public catalog was meanwhile deriving it
+    // anyway (deriveFormatCategory in projects.ts). The picker still wins when
+    // it is set: only Type cannot tell a mini-series from a series, or a
+    // documentary from a feature.
+    formatCategory:
+      str(fd, "formatCategory", VARCHAR_MAX) ||
+      deriveFormatCategory("", kind, `${str(fd, "format", VARCHAR_MAX)} ${genres.join(" ")}`),
     // Studio became a MultiSelect over a dictionary (2026-07-27) — same CSV
     // storage convention as genres/countries/platforms, so a co-production can
     // list every company instead of cramming them into one text field.
@@ -606,6 +617,12 @@ function revalidateProjectPaths(id?: number) {
   updateTag("projects");
   revalidatePath("/admin/projects");
   if (id) revalidatePath(`/reports/${id}`);
+  // The storefront surfaces, added 2026-08-05: expiring the cached data is not
+  // enough on its own — the owner changed a project's age rating, saved, and
+  // the catalog went on showing the old badge until a manual reload. Every
+  // page that renders a project card has to be dropped alongside the tag, or
+  // the edit looks like it did not take.
+  revalidateStorefront();
 }
 
 export async function createProject(

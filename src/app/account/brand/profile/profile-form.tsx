@@ -4,14 +4,28 @@ import { useActionState, useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { MediaField } from "@/components/media-field";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { BRAND_CATEGORIES, BUDGET_RANGES } from "@/lib/brand-categories";
 import { makeUI, useLocalizer, type Locale } from "@/lib/i18n-client";
 import { updateBrandProfile, type BrandProfileFormState } from "../actions";
 import type { BrandProfileDTO } from "@/lib/data/brand-profile";
+import {
+  FIELD_ERROR_CLASS,
+  FieldError,
+  FieldErrorIcon,
+  RequiredMark,
+  focusFirstError,
+  useRequiredFields,
+} from "@/components/ui/field";
+import { cn } from "@/lib/utils";
 
 const initialState: BrandProfileFormState = {};
+
+// The action rejects a blank display name (../actions.ts) — flag it in the
+// form instead of only after the round-trip, same as the creator's form.
+const REQUIRED = ["name"] as const;
 
 const fieldClass =
   "w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none transition-colors focus:border-primary/50";
@@ -46,7 +60,15 @@ export function ProfileForm({ profile, locale }: { profile: BrandProfileDTO; loc
   // value on screen for good rather than for a frame.
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const data = new FormData(e.currentTarget);
+    const form = e.currentTarget;
+    const data = new FormData(form);
+    // Own validation instead of the browser's (see field.tsx) — and it has to
+    // run here rather than on a <form action={...}>, because this form
+    // dispatches the action by hand for the anti-flash reason above.
+    if (!check(data, REQUIRED)) {
+      focusFirstError(form, REQUIRED);
+      return;
+    }
     startTransition(() => formAction(data));
   }
   const [categories, setCategories] = useState<string[]>(profile.brandCategories);
@@ -65,6 +87,8 @@ export function ProfileForm({ profile, locale }: { profile: BrandProfileDTO; loc
   // instead of lingering forever (IA-28). Kept separate from `state.ok` (which
   // stays true) so it can be re-shown and re-timed on every consecutive save.
   const [showSaved, setShowSaved] = useState(false);
+  const { errors, check, clear, fieldProps } = useRequiredFields(t("form.required"));
+  const hasErrors = Object.keys(errors).length > 0;
 
   // After a successful save, pull the fresh server data so every consumer of
   // the profile (this select, the dashboard) reflects the new value without a
@@ -105,6 +129,58 @@ export function ProfileForm({ profile, locale }: { profile: BrandProfileDTO; loc
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         <div className={cardClass}>
           <h2 className="text-lg font-semibold text-foreground">{t("account.brand.companyDetails")}</h2>
+
+          {/* Added 2026-08-05. The name was fetched by the page and rendered
+              by nothing, so the one string creators and admins actually see —
+              the "From" on every application, and the only identifier in the
+              e-mail a creator receives — could not be corrected after
+              registration. The logo had never existed on this side at all,
+              while the creator's form has had an avatar since #23. */}
+          <div className="mt-4 max-w-md">
+            <label className="block">
+              <span className={labelClass}>
+                {t("form.name")}
+                <RequiredMark />
+              </span>
+              <div className="relative">
+                <input
+                  name="name"
+                  type="text"
+                  defaultValue={profile.name}
+                  placeholder={t("form.name")}
+                  onInput={() => clear("name")}
+                  {...fieldProps("name")}
+                  className={cn(fieldClass, errors.name && FIELD_ERROR_CLASS)}
+                />
+                {errors.name && <FieldErrorIcon />}
+              </div>
+            </label>
+            <FieldError id="name-error" message={errors.name} />
+          </div>
+
+          <div className="mt-4">
+            <span className={labelClass}>{t("account.brand.logo")}</span>
+            <p className="mb-2 text-xs text-muted-foreground">{t("account.brand.logoHint")}</p>
+            {/* Member-scoped, exactly like the creator's avatar: uploads land
+                in /uploads/members/<id>/avatars and the picker only ever shows
+                this brand's own files. Every caption is localized — the
+                component's English defaults would otherwise show through. */}
+            <MediaField
+              name="avatar"
+              initial={profile.avatar}
+              uploadDir="avatars"
+              scope="member"
+              label={t("btn.browse")}
+              previewShape="square"
+              dropTitle={t("media.dropTitleOne")}
+              dropLabel={t("media.dropHereOne")}
+              errTooLargeLabel={t("media.errTooLargeShort")}
+              replaceLabel={t("media.replace")}
+              removeLabel={t("ui.remove")}
+              dropReplaceLabel={t("media.dropToReplace")}
+            />
+          </div>
+
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <label className="block">
               <span className={labelClass}>{t("form.company")}</span>
@@ -185,7 +261,9 @@ export function ProfileForm({ profile, locale }: { profile: BrandProfileDTO; loc
             {pending && <Loader2 className="h-4 w-4 animate-spin" />}
             {t("account.brand.saveChanges")}
           </Button>
-          {showSaved && !pending ? (
+          {/* Blocked submits never reach the action, so a stale "Saved" must
+              not sit next to a red "please fill in this field". */}
+          {showSaved && !pending && !hasErrors ? (
             <span className="text-sm font-medium text-success">{t("account.brand.saved")}</span>
           ) : null}
         </div>

@@ -427,7 +427,7 @@ function jsonArray(fd: FormData, key: string): string[] {
 const VARCHAR_MAX = 191;
 const BUDGET_VALUES = BUDGET_RANGES.map((b) => b.value);
 
-/** Update the current BRAND member's company/website/categories/budget.
+/** Update the current BRAND member's name/company/website/categories/budget.
  *  Categories are filtered against BRAND_CATEGORIES (closed set — unlike
  *  genres.ts, there's no allowCustom here); budgetRange against
  *  BUDGET_RANGES. Email is never editable from this form. */
@@ -439,6 +439,24 @@ export async function updateBrandProfile(
   const locale = await getLocale();
   const t = makeUI(locale);
   if (user.role !== "BRAND") return { error: t("account.brand.expressInterestError") };
+
+  // The display name. Fixed 2026-08-05: the profile page fetched it and then
+  // rendered nothing for it, so a brand could edit its company, site, phone,
+  // categories and budget but not the one string every creator and admin
+  // actually sees — it is the name on each application ("From" in both
+  // inboxes) and the only identifier in the e-mail a creator gets. A typo made
+  // at registration was permanent. Required and capped exactly as on the
+  // creator's own form (updateCreatorProfile), so the two cannot disagree
+  // about what a usable name is.
+  const name = String(fd.get("name") || "").trim();
+  if (!name) return { error: t("account.profile.nameRequired") };
+
+  // The logo. Same containment rule as the creator's avatar: a path the brand
+  // does not own is discarded rather than stored, so a crafted POST cannot
+  // point the picture at another member's upload directory.
+  const rawAvatar = String(fd.get("avatar") || "").trim();
+  const avatar =
+    rawAvatar === "" || rawAvatar.startsWith(`/uploads/members/${user.id}/`) ? rawAvatar : "";
 
   const company = String(fd.get("company") || "").trim().slice(0, VARCHAR_MAX);
   // Capped generously before parsing (not to VARCHAR_MAX yet) — the parsed
@@ -467,6 +485,8 @@ export async function updateBrandProfile(
   await prisma.user.update({
     where: { id: user.id },
     data: {
+      name: name.slice(0, 120),
+      avatar: avatar || null,
       company: company || null,
       website,
       phone: phone || null,

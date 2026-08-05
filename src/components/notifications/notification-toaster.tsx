@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Bell, Heart, Megaphone, X } from "lucide-react";
+import { Bell, CheckCircle2, Clock, Handshake, Megaphone, X, XCircle } from "lucide-react";
 import { makeUI, type Locale } from "@/lib/i18n-client";
 import { renderNotification, parseNotificationData } from "@/lib/notifications";
 import { getUnreadNotificationsPreview, markNotificationRead } from "@/lib/actions/notifications";
@@ -13,9 +13,19 @@ const STORAGE_KEY = "igovazd:toastedNotifIds";
 const POLL_MS = 10_000;
 const AUTO_DISMISS_MS = 6500;
 
+// IA-43: only two of the seven notification types had an icon, so everything
+// else — including "your project was approved" — fell back to a plain bell and
+// a success message looked identical to a rejection. Every type now says what
+// it is at a glance: a tick for the good news, a cross for the refusal.
 const ICONS: Record<string, typeof Bell> = {
   BROADCAST: Megaphone,
-  INTEREST: Heart,
+  // A brand offer, not a favourite: the heart belongs to the shortlist.
+  INTEREST: Handshake,
+  PROJECT_SUBMITTED: Clock,
+  PROJECT_APPROVED: CheckCircle2,
+  PROJECT_REJECTED: XCircle,
+  INTEREST_APPROVED: CheckCircle2,
+  INTEREST_DECLINED: XCircle,
 };
 
 /** Live in-app notification toaster (#push). Polls the server every ~10s for

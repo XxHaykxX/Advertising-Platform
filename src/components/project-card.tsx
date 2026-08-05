@@ -8,6 +8,7 @@ import {
   Clock,
   Film,
   MapPin,
+  Megaphone,
 } from "lucide-react";
 import { GenreBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,7 @@ import { FavoriteHeart } from "@/components/favorite-heart";
 import { daysUntil, formatFullDate, formatReleaseDate, parseStringArray, splitCountries } from "@/lib/data/format";
 import { cn } from "@/lib/utils";
 import { DEFAULT_LOCALE, intlLocale, makeUI, useLocalizer, type Locale } from "@/lib/i18n-client";
+import { NO_OFFER_KEY } from "@/lib/offer-value";
 import type { SiteHeaderUser } from "@/components/header";
 import type { ProjectListDTO } from "@/lib/types";
 
@@ -58,14 +60,47 @@ export function ProjectCard({
   // the title started at genres[1] to avoid repeating it. The overlay is gone
   // now (it covered the image and still dropped every genre past the first),
   // so the row under the title starts at genres[0] and carries all of them.
-  // Cap at 3 badges and collapse the rest into a "+N" pill, same convention
-  // as the country list above.
+  // Two badges since 2026-08-05 (owner decision) with the rest collapsed into
+  // a "+N" pill — the same convention as the country list above. The counter
+  // is not optional: "1988" carries four genres and would silently lose two.
   // .filter(Boolean): a project with neither `genres` nor a legacy `genre`
   // (both empty) fell back to [""], rendering an empty grey pill — exactly
   // the "chip with no value" bug IA-41 was about (review finding, 2026-08-02).
   const allGenres = (project.genres.length > 0 ? project.genres : [project.genre]).filter(Boolean);
-  const shownGenres = allGenres.slice(0, 3);
+  const shownGenres = allGenres.slice(0, 2);
   const moreGenres = allGenres.length - shownGenres.length;
+  // Platforms are NOT capped (owner decision 2026-08-05, reversing the cap
+  // added the same day): where a project actually airs is a fact a brand
+  // weighs, and "+1" hides which channel it was. Genres collapse, this list
+  // does not.
+  // A brand is the only viewer who can apply, so it is the only one whose
+  // button says so. `?offer=-` opens the report page with the application
+  // popup already up — see OFFER_QUERY_PARAM.
+  const canApply = canFavorite;
+  const reportHref = `/reports/${project.id}`;
+  // Capacity bar (2026-08-05). Filled = already taken, so the bar grows as the
+  // project sells out. Clamped because availableSlots and totalSlots are two
+  // independently-editable admin fields: nothing stops a publisher leaving 12
+  // available out of 10 total, and an unclamped width would paint outside the
+  // track.
+  const slotsTaken = Math.max(0, project.slotsTotal - project.slotsAvailable);
+  const slotsTakenPct =
+    project.slotsTotal > 0 ? Math.min(100, Math.round((slotsTaken / project.slotsTotal) * 100)) : 0;
+  const slotsLow = project.slotsTotal > 0 && project.slotsAvailable <= 2;
+  // The marketing bucket ("Series", "Feature film") — already in the DTO and
+  // already the catalog's Format filter, but never shown on the card until
+  // 2026-08-05. Distinct from `project.format` below, which is the runtime
+  // ("12 ep x 11 min").
+  const formatCategoryRaw = project.formatCategory
+    ? localize("formatCategory", project.formatCategory)
+    : "";
+  // "Animation" is both a genre and a format bucket, and the two localize to
+  // the same word — the chip row rendered "Անիմացիա · Արկածային · +1 ·
+  // Անիմացիա" on the very first project in the catalog. A chip that repeats
+  // its neighbour is noise, so drop it rather than teach the reader to ignore
+  // duplicates.
+  const shownGenreLabels = shownGenres.map((g) => localize("genre", g));
+  const formatCategoryLabel = shownGenreLabels.includes(formatCategoryRaw) ? "" : formatCategoryRaw;
   // Language is a CSV of one or more values (admin redesign phase 1) — used to
   // only drive the filter and was never shown on the card itself.
 
@@ -92,6 +127,17 @@ export function ProjectCard({
             <Film className="h-10 w-10 text-primary/40" />
           </div>
         )}
+        {/* Content rating, top-LEFT so it never collides with the heart
+            (2026-08-05). Solid dark plate rather than a translucent one: the
+            poster underneath is arbitrary artwork, and on a light one — the
+            animation posters are all light — a see-through badge disappears.
+            The rating is a fact a brand screens on, so it cannot be a chip
+            that only sometimes reads. */}
+        {project.ageRating ? (
+          <span className="absolute left-3 top-3 z-[5] rounded-md bg-black/75 px-2 py-0.5 text-xs font-bold text-white shadow-sm">
+            {project.ageRating}
+          </span>
+        ) : null}
         <FavoriteHeart
           projectId={project.id}
           initialFavorite={favorited}
@@ -103,26 +149,19 @@ export function ProjectCard({
       </div>
 
       <div className="flex flex-1 flex-col p-6">
-        <div className="flex flex-wrap items-center gap-2">
-          <h3 className="text-lg font-semibold text-foreground md:text-xl">{project.title}</h3>
-          {shownGenres.map((g) => (
-            <GenreBadge key={g}>{localize("genre", g)}</GenreBadge>
+        {/* The title owns its line (owner decision 2026-08-05). It used to
+            share one flex-wrap container with every badge, so the pills flowed
+            around the project name and it stopped reading as a heading. */}
+        <h3 className="text-lg font-semibold text-foreground md:text-xl">{project.title}</h3>
+        {/* What the project IS — genres and format. Availability and price are
+            not categories and no longer sit here; they moved down to the
+            decision block above the button. */}
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          {shownGenres.map((g, i) => (
+            <GenreBadge key={g}>{shownGenreLabels[i]}</GenreBadge>
           ))}
           {moreGenres > 0 ? <GenreBadge>+{moreGenres}</GenreBadge> : null}
-          {project.slotsTotal > 0 ? (
-            <GenreBadge>
-              {project.slotsAvailable} / {project.slotsTotal} {t("card.slotsAvailable")}
-            </GenreBadge>
-          ) : null}
-          {/* How many product placements the project offers (owner request
-              2026-07-28). Counted from real rows, so a project with none says
-              nothing rather than printing a zero. */}
-          {project.placementsCount > 0 ? (
-            <GenreBadge>
-              {project.placementsCount}{" "}
-              {t(project.placementsCount === 1 ? "card.placementsOne" : "card.placementsMany")}
-            </GenreBadge>
-          ) : null}
+          {formatCategoryLabel ? <GenreBadge>{formatCategoryLabel}</GenreBadge> : null}
         </div>
         <div className="mt-4 flex flex-col gap-2 text-sm text-muted-foreground">
           {/* IA-41: format and countries used to render unconditionally, so a
@@ -152,10 +191,20 @@ export function ProjectCard({
           {project.applicationDeadline || project.applicationDeadlineOngoing ? (
             <div className={cn("flex items-center gap-2", deadlineUrgent ? "text-warn" : undefined)}>
               <Clock className="h-3.5 w-3.5 shrink-0" />
+              {/* Close to the deadline the card counts down instead of naming
+                  a date (2026-08-05): the row already turned amber at 45 days
+                  but still made the reader subtract today from a date to find
+                  out how urgent that was. Past the deadline the project is
+                  archived and never reaches the catalog, so a negative count
+                  cannot appear here. */}
               <span>
                 {project.applicationDeadlineOngoing
                   ? t("deadline.ongoing")
-                  : `${t("card.applicationsUntil")} ${formatFullDate(project.applicationDeadline, intlLocale(locale))}`}
+                  : deadlineUrgent && deadlineDays !== null
+                    ? deadlineDays <= 0
+                      ? t("card.deadlineLastDay")
+                      : t("card.deadlineDaysLeft").replace("{n}", String(deadlineDays))
+                    : `${t("card.applicationsUntil")} ${formatFullDate(project.applicationDeadline, intlLocale(locale))}`}
               </span>
             </div>
           ) : null}
@@ -179,12 +228,70 @@ export function ProjectCard({
           </div>
         ) : null}
 
-        {/* The interest action moved to the heart (favorite) + the report page's
-            Apply popup, so the card keeps a single "View report" CTA. */}
-        <div className="relative z-20 mt-auto pt-6">
-          <Button asChild variant="secondary" size="sm" className="w-full">
-            <Link href={`/reports/${project.id}`}>{t("btn.viewReport")}</Link>
-          </Button>
+        {/* The decision block (2026-08-05): what is left, and what it costs.
+            Both used to be grey pills up in the title row — indistinguishable
+            from "Family" — or, in the price's case, absent from the card
+            entirely, so a brand could not compare two listings without opening
+            both. */}
+        <div className="mt-auto pt-4">
+          {/* Capacity, as a bar rather than the "8 / 10 · 5 placements" run-on
+              it used to be (2026-08-05). The filled part is what is already
+              TAKEN, so a project fills up visibly as deals land, and the
+              wording underneath states the same thing in words — colour alone
+              never carries it. */}
+          {project.slotsTotal > 0 ? (
+            <div>
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                <div
+                  className={cn("h-full rounded-full transition-[width]", slotsLow ? "bg-warn" : "bg-primary")}
+                  style={{ width: `${slotsTakenPct}%` }}
+                />
+              </div>
+              <p
+                className={cn(
+                  "mt-1.5 text-xs font-medium",
+                  slotsLow ? "text-warn" : "text-muted-foreground",
+                )}
+              >
+                {t("card.slotsLeft")
+                  .replace("{n}", String(project.slotsAvailable))
+                  .replace("{total}", String(project.slotsTotal))}
+              </p>
+            </div>
+          ) : null}
+          {/* Placements are a count, not a ratio — they get their own line with
+              an icon instead of being glued to the slots with a "·". */}
+          {project.placementsCount > 0 ? (
+            <p className="mt-1.5 flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+              <Megaphone className="h-3.5 w-3.5 shrink-0" />
+              {project.placementsCount}{" "}
+              {t(project.placementsCount === 1 ? "card.placementsOne" : "card.placementsMany")}
+            </p>
+          ) : null}
+          {/* tabular-nums: three cards sit side by side in the catalog grid,
+              and proportional digits make their prices jitter out of line. */}
+          <p className="mt-1 text-base font-bold tabular-nums text-foreground">
+            {project.priceFromDisplay ? (
+              <>
+                <span className="text-xs font-medium text-muted-foreground">{t("card.priceFrom")} </span>
+                {project.priceFromDisplay}
+              </>
+            ) : (
+              <span className="text-sm font-medium text-muted-foreground">{t("card.priceOnRequest")}</span>
+            )}
+          </p>
+          <div className="relative z-20 mt-3">
+            {/* A brand goes straight to the application; everyone else — a
+                guest, a creator, staff — gets the report, which is all they can
+                act on. The popup itself cannot live here: it needs the offers,
+                the brand's phone and the applications already sent, none of
+                which the catalog loads. */}
+            <Button asChild variant={canApply ? "primary" : "secondary"} size="sm" className="w-full">
+              <Link href={canApply ? `${reportHref}?offer=${NO_OFFER_KEY}` : reportHref}>
+                {canApply ? t("card.applyCta") : t("btn.viewReport")}
+              </Link>
+            </Button>
+          </div>
         </div>
       </div>
     </div>

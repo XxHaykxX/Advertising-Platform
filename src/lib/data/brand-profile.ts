@@ -11,6 +11,9 @@ export type BrandProfileDTO = {
   email: string;
   name: string;
   company: string;
+  /** The brand's logo, member-scoped like the creator's avatar. Added
+   *  2026-08-05 — this side of the cabinet had no picture at all. */
+  avatar: string;
   website: string;
   /** The callback number the seller gets with every application. Editable here
    *  since 2026-07-29 — until then the only way a brand's phone was ever set
@@ -29,6 +32,7 @@ export async function getBrandProfile(userId: number): Promise<BrandProfileDTO |
       email: true,
       name: true,
       company: true,
+      avatar: true,
       website: true,
       phone: true,
       brandCategories: true,
@@ -41,6 +45,7 @@ export async function getBrandProfile(userId: number): Promise<BrandProfileDTO |
     email: user.email,
     name: user.name,
     company: user.company ?? "",
+    avatar: user.avatar ?? "",
     website: user.website ?? "",
     phone: user.phone ?? "",
     brandCategories: parseStringArray(user.brandCategories),

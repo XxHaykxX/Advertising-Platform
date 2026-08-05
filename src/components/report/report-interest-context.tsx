@@ -55,7 +55,15 @@ export type ReportViewer = "brand" | "guest" | "none";
 
 /** Query parameter that survives the sign-in round trip: /reports/34?offer=P:5
  *  reopens the popup on placement 5 the moment the brand lands back here, so
- *  the intent isn't lost at the login wall (owner decision 2026-07-29). */
+ *  the intent isn't lost at the login wall (owner decision 2026-07-29).
+ *
+ *  `?offer=-` (NO_OFFER_KEY) is the same door with nothing preselected — the
+ *  catalog card's apply button uses it (2026-08-05). The card cannot open the
+ *  popup itself: the dialog needs the project's offers with prices and slots,
+ *  the brand's phone and the set of applications it already holds, none of
+ *  which the catalog loads. Sending the brand to the report page with the
+ *  popup already open costs nothing and keeps the project in front of them
+ *  rather than letting them apply to a title they never opened. */
 export const OFFER_QUERY_PARAM = "offer";
 
 const ReportInterestContext = createContext<ReportInterestContextValue | null>(null);
@@ -112,6 +120,13 @@ export function ReportInterestProvider({
     url.searchParams.delete(OFFER_QUERY_PARAM);
     window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
     if (archived || viewer !== "brand") return;
+    // The sentinel opens the popup with the picker untouched — that is what
+    // the catalog card asks for, since it names no particular offer.
+    if (wanted === NO_OFFER_KEY) {
+      setPreselected("");
+      setIsOpen(true);
+      return;
+    }
     // Only an offer this project actually sells — a hand-typed id must not
     // open a popup preselected on somebody else's placement.
     if (!offers.some((o) => `${o.kind === "PLACEMENT" ? "P" : "T"}:${o.id}` === wanted)) return;

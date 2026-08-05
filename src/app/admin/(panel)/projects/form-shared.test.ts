@@ -24,10 +24,25 @@ describe("deriveFormatCategory", () => {
     expect(deriveFormatCategory("", "FILM", "Series · 18+")).toBe("SERIES");
   });
 
-  it("infers FEATURE from Feature/Film/Movie/Documentary tokens", () => {
+  it("infers FEATURE from Feature/Film/Movie tokens", () => {
     expect(deriveFormatCategory("", "FILM", "Feature · 95 min")).toBe("FEATURE");
     expect(deriveFormatCategory("", "FILM", "Movie · 1h 40m")).toBe("FEATURE");
-    expect(deriveFormatCategory("", "FILM", "Documentary · 44 min")).toBe("FEATURE");
+  });
+
+  // Both are buckets of their own in FORMAT_CATEGORY_VALUES *and* genres in
+  // GENRES, so real rows carry the word. Until 2026-08-05 "documentary" was
+  // swallowed by the feature branch and came back FEATURE (this test asserted
+  // that), while "animation" matched nothing and fell through to the `kind`
+  // fallback — a cartoon series was filed as a plain feature film.
+  it("infers DOCUMENTARY and ANIMATION rather than lumping them into FEATURE", () => {
+    expect(deriveFormatCategory("", "FILM", "Documentary · 44 min")).toBe("DOCUMENTARY");
+    expect(deriveFormatCategory("", "FILM", "Документальный фильм")).toBe("DOCUMENTARY");
+    expect(deriveFormatCategory("", "SERIAL", "Animation")).toBe("ANIMATION");
+    expect(deriveFormatCategory("", "FILM", "Анимация · 12 серий")).toBe("ANIMATION");
+  });
+
+  it("still lets an explicitly saved value win over any guess", () => {
+    expect(deriveFormatCategory("MINISERIES", "FILM", "Documentary · 44 min")).toBe("MINISERIES");
   });
 
   it("infers the niche buckets from their tokens", () => {

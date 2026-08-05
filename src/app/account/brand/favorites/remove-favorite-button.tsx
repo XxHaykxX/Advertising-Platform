@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Loader2, X } from "lucide-react";
+import { HeartOff, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { removeFavorite } from "../favorite-actions";
 
@@ -36,7 +36,9 @@ export function RemoveFavoriteButton({
           })
         }
       >
-        {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <X className="h-3.5 w-3.5" />}
+        {/* IA-43: a bare ✕ reads as "close/cancel", not "take this out of my
+            shortlist" — the action undoes a heart, so it wears one. */}
+        {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <HeartOff className="h-3.5 w-3.5" />}
         {label}
       </Button>
       {error ? <p className="text-xs text-danger">{error}</p> : null}

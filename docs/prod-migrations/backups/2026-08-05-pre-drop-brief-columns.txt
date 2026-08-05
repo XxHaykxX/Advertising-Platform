@@ -1,0 +1,4 @@
+﻿id	brandId	projectId	offerKey	desiredTiming	dealType	offerAmountAmd
+44	17	23	-	NULL	CASH	150000
+id	interestId	kind	desiredTiming	dealType	offerAmountAmd
+9	44	APPLICATION	NULL	CASH	150000

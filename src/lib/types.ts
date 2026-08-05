@@ -32,6 +32,16 @@ export interface ProjectListDTO {
   // 2026-07-28) — powers the "N placements" badge on the catalog card.
   // Counted from real rows, so a project with none renders nothing.
   placementsCount: number;
+  /** The cheapest thing this project sells, already formatted in the visitor's
+   *  currency (2026-08-05) — same preformatted-on-the-server contract as
+   *  productionBudgetDisplay below, so the three components that render a card
+   *  don't each have to be handed the daily FX rates.
+   *
+   *  A marketplace card without a price is a listing a buyer cannot compare,
+   *  which is why this exists. "" means nothing here carries a price at all —
+   *  every placement and package is "on request" — and the card says so
+   *  rather than printing a bare currency symbol. */
+  priceFromDisplay: string;
 }
 
 export interface ProjectDetailDTO extends ProjectListDTO {

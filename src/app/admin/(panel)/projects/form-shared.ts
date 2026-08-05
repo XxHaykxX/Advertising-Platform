@@ -104,7 +104,14 @@ export function deriveFormatCategory(
   if (/\bshort\b|короткометр|կարճամետրաժ/.test(t)) return "SHORT";
   if (/series|serial|сериал|սերիал/.test(t)) return "SERIES";
   if (/program|переда|հաղորդում/.test(t)) return "PROGRAM";
-  if (/feature|documentary|\bfilm\b|\bmovie\b|фильм|филм|ֆիլմ|վավերագր/.test(t)) return "FEATURE";
+  // Documentary and animation are their own buckets AND their own genres, so
+  // they have to be matched before the catch-all film branch below. Until
+  // 2026-08-05 "documentary" fell into that branch and came back as FEATURE,
+  // and animation matched nothing at all — a cartoon series was filed as a
+  // plain feature film. Both words are in GENRES, so this fires on real data.
+  if (/documentary|документальн|վավերագր/.test(t)) return "DOCUMENTARY";
+  if (/animation|cartoon|анимац|мультф|անիմաց/.test(t)) return "ANIMATION";
+  if (/feature|\bfilm\b|\bmovie\b|фильм|филм|ֆիլմ/.test(t)) return "FEATURE";
   if (kind === "SERIAL") return "SERIES";
   if (kind === "FILM") return "FEATURE";
   return "";
