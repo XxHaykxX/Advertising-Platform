@@ -133,7 +133,10 @@ export function PosterSlider({
   }
 
   return (
-    <div className="flex flex-col gap-3">
+    // min-w-0 all the way down: the strip below is a scroller whose content is
+    // far wider than the column, and without it that content width becomes the
+    // column's min-content and pushes the whole layout open.
+    <div className="flex min-w-0 flex-col gap-3">
       <div className={FRAME}>
         <div
           ref={scrollerRef}
@@ -179,7 +182,7 @@ export function PosterSlider({
           one slide at a time, so with a dozen gallery frames the last of them
           was eleven clicks away and nothing on screen said it existed. The
           strip scrolls on its own axis when it outgrows the column. */}
-      <div className="no-print flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="no-print flex min-w-0 gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {hasVideo ? (
           <button
             type="button"

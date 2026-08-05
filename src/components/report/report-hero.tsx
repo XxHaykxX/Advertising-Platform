@@ -83,12 +83,21 @@ export function ReportHero({
         </Reveal>
 
         <Reveal delay={0.05}>
-          {/* items-start, not the default stretch: the left column is now
-              taller than the frame alone (strip + synopsis), and stretching
-              would leave the deal card floating against a column it no longer
-              matches in height. */}
-          <div className="mt-6 grid grid-cols-1 items-start gap-6 lg:grid-cols-[1.3fr_1fr]">
-            <div className="flex flex-col gap-5">
+          {/* minmax(0,…) on BOTH tracks, not a bare `1.3fr_1fr`. An `fr` track's
+              minimum is `auto`, i.e. the min-content width of its item — and the
+              thumbnail strip's content is ~1030px wide (11 thumbs). Even though
+              the strip scrolls, that width leaked into the track minimum and the
+              browser resolved the row as 1032px + 232px instead of 651 + 501,
+              squeezing the deal card to a third of its width. min-w-0 on the
+              column itself is the same fix applied one level down, so neither
+              the track nor the flex column can be pushed open by content that
+              is supposed to scroll.
+
+              items-start, not the default stretch: the left column is now taller
+              than the frame alone (strip + synopsis), and stretching would leave
+              the deal card floating against a column it no longer matches. */}
+          <div className="mt-6 grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
+            <div className="flex min-w-0 flex-col gap-5">
               {/* The frame, the age pill and the thumbnail strip all live
                   inside PosterSlider now — the strip has to drive the same
                   scroller, so they cannot be split across a server/client

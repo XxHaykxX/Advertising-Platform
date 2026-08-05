@@ -141,7 +141,13 @@ export function DealCard({
     // space falls outside the card instead, where it reads as page, not as a
     // gap someone forgot to fill. (`items-start` on the hero grid is what lets
     // this shrink: without it the grid would stretch the card anyway.)
-    <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 sm:p-5">
+    // @container, so everything inside reacts to THIS CARD's width instead of
+    // the viewport's. The two are not related here: the card is full page width
+    // on a phone and on a tablet, then drops to ~410px the moment the hero grid
+    // splits at lg. A viewport breakpoint would have to be right for both, and
+    // there is no such value — sm:grid-cols-2 gave the card two comfortable
+    // columns at 768 and two cramped ones at 1024.
+    <div className="@container flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 sm:p-5">
       {hasBudget ? (
         <div>
           <Wallet className="h-4 w-4 text-primary" />
@@ -196,7 +202,11 @@ export function DealCard({
       {metaItems.length > 0 ? (
         <>
           {hasBudget || hasOffer || hasDeadline ? <hr className="border-border" /> : null}
-          <dl className="grid grid-cols-2 gap-x-4 gap-y-3 max-sm:grid-cols-1">
+          {/* One column until the card itself is ~384px wide. Armenian fact
+              labels ("ՆԿԱՐԱՀԱՆՈՒՄՆԵՐԸ", "ՑՈՒՑԱԴՐՈՒԹՅՈՒՆԸ՝") need roughly
+              180px to sit on one line, and half of a narrower card does not
+              give them that. */}
+          <dl className="grid grid-cols-1 gap-x-4 gap-y-3 @sm:grid-cols-2">
             {metaItems.map(({ icon: Icon, label, value }) => (
               <div key={label} className="min-w-0">
                 {/* Labels wrap rather than truncate: this card is ~185px per
