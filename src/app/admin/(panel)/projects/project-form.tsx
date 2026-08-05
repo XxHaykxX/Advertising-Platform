@@ -30,7 +30,7 @@ import type { PlacementRow } from "./placements-editor";
 import { ReferencesSection } from "./references-editor";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { MediaField } from "@/components/media-field";
-import { Dropzone, DropzoneEmptyState, DropzonePreview } from "@/components/ui/dropzone";
+import { Dropzone, DropzoneEmptyState, useDropzoneOpen } from "@/components/ui/dropzone";
 import { UploadProgress } from "@/components/ui/upload-progress";
 import { holdProgress, uploadViaXhr } from "@/lib/upload-xhr";
 import { PosterGenerator, type PosterGenerateInput, type PosterGenerateResult } from "@/components/poster-generator";
@@ -429,6 +429,7 @@ function PresentationField({
           from an empty string, same contract as poster/videoFile. */}
       <input type="hidden" name={name} value={value} />
       <Dropzone
+        className="w-full flex-row items-center justify-start gap-2.5 px-3 py-2.5 text-left"
         accept={{ "application/pdf": [".pdf"] }}
         maxFiles={1}
         maxSize={PRESENTATION_MAX_MB * 1024 * 1024}
@@ -450,31 +451,79 @@ function PresentationField({
               className="border-0"
             />
           ) : value ? (
-            // A row, not a 16:9 picture frame — there's no thumbnail to show
-            // for a PDF, only its name, so the same aspect-video box MediaField
-            // uses for images would just be mostly empty.
-            <DropzonePreview replaceLabel={t("media.replace")} removeLabel={t("ui.remove")} onRemove={() => setValue("")}>
-              <a
-                href={value}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex h-20 items-center gap-3 rounded-xl border border-border bg-background px-4 text-sm text-foreground hover:border-primary/40"
-              >
-                <FileText className="h-6 w-6 shrink-0 text-muted-foreground" />
-                <span className="min-w-0 truncate">{fileName}</span>
-              </a>
-            </DropzonePreview>
+            <PresentationRow
+              href={value}
+              fileName={fileName}
+              replaceLabel={t("media.replace")}
+              removeLabel={t("ui.remove")}
+              onRemove={() => setValue("")}
+            />
           ) : undefined
         }
       >
+        {/* One line, not the stacked icon-over-caption block every image field
+            uses. A deck is an optional attachment: at the poster's size it read
+            as a fourth required asset and ate 166px of the section (owner,
+            2026-08-06). The size cap is stated here rather than in the section
+            hint, because the only moment it matters is while picking a file. */}
         <DropzoneEmptyState>
-          <span className="flex flex-col items-center gap-1 text-xs text-muted-foreground">
-            <FileText className="h-4 w-4" />
-            {t("projectForm.presentation")}
+          <span className="flex w-full items-center gap-2.5 text-left">
+            <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+            <span className="text-sm font-medium text-foreground">
+              {t("projectForm.presentation")}
+            </span>
+            <span className="ml-auto shrink-0 text-xs text-muted-foreground">
+              PDF · ≤ {PRESENTATION_MAX_MB} MB
+            </span>
           </span>
         </DropzoneEmptyState>
       </Dropzone>
       {error ? <p className="text-xs text-danger">{error}</p> : null}
+    </div>
+  );
+}
+
+/** The filled state of the deck field: a single row with the file name and its
+ *  two actions spelled out.
+ *
+ *  Deliberately NOT DropzonePreview, which hides Replace/Remove behind a hover
+ *  overlay. That works over a poster — the image is the content and the buttons
+ *  would cover it — but this row IS the buttons' own line, there is nothing to
+ *  cover, and a control you have to hover to discover is the wrong trade on a
+ *  field the owner already had trouble finding. */
+function PresentationRow({
+  href,
+  fileName,
+  replaceLabel,
+  removeLabel,
+  onRemove,
+}: {
+  href: string;
+  fileName: string;
+  replaceLabel: string;
+  removeLabel: string;
+  onRemove: () => void;
+}) {
+  const open = useDropzoneOpen();
+  const action =
+    "shrink-0 rounded-lg border border-border bg-card px-2 py-1 text-xs font-medium text-foreground hover:border-primary/40 hover:text-primary";
+  return (
+    <div className="flex w-full items-center gap-2.5 rounded-xl bg-background px-3 py-2">
+      <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="min-w-0 flex-1 truncate text-sm text-foreground underline-offset-2 hover:text-primary hover:underline"
+      >
+        {fileName}
+      </a>
+      <button type="button" onClick={() => open?.()} className={action}>
+        {replaceLabel}
+      </button>
+      <button type="button" onClick={onRemove} className={action}>
+        {removeLabel}
+      </button>
     </div>
   );
 }
@@ -1574,8 +1623,17 @@ export function ProjectForm({
               {/* ── Presentation (IA-44 §1) ── an optional sales deck a brand
                   can download from the report page; nothing here feeds
                   publishBlockers or projectCompleteness — a missing deck never
-                  blocks publication. */}
-              <MediaCard heading={t("projectForm.presentation")} hint={t("projectForm.presentationHint")}>
+                  blocks publication.
+
+                  Deliberately NOT a MediaCard like the three above it. As a card
+                  it carried the poster's exact visual weight — same border, same
+                  heading size, same 166px — and read as a fourth required asset
+                  in a section about imagery (owner, 2026-08-06). It is the one
+                  optional, non-visual thing here, so it renders as a single
+                  attachment line under the assets instead: the label lives
+                  inside the row, and the card's heading would only have said the
+                  same words twice. */}
+              <div className="space-y-1.5 pt-1">
                 <PresentationField
                   key={`presentation-${restoreNonce}`}
                   name="presentationPdf"
@@ -1583,7 +1641,10 @@ export function ProjectForm({
                   scope={uploaderScope}
                   t={t}
                 />
-              </MediaCard>
+                <p className="px-1 text-xs text-muted-foreground">
+                  {t("projectForm.presentationHint")}
+                </p>
+              </div>
             </div>
           </section>
 
