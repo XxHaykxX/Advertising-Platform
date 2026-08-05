@@ -1,5 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { SESSION_COOKIE, verifySessionToken } from "@/lib/auth/session";
+import {
+  MEMBER_SESSION_COOKIE,
+  STAFF_SESSION_COOKIE,
+  verifySessionToken,
+} from "@/lib/auth/session";
 import { isMemberReachablePath } from "@/lib/auth/member-paths";
 
 const STAFF_ROLES = ["SUPERADMIN", "PUBLISHER", "MODERATOR", "TRANSLATOR"];
@@ -15,9 +19,15 @@ const STAFF_ROLES = ["SUPERADMIN", "PUBLISHER", "MODERATOR", "TRANSLATOR"];
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  const session = await verifySessionToken(req.cookies.get(SESSION_COOKIE)?.value);
-  const isStaff = session !== null && STAFF_ROLES.includes(session.role);
-  const isMember = session !== null && (session.role === "BRAND" || session.role === "CREATOR");
+  // One cookie per audience since IA-47, so both are read here: the admin
+  // guard below only ever looks at the staff one, the confinement only at the
+  // member one, and a browser may legitimately carry both at once.
+  const staffSession = await verifySessionToken(req.cookies.get(STAFF_SESSION_COOKIE)?.value);
+  const memberSession = await verifySessionToken(req.cookies.get(MEMBER_SESSION_COOKIE)?.value);
+  const isStaff = staffSession !== null && STAFF_ROLES.includes(staffSession.role);
+  const isMember =
+    memberSession !== null &&
+    (memberSession.role === "BRAND" || memberSession.role === "CREATOR");
 
   // --- 1. Admin area (staff only) ---
   if (pathname.startsWith("/admin")) {
@@ -32,7 +42,7 @@ export async function proxy(req: NextRequest) {
       const url = req.nextUrl.clone();
       // A TRANSLATOR can only reach the dictionary editor — every other admin
       // page 404s for that role, so land them there instead of the dashboard.
-      url.pathname = session!.role === "TRANSLATOR" ? "/admin/i18n" : "/admin";
+      url.pathname = staffSession!.role === "TRANSLATOR" ? "/admin/i18n" : "/admin";
       url.search = "";
       return NextResponse.redirect(url);
     }
@@ -47,10 +57,15 @@ export async function proxy(req: NextRequest) {
   // stays off-limits so a signed-in member can't wander into guest-only
   // flows. See lib/auth/member-paths.ts for the shared allow-list, also used
   // by the login action to validate a post-login ?from= redirect target.)
-  if (isMember) {
+  // ...unless the same browser also holds a staff session (only possible since
+  // the cookies were split): that visitor is an editor who happens to have a
+  // member account too, and confining them to the cabinet would take the whole
+  // public site away from them. The staff identity wins, matching
+  // loadCurrentUser()'s precedence.
+  if (isMember && !isStaff) {
     if (!isMemberReachablePath(pathname)) {
       const url = req.nextUrl.clone();
-      url.pathname = session!.role === "BRAND" ? "/account/brand" : "/account";
+      url.pathname = memberSession!.role === "BRAND" ? "/account/brand" : "/account";
       url.search = "";
       return NextResponse.redirect(url);
     }

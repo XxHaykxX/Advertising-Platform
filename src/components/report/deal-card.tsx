@@ -1,4 +1,15 @@
-import { Building2, Clapperboard, Clock, Film, Layers, MapPin, Wallet } from "lucide-react";
+import {
+  Building2,
+  CalendarDays,
+  Clapperboard,
+  Clock,
+  Film,
+  Layers,
+  MapPin,
+  MonitorPlay,
+  Popcorn,
+  Wallet,
+} from "lucide-react";
 import { DealCta } from "@/components/report/deal-cta";
 import { PresentationDownload } from "@/components/report/presentation-download";
 import { formatFullDate, splitCountries } from "@/lib/data/format";
@@ -29,6 +40,7 @@ export function DealCard({
   ongoing = false,
   daysLeft,
   meta,
+  where,
   presentationPdf,
   locale = DEFAULT_LOCALE,
 }: {
@@ -36,8 +48,24 @@ export function DealCard({
   budgetDisplay: string | null;
   /** What the project IS — the icon row that used to sit under the hero image
    *  as bare values. It lands here, labelled, in the space this card had left
-   *  over above the button (owner decision 2026-07-30). */
-  meta: { genres: string[]; format: string; studio: string; countries: string };
+   *  over above the button (owner decision 2026-07-30).
+   *
+   *  `release` joined it on 2026-08-05 together with the two chip rows below:
+   *  the whole "where it airs / when" half of the facts block moved into this
+   *  card, because a brand was reading the price here and then having to scroll
+   *  to a second card to learn where the thing actually airs. Preformatted by
+   *  the caller (it needs the project's release PRECISION, which this card is
+   *  not given) — null when the creator never set a release date. */
+  meta: {
+    genres: string[];
+    format: string;
+    studio: string;
+    countries: string;
+    release: string | null;
+  };
+  /** Streaming/TV platforms and cinema chains, rendered as chip rows under the
+   *  facts. Empty arrays simply render nothing — no label above an empty row. */
+  where: { platforms: string[]; cinemas: string[] };
   /** Cheapest offer on the page (placement or package), preformatted. */
   fromPrice: string | null;
   slotsFree: number;
@@ -76,11 +104,18 @@ export function DealCard({
     { icon: Clapperboard, label: t("keyFacts.format"), value: meta.format },
     { icon: Building2, label: t("keyFacts.studio"), value: meta.studio },
     { icon: MapPin, label: t("keyFacts.countries"), value: splitCountries(meta.countries).join(", ") },
+    { icon: CalendarDays, label: t("keyFacts.release"), value: meta.release ?? "" },
   ].filter((m) => Boolean(m.value));
+  // Chip rows, each dropping out on its own when the creator filled neither.
+  const chipRows = [
+    { icon: MonitorPlay, label: t("keyFacts.platforms"), values: where.platforms },
+    { icon: Popcorn, label: t("keyFacts.cinemas"), values: where.cinemas },
+  ].filter((row) => row.values.length > 0);
   // A project with no budget, no priced offer, no deadline and no facts has
   // nothing to put in this card — better an empty column than an empty box
   // with a border around it.
-  if (!hasBudget && !hasOffer && !hasDeadline && metaItems.length === 0) return null;
+  if (!hasBudget && !hasOffer && !hasDeadline && metaItems.length === 0 && chipRows.length === 0)
+    return null;
 
   // Matches the catalog card's threshold, so "closing soon" means the same
   // thing in the list and on the page.
@@ -155,14 +190,51 @@ export function DealCard({
           <dl className="grid grid-cols-2 gap-x-4 gap-y-3 max-sm:grid-cols-1">
             {metaItems.map(({ icon: Icon, label, value }) => (
               <div key={label} className="min-w-0">
-                <dt className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                  <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                  <span className="truncate">{label}</span>
+                {/* Labels wrap rather than truncate: this card is ~185px per
+                    column at desktop and the Armenian labels are longer than
+                    that, so truncation turned half of them into "ՆԿԱՐԱՀ…".
+                    items-start keeps the icon on the first line when a label
+                    takes two. */}
+                <dt className="flex items-start gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  <Icon className="mt-px h-3.5 w-3.5 shrink-0" aria-hidden />
+                  <span className="min-w-0">{label}</span>
                 </dt>
                 <dd className="mt-1 break-words text-sm font-medium text-foreground">{value}</dd>
               </div>
             ))}
           </dl>
+        </>
+      ) : null}
+
+      {/* Where it airs — the chip rows that used to open the facts block below.
+          They sit last among the facts because they are the widest thing in
+          this column and a wrapping chip row would otherwise push the labelled
+          two-column grid around (owner decision 2026-08-05). */}
+      {chipRows.length > 0 ? (
+        <>
+          {hasBudget || hasOffer || hasDeadline || metaItems.length > 0 ? (
+            <hr className="border-border" />
+          ) : null}
+          <div className="flex flex-col gap-3">
+            {chipRows.map(({ icon: Icon, label, values }) => (
+              <div key={label} className="min-w-0">
+                <div className="flex items-start gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  <Icon className="mt-px h-3.5 w-3.5 shrink-0" aria-hidden />
+                  <span className="min-w-0">{label}</span>
+                </div>
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {values.map((v) => (
+                    <span
+                      key={v}
+                      className="inline-flex items-center rounded-full border border-border bg-muted px-2.5 py-1 text-xs font-medium text-foreground"
+                    >
+                      {v}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
         </>
       ) : null}
 

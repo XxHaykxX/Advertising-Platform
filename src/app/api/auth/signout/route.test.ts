@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { GET } from "./route";
-import { SESSION_COOKIE } from "@/lib/auth/session";
+import { MEMBER_SESSION_COOKIE, STAFF_SESSION_COOKIE } from "@/lib/auth/session";
 
 /* Regression test for IA-31: NextResponse.redirect(new URL(target, url.origin))
    derived its origin from req.url, which on Hostinger/Passenger reports the
@@ -36,10 +36,21 @@ describe("GET /api/auth/signout", () => {
     expect(location?.startsWith("http")).toBe(false);
   });
 
-  it("clears the session cookie", async () => {
+  /* IA-47: staff and members hold separate cookies, so a signout must clear
+     the one its ?to= names and leave the other cabinet's session alone. */
+  it("clears the member cookie only, with no ?to=", async () => {
     const res = await GET(new Request("http://localhost:3001/api/auth/signout"));
     const setCookie = res.headers.get("set-cookie");
-    expect(setCookie).toContain(SESSION_COOKIE);
+    expect(setCookie).toContain(MEMBER_SESSION_COOKIE);
+    expect(setCookie).not.toContain(STAFF_SESSION_COOKIE);
+    expect(setCookie).toContain("Max-Age=0");
+  });
+
+  it("clears the staff cookie only, for ?to=staff", async () => {
+    const res = await GET(new Request("http://localhost:3001/api/auth/signout?to=staff"));
+    const setCookie = res.headers.get("set-cookie");
+    expect(setCookie).toContain(STAFF_SESSION_COOKIE);
+    expect(setCookie).not.toContain(MEMBER_SESSION_COOKIE);
     expect(setCookie).toContain("Max-Age=0");
   });
 });

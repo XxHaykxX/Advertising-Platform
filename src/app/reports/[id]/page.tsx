@@ -217,7 +217,10 @@ export default async function ReportPage({
         {/* The video now leads the hero slider (first slide) — see ReportHero /
             PosterSlider. The standalone ReportVideo section was removed so it
             isn't shown twice (user request 2026-07-25). */}
-        <KeyFacts project={project} locale={locale} user={user} />
+        {/* No `user` prop any more: the block's apply button was a duplicate of
+            the deal card's own CTA and was removed on 2026-08-05, and it was
+            the only thing here that cared who was looking. */}
+        <KeyFacts project={project} locale={locale} />
       </div>
       <div id="production" className="scroll-mt-24">
         <ProductionTimeline project={project} locale={locale} />

@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
-import { SESSION_COOKIE, sessionCookieOptions } from "@/lib/auth/session";
+import {
+  MEMBER_SESSION_COOKIE,
+  STAFF_SESSION_COOKIE,
+  sessionCookieOptions,
+} from "@/lib/auth/session";
 
 /** Clears the session cookie and sends the visitor to a login page.
  *
@@ -20,14 +24,19 @@ import { SESSION_COOKIE, sessionCookieOptions } from "@/lib/auth/session";
 /** Where a signout may land. A closed list rather than a free `to` parameter:
  *  the URL is reachable by anyone, and an open one would make it an
  *  off-site redirector. */
-const TARGETS: Record<string, string> = {
-  member: "/login",
-  staff: "/admin/login",
+/** Where a signout may land, and which cookie that landing implies. `?to=`
+ *  already names the audience, so since IA-47 this route clears exactly one
+ *  cookie — signing out of the cabinet must not end an admin session opened in
+ *  the same browser, and the other way round. */
+const TARGETS: Record<string, { path: string; cookie: string }> = {
+  member: { path: "/login", cookie: MEMBER_SESSION_COOKIE },
+  staff: { path: "/admin/login", cookie: STAFF_SESSION_COOKIE },
 };
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
-  const target = TARGETS[url.searchParams.get("to") ?? "member"] ?? TARGETS.member;
+  const to = TARGETS[url.searchParams.get("to") ?? "member"] ?? TARGETS.member;
+  const target = to.path;
 
   // NextResponse.redirect() insists on an absolute URL (it runs `new URL()`
   // on whatever you give it with no base, so a bare path throws). Building
@@ -50,6 +59,6 @@ export async function GET(req: Request) {
   });
   // Same attributes the cookie was set with (path especially) or the browser
   // keeps the original alongside the expired one.
-  res.cookies.set(SESSION_COOKIE, "", { ...sessionCookieOptions(0), maxAge: 0 });
+  res.cookies.set(to.cookie, "", { ...sessionCookieOptions(0), maxAge: 0 });
   return res;
 }

@@ -2,7 +2,11 @@
 
 import { cookies } from "next/headers";
 import { createMember } from "@/lib/auth/members";
-import { SESSION_COOKIE, createSessionToken, sessionCookieOptions } from "@/lib/auth/session";
+import {
+  MEMBER_SESSION_COOKIE,
+  createSessionToken,
+  sessionCookieOptions,
+} from "@/lib/auth/session";
 import { safeMemberRedirect } from "@/lib/auth/member-paths";
 import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
@@ -66,7 +70,7 @@ export async function register(
   // pattern as /login/actions.ts).
   const token = await createSessionToken(result.userId, role);
   const jar = await cookies();
-  jar.set(SESSION_COOKIE, token, sessionCookieOptions());
+  jar.set(MEMBER_SESSION_COOKIE, token, sessionCookieOptions());
 
   // Don't redirect() here: this cookie was just set in a useActionState
   // action, and Next 16 would render /account from the root in the same

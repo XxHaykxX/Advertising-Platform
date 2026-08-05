@@ -2,7 +2,11 @@
 
 import { cookies, headers } from "next/headers";
 import { authenticateMember } from "@/lib/auth/members";
-import { SESSION_COOKIE, createSessionToken, sessionCookieOptions } from "@/lib/auth/session";
+import {
+  MEMBER_SESSION_COOKIE,
+  createSessionToken,
+  sessionCookieOptions,
+} from "@/lib/auth/session";
 import { safeMemberRedirect } from "@/lib/auth/member-paths";
 import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
@@ -64,7 +68,7 @@ export async function login(
 
   const token = await createSessionToken(result.user.id, result.user.role);
   const jar = await cookies();
-  jar.set(SESSION_COOKIE, token, sessionCookieOptions());
+  jar.set(MEMBER_SESSION_COOKIE, token, sessionCookieOptions());
 
   const from = safeMemberRedirect(String(formData.get("from") ?? "") || null);
 

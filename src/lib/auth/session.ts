@@ -7,7 +7,21 @@ import type { Role } from "@prisma/client";
    that uid — it does NOT confirm the user is still active. The authoritative
    isActive gate lives in requireUser() (Node runtime, hits the DB). */
 
-export const SESSION_COOKIE = "adm_session";
+/* Two session cookies, one per audience (IA-47). A browser holds one value per
+   cookie name, so while staff and members shared a single name, signing into
+   the member cabinet silently overwrote an open admin session and vice versa —
+   different email addresses didn't help, since the collision is on the cookie,
+   not on the role. Same token format and the same signing secret for both;
+   only the name differs, and each guard reads exactly one of them. There is
+   deliberately no "either cookie" fallback and no default name: every call site
+   has to say which audience it means. */
+
+/** Staff session: SUPERADMIN / PUBLISHER / MODERATOR / TRANSLATOR, set at
+   /admin/login. Keeps the historical name, so this split logs no staff out. */
+export const STAFF_SESSION_COOKIE = "adm_session";
+/** Member session: BRAND / CREATOR, set at /login, /register and the Google
+   callback. A new name, so the release signs every member out once. */
+export const MEMBER_SESSION_COOKIE = "mbr_session";
 /** Non-httpOnly cookie holding the last logged-in email, for "Remember me" prefill. */
 export const LAST_EMAIL_COOKIE = "adm_last_email";
 const MAX_AGE_SECONDS = 60 * 60 * 24 * 7; // 7 days (default / not remembered)

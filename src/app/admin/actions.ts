@@ -2,7 +2,7 @@
 
 import { cookies, headers } from "next/headers";
 import {
-  SESSION_COOKIE,
+  STAFF_SESSION_COOKIE,
   LAST_EMAIL_COOKIE,
   REMEMBER_MAX_AGE_SECONDS,
   createSessionToken,
@@ -107,7 +107,7 @@ export async function login(
   );
   const c = await cookies();
   c.set(
-    SESSION_COOKIE,
+    STAFF_SESSION_COOKIE,
     token,
     sessionCookieOptions(remember ? REMEMBER_MAX_AGE_SECONDS : undefined),
   );
@@ -150,7 +150,9 @@ export async function login(
  *  on the client with a fresh full request. */
 export async function logout(): Promise<{ ok: true; redirect: string }> {
   const c = await cookies();
-  c.delete(SESSION_COOKIE);
+  // Staff cookie only — a member session in the same browser is a separate
+  // login and stays untouched (IA-47).
+  c.delete(STAFF_SESSION_COOKIE);
   return { ok: true, redirect: "/admin/login" };
 }
 

@@ -3,7 +3,11 @@ import { cache } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { notFound } from "next/navigation";
-import { SESSION_COOKIE, verifySessionToken } from "@/lib/auth/session";
+import {
+  MEMBER_SESSION_COOKIE,
+  STAFF_SESSION_COOKIE,
+  verifySessionToken,
+} from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
 import {
   canEditContent,
@@ -35,8 +39,12 @@ const SIGNOUT_STAFF = "/api/auth/signout?to=staff";
  *  proxy will bounce the visitor straight back), otherwise to the login page
  *  directly. */
 async function rejectTo(kind: "member" | "staff"): Promise<string> {
-  const hasCookie = (await cookies()).get(SESSION_COOKIE)?.value != null;
-  if (kind === "staff") return hasCookie ? SIGNOUT_STAFF : LOGIN_STAFF;
+  const jar = await cookies();
+  if (kind === "staff") {
+    const hasCookie = jar.get(STAFF_SESSION_COOKIE)?.value != null;
+    return hasCookie ? SIGNOUT_STAFF : LOGIN_STAFF;
+  }
+  const hasCookie = jar.get(MEMBER_SESSION_COOKIE)?.value != null;
   return hasCookie ? SIGNOUT_MEMBER : LOGIN_MEMBER;
 }
 
@@ -48,40 +56,29 @@ export type AuthedUser = {
   isActive: boolean;
 };
 
-/** Loads the current session's user from the DB. Returns null unless the
-   token is valid AND the user still has isActive=true — this is the instant-
-   deactivation gate: a deactivated Publisher is locked out on the very next
-   request, since we re-check the DB (not just the JWT) on every call. */
-export const loadCurrentUser = cache(async function loadCurrentUser(): Promise<AuthedUser | null> {
-  const token = (await cookies()).get(SESSION_COOKIE)?.value;
+/** Reads one named session cookie and loads its user from the DB. Returns null
+   unless the token is valid AND the user still has isActive=true — this is the
+   instant-deactivation gate: a deactivated Publisher is locked out on the very
+   next request, since we re-check the DB (not just the JWT) on every call.
+   The cookie name is always passed in: since IA-47 staff and members hold
+   different cookies, and a guard that guesses is the bug this split fixes. */
+async function loadSessionUser(cookieName: string) {
+  const token = (await cookies()).get(cookieName)?.value;
   const session = await verifySessionToken(token);
   if (!session) return null;
 
   const user = await prisma.user.findUnique({ where: { id: session.uid } });
   if (!user || !user.isActive) return null;
+  return user;
+}
 
-  return {
-    id: user.id,
-    email: user.email,
-    role: user.role,
-    name: user.name,
-    isActive: user.isActive,
-  };
-});
-
-/** Loads the current session's user only if it is an approved, active member
-   (BRAND / CREATOR). Blocked/pending/rejected members and staff users → null.
-   Re-checks the DB each call, so blocking a member locks them out immediately. */
-async function loadCurrentMember(): Promise<AuthedUser | null> {
-  const token = (await cookies()).get(SESSION_COOKIE)?.value;
-  const session = await verifySessionToken(token);
-  if (!session) return null;
-
-  const user = await prisma.user.findUnique({ where: { id: session.uid } });
-  if (!user || !user.isActive) return null;
-  if (user.role !== "BRAND" && user.role !== "CREATOR") return null;
-  if (user.status !== "APPROVED") return null;
-
+function toAuthedUser(user: {
+  id: number;
+  email: string;
+  role: Role;
+  name: string;
+  isActive: boolean;
+}): AuthedUser {
   return {
     id: user.id,
     email: user.email,
@@ -90,6 +87,36 @@ async function loadCurrentMember(): Promise<AuthedUser | null> {
     isActive: user.isActive,
   };
 }
+
+/** The active staff user behind the staff cookie, or null. A member token
+   found in that cookie is rejected outright — it can only get there by hand,
+   since no member sign-in path writes it. */
+export const loadStaffUser = cache(async function loadStaffUser(): Promise<AuthedUser | null> {
+  const user = await loadSessionUser(STAFF_SESSION_COOKIE);
+  if (!user || !isStaffRole(user.role)) return null;
+  return toAuthedUser(user);
+});
+
+/** The current member behind the member cookie, but only if it is an approved,
+   active BRAND / CREATOR. Blocked/pending/rejected members → null. Re-checks
+   the DB each call, so blocking a member locks them out immediately. */
+export const loadCurrentMember = cache(async function loadCurrentMember(): Promise<AuthedUser | null> {
+  const user = await loadSessionUser(MEMBER_SESSION_COOKIE);
+  if (!user) return null;
+  if (user.role !== "BRAND" && user.role !== "CREATOR") return null;
+  if (user.status !== "APPROVED") return null;
+  return toAuthedUser(user);
+});
+
+/** Whoever is signed in on this request, from either cabinet — for the call
+   sites that serve both audiences (the site header, the notification badge,
+   the dictionary widening in the project form). Since the two cookies are
+   independent, one browser can now carry both; the staff identity wins, which
+   is the same precedence proxy.ts applies to its member confinement.
+   Guards must NOT use this: they take loadStaffUser / loadCurrentMember. */
+export const loadCurrentUser = cache(async function loadCurrentUser(): Promise<AuthedUser | null> {
+  return (await loadStaffUser()) ?? (await loadCurrentMember());
+});
 
 /** True for any staff role that may sign in at /admin (SUPERADMIN, PUBLISHER,
    MODERATOR, TRANSLATOR). Members (BRAND / CREATOR) are not staff. */
@@ -103,10 +130,11 @@ function isStaffRole(role: Role): boolean {
 }
 
 /** Require a logged-in, active staff user (SUPERADMIN, PUBLISHER or
-   MODERATOR). Members (BRAND / CREATOR) are bounced to /admin/login — they
-   can never reach the admin panel even with a valid member session. */
+   MODERATOR). Reads the staff cookie only, so a member session — which now
+   lives in a cookie of its own — can never reach the admin panel, even when
+   the same browser holds both. */
 export async function requireUser(): Promise<AuthedUser> {
-  const user = await loadCurrentUser();
+  const user = await loadStaffUser();
   if (!user) redirect(await rejectTo("staff"));
   if (!isStaffRole(user.role)) redirect(await rejectTo("staff"));
   return user;

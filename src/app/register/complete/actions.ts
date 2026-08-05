@@ -3,7 +3,11 @@
 import { cookies } from "next/headers";
 import { createGoogleMember } from "@/lib/auth/members";
 import { verifyPendingGoogle, G_PENDING_COOKIE } from "@/lib/auth/google";
-import { SESSION_COOKIE, createSessionToken, sessionCookieOptions } from "@/lib/auth/session";
+import {
+  MEMBER_SESSION_COOKIE,
+  createSessionToken,
+  sessionCookieOptions,
+} from "@/lib/auth/session";
 import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
 
@@ -49,7 +53,7 @@ export async function completeRegister(
   // No moderation queue — the account is APPROVED immediately, so sign the
   // new member straight in and drop them into their cabinet.
   const token = await createSessionToken(result.userId, role);
-  c.set(SESSION_COOKIE, token, sessionCookieOptions());
+  c.set(MEMBER_SESSION_COOKIE, token, sessionCookieOptions());
 
   // Don't redirect() here: this cookie was just set in a useActionState
   // action, and Next 16 would render /account from the root in the same

@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" width="320" height="180">
+  <!-- Jingle: the mic and the sound it records. -->
+  <rect width="320" height="180" fill="#f4f5fa"/>
+  <g fill="none" stroke="#111827" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="52" y="30" width="38" height="66" rx="19" fill="#f4f5fa"/>
+    <path d="M38 84 a33 33 0 0 0 66 0"/>
+    <line x1="71" y1="117" x2="71" y2="146"/>
+    <line x1="52" y1="146" x2="90" y2="146"/>
+  </g>
+  <g stroke="#6b7280" stroke-width="1.6" opacity="0.8">
+    <line x1="60" y1="46" x2="82" y2="46"/>
+    <line x1="60" y1="56" x2="82" y2="56"/>
+    <line x1="60" y1="66" x2="82" y2="66"/>
+  </g>
+  <!-- the waveform it lays down -->
+  <g stroke-linecap="round" stroke-width="7">
+    <g stroke="#6b7280" opacity="0.55">
+      <line x1="134" y1="76" x2="134" y2="104"/>
+      <line x1="152" y1="62" x2="152" y2="118"/>
+      <line x1="224" y1="60" x2="224" y2="120"/>
+      <line x1="242" y1="74" x2="242" y2="106"/>
+      <line x1="278" y1="70" x2="278" y2="110"/>
+      <line x1="296" y1="82" x2="296" y2="98"/>
+    </g>
+    <g stroke="#4f46e5">
+      <line x1="170" y1="44" x2="170" y2="136"/>
+      <line x1="188" y1="30" x2="188" y2="150"/>
+      <line x1="206" y1="50" x2="206" y2="130"/>
+      <line x1="260" y1="54" x2="260" y2="126"/>
+    </g>
+  </g>
+</svg>

@@ -1,9 +1,8 @@
 "use server";
 
 import { revalidatePath, updateTag } from "next/cache";
-import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import { SESSION_COOKIE, verifySessionToken } from "@/lib/auth/session";
+import { loadCurrentMember, loadStaffUser } from "@/lib/auth/require";
 import { canEditContent } from "@/lib/auth/permissions";
 import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
@@ -36,19 +35,16 @@ type Responder = { id: number; role: string };
    the project's owner may answer an application (owner decision — the deal is
    the seller's to run), so passing this check is necessary but not sufficient. */
 async function loadResponder(): Promise<Responder | null> {
-  const token = (await cookies()).get(SESSION_COOKIE)?.value;
-  const session = await verifySessionToken(token);
-  if (!session) return null;
-  const user = await prisma.user.findUnique({
-    where: { id: session.uid },
-    select: { id: true, role: true, isActive: true, status: true },
-  });
-  if (!user || !user.isActive) return null;
-  if (user.role === "CREATOR") {
-    if (user.status !== "APPROVED") return null;
-    return { id: user.id, role: user.role };
-  }
-  if (canEditContent(user.role)) return { id: user.id, role: user.role };
+  // Both cabinets answer here, and since IA-47 they arrive on different
+  // cookies — so both are consulted, each through its own loader (which
+  // re-checks isActive/status against the DB). The creator is tried first:
+  // this action is called from their inbox far more often than from the
+  // staff one, and a browser may now hold both sessions at once.
+  const member = await loadCurrentMember();
+  if (member && member.role === "CREATOR") return { id: member.id, role: member.role };
+
+  const staff = await loadStaffUser();
+  if (staff && canEditContent(staff.role)) return { id: staff.id, role: staff.role };
   return null;
 }
 

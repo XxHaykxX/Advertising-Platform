@@ -3,10 +3,9 @@ import { DealCard } from "@/components/report/deal-card";
 import { BackButton, PrintButton, ShareButton } from "@/components/report/report-actions";
 import { PosterSlider } from "@/components/report/poster-slider";
 import { toEmbedUrl } from "@/components/report/report-video";
-import { StoryboardMarquee } from "@/components/report/storyboard-marquee";
 import { SynopsisDisclosure } from "@/components/report/synopsis-disclosure";
-import { parseStringArray } from "@/lib/data/format";
-import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
+import { formatReleaseDate, parseStringArray } from "@/lib/data/format";
+import { DEFAULT_LOCALE, intlLocale, makeUI, type Locale } from "@/lib/i18n";
 import type { ProjectDetailDTO } from "@/lib/types";
 
 /** Offer summary for the hero's deal card. Computed in page.tsx (it is the
@@ -30,7 +29,6 @@ export function ReportHero({
   locale?: Locale;
 }) {
   const t = makeUI(locale);
-  const thumbnails = parseStringArray(project.gallery).slice(0, 20);
   // Main slider shows the poster plus every gallery image, poster first,
   // de-duplicated in case the same file is used in both fields.
   const sliderImages = Array.from(
@@ -42,6 +40,16 @@ export function ReportHero({
   const videoEmbed = project.videoEmbedUrl ? toEmbedUrl(project.videoEmbedUrl) : null;
   const videoSource =
     videoEmbed || project.videoFile ? { embed: videoEmbed, file: project.videoFile || null } : undefined;
+  // Formatted here rather than inside the deal card: the card is not given the
+  // project's release PRECISION, and printing a day the editor never entered is
+  // exactly the bug IA-42 fixed. `false` keeps the page at full DAY precision,
+  // unlike the compact catalog card.
+  const release = formatReleaseDate(
+    project.releaseDate,
+    project.releasePrecision,
+    intlLocale(locale),
+    false,
+  );
 
   return (
     <section className="pt-8 pb-4">
@@ -75,25 +83,38 @@ export function ReportHero({
         </Reveal>
 
         <Reveal delay={0.05}>
-          <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-[1.3fr_1fr]">
-            <div className="relative aspect-video overflow-hidden rounded-2xl border border-border bg-muted">
+          {/* items-start, not the default stretch: the left column is now
+              taller than the frame alone (strip + synopsis), and stretching
+              would leave the deal card floating against a column it no longer
+              matches in height. */}
+          <div className="mt-6 grid grid-cols-1 items-start gap-6 lg:grid-cols-[1.3fr_1fr]">
+            <div className="flex flex-col gap-5">
+              {/* The frame, the age pill and the thumbnail strip all live
+                  inside PosterSlider now — the strip has to drive the same
+                  scroller, so they cannot be split across a server/client
+                  boundary. The production-status pill ("Filming", …) that used
+                  to sit over the poster was removed on 2026-07-30: production
+                  trivia a brand cannot act on, covering the image. */}
               <PosterSlider
                 images={sliderImages}
                 alt={project.title}
                 prevLabel={t("report.prev")}
                 nextLabel={t("report.next")}
                 video={videoSource}
+                ageRating={project.ageRating}
               />
-              {/* The production-status pill ("Filming", "Post-Production", …)
-                  used to sit here over the poster. Removed on every project by
-                  owner decision 2026-07-30: it is production trivia a brand
-                  cannot act on, and it covered the image. The status still
-                  lives in the production timeline, where it has context. */}
-              {project.ageRating ? (
-                <span className="absolute right-3 top-3 inline-flex items-center rounded-full bg-black/75 px-2.5 py-1 text-xs font-bold text-white shadow-sm ring-1 ring-white/20">
-                  {project.ageRating}
-                </span>
-              ) : null}
+              {/* The synopsis moved up here on 2026-08-05 (owner request). It
+                  used to run the full page width under the grid, which left the
+                  column beside the deal card empty for its whole height — the
+                  card is roughly twice as tall as the video frame. Full width
+                  also gave it a ~1100px measure; in this column it reads at a
+                  sane line length. On a phone the grid collapses in source
+                  order, so it still follows the images. */}
+              <SynopsisDisclosure
+                text={project.synopsis}
+                moreLabel={t("report.showMore")}
+                lessLabel={t("report.showLess")}
+              />
             </div>
 
             {/* The production budget used to sit here alone in a half-width
@@ -120,6 +141,15 @@ export function ReportHero({
                 format: project.format,
                 studio: project.studio,
                 countries: project.countries,
+                release,
+              }}
+              // "Where it airs" (owner request 2026-08-05): platforms and
+              // cinemas were the opening group of the facts block below. A
+              // brand read the price in this card and then had to scroll to a
+              // second card to learn where the thing actually shows.
+              where={{
+                platforms: parseStringArray(project.platforms),
+                cinemas: project.cinemas,
               }}
               presentationPdf={project.presentationPdf}
               locale={locale}
@@ -127,25 +157,11 @@ export function ReportHero({
           </div>
         </Reveal>
 
-        <Reveal delay={0.1}>
-          {/* The icon row (genre · format · studio · countries) that used to sit
-              here is now a labelled group inside KeyFacts: an icon next to a
-              bare "Kinodaran" never said what the value was, and research on
-              icon usability is blunt about unlabelled icons carrying unique
-              facts (owner decision 2026-07-30). The synopsis now follows the
-              image directly. */}
-          <SynopsisDisclosure
-            text={project.synopsis}
-            moreLabel={t("report.showMore")}
-            lessLabel={t("report.showLess")}
-          />
-        </Reveal>
-
-        <Reveal delay={0.15}>
-          <div className="mt-6">
-            <StoryboardMarquee images={thumbnails} alt={project.title} />
-          </div>
-        </Reveal>
+        {/* The auto-scrolling storyboard marquee that used to close the hero was
+            removed on 2026-08-05: it drew the same gallery images the slider
+            already shows, and once those images got a real clickable thumbnail
+            strip inside the slider, the marquee was the third copy of one image
+            set on one screen — motion with nothing to do. */}
       </div>
     </section>
   );

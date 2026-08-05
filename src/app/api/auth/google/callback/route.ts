@@ -8,7 +8,11 @@ import {
 } from "@/lib/auth/google";
 import { findMemberByGoogleId } from "@/lib/auth/members";
 import { prisma } from "@/lib/prisma";
-import { SESSION_COOKIE, createSessionToken, sessionCookieOptions } from "@/lib/auth/session";
+import {
+  MEMBER_SESSION_COOKIE,
+  createSessionToken,
+  sessionCookieOptions,
+} from "@/lib/auth/session";
 
 const bounce = (origin: string, path: string) => NextResponse.redirect(new URL(path, origin));
 
@@ -55,7 +59,9 @@ export async function GET(req: Request) {
     }
     const token = await createSessionToken(existing.id, existing.role);
     const res = bounce(origin, "/account");
-    res.cookies.set(SESSION_COOKIE, token, sessionCookieOptions());
+    // Google sign-in is the member flow only (staff accounts were bounced
+    // above), so it writes the member cookie.
+    res.cookies.set(MEMBER_SESSION_COOKIE, token, sessionCookieOptions());
     return res;
   }
 

@@ -2,7 +2,7 @@
 
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
-import { SESSION_COOKIE } from "@/lib/auth/session";
+import { MEMBER_SESSION_COOKIE } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
 import { requireMember } from "@/lib/auth/require";
 import { getLocale } from "@/lib/data/locale";
@@ -16,7 +16,9 @@ import { parseWebsiteUrl } from "@/lib/website-url";
  *  navigates on the client with a fresh full request. */
 export async function logout(): Promise<{ ok: true; redirect: string }> {
   const c = await cookies();
-  c.delete(SESSION_COOKIE);
+  // Member cookie only — a staff session in the same browser is a separate
+  // login and stays untouched (IA-47).
+  c.delete(MEMBER_SESSION_COOKIE);
   return { ok: true, redirect: "/" };
 }
 
