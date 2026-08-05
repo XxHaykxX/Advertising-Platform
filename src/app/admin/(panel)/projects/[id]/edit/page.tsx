@@ -103,6 +103,8 @@ export default async function EditProjectPage({
     cinemas: p.cinemas ?? "",
     videoEmbedUrl: p.videoEmbedUrl ?? "",
     videoFile: p.videoFile ?? "",
+    // Sales deck (IA-44, 2026-08-05) — same "path or empty" contract as poster.
+    presentationPdf: p.presentationPdf ?? "",
   };
 
   // "What a brand sees" (audit B8) — computed from the SAVED row (`p`), which
@@ -186,9 +188,19 @@ export default async function EditProjectPage({
             // Carries the DB id so a save updates this tier in place instead of
             // deleting and re-creating it (which detached brand applications).
             dbId: tier.id,
+            // Legacy columns first, then the per-locale trio (IA-44). A row
+            // saved before the language tabs existed has only the legacy pair
+            // filled; the hy tab falls back to it in the editor the same way
+            // the public page does, so nothing opens blank.
             name: tier.name,
+            nameHy: tier.nameHy || tier.name,
+            nameRu: tier.nameRu,
+            nameEn: tier.nameEn,
             priceAmd: tier.priceAmd,
             benefits: parseBenefitsInput(tier.benefits),
+            benefitsHy: parseBenefitsInput(tier.benefitsHy ?? tier.benefits),
+            benefitsRu: parseBenefitsInput(tier.benefitsRu),
+            benefitsEn: parseBenefitsInput(tier.benefitsEn),
             image: tier.image ?? "",
             isExclusive: tier.isExclusive,
             availableSlots: tier.availableSlots,
@@ -198,7 +210,13 @@ export default async function EditProjectPage({
             // Same "carry the id" reasoning as initialTiers above.
             dbId: pl.id,
             title: pl.title,
+            titleHy: pl.titleHy || pl.title,
+            titleRu: pl.titleRu,
+            titleEn: pl.titleEn,
             description: parseBenefitsInput(pl.description),
+            descriptionHy: parseBenefitsInput(pl.descriptionHy ?? pl.description),
+            descriptionRu: parseBenefitsInput(pl.descriptionRu),
+            descriptionEn: parseBenefitsInput(pl.descriptionEn),
             image: pl.image ?? "",
             priceAmd: pl.priceAmd,
             availableSlots: pl.availableSlots,

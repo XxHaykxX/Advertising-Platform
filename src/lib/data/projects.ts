@@ -15,15 +15,8 @@ import {
   parseReferencesInput,
   parseGenresInput,
 } from "@/app/admin/(panel)/projects/form-shared";
+import { parseJsonList, pickLocale, pickLocaleList } from "@/lib/data/pick-locale";
 
-/** locale → en → base fallback chain for a per-locale content field. Returns
-   the first non-empty candidate in that order. */
-function pickLocale(locale: Locale, values: { hy?: string | null; ru?: string | null; en?: string | null }, base: string): string {
-  const byLocale = locale === "hy" ? values.hy : locale === "ru" ? values.ru : values.en;
-  if (byLocale) return byLocale;
-  if (values.en) return values.en;
-  return base;
-}
 
 // ── format token dictionary ──────────────────────────────────────────────
 // `format` is a free-text string like "50 ep × 1m 15s" or "95 min · Feature ·
@@ -98,16 +91,6 @@ function splitCommaList(s: string | null): string[] {
     .filter(Boolean);
 }
 
-/** JSON string[] (or null) -> string[]; tolerant of malformed data. */
-function parseJsonList(json: string | null): string[] {
-  if (!json) return [];
-  try {
-    const arr = JSON.parse(json);
-    return Array.isArray(arr) ? arr.filter((v): v is string => typeof v === "string") : [];
-  } catch {
-    return [];
-  }
-}
 
 function localizeCountries(locale: Locale, countries: string): string {
   // The list and its labels live in src/lib/countries.ts — the same source the
@@ -260,6 +243,7 @@ const getProjectCached = unstable_cache(
     synopsis: pickLocale(locale, { hy: p.synopsisHy, ru: p.synopsisRu, en: p.synopsisEn }, p.synopsis),
     poster: p.poster ?? "",
     gallery: p.gallery ?? "[]",
+    presentationPdf: p.presentationPdf ?? "",
     format: effectiveFormat(locale, p),
     formatCategory: deriveFormatCategory(p.formatCategory, p.kind, `${p.format} ${p.genre}`),
     studio: p.studio,
@@ -291,7 +275,9 @@ const getProjectCached = unstable_cache(
       p.productionBudgetAmd != null ? formatMoney(p.productionBudgetAmd, currency, rates, locale) : "",
     tiers: p.tiers.map((tier) => ({
       id: tier.id,
-      name: tier.name,
+      // Per-locale since IA-44 (2026-08-05); `name`/`benefits` are the fallback
+      // for rows written before the editor grew its language tabs.
+      name: pickLocale(locale, { hy: tier.nameHy, ru: tier.nameRu, en: tier.nameEn }, tier.name),
       // Raw AMD alongside the formatted strings: the sticky offer bar has to
       // compare packages and placements to name the cheapest one, and it
       // cannot do that on "2 500 000 ֏".
@@ -299,7 +285,11 @@ const getProjectCached = unstable_cache(
       priceDisplay: tier.priceAmd != null ? formatMoney(tier.priceAmd, currency, rates, locale) : null,
       // The deal currency, for the application popup — see TierDTO.priceNative.
       priceNative: tier.priceAmd != null ? formatMoney(tier.priceAmd, "AMD", rates, locale) : null,
-      benefits: parseJsonList(tier.benefits),
+      benefits: pickLocaleList(
+        locale,
+        { hy: tier.benefitsHy, ru: tier.benefitsRu, en: tier.benefitsEn },
+        tier.benefits,
+      ),
       image: tier.image ?? null,
       isExclusive: tier.isExclusive,
       availableSlots: tier.availableSlots,
@@ -309,8 +299,12 @@ const getProjectCached = unstable_cache(
     slotsTotal: p.tiers.reduce((sum, tier) => sum + (tier.totalSlots ?? 0), 0),
     placements: p.placements.map((pl) => ({
       id: pl.id,
-      title: pl.title,
-      description: parseJsonList(pl.description),
+      title: pickLocale(locale, { hy: pl.titleHy, ru: pl.titleRu, en: pl.titleEn }, pl.title),
+      description: pickLocaleList(
+        locale,
+        { hy: pl.descriptionHy, ru: pl.descriptionRu, en: pl.descriptionEn },
+        pl.description,
+      ),
       image: pl.image ?? null,
       priceAmd: pl.priceAmd,
       priceDisplay: pl.priceAmd != null ? formatMoney(pl.priceAmd, currency, rates, locale) : null,

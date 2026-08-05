@@ -24,6 +24,7 @@ const CONTENT_TYPE: Record<string, string> = {
   ".avif": "image/avif",
   ".mp4": "video/mp4",
   ".webm": "video/webm",
+  ".pdf": "application/pdf",
 };
 
 export async function GET(req: Request, ctx: { params: Promise<{ path: string[] }> }) {
@@ -72,6 +73,12 @@ export async function GET(req: Request, ctx: { params: Promise<{ path: string[] 
         "Content-Length": String(s.size),
         "Accept-Ranges": "bytes",
         "Cache-Control": "public, max-age=31536000, immutable",
+        // A PDF is the one thing here that a browser will happily open INSIDE
+        // our own origin, where its embedded scripting would run as us. It is
+        // also the one thing nobody wants rendered in place — the only link to
+        // it says "Download presentation". Forcing the attachment disposition
+        // settles both (IA-44, 2026-08-05).
+        ...(type === "application/pdf" ? { "Content-Disposition": "attachment" } : {}),
       },
     });
   } catch {

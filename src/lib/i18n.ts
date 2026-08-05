@@ -1784,6 +1784,25 @@ export const UI: Record<string, Dict> = {
   "projectForm.section.sponsorshipTiers": { ru: "Спонсоры", en: "Sponsors", hy: "Հովանավորներ" },
   "projectForm.section.placements": { ru: "Продакт-плейсмент", en: "Placements", hy: "Փլեյսմենթներ" },
   "projectForm.section.visibility": { ru: "Видимость", en: "Visibility", hy: "Տեսանելիություն" },
+  // IA-44 (2026-08-05): every project starts with the standard three positions,
+  // and an existing project can be topped up with whatever it is missing.
+  "projectForm.offers.addDefaultSet": {
+    ru: "Добавить стандартный набор",
+    en: "Add the standard set",
+    hy: "Ավելացնել ստանդարտ հավաքածուն",
+  },
+  // IA-44 §1 (2026-08-05): an optional sales deck brands can download.
+  "projectForm.presentation": { ru: "Презентация (PDF)", en: "Presentation (PDF)", hy: "Պրեզենտացիա (PDF)" },
+  "projectForm.presentationHint": {
+    ru: "Необязательно. PDF до 20 МБ — бренд сможет скачать его со страницы проекта.",
+    en: "Optional. A PDF up to 20 MB — brands can download it from the project page.",
+    hy: "Ըստ ցանկության։ PDF՝ մինչև 20 ՄԲ. բրենդը կարող է ներբեռնել այն նախագծի էջից։",
+  },
+  "report.downloadPresentation": {
+    ru: "Скачать презентацию",
+    en: "Download presentation",
+    hy: "Ներբեռնել պրեզենտացիան",
+  },
   // New sections (admin redesign phase 1): Production Info holds
   // status/timeline/where-it-plays fields moved out of the old Status&release
   // and Placement cards; Reference Projects is the "Comparable titles" field,
@@ -2286,6 +2305,11 @@ export const UI: Record<string, Dict> = {
     ru: "Неподдерживаемый тип — используйте MP4 или WebM.",
     en: "Unsupported type — use MP4 or WebM.",
     hy: "Չաջակցվող տեսակ — օգտագործեք MP4 կամ WebM։",
+  },
+  "media.errUnsupportedDoc": {
+    ru: "Неподдерживаемый тип — используйте PDF.",
+    en: "Unsupported type — use PDF.",
+    hy: "Չաջակցվող տեսակ — օգտագործեք PDF։",
   },
   "media.errUnsupportedImage": {
     ru: "Неподдерживаемый тип — используйте JPG, PNG, WebP, GIF или AVIF.",

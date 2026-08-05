@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { parseStringArray } from "@/lib/data/format";
 import type { Locale } from "@/lib/i18n";
 import type { InterestStatus } from "@prisma/client";
+import { OFFER_NAME_SELECT, pickPlacementTitle, pickTierName } from "@/lib/data/pick-locale";
 
 /* Wave 2 of the audit — the seller's side of an application.
  *
@@ -117,8 +118,21 @@ const INTEREST_INCLUDE = {
       titleEn: true,
     },
   },
-  tier: { select: { id: true, name: true, priceAmd: true, isExclusive: true, availableSlots: true, totalSlots: true } },
-  placement: { select: { id: true, title: true, priceAmd: true, availableSlots: true, totalSlots: true } },
+  // The per-locale name columns ride along (IA-44, 2026-08-05) so an offer is
+  // named in the reader's own language here too — this feeds the creator's
+  // inbox and /admin/interests, not just the public page.
+  tier: {
+    select: {
+      id: true, ...OFFER_NAME_SELECT.tier,
+      priceAmd: true, isExclusive: true, availableSlots: true, totalSlots: true,
+    },
+  },
+  placement: {
+    select: {
+      id: true, ...OFFER_NAME_SELECT.placement,
+      priceAmd: true, availableSlots: true, totalSlots: true,
+    },
+  },
   events: { orderBy: { createdAt: "asc" } },
 } as const;
 
@@ -156,7 +170,7 @@ function toDTO(locale: Locale, r: InterestRow): InterestInboxDTO {
     tier: r.tier
       ? {
           id: r.tier.id,
-          name: r.tier.name,
+          name: pickTierName(locale, r.tier),
           priceAmd: r.tier.priceAmd,
           isExclusive: r.tier.isExclusive,
           availableSlots: r.tier.availableSlots,
@@ -166,7 +180,7 @@ function toDTO(locale: Locale, r: InterestRow): InterestInboxDTO {
     placement: r.placement
       ? {
           id: r.placement.id,
-          title: r.placement.title,
+          title: pickPlacementTitle(locale, r.placement),
           priceAmd: r.placement.priceAmd,
           availableSlots: r.placement.availableSlots,
           totalSlots: r.placement.totalSlots,

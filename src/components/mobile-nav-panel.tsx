@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { LogIn, LogOut } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
@@ -21,6 +22,7 @@ export function MobileNavPanel({
   open,
   nav,
   isMember,
+  brandNav,
   user,
   locale,
   loginHref,
@@ -34,6 +36,10 @@ export function MobileNavPanel({
   open: boolean;
   nav: readonly { label: string; href: string }[];
   isMember: boolean;
+  /** IA-46: BRAND's two promoted cabinet pages (dashboard + favorites) —
+   *  empty for everyone else. Rendered in the same slot marketing `nav`
+   *  occupies, so they land in the burger menu instead of spilling out. */
+  brandNav: readonly { label: string; href: string; exact?: boolean }[];
   user: SiteHeaderUser | null;
   locale: Locale;
   loginHref: string;
@@ -50,6 +56,8 @@ export function MobileNavPanel({
    *  dumb prop-driven component. */
   onNavigate: () => void;
 }) {
+  const pathname = usePathname();
+
   return (
     <AnimatePresence>
       {open && (
@@ -72,6 +80,26 @@ export function MobileNavPanel({
                   {item.label}
                 </Link>
               ))}
+            {brandNav.map((item) => {
+              const active = item.exact
+                ? pathname === item.href
+                : (pathname ?? "").startsWith(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={onNavigate}
+                  className={cn(
+                    "flex min-h-11 items-center rounded-xl px-3 text-sm font-medium transition-colors",
+                    active
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
+                  )}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
             {!isMember && (
               <div className="mt-2 flex items-center gap-2 border-t border-border pt-4">
                 <div className="ml-auto flex items-center gap-2">

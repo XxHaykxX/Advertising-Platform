@@ -57,6 +57,9 @@ export interface ProjectListDTO {
 
 export interface ProjectDetailDTO extends ProjectListDTO {
   gallery: string;
+  /** "/uploads/…" path to the optional sales deck a brand can download from the
+   *  project page (IA-44, 2026-08-05); "" when none was attached. */
+  presentationPdf: string;
   actors: ActorDTO[];
   // ── Press-kit fields (Aram) ──
   tagline: string; // "" when unset

@@ -15,7 +15,7 @@ import { restrictToVerticalAxis, restrictToParentElement } from "@dnd-kit/modifi
 import { sortableKeyboardCoordinates, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { ChevronDown, ChevronUp, Copy, GripVertical, ImageOff, Trash2, X } from "lucide-react";
-import { groupDigits } from "./form-shared";
+import { OFFER_LANGS, groupDigits, type OfferLang } from "./form-shared";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { MediaField } from "@/components/media-field";
 import { BulletListEditor } from "@/components/ui/bullet-list-editor";
@@ -712,4 +712,74 @@ export function useCollapsed(ids: number[], isComplete: (index: number) => boole
   }
 
   return { isCollapsed: (id: number) => collapsed.has(id), toggle, expand };
+}
+
+// ── trilingual name/benefits tabs (IA-44, 2026-08-05) ───────────────────────
+// One switcher per row governs BOTH the title/name input (rides in the card's
+// header) and the bullet list below it in the body — same hy/ru/en segmented
+// control as the About block's per-locale tabs (project-form.tsx, sec-about),
+// reproduced here rather than shared across modules: About's fields are
+// uncontrolled refs (kept mounted for the autosave snapshot + Translate
+// button), while a placement/tier row is plain controlled state, so a single
+// input that swaps which locale field it's bound to is enough — nothing needs
+// to stay mounted while hidden.
+
+const OFFER_LANG_NAMES: Record<OfferLang, string> = { hy: "Հայերեն", ru: "Русский", en: "English" };
+
+/** A locale tab counts as filled only once ITS OWN title/name AND its own
+ *  bullet list have something in them — same all-or-nothing rule as the
+ *  About block's dot (project-form.tsx recomputeAboutFilled). */
+export function offerLocaleFilled(title: string, bullets: string): boolean {
+  return !!title.trim() && bullets.split("\n").some((line) => line.trim());
+}
+
+/** Per-row "which locale tab is open", keyed by the row's client id (the same
+ *  ids useSortableRows hands out) — UI-only, never serialized into the hidden
+ *  JSON input. */
+export function useOfferLangTabs() {
+  const [active, setActive] = useState<Record<number, OfferLang>>({});
+  return {
+    activeFor: (id: number): OfferLang => active[id] ?? "hy",
+    setActiveFor: (id: number, lang: OfferLang) => setActive((prev) => ({ ...prev, [id]: lang })),
+  };
+}
+
+/** Sized to its labels, not the card width (owner request 2026-07-30, same
+ *  reasoning as the About tabs and the video-source tabs above) — a 3-way
+ *  pick has no business stretching across the card. */
+export function OfferLangTabs({
+  active,
+  onChange,
+  filled,
+}: {
+  active: OfferLang;
+  onChange: (l: OfferLang) => void;
+  filled: Record<OfferLang, boolean>;
+}) {
+  return (
+    <div className="inline-flex w-fit gap-1 rounded-lg border border-border bg-background p-1">
+      {OFFER_LANGS.map((l) => (
+        <button
+          key={l}
+          type="button"
+          onClick={() => onChange(l)}
+          // min-h-11 (44px): the project's touch-target convention (see
+          // header.tsx's nav links) — the segmented control itself is
+          // otherwise sized to its px-3/py-1.5 padding, which reads well but
+          // falls short of that on its own.
+          className={`inline-flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+            active === l ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <span
+            aria-hidden="true"
+            className={`h-1.5 w-1.5 shrink-0 rounded-full ${
+              filled[l] ? "bg-success" : "border border-current opacity-50"
+            }`}
+          />
+          {OFFER_LANG_NAMES[l]}
+        </button>
+      ))}
+    </div>
+  );
 }

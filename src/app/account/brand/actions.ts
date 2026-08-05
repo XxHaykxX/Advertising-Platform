@@ -8,11 +8,12 @@ import { getLocale } from "@/lib/data/locale";
 import { getBrandProfile } from "@/lib/data/brand-profile";
 import { getBrandInterestCount, getBrandInterests } from "@/lib/data/brand-interests";
 import { BRAND_CATEGORIES, BUDGET_RANGES } from "@/lib/brand-categories";
-import { makeUI } from "@/lib/i18n";
+import { DEFAULT_LOCALE, makeUI } from "@/lib/i18n";
 import { createNotification, notifyRoles } from "@/lib/data/notifications";
 import { notifyNewInterest } from "@/lib/mail";
 import { offerKeyOf } from "@/lib/offer-value";
 import { parseWebsiteUrl } from "@/lib/website-url";
+import { OFFER_NAME_SELECT, pickPlacementTitle, pickTierName } from "@/lib/data/pick-locale";
 
 /* #23 — BRAND-cabinet server actions. Every action re-checks requireMember()
  * + role === "BRAND" itself (defense in depth — the layout gate already
@@ -355,14 +356,30 @@ export async function submitApplication(
       await notifyRoles(["SUPERADMIN"], { ...payload, link: "/admin/interests" }, project.ownerId);
       // Audit 2.7: only in-app + push went out before, so a creator who doesn't
       // open the cabinet never learned a lead had arrived.
+      // The e-mail carries all three languages in its own labels and has no
+      // locale to resolve with (see the comment on budgetLabel below), so the
+      // offer is named in the site's default locale — hy, with the usual
+      // fallback — rather than in whichever column happens to be filled.
       const tierName = resolvedTierId
-        ? (await prisma.sponsorshipTier.findUnique({ where: { id: resolvedTierId }, select: { name: true } }))?.name
+        ? pickTierName(
+            DEFAULT_LOCALE,
+            await prisma.sponsorshipTier.findUnique({
+              where: { id: resolvedTierId },
+              select: OFFER_NAME_SELECT.tier,
+            }),
+          ) || undefined
         : undefined;
       // The placement is the other half of the offer since 2026-07-29 — an
       // e-mail naming only the sponsorship package would silently drop the
       // very thing most brands apply for.
       const placementName = resolvedPlacementId
-        ? (await prisma.placement.findUnique({ where: { id: resolvedPlacementId }, select: { title: true } }))?.title
+        ? pickPlacementTitle(
+            DEFAULT_LOCALE,
+            await prisma.placement.findUnique({
+              where: { id: resolvedPlacementId },
+              select: OFFER_NAME_SELECT.placement,
+            }),
+          ) || undefined
         : undefined;
       // The brand's own budget bracket, resolved to its label here: the email
       // is tri-lingual and has no locale to localize with. Read from the DB —

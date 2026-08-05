@@ -60,16 +60,16 @@ model User {
   brandCategories String? @db.Text // JSON string[] — see src/lib/brand-categories.ts
   budgetRange     String? // one of BUDGET_RANGES in src/lib/brand-categories.ts
 
-  projects  Project[]
-  projectsUpdated Project[] @relation("ProjectUpdatedBy") // projects this user last saved
-  interests Interest[] // Interest rows this user (as a BRAND) has expressed
-  favorites Favorite[] // Favorite (shortlist) rows this user (as a BRAND) saved
+  projects            Project[]
+  projectsUpdated     Project[]            @relation("ProjectUpdatedBy") // projects this user last saved
+  interests           Interest[] // Interest rows this user (as a BRAND) has expressed
+  favorites           Favorite[] // Favorite (shortlist) rows this user (as a BRAND) saved
   passwordResetTokens PasswordResetToken[]
-  notifications Notification[]
-  pushSubscriptions PushSubscription[]
-  uiDrafts      UiDraft[] // dictionary rows this staff user last edited (TRANSLATOR)
-  i18nPublishes I18nPublish[] // publish clicks this staff user made
-  contentVersions ContentVersion[] // content edits this user authored (history)
+  notifications       Notification[]
+  pushSubscriptions   PushSubscription[]
+  uiDrafts            UiDraft[] // dictionary rows this staff user last edited (TRANSLATOR)
+  i18nPublishes       I18nPublish[] // publish clicks this staff user made
+  contentVersions     ContentVersion[] // content edits this user authored (history)
 }
 
 /// In-app notification (#25 / V9). Text is NOT stored translated — only a
@@ -136,42 +136,45 @@ model Content {
 
 /// A film/series project listed for product placement
 model Project {
-  id             Int           @id @default(autoincrement())
-  code           String        @unique // "#PP-2026-8540"
-  title          String
-  titleHy        String        @default("")
-  titleRu        String        @default("")
-  titleEn        String        @default("")
-  genre          String
-  synopsis       String        @db.Text
-  synopsisHy     String?       @db.Text
-  synopsisRu     String?       @db.Text
-  synopsisEn     String?       @db.Text
-  poster         String?
-  gallery        String?       @db.Text // JSON string[]; nullable — MySQL forbids literal defaults on TEXT columns
-  format         String        @default("") // "50 ep × 1m 15s"
-  studio         String        @default("")
-  countries      String        @default("") // "US, UK, …"
-  ageRating      String        @default("") // content rating badge on the poster: "16+", "18+", "12+", …
+  id                  Int      @id @default(autoincrement())
+  code                String   @unique // "#PP-2026-8540"
+  title               String
+  titleHy             String   @default("")
+  titleRu             String   @default("")
+  titleEn             String   @default("")
+  genre               String
+  synopsis            String   @db.Text
+  synopsisHy          String?  @db.Text
+  synopsisRu          String?  @db.Text
+  synopsisEn          String?  @db.Text
+  poster              String?
+  gallery             String?  @db.Text // JSON string[]; nullable — MySQL forbids literal defaults on TEXT columns
+  // Optional sales deck the creator attaches for brands to download (IA-44,
+  // 2026-08-05). Stored like every other upload: a "/uploads/…" path, not a blob.
+  presentationPdf     String?
+  format              String   @default("") // "50 ep × 1m 15s"
+  studio              String   @default("")
+  countries           String   @default("") // "US, UK, …"
+  ageRating           String   @default("") // content rating badge on the poster: "16+", "18+", "12+", …
   // Money — admin enters AMD only; the public site converts + formats for
   // display in the visitor's chosen currency (see src/lib/currency).
   // Production budget, the CSV schema's "Budget" (owner decision C.3).
   productionBudgetAmd Int?
-  isActive       Boolean       @default(true)
-  sortOrder      Int           @default(0)
+  isActive            Boolean  @default(true)
+  sortOrder           Int      @default(0)
   // How many times the public report page was opened. The creator had no
   // numbers at all about their own listing (audit 4.8) — not views, not how
   // many brands shortlisted it. Counted once per visitor per day (see the
   // /api/projects/[id]/view route), so a refresh loop can't inflate it.
-  viewCount      Int           @default(0)
-  createdAt      DateTime      @default(now())
+  viewCount           Int      @default(0)
+  createdAt           DateTime @default(now())
   // When this project was last saved, and by whom. The full edit history lives
   // in ContentVersion; these two are denormalized onto the row so the admin list
   // can show "changed 31.07 by Мариам" without joining history for every line.
   // Their absence is what made the 2026-07-31 damage impossible to trace.
-  updatedAt      DateTime      @default(now()) @updatedAt
-  updatedById    Int?
-  ownerId        Int
+  updatedAt           DateTime @default(now()) @updatedAt
+  updatedById         Int?
+  ownerId             Int
 
   // ── Moderation & content-kind (added for the Creator submission flow) ──
   moderationStatus ModerationStatus @default(APPROVED) // existing rows stay visible; the creator flow will set PENDING
@@ -187,27 +190,27 @@ model Project {
   genres           String?          @db.Text // JSON string[] multi-genre; nullable, same pattern as platforms/cinemas — `genre` above stays as the primary display value
   formatCategory   String           @default("") // marketing format bucket (FEATURE|SERIES|SITCOM|…), separate from `kind`; drives the catalog Format filter
 
-  applicationDeadline DateTime?
+  applicationDeadline        DateTime?
   // True for an open-ended call for offers — no concrete deadline (IA-42,
   // 2026-08-01). applicationDeadline stays NULL while this is set; the form
   // never submits both, and every save forces the pair back into that
   // agreement server-side (defense in depth).
   applicationDeadlineOngoing Boolean   @default(false)
-  releaseDate         DateTime?
+  releaseDate                DateTime?
   // How much of releaseDate the editor actually entered — DAY | MONTH | YEAR
   // (IA-42, 2026-08-01). The date itself is stored at that precision's
   // placeholder (YEAR -> YYYY-01-01, MONTH -> YYYY-MM-01), and this column is
   // what decides how much of it is safe to render: the site must never show a
   // day/month the editor never gave. Existing rows default to DAY, matching
   // the exact dates they already carry.
-  releasePrecision    String    @default("DAY")
-  platforms           String?   @db.Text // JSON string[]; nullable — MySQL forbids literal defaults on TEXT columns
+  releasePrecision           String    @default("DAY")
+  platforms                  String?   @db.Text // JSON string[]; nullable — MySQL forbids literal defaults on TEXT columns
 
   // ── Real press-kit fields (added for the Aram title, 2026-07-09) ──
-  tagline   String? // one-line logline, shown in the report hero (base/fallback, mirrors `synopsis`)
-  taglineHy String? @db.Text // per-locale logline (IA-23 press-kit localization)
-  taglineRu String? @db.Text
-  taglineEn String? @db.Text
+  tagline    String? // one-line logline, shown in the report hero (base/fallback, mirrors `synopsis`)
+  taglineHy  String? @db.Text // per-locale logline (IA-23 press-kit localization)
+  taglineRu  String? @db.Text
+  taglineEn  String? @db.Text
   references String? @db.Text // comparable titles ("Bohemian Rhapsody, Ray"), comma/JSON list
   cinemas    String? @db.Text // exhibition venues ("Cinema Star, Kino Park"), comma/JSON list
 
@@ -215,14 +218,14 @@ model Project {
   videoEmbedUrl String? // YouTube/Vimeo URL, embedded on the detail/report page
   videoFile     String? // uploaded MP4 path ("/uploads/…")
 
-  owner         User                   @relation(fields: [ownerId], references: [id])
-  updatedBy     User?                  @relation("ProjectUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
-  actors        Actor[]
-  tiers         SponsorshipTier[]
-  placements    Placement[]
-  milestones    ProductionMilestone[]
-  interests     Interest[]
-  favorites     Favorite[]
+  owner      User                  @relation(fields: [ownerId], references: [id])
+  updatedBy  User?                 @relation("ProjectUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  actors     Actor[]
+  tiers      SponsorshipTier[]
+  placements Placement[]
+  milestones ProductionMilestone[]
+  interests  Interest[]
+  favorites  Favorite[]
 
   @@index([ownerId])
 }
@@ -249,7 +252,7 @@ model ProductionMilestone {
 
 /// A person attached to a project (cast or crew), shown in the pitch materials
 model Actor {
-  id        Int    @id @default(autoincrement())
+  id        Int     @id @default(autoincrement())
   projectId Int
   personId  Int? // link to the global Person directory (Ф3); null for legacy rows until backfilled
   name      String // legacy base — the ultimate fallback, same role as Project.title
@@ -257,14 +260,14 @@ model Actor {
   // save (2026-07-27). A name is a proper noun, so this is transliteration, not
   // translation: Արամ / Арам / Aram. Empty -> pickPersonName falls back to en,
   // then to `name`, so a half-filled directory still renders.
-  nameHy    String @default("")
-  nameRu    String @default("")
-  nameEn    String @default("")
+  nameHy    String  @default("")
+  nameRu    String  @default("")
+  nameEn    String  @default("")
   role      String // legacy single role — kept as fallback; new code reads `roles`
   roles     String? @db.Text // JSON string[] of roles (Ф3 multi-role): one person can be Actor+Producer+…
-  kind      String @default("CAST") // CAST | CREW — press-kits often list crew, not cast
+  kind      String  @default("CAST") // CAST | CREW — press-kits often list crew, not cast
   photo     String? // uploaded headshot path ("/uploads/…"); null -> initials avatar
-  sortOrder Int    @default(0)
+  sortOrder Int     @default(0)
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
   person  Person? @relation(fields: [personId], references: [id], onDelete: SetNull)
@@ -336,21 +339,30 @@ model Person {
 /// a named price point with a list of included benefits. Distinct from
 /// scene-level PlacementOpportunity — tiers are the productised sponsor deal.
 model SponsorshipTier {
-  id        Int     @id @default(autoincrement())
-  projectId Int
-  name      String // "Official Sponsor" | "General Sponsor" (+ per-locale later)
+  id             Int     @id @default(autoincrement())
+  projectId      Int
+  name           String // "Official Sponsor" | "General Sponsor" — legacy single-language value, kept as the fallback
+  // Per-locale name and benefits (IA-44, 2026-08-05). `name`/`benefits` above
+  // stay as the fallback for rows written before the editor gained tabs, and
+  // for any locale an editor left blank; pickLocale() resolves the pair.
+  nameHy         String  @default("")
+  nameRu         String  @default("")
+  nameEn         String  @default("")
   // Optional since 2026-08-04 (bug fix): a creator who hasn't priced a
   // package yet leaves it empty and the storefront shows "on request" — same
   // contract as Placement.priceAmd below. Was a non-null Int that a form
   // clamp silently stored as 0, which read to a brand as a real price of
   // 0 AMD ("free"). See docs/prod-migrations/2026-08-04-tier-price-nullable.sql.
-  priceAmd  Int? // 20000000 / 30000000 / 40000000; null -> "on request"
-  benefits  String  @db.Text // JSON string[] — the included-benefits bullet list
-  image     String? // 16:9 still shown atop the card, same contract as Placement.image
-  isExclusive Boolean @default(false) // shared (non-competing brands only) vs exclusive placement (CSV "Is Exclusive")
+  priceAmd       Int? // 20000000 / 30000000 / 40000000; null -> "on request"
+  benefits       String  @db.Text // JSON string[] — the included-benefits bullet list (fallback locale)
+  benefitsHy     String? @db.Text // JSON string[]; nullable — MySQL forbids literal defaults on TEXT
+  benefitsRu     String? @db.Text
+  benefitsEn     String? @db.Text
+  image          String? // 16:9 still shown atop the card, same contract as Placement.image
+  isExclusive    Boolean @default(false) // shared (non-competing brands only) vs exclusive placement (CSV "Is Exclusive")
   totalSlots     Int? // total capacity of this placement (the "Y" in "3 of 10" on catalog cards)
   availableSlots Int? // still-open slots (CSV "Available Slots"); the "X" in "3 of 10"; null -> unspecified
-  sortOrder Int     @default(0)
+  sortOrder      Int     @default(0)
 
   project   Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
   interests Interest[] // applications aimed at this package (audit 2.3)
@@ -368,15 +380,23 @@ model SponsorshipTier {
 /// storefront shows "on request" — the brand asks and the terms are negotiated,
 /// rather than a made-up number being published.
 model Placement {
-  id          Int     @id @default(autoincrement())
-  projectId   Int
-  title       String // "Integration into the story", "Hero's car"
-  description String  @db.Text // what the brand gets, one item per line (JSON string[], same as tier benefits)
-  image       String? // still showing the scene/slot ("/uploads/…")
-  priceAmd    Int? // null -> "on request"; the creator prices it only if they want to
+  id             Int     @id @default(autoincrement())
+  projectId      Int
+  title          String // "Integration into the story", "Hero's car" — legacy single-language value, kept as the fallback
+  // Per-locale title and description (IA-44, 2026-08-05), same contract as
+  // SponsorshipTier.name* / benefits* above.
+  titleHy        String  @default("")
+  titleRu        String  @default("")
+  titleEn        String  @default("")
+  description    String  @db.Text // what the brand gets, one item per line (JSON string[], same as tier benefits)
+  descriptionHy  String? @db.Text // JSON string[]; nullable — MySQL forbids literal defaults on TEXT
+  descriptionRu  String? @db.Text
+  descriptionEn  String? @db.Text
+  image          String? // still showing the scene/slot ("/uploads/…")
+  priceAmd       Int? // null -> "on request"; the creator prices it only if they want to
   totalSlots     Int? // how many brands this opportunity can take
   availableSlots Int? // still open; null -> unspecified, same contract as SponsorshipTier
-  sortOrder   Int     @default(0)
+  sortOrder      Int     @default(0)
 
   project   Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
   interests Interest[]
@@ -386,23 +406,23 @@ model Placement {
 
 /// A past placement case study shown in the portfolio/case-studies section
 model Portfolio {
-  id             Int      @id @default(autoincrement())
-  title          String // legacy base — kept as the ultimate fallback (see pickLocale)
-  titleHy        String   @default("")
-  titleRu        String   @default("")
-  titleEn        String   @default("")
-  brand          String
-  description    String   @db.Text // legacy base — kept as the ultimate fallback
+  id            Int      @id @default(autoincrement())
+  title         String // legacy base — kept as the ultimate fallback (see pickLocale)
+  titleHy       String   @default("")
+  titleRu       String   @default("")
+  titleEn       String   @default("")
+  brand         String
+  description   String   @db.Text // legacy base — kept as the ultimate fallback
   // Per-locale descriptions mirror Project.synopsisHy/Ru/En: nullable @db.Text
   // (MySQL forbids literal defaults on TEXT columns, and translated copy easily
   // exceeds the 191-char VarChar cap). Null/empty falls back to En, then base.
-  descriptionHy  String?  @db.Text
-  descriptionRu  String?  @db.Text
-  descriptionEn  String?  @db.Text
-  image          String?
-  metrics        String?  @db.Text // JSON object, e.g. {"views":"2.1M","recall":"+38%"}
-  sortOrder      Int      @default(0)
-  createdAt      DateTime @default(now())
+  descriptionHy String?  @db.Text
+  descriptionRu String?  @db.Text
+  descriptionEn String?  @db.Text
+  image         String?
+  metrics       String?  @db.Text // JSON object, e.g. {"views":"2.1M","recall":"+38%"}
+  sortOrder     Int      @default(0)
+  createdAt     DateTime @default(now())
 }
 
 /// A studio/platform partner logo shown in the trust/partners strip
@@ -427,12 +447,12 @@ enum InterestStatus {
 }
 
 model Interest {
-  id        Int             @id @default(autoincrement())
+  id        Int            @id @default(autoincrement())
   brandId   Int
   projectId Int
-  status    InterestStatus  @default(SENT)
-  createdAt DateTime        @default(now())
-  message   String?         @db.Text // latest application message from the brand (report popup)
+  status    InterestStatus @default(SENT)
+  createdAt DateTime       @default(now())
+  message   String?        @db.Text // latest application message from the brand (report popup)
   contact   String? // optional contact override supplied with the application
 
   // ── Wave 2 of the audit: closing the deal loop ──
@@ -453,7 +473,7 @@ model Interest {
   // lets NULL repeat, so every "no offer named" application would count as
   // distinct and the same brand could pile up dozens of them on one project.
   // Always derived from the two ids above, never entered by hand.
-  offerKey     String @default("-") @db.VarChar(24)
+  offerKey     String    @default("-") @db.VarChar(24)
   // True while this application holds one of that package's availableSlots.
   // Set when a creator accepts, released when they decline or the brand
   // withdraws — so two brands can no longer both "take" one exclusive slot.
@@ -501,18 +521,18 @@ model Interest {
 /// Deliberately a log, not a chat: in-platform messaging was postponed by the
 /// owner on 2026-07-26 (decision C.2).
 model InterestEvent {
-  id         Int             @id @default(autoincrement())
-  interestId Int
-  kind       String // APPLICATION (from the brand) | RESPONSE (from the creator/staff)
-  status     InterestStatus? // the status this event set, for RESPONSE rows
-  body       String?         @db.Text // the message / the answer
-  contact    String? // contact supplied with an APPLICATION
+  id          Int             @id @default(autoincrement())
+  interestId  Int
+  kind        String // APPLICATION (from the brand) | RESPONSE (from the creator/staff)
+  status      InterestStatus? // the status this event set, for RESPONSE rows
+  body        String?         @db.Text // the message / the answer
+  contact     String? // contact supplied with an APPLICATION
   // The brief as it stood in THIS round (see Interest above). Kept per event
   // so a resend with new terms doesn't rewrite what was originally offered.
   // Same three columns dropped here on 2026-08-05 as on Interest.
-  productInfo String? @db.Text
-  authorId   Int? // who wrote it; null if that account was deleted
-  createdAt  DateTime        @default(now())
+  productInfo String?         @db.Text
+  authorId    Int? // who wrote it; null if that account was deleted
+  createdAt   DateTime        @default(now())
 
   interest Interest @relation(fields: [interestId], references: [id], onDelete: Cascade)
 
@@ -562,7 +582,7 @@ model UiDraft {
   en          String      @db.Text
   mark        UiDraftMark @default(NONE) // colour highlight, see UiDraftMark
   note        String?     @db.Text // translator's own remark, replaces sheet cell comments
-  updatedAt   DateTime      @updatedAt
+  updatedAt   DateTime    @updatedAt
   updatedById Int? // last editor; null if that staff account was deleted
   publishedAt DateTime? // set when this exact value was committed to git
 
@@ -622,7 +642,7 @@ model ContentVersion {
   /// render a line.
   summary String? @db.Text
 
-  authorId Int? // null once that account is deleted
+  authorId   Int? // null once that account is deleted
   /// Author's name copied at write time, so history stays readable after the
   /// account is gone (authorId goes null, this does not).
   authorName String   @db.VarChar(191)

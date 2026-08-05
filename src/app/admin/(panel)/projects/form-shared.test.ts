@@ -13,6 +13,8 @@ import {
   ROLE_VALUES,
   PLACEMENTS_REQUIRED_FROM,
   type PublishCheckInput,
+  firstFilledLocale,
+  safeUploadPath,
 } from "./form-shared";
 
 describe("deriveFormatCategory", () => {
@@ -449,5 +451,42 @@ describe("mergeTierTemplates", () => {
   it("caps the menu at the requested length", () => {
     const rows = Array.from({ length: 20 }, (_, i) => ({ name: `Tier ${i}`, benefits: json("x") }));
     expect(mergeTierTemplates(rows, 5)).toHaveLength(5);
+  });
+});
+
+describe("firstFilledLocale", () => {
+  it("prefers the site's default locale, then whatever else was filled", () => {
+    expect(firstFilledLocale({ hy: "Հ", ru: "Р", en: "E" })).toBe("Հ");
+    expect(firstFilledLocale({ hy: "  ", ru: "Р", en: "E" })).toBe("Р");
+    expect(firstFilledLocale({ hy: "", ru: "", en: "E" })).toBe("E");
+  });
+
+  it("returns an empty string only when every tab is empty", () => {
+    // This is exactly the case publishBlockers is meant to catch, so it must
+    // stay distinguishable — the legacy column going blank is the signal.
+    expect(firstFilledLocale({ hy: " ", ru: "", en: undefined })).toBe("");
+  });
+});
+
+describe("safeUploadPath", () => {
+  it("keeps a path inside the uploads root", () => {
+    expect(safeUploadPath("/uploads/presentations/1-2.pdf")).toBe("/uploads/presentations/1-2.pdf");
+    expect(safeUploadPath("  /uploads/presentations/1-2.pdf  ")).toBe(
+      "/uploads/presentations/1-2.pdf",
+    );
+  });
+
+  it("refuses anything that isn't one", () => {
+    // The project page renders this as a link a brand clicks, so an off-site
+    // URL or a traversal would be a download button pointing anywhere.
+    expect(safeUploadPath("https://evil.example/x.pdf")).toBe("");
+    expect(safeUploadPath("/uploads/../../etc/passwd")).toBe("");
+    expect(safeUploadPath("/uploads\\windows\\x.pdf")).toBe("");
+    expect(safeUploadPath("uploads/x.pdf")).toBe("");
+  });
+
+  it("passes an empty value through — that is how a file is detached", () => {
+    expect(safeUploadPath("")).toBe("");
+    expect(safeUploadPath("   ")).toBe("");
   });
 });

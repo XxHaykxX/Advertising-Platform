@@ -93,7 +93,7 @@ export function Hero({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
   return (
     <section
       ref={ref}
-      className="relative isolate -mt-16 flex min-h-[100svh] w-full items-center overflow-hidden bg-[#0b0b14]"
+      className="relative isolate -mt-16 flex min-h-[100svh] w-full items-center overflow-hidden bg-[#070a1c]"
     >
       {/* ── Parallax poster wall ─────────────────────────────── */}
       <motion.div
@@ -119,12 +119,20 @@ export function Hero({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
         </div>
       </motion.div>
 
-      {/* ── Cinematic overlays (posters stay clearly visible) ── */}
-      <div className="pointer-events-none absolute left-1/2 top-1/3 z-0 h-[65vh] w-[65vh] -translate-x-1/2 rounded-full bg-primary/25 blur-[120px]" />
-      {/* light edge vignette only */}
-      <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_center,rgba(11,11,20,0)_30%,rgba(11,11,20,0.35)_80%,rgba(11,11,20,0.8)_100%)]" />
-      {/* focused scrim directly behind the headline for legibility */}
-      <div className="pointer-events-none absolute left-1/2 top-1/2 z-0 h-[70%] w-[min(900px,92%)] -translate-x-1/2 -translate-y-1/2 bg-[radial-gradient(ellipse_at_center,rgba(8,8,16,0.85)_0%,rgba(8,8,16,0.55)_45%,transparent_72%)] blur-xl" />
+      {/* ── Navy scrim (IA-45) ────────────────────────────────
+          The poster wall was competing with the headline. Three
+          stacked layers calm it down without cutting a visible
+          panel out of the wall: an even wash, a denser bloom
+          behind the copy, and an edge vignette. All of them are
+          full-bleed, so there is no border anywhere for the eye
+          to catch on. */}
+      <div className="pointer-events-none absolute left-1/2 top-1/3 z-0 h-[65vh] w-[65vh] -translate-x-1/2 rounded-full bg-primary/15 blur-[140px]" />
+      {/* even navy wash over the whole wall */}
+      <div className="pointer-events-none absolute inset-0 z-0 bg-[#0a1030]/55" />
+      {/* denser navy right behind the copy — fades out long before any edge */}
+      <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(ellipse_72%_58%_at_50%_50%,rgba(8,13,42,0.92)_0%,rgba(8,13,42,0.74)_42%,rgba(8,13,42,0.34)_72%,transparent_100%)]" />
+      {/* edge vignette */}
+      <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_center,rgba(6,10,32,0)_28%,rgba(6,10,32,0.45)_74%,rgba(6,10,32,0.88)_100%)]" />
       {/* bottom fade → seamless blend into next (light) section */}
 
       {/* ── Foreground content ───────────────────────────────── */}

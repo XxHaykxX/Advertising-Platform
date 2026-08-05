@@ -3,9 +3,11 @@
 import { createContext, useActionState, useContext, useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { AlertTriangle, Languages, Loader2, RotateCcw, Sparkles, X } from "lucide-react";
+import { AlertTriangle, FileText, Languages, Loader2, RotateCcw, Sparkles, X } from "lucide-react";
 import {
   AGE_RATING_VALUES,
+  DEFAULT_PLACEMENT_SET,
+  DEFAULT_TIER_SET,
   FORMAT_CATEGORY_VALUES,
   KIND_VALUES,
   RELEASE_PRECISION_VALUES,
@@ -28,6 +30,9 @@ import type { PlacementRow } from "./placements-editor";
 import { ReferencesSection } from "./references-editor";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { MediaField } from "@/components/media-field";
+import { Dropzone, DropzoneEmptyState, DropzonePreview } from "@/components/ui/dropzone";
+import { UploadProgress } from "@/components/ui/upload-progress";
+import { holdProgress, uploadViaXhr } from "@/lib/upload-xhr";
 import { PosterGenerator, type PosterGenerateInput, type PosterGenerateResult } from "@/components/poster-generator";
 import { ProjectCompletenessChecklist } from "@/components/project-completeness-checklist";
 import type { CompletenessItem } from "@/lib/project-completeness";
@@ -102,6 +107,9 @@ const CONTROLLED_NAMES = new Set([
   // videoFile mirrors through MediaField's own hidden input + React state, so
   // it restores via a keyed remount (like poster/gallery), not a DOM replay.
   "videoFile",
+  // presentationPdf (IA-44 §1) is the same shape as videoFile — its own
+  // uploader (PresentationField below) owns a hidden input + React state.
+  "presentationPdf",
 ]);
 
 export type ProjectFormInitial = ProjectFormValues;
@@ -143,6 +151,7 @@ const EMPTY: ProjectFormInitial = {
   cinemas: "",
   videoEmbedUrl: "",
   videoFile: "",
+  presentationPdf: "",
 };
 
 // #11 About block: the three locale tabs.
@@ -151,6 +160,63 @@ const ABOUT_LANGS = ["hy", "ru", "en"] as const;
 const ABOUT_LANG_NAMES: Record<TranslateLang, string> = { hy: "Հայերեն", ru: "Русский", en: "English" };
 // Short description (tagline) hard cap + live "N left" counter, per the ref UI.
 const TAGLINE_MAX = 140;
+
+// ── Trilingual offers defaults (IA-44 §1/§3, 2026-08-05) ───────────────────
+// A brand-new project starts with the three offers Мариам asked every
+// project to have (one placement, two sponsor tiers) instead of an empty
+// list — literal object shapes here, NOT a spread of tiers-editor's /
+// placements-editor's own EMPTY_TIER/EMPTY_PLACEMENT: those two modules are
+// dynamically imported below (ssr:false — see the SECTION_SKELETON comment)
+// specifically to keep @dnd-kit out of every /admin and /account page load,
+// and a plain value import here would pull them straight back into the main
+// bundle regardless of the dynamic() call elsewhere in this file.
+function defaultTierRow(set: { hy: string; ru: string; en: string }): TierRow {
+  return {
+    name: set.hy,
+    nameHy: set.hy,
+    nameRu: set.ru,
+    nameEn: set.en,
+    priceAmd: null,
+    benefits: "",
+    benefitsHy: "",
+    benefitsRu: "",
+    benefitsEn: "",
+    image: "",
+    isExclusive: false,
+    availableSlots: null,
+    totalSlots: null,
+  };
+}
+function defaultPlacementRow(set: { hy: string; ru: string; en: string }): PlacementRow {
+  return {
+    title: set.hy,
+    titleHy: set.hy,
+    titleRu: set.ru,
+    titleEn: set.en,
+    description: "",
+    descriptionHy: "",
+    descriptionRu: "",
+    descriptionEn: "",
+    image: "",
+    priceAmd: null,
+    availableSlots: null,
+    totalSlots: null,
+  };
+}
+
+/** A row saved before locale tabs existed (IA-44) has only its legacy
+   title/name and description/benefits filled — seed the hy tab from that
+   value once, when the row enters state, so an old project's offers don't
+   look empty in the editor just because nothing has been migrated into
+   titleHy/nameHy yet. The server keeps `title`/`name` in sync with whichever
+   locale is filled on every future save (form-shared.ts firstFilledLocale),
+   so this never fights a real edit. */
+function hydrateTierRow(r: TierRow): TierRow {
+  return { ...r, nameHy: r.nameHy || r.name, benefitsHy: r.benefitsHy || r.benefits };
+}
+function hydratePlacementRow(r: PlacementRow): PlacementRow {
+  return { ...r, titleHy: r.titleHy || r.title, descriptionHy: r.descriptionHy || r.description };
+}
 
 const inputCls =
   "w-full rounded-xl border border-border bg-card px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:border-primary";
@@ -271,6 +337,144 @@ function MediaCard({
         {gap && <PublishGapNote note={gap} />}
       </div>
       {children}
+    </div>
+  );
+}
+
+// Mirrors MAX_BYTES_DOC in lib/uploads-store.ts — checked before the round
+// trip so a fat-fingered 40 MB PDF fails instantly instead of after crossing
+// the wire, same reasoning as MediaField's own MAX_MB.
+const PRESENTATION_MAX_MB = 20;
+
+/** A project's optional sales deck (IA-44 §1, 2026-08-05) — uploaded here by
+ *  staff/the creator, downloaded from the report page by a brand
+ *  (report.downloadPresentation). Its own small uploader rather than
+ *  MediaField: that component is built entirely around images/video (a
+ *  picture preview, the shared MediaPicker library, optional cropping), none
+ *  of which fits a single PDF — this repeats its underlying shape instead
+ *  (Dropzone + UploadProgress, posted over uploadViaXhr for a real progress
+ *  bar and a cancel button) without dragging a PDF through an image-shaped
+ *  component. `dir` is always "presentations", `kind` is always "doc" — see
+ *  storeUpload's folder/kind rule in uploads-store.ts (that folder takes
+ *  nothing but a PDF, and a PDF may only go there). */
+function PresentationField({
+  name,
+  initial,
+  scope,
+  t,
+}: {
+  name: string;
+  initial: string;
+  scope: "staff" | "member";
+  t: ReturnType<typeof makeUI>;
+}) {
+  const [value, setValue] = useState(initial);
+  const [job, setJob] = useState<{ file: File; loaded: number; total: number } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+
+  async function upload(file: File) {
+    setError(null);
+    if (file.size > PRESENTATION_MAX_MB * 1024 * 1024) {
+      const mb = Math.round((file.size / (1024 * 1024)) * 10) / 10;
+      setError(`${t("media.errTooLargeShort")}: ${file.name} (${mb} MB > ${PRESENTATION_MAX_MB} MB)`);
+      return;
+    }
+
+    const controller = new AbortController();
+    abortRef.current = controller;
+    setJob({ file, loaded: 0, total: file.size });
+
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("dir", "presentations");
+    fd.append("kind", "doc");
+
+    const startedAt = Date.now();
+    const res = await uploadViaXhr(fd, {
+      scope,
+      signal: controller.signal,
+      errorLabel: "Upload failed.",
+      onProgress: ({ loaded, total }) =>
+        setJob((current) => (current?.file === file ? { ...current, loaded, total } : current)),
+    });
+
+    abortRef.current = null;
+    if (res.canceled) {
+      setJob(null); // the user asked for this — not an error
+      return;
+    }
+    if (res.error) {
+      setJob(null);
+      setError(res.error);
+      return;
+    }
+    if (res.path) {
+      // Same "let the finished bar stand for its minimum" beat as
+      // MediaField.uploadFile — see holdProgress.
+      setJob((current) => (current ? { ...current, loaded: current.total } : current));
+      await holdProgress(startedAt);
+      setJob(null);
+      setValue(res.path);
+      return;
+    }
+    setJob(null);
+  }
+
+  const fileName = value.split("/").pop() || value;
+
+  return (
+    <div className="space-y-1.5">
+      {/* Empty value = "file removed" (per spec) — the server nulls the column
+          from an empty string, same contract as poster/videoFile. */}
+      <input type="hidden" name={name} value={value} />
+      <Dropzone
+        accept={{ "application/pdf": [".pdf"] }}
+        maxFiles={1}
+        maxSize={PRESENTATION_MAX_MB * 1024 * 1024}
+        disabled={job !== null}
+        onDrop={(files) => {
+          const file = files[0];
+          if (file) void upload(file);
+        }}
+        onError={(e) => setError(e.message)}
+        labels={{ title: t("projectForm.presentation"), hint: t("media.dropHereOne"), replaceHint: t("media.dropToReplace") }}
+        preview={
+          job ? (
+            <UploadProgress
+              value={job.loaded}
+              max={job.total}
+              size="row"
+              caption={job.file.name}
+              onCancel={() => abortRef.current?.abort()}
+              className="border-0"
+            />
+          ) : value ? (
+            // A row, not a 16:9 picture frame — there's no thumbnail to show
+            // for a PDF, only its name, so the same aspect-video box MediaField
+            // uses for images would just be mostly empty.
+            <DropzonePreview replaceLabel={t("media.replace")} removeLabel={t("ui.remove")} onRemove={() => setValue("")}>
+              <a
+                href={value}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex h-20 items-center gap-3 rounded-xl border border-border bg-background px-4 text-sm text-foreground hover:border-primary/40"
+              >
+                <FileText className="h-6 w-6 shrink-0 text-muted-foreground" />
+                <span className="min-w-0 truncate">{fileName}</span>
+              </a>
+            </DropzonePreview>
+          ) : undefined
+        }
+      >
+        <DropzoneEmptyState>
+          <span className="flex flex-col items-center gap-1 text-xs text-muted-foreground">
+            <FileText className="h-4 w-4" />
+            {t("projectForm.presentation")}
+          </span>
+        </DropzoneEmptyState>
+      </Dropzone>
+      {error ? <p className="text-xs text-danger">{error}</p> : null}
     </div>
   );
 }
@@ -623,10 +827,18 @@ export function ProjectForm({
   const [deletingStudioOption, setDeletingStudioOption] = useState<string | null>(null);
   // ── Cast/crew + sponsorship tiers, inline (#20²) ──
   const [actors, setActors] = useState<ActorRow[]>(() => initialActors);
-  const [tiers, setTiers] = useState<TierRow[]>(() => initialTiers);
+  // IA-44 §1: a brand-new project (no `initial`) starts pre-filled with the
+  // standard 3-offer set instead of an empty list; an existing one hydrates
+  // its rows' hy tab from whatever legacy title/name it already has (IA-44 §2
+  // — see hydrateTierRow's doc comment) and otherwise loads exactly as saved.
+  const [tiers, setTiers] = useState<TierRow[]>(() =>
+    isEdit ? initialTiers.map(hydrateTierRow) : DEFAULT_TIER_SET.map(defaultTierRow),
+  );
   // ── Product placements (owner correction 2026-07-28): same "ride along as a
   // hidden JSON input" pattern as tiers above, but a separate offer. ──
-  const [placements, setPlacements] = useState<PlacementRow[]>(() => initialPlacements);
+  const [placements, setPlacements] = useState<PlacementRow[]>(() =>
+    isEdit ? initialPlacements.map(hydratePlacementRow) : DEFAULT_PLACEMENT_SET.map(defaultPlacementRow),
+  );
   // ── Reference Projects (Ф2): repeatable {name,url} rows, same "ride along
   // as a hidden JSON input" pattern as actors/tiers above. ──
   const [references, setReferences] = useState<ReferenceRow[]>(() => parseReferencesInput(data.references));
@@ -800,6 +1012,8 @@ export function ProjectForm({
   // videoFile's MediaField seeds from `initial` at mount too — remount it with
   // the restored path on draft restore (same pattern as poster/gallery).
   const [videoFileInitial, setVideoFileInitial] = useState(data.videoFile);
+  // Same story for presentationPdf's PresentationField.
+  const [presentationPdfInitial, setPresentationPdfInitial] = useState(data.presentationPdf ?? "");
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const skipFirstDraftEffect = useRef(true);
   // Plain uncontrolled fields to replay onto the DOM after a restore re-render.
@@ -933,6 +1147,7 @@ export function ProjectForm({
     setPosterInitial(obj.poster ?? "");
     setGalleryInitial(obj.gallery ?? "");
     setVideoFileInitial(obj.videoFile ?? "");
+    setPresentationPdfInitial(obj.presentationPdf ?? "");
     // Short-description counters ← restored lengths.
     setTaglineLen({
       hy: (obj.taglineHy ?? "").length,
@@ -1355,6 +1570,20 @@ export function ProjectForm({
                   </Field>
                 )}
               </MediaCard>
+
+              {/* ── Presentation (IA-44 §1) ── an optional sales deck a brand
+                  can download from the report page; nothing here feeds
+                  publishBlockers or projectCompleteness — a missing deck never
+                  blocks publication. */}
+              <MediaCard heading={t("projectForm.presentation")} hint={t("projectForm.presentationHint")}>
+                <PresentationField
+                  key={`presentation-${restoreNonce}`}
+                  name="presentationPdf"
+                  initial={presentationPdfInitial}
+                  scope={uploaderScope}
+                  t={t}
+                />
+              </MediaCard>
             </div>
           </section>
 
@@ -1378,7 +1607,14 @@ export function ProjectForm({
           <section id="sec-placements" className={sectionCls("sec-placements")}>
             <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">{t("projectForm.section.placements")}</h2>
             {sectionNote("sec-placements")}
-            <PlacementsSection value={placements} onChange={setPlacements} t={t} scope={uploaderScope} locale={locale} />
+            <PlacementsSection
+              value={placements}
+              onChange={setPlacements}
+              t={t}
+              scope={uploaderScope}
+              locale={locale}
+              showAddDefaultSet={isEdit}
+            />
           </section>
 
           {/* ── Sponsors (was "Placement(s)"/"Sponsorship tiers") ── */}
@@ -1392,6 +1628,7 @@ export function ProjectForm({
               templates={tierTemplates}
               scope={uploaderScope}
               locale={locale}
+              showAddDefaultSet={isEdit}
             />
           </section>
 

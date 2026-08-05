@@ -493,3 +493,56 @@ export function parseRolesInput(json: string | null, legacyRole: string): string
   }
   return legacyRole ? [legacyRole] : [];
 }
+
+// ── Trilingual offers (IA-44, 2026-08-05) ─────────────────────────────────
+// Placement titles/descriptions and SponsorshipTier names/benefits are now
+// per-locale. The legacy single-language columns (`title`/`description`,
+// `name`/`benefits`) are kept and still feed every reader that has not been
+// taught about the locale trio yet — including publishBlockers above — so they
+// must never be left empty while a locale tab has text in it. Both the admin
+// and the creator actions mirror them through firstFilledLocale().
+
+export const OFFER_LANGS = ["hy", "ru", "en"] as const;
+export type OfferLang = (typeof OFFER_LANGS)[number];
+
+/** The value that goes into the legacy column: the reader's default locale
+   first (the site is hy-first), then whatever else the editor did fill in.
+   Returns "" only when all three tabs are empty, which is exactly the case the
+   publish gate is meant to catch. */
+export function firstFilledLocale(v: { hy?: string; ru?: string; en?: string }): string {
+  return (v.hy || "").trim() || (v.ru || "").trim() || (v.en || "").trim() || "";
+}
+
+// The three positions Мариам asked every project to start with (IA-44 §1): one
+// product-placement slot and two sponsorship packages. Prefilled in all three
+// languages — the point of the request is that a creator opens the form and
+// already has the standard shape of a deal in front of them, and leaving ru/en
+// blank would have made them retype the same three names in two more tabs.
+// Owner decision 2026-08-05: NEW projects only. Existing projects get the same
+// set behind the "add the standard set" button, so nothing already published
+// changes without an editor asking for it.
+export const DEFAULT_PLACEMENT_SET: { hy: string; ru: string; en: string }[] = [
+  { hy: "Գովազդային ինտեգրացիա", ru: "Рекламная интеграция", en: "Advertising integration" },
+];
+
+export const DEFAULT_TIER_SET: { hy: string; ru: string; en: string }[] = [
+  { hy: "Գլխավոր հովանավոր", ru: "Генеральный спонсор", en: "General sponsor" },
+  { hy: "Պաշտոնական հովանավոր", ru: "Официальный спонсор", en: "Official sponsor" },
+];
+
+/** Keep an uploaded-file path pointing INSIDE our own uploads root (IA-44).
+
+   `presentationPdf` differs from the other upload fields in one way that
+   matters: the project page renders it as a link the reader clicks, so a
+   crafted save could otherwise park an arbitrary URL — or a traversal out of
+   the uploads tree — behind a "Download presentation" button on a real
+   listing. The upload endpoint already decides WHERE a file may be written;
+   this decides what the form is allowed to claim was written. "" means the
+   editor detached the file, and stays "". */
+export function safeUploadPath(value: string): string {
+  const v = value.trim();
+  if (!v) return "";
+  if (!v.startsWith("/uploads/")) return "";
+  if (v.includes("..") || v.includes("\\")) return "";
+  return v;
+}

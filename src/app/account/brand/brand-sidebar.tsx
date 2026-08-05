@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Search, Heart, Handshake, User, Bell, LogOut } from "lucide-react";
+import { LayoutDashboard, Search, Handshake, User, Bell, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutButton } from "@/components/logout-button";
 import type { Locale } from "@/lib/i18n-client";
@@ -29,9 +29,7 @@ export function BrandSidebar({
   locale,
 }: {
   labels: {
-    dashboard: string;
     browse: string;
-    favorites: string;
     interests: string;
     profile: string;
     notifications: string;
@@ -42,10 +40,11 @@ export function BrandSidebar({
 }) {
   const pathname = usePathname();
 
+  // IA-46: "dashboard" (account.title) and "favorites" moved up into the
+  // header nav next to the wordmark — see Header's BRAND_NAV — and are
+  // deliberately not duplicated here.
   const items: NavItem[] = [
-    { href: "/account/brand", label: labels.dashboard, icon: LayoutDashboard, exact: true },
     { href: "/account/brand/browse", label: labels.browse, icon: Search },
-    { href: "/account/brand/favorites", label: labels.favorites, icon: Heart },
     // Audit 4.2: the interests/applications page existed but had no sidebar
     // entry — a brand could only reach it via a dashboard card link.
     { href: "/account/brand/interests", label: labels.interests, icon: Handshake },

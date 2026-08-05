@@ -21,10 +21,12 @@ import {
   RELEASE_YEAR_MIN,
   ROLE_VALUES,
   deriveFormatCategory,
+  firstFilledLocale,
   kindForRole,
   parseCsvInput,
   publishBlockers,
   validateReleaseDateValue,
+  safeUploadPath,
 } from "@/app/admin/(panel)/projects/form-shared";
 import { revalidateStorefront } from "@/lib/data/revalidate-storefront";
 import type { ProjectFormValues, ProjectFormState } from "@/app/admin/(panel)/projects/actions";
@@ -132,6 +134,7 @@ function buildData(fd: FormData): ProjectFormValues {
     synopsisEn,
     poster: str(fd, "poster", VARCHAR_MAX),
     gallery: str(fd, "gallery"),
+    presentationPdf: safeUploadPath(str(fd, "presentationPdf", VARCHAR_MAX)),
     // Derived from Type when the editor leaves it alone (2026-08-05). Format
     // is a publish blocker, but it asks the same question as the Type radio
     // right above it, so a project could sit refused over a field whose answer
@@ -225,9 +228,17 @@ const ACTOR_KIND_VALUES = ["CAST", "CREW"] as const;
 type ActorInput = { name?: string; roles?: string[]; kind?: string; photo?: string; personId?: number | null };
 type TierInput = {
   dbId?: number; // existing SponsorshipTier.id, absent for a newly added row
-  name?: string;
+  name?: string; // legacy single-language value — see the locale trio below
+  // Per-locale name/benefits (IA-44, 2026-08-05) — mirrors the admin action's
+  // TierInput (see its comment for the legacy-column contract).
+  nameHy?: string;
+  nameRu?: string;
+  nameEn?: string;
   priceAmd?: number | null; // null -> "on request" (2026-08-04), same contract as PlacementInput.priceAmd
-  benefits?: string;
+  benefits?: string; // legacy single-language value
+  benefitsHy?: string;
+  benefitsRu?: string;
+  benefitsEn?: string;
   image?: string;
   isExclusive?: boolean;
   availableSlots?: number | null;
@@ -235,14 +246,30 @@ type TierInput = {
 };
 type PlacementInput = {
   dbId?: number; // existing Placement.id, absent for a newly added row
-  title?: string;
-  description?: string;
+  title?: string; // legacy single-language value — see the locale trio below
+  // Per-locale title/description (IA-44, 2026-08-05), mirrors TierInput's
+  // nameHy/Ru/En + benefitsHy/Ru/En above.
+  titleHy?: string;
+  titleRu?: string;
+  titleEn?: string;
+  description?: string; // legacy single-language value
+  descriptionHy?: string;
+  descriptionRu?: string;
+  descriptionEn?: string;
   image?: string;
   priceAmd?: number | null;
   availableSlots?: number | null;
   totalSlots?: number | null;
 };
 type MilestoneInput = { label?: string; date?: string; note?: string; active?: boolean };
+
+/** IA-44 (2026-08-05): mirrors the admin action's withLegacyHyFallback (same
+   "different trust zone, duplicate" reasoning as the rest of this file) — an
+   old payload from before the locale tabs existed sends only the legacy
+   field, treated as the hy tab whenever every tab is empty. */
+function withLegacyHyFallback(hy: string, ru: string, en: string, legacy: string): string {
+  return hy || (!ru && !en ? legacy.trim() : "");
+}
 
 /** "line 1\nline 2" -> JSON string[] (trimmed, blanks dropped) for the
    benefits @db.Text column. */
@@ -375,21 +402,52 @@ async function snapshotPersonNames(
 
 /** Rows for prisma.sponsorshipTier.createMany (projectId added by the
    caller). Price is optional (null -> "on request", 2026-08-04), same
-   contract as parsePlacementRows below. */
+   contract as parsePlacementRows below.
+
+   IA-44 (2026-08-05): mirrors the admin action's parseTierRows (see its
+   comment) — per-locale name/benefits, and the filter now keeps a row alive
+   on ANY filled locale (or the pre-tabs legacy field), not just legacy `name`. */
 function parseTierRows(fd: FormData) {
   return jsonArray<TierInput>(fd, "tiersRows")
-    .filter((r) => (r.name || "").trim())
-    .map((r, i) => ({
-      dbId: typeof r.dbId === "number" ? r.dbId : null,
-      name: (r.name || "").trim().slice(0, VARCHAR_MAX),
-      priceAmd: r.priceAmd == null ? null : Math.max(0, Number(r.priceAmd) || 0),
-      benefits: benefitsToJson(r.benefits || ""),
-      image: (r.image || "").trim() || null,
-      isExclusive: !!r.isExclusive,
-      availableSlots: r.availableSlots == null ? null : Math.max(0, Number(r.availableSlots) || 0),
-      totalSlots: r.totalSlots == null ? null : Math.max(0, Number(r.totalSlots) || 0),
-      sortOrder: i,
-    }));
+    .filter(
+      (r) =>
+        (r.nameHy || "").trim() ||
+        (r.nameRu || "").trim() ||
+        (r.nameEn || "").trim() ||
+        (r.name || "").trim(),
+    )
+    .map((r, i) => {
+      const nameHy = withLegacyHyFallback(
+        (r.nameHy || "").trim(),
+        (r.nameRu || "").trim(),
+        (r.nameEn || "").trim(),
+        r.name || "",
+      ).slice(0, VARCHAR_MAX);
+      const nameRu = (r.nameRu || "").trim().slice(0, VARCHAR_MAX);
+      const nameEn = (r.nameEn || "").trim().slice(0, VARCHAR_MAX);
+      const benefitsHyRaw = withLegacyHyFallback(r.benefitsHy || "", r.benefitsRu || "", r.benefitsEn || "", r.benefits || "");
+      const benefitsRuRaw = r.benefitsRu || "";
+      const benefitsEnRaw = r.benefitsEn || "";
+      return {
+        dbId: typeof r.dbId === "number" ? r.dbId : null,
+        // Legacy single-language column — never empty while a tab has text
+        // (see the admin action's parseTierRows comment).
+        name: firstFilledLocale({ hy: nameHy, ru: nameRu, en: nameEn }).slice(0, VARCHAR_MAX),
+        nameHy,
+        nameRu,
+        nameEn,
+        priceAmd: r.priceAmd == null ? null : Math.max(0, Number(r.priceAmd) || 0),
+        benefits: benefitsToJson(firstFilledLocale({ hy: benefitsHyRaw, ru: benefitsRuRaw, en: benefitsEnRaw })),
+        benefitsHy: benefitsHyRaw.trim() ? benefitsToJson(benefitsHyRaw) : null,
+        benefitsRu: benefitsRuRaw.trim() ? benefitsToJson(benefitsRuRaw) : null,
+        benefitsEn: benefitsEnRaw.trim() ? benefitsToJson(benefitsEnRaw) : null,
+        image: (r.image || "").trim() || null,
+        isExclusive: !!r.isExclusive,
+        availableSlots: r.availableSlots == null ? null : Math.max(0, Number(r.availableSlots) || 0),
+        totalSlots: r.totalSlots == null ? null : Math.max(0, Number(r.totalSlots) || 0),
+        sortOrder: i,
+      };
+    });
 }
 
 /** Persist a project's tier rows inside an open transaction. Deliberately not
@@ -422,20 +480,57 @@ async function saveTierRows(
 /** Rows for prisma.placement (projectId added by the caller). Price is
    optional (null -> "on request"), same as a tier's priceAmd since
    2026-08-04. Deliberately duplicated from admin/(panel)/projects/actions.ts,
-   same trust-boundary reason as parseTierRows/saveTierRows above. */
+   same trust-boundary reason as parseTierRows/saveTierRows above.
+
+   IA-44 (2026-08-05): mirrors the admin action's parsePlacementRows — see its
+   comment for the per-locale/filter-fix/legacy-fallback reasoning. */
 function parsePlacementRows(fd: FormData) {
   return jsonArray<PlacementInput>(fd, "placementsRows")
-    .filter((r) => (r.title || "").trim())
-    .map((r, i) => ({
-      dbId: typeof r.dbId === "number" ? r.dbId : null,
-      title: (r.title || "").trim().slice(0, VARCHAR_MAX),
-      description: benefitsToJson(r.description || ""),
-      image: (r.image || "").trim() || null,
-      priceAmd: r.priceAmd == null ? null : Math.max(0, Number(r.priceAmd) || 0),
-      availableSlots: r.availableSlots == null ? null : Math.max(0, Number(r.availableSlots) || 0),
-      totalSlots: r.totalSlots == null ? null : Math.max(0, Number(r.totalSlots) || 0),
-      sortOrder: i,
-    }));
+    .filter(
+      (r) =>
+        (r.titleHy || "").trim() ||
+        (r.titleRu || "").trim() ||
+        (r.titleEn || "").trim() ||
+        (r.title || "").trim(),
+    )
+    .map((r, i) => {
+      const titleHy = withLegacyHyFallback(
+        (r.titleHy || "").trim(),
+        (r.titleRu || "").trim(),
+        (r.titleEn || "").trim(),
+        r.title || "",
+      ).slice(0, VARCHAR_MAX);
+      const titleRu = (r.titleRu || "").trim().slice(0, VARCHAR_MAX);
+      const titleEn = (r.titleEn || "").trim().slice(0, VARCHAR_MAX);
+      const descriptionHyRaw = withLegacyHyFallback(
+        r.descriptionHy || "",
+        r.descriptionRu || "",
+        r.descriptionEn || "",
+        r.description || "",
+      );
+      const descriptionRuRaw = r.descriptionRu || "";
+      const descriptionEnRaw = r.descriptionEn || "";
+      return {
+        dbId: typeof r.dbId === "number" ? r.dbId : null,
+        // Legacy single-language column — never empty while a tab has text
+        // (see the admin action's parsePlacementRows comment).
+        title: firstFilledLocale({ hy: titleHy, ru: titleRu, en: titleEn }).slice(0, VARCHAR_MAX),
+        titleHy,
+        titleRu,
+        titleEn,
+        description: benefitsToJson(
+          firstFilledLocale({ hy: descriptionHyRaw, ru: descriptionRuRaw, en: descriptionEnRaw }),
+        ),
+        descriptionHy: descriptionHyRaw.trim() ? benefitsToJson(descriptionHyRaw) : null,
+        descriptionRu: descriptionRuRaw.trim() ? benefitsToJson(descriptionRuRaw) : null,
+        descriptionEn: descriptionEnRaw.trim() ? benefitsToJson(descriptionEnRaw) : null,
+        image: (r.image || "").trim() || null,
+        priceAmd: r.priceAmd == null ? null : Math.max(0, Number(r.priceAmd) || 0),
+        availableSlots: r.availableSlots == null ? null : Math.max(0, Number(r.availableSlots) || 0),
+        totalSlots: r.totalSlots == null ? null : Math.max(0, Number(r.totalSlots) || 0),
+        sortOrder: i,
+      };
+    });
 }
 
 /** Persist a project's placement rows inside an open transaction. Same
@@ -565,6 +660,7 @@ export async function createCreatorProject(
     synopsisEn: data.synopsisEn || null,
     poster: data.poster || null,
     gallery: galleryToJson(data.gallery),
+    presentationPdf: data.presentationPdf || null,
     // Defense in depth: the form never renders the date input while Ongoing
     // is checked, but a save must not trust that alone — force the pair back
     // into agreement here too.
@@ -733,6 +829,7 @@ export async function updateCreatorProject(
           synopsisEn: data.synopsisEn || null,
           poster: data.poster || null,
           gallery: galleryToJson(data.gallery),
+          presentationPdf: data.presentationPdf || null,
           // Defense in depth: the form never renders the date input while
           // Ongoing is checked, but a save must not trust that alone — force
           // the pair back into agreement here too.

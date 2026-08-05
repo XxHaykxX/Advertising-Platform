@@ -21,6 +21,9 @@ export const MAX_BYTES = 8 * 1024 * 1024; // 8 MB
 // Hostinger shared hosting. #16 (2026-07-31): mp4 now gets an ffmpeg pass when
 // the host has one — see prepareVideo() below.
 export const MAX_BYTES_VIDEO = 50 * 1024 * 1024; // 50 MB
+/** A sales deck (IA-44). Well above a realistic slide deck, well below the
+   video cap — a PDF is stored byte-for-byte, so nothing shrinks it afterwards. */
+export const MAX_BYTES_DOC = 20 * 1024 * 1024; // 20 MB
 
 /** Ceiling for a whole multipart body, for a front door that wants to reject a
  *  hostile request before reading it. Deliberately the LARGEST thing this
@@ -42,6 +45,15 @@ const EXT_BY_TYPE_VIDEO: Record<string, string> = {
   "video/mp4": "mp4",
   "video/webm": "webm",
 };
+/** The one non-media upload the site takes: a project's sales deck (IA-44,
+ *  2026-08-05). Its own kind rather than a third image type, because it skips
+ *  the sharp pass entirely and lives under its own size cap and folder. */
+const EXT_BY_TYPE_DOC: Record<string, string> = {
+  "application/pdf": "pdf",
+};
+/** Presentations are the only thing this folder holds, and the only place a
+ *  document may land — see the folder/kind rule in storeUpload. */
+export const DOC_DIR = "presentations";
 
 /** Keep only a safe folder segment (project code etc.) — strip anything that
    could escape the uploads root.
@@ -80,10 +92,15 @@ export type UploadMessages = {
   notAVideo: string;
   /** A clip aimed at a stills folder. */
   notAnImage: string;
+  /** Anything but a PDF aimed at the Presentations folder, or a PDF aimed
+   *  anywhere else. */
+  notADoc: string;
   tooLargeImage: string;
   tooLargeVideo: string;
+  tooLargeDoc: string;
   unsupportedImage: string;
   unsupportedVideo: string;
+  unsupportedDoc: string;
   processFailed: string;
 };
 
@@ -92,10 +109,13 @@ export const STAFF_UPLOAD_MESSAGES: UploadMessages = {
   noFile: "No file provided.",
   notAVideo: "This folder only takes MP4 / WebM.",
   notAnImage: "Upload videos to the Videos folder.",
+  notADoc: "The Presentations folder only takes PDF.",
   tooLargeImage: "File too large (max 8 MB).",
   tooLargeVideo: "File too large (max 50 MB).",
+  tooLargeDoc: "File too large (max 20 MB).",
   unsupportedImage: "Unsupported type — use JPG, PNG, WebP, GIF or AVIF.",
   unsupportedVideo: "Unsupported type — use MP4 or WebM.",
+  unsupportedDoc: "Unsupported type — use PDF.",
   processFailed: "Could not process image.",
 };
 
@@ -108,10 +128,13 @@ export function memberUploadMessages(
     noFile: t("media.errNoFile"),
     notAVideo: t("media.errUnsupportedVideo"),
     notAnImage: t("media.errUnsupportedImage"),
+    notADoc: t("media.errUnsupportedDoc"),
     tooLargeImage: t("media.errTooLargeServer", { limit: String(MAX_BYTES / (1024 * 1024)) }),
     tooLargeVideo: t("media.errTooLargeServer", { limit: String(MAX_BYTES_VIDEO / (1024 * 1024)) }),
+    tooLargeDoc: t("media.errTooLargeServer", { limit: String(MAX_BYTES_DOC / (1024 * 1024)) }),
     unsupportedImage: t("media.errUnsupportedImage"),
     unsupportedVideo: t("media.errUnsupportedVideo"),
+    unsupportedDoc: t("media.errUnsupportedDoc"),
     processFailed: t("media.loadError"),
   };
 }
@@ -153,6 +176,34 @@ export async function storeUpload(fd: FormData, opts: StoreUploadOptions): Promi
   if (dir === "videos" && kind !== "video") return { error: messages.notAVideo };
   if (dir !== "videos" && kind === "video" && !MIXED_DIRS.has(dir)) {
     return { error: messages.notAnImage };
+  }
+  // Documents get the same treatment as clips: exactly one folder, and that
+  // folder takes nothing else. Without the second half of the rule a PDF could
+  // be dropped among the posters, where every reader expects an image.
+  if ((dir === DOC_DIR) !== (kind === "doc")) return { error: messages.notADoc };
+
+  if (kind === "doc") {
+    if (file.size > MAX_BYTES_DOC) return { error: messages.tooLargeDoc };
+    const ext = EXT_BY_TYPE_DOC[file.type];
+    if (!ext) return { error: messages.unsupportedDoc };
+
+    const rawBuffer = Buffer.from(await file.arrayBuffer());
+    // A PDF is stored byte-for-byte — nothing re-encodes it the way sharp
+    // re-encodes a still, so the declared MIME is the ONLY thing vouching for
+    // the contents. Check the magic number too: this file ends up served from
+    // our own origin, and a renamed .html would otherwise ride in on a
+    // hand-built request and run as same-origin script in a brand's browser.
+    if (rawBuffer.subarray(0, 5).toString("latin1") !== "%PDF-") {
+      return { error: messages.unsupportedDoc };
+    }
+
+    const name = `${Date.now()}-${randomUUID().slice(0, 8)}.${ext}`;
+    const destDir = path.join(root, dir);
+    if (!assertInside(root, destDir)) return { error: messages.noFile };
+    await mkdir(destDir, { recursive: true });
+    await writeFile(path.join(destDir, name), rawBuffer);
+
+    return { path: `${publicPrefix}/${dir}/${name}` };
   }
 
   if (kind === "video") {

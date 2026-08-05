@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@/lib/prisma";
 import type { Locale } from "@/lib/i18n";
 import type { InterestStatus } from "@prisma/client";
+import { OFFER_NAME_SELECT, pickPlacementTitle, pickTierName } from "@/lib/data/pick-locale";
 
 /* #23 — Interest is a BRAND member's "Express Interest" signal on a Project.
  * It's the only placement-lead channel now (#37 removed the anonymous
@@ -54,8 +55,11 @@ export async function getBrandInterests(brandId: number, locale: Locale): Promis
     where: { brandId },
     include: {
       project: true,
-      tier: { select: { name: true } },
-      placement: { select: { title: true } },
+      // Per-locale offer names (IA-44, 2026-08-05) — this list is the brand's
+      // own record of what it applied for, so it has to read in the brand's
+      // language, not in whatever the creator typed first.
+      tier: { select: OFFER_NAME_SELECT.tier },
+      placement: { select: OFFER_NAME_SELECT.placement },
     },
     orderBy: { createdAt: "desc" },
   });
@@ -65,8 +69,8 @@ export async function getBrandInterests(brandId: number, locale: Locale): Promis
     createdAt: r.createdAt.toISOString(),
     respondedAt: r.respondedAt?.toISOString() ?? null,
     responseNote: r.responseNote ?? "",
-    tierName: r.tier?.name ?? "",
-    placementTitle: r.placement?.title ?? "",
+    tierName: pickTierName(locale, r.tier),
+    placementTitle: pickPlacementTitle(locale, r.placement),
     message: r.message ?? "",
     productInfo: r.productInfo ?? "",
     project: {

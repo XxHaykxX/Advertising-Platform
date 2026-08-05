@@ -72,6 +72,28 @@ function useNav(t: ReturnType<typeof makeUI>) {
   ] as const;
 }
 
+/** IA-46: the BRAND cabinet's two most-used pages (dashboard + favorites),
+ *  promoted from BrandSidebar into the header itself, next to the wordmark —
+ *  mirrors the "Home / My List" placement on kinodaran.am. Brand-only: never
+ *  shown to CREATOR members, guests, or staff (see `isBrand` in Header). */
+function useBrandNav(t: ReturnType<typeof makeUI>) {
+  return [
+    { label: t("account.title"), href: "/account/brand", exact: true },
+    { label: t("account.brand.navFavorites"), href: "/account/brand/favorites" },
+  ] as const;
+}
+
+/** Shared by the desktop nav below and MobileNavPanel — `exact` items (the
+ *  dashboard root) only highlight on a precise match, everything else also
+ *  highlights on nested routes, same convention as BrandSidebar's isActive. */
+function isNavItemActive(
+  pathname: string | null,
+  item: { href: string; exact?: boolean }
+): boolean {
+  if (!pathname) return false;
+  return item.exact ? pathname === item.href : pathname.startsWith(item.href);
+}
+
 /** "Hayk Karapetyan" → "HK"; "Hayk" → "H"; falls back to the email's first
  *  letter when the name is blank. */
 function initials(name: string, email: string): string {
@@ -223,10 +245,15 @@ export function Header({
   const pathname = usePathname();
   const t = makeUI(locale);
   const NAV = useNav(t);
+  const BRAND_NAV = useBrandNav(t);
   // Signed-in BRAND/CREATOR: header drops the marketing nav entirely — the
   // cabinet is reachable via the avatar menu / Wordmark instead
   // (see docs/superpowers/specs/2026-07-19-member-header-nav-design.md).
   const isMember = user != null && !STAFF_ROLES.includes(user.role);
+  // IA-46: BRAND (not CREATOR, not staff, not guests) gets its two most-used
+  // cabinet pages promoted into the header nav slot, replacing the sidebar
+  // entries removed in brand-sidebar.tsx.
+  const isBrand = user?.role === "BRAND";
   // Every page that opens on the dark cinematic PageHero (plus the landing
   // page, which has its own bespoke hero) — while the transparent header
   // floats over it, switch text to a light-on-dark scheme.
@@ -269,8 +296,16 @@ export function Header({
         <div className="flex h-16 items-center justify-between gap-4">
           <Wordmark onDark={onDark} user={user} />
 
-          {/* Desktop nav */}
-          <nav className="hidden items-center gap-8 lg:flex">
+          {/* Desktop nav. The marketing links sit centred between the wordmark
+              and the right cluster; the BRAND cabinet links instead hug the
+              wordmark (mr-auto), which is where kinodaran.am puts "Home / My
+              List" and where IA-46's mockup drew them. */}
+          <nav
+            className={cn(
+              "hidden items-center lg:flex",
+              isBrand ? "ml-2 mr-auto gap-1" : "gap-8"
+            )}
+          >
             {!isMember &&
               NAV.map((item) => (
                 <Link
@@ -284,6 +319,28 @@ export function Header({
                   {item.label}
                 </Link>
               ))}
+            {isBrand &&
+              BRAND_NAV.map((item) => {
+                const active = isNavItemActive(pathname, item);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      // h-11 (44px) hit area — the project's touch-target
+                      // convention (see button.tsx's md size / offer-apply-button.tsx).
+                      "flex h-11 items-center rounded-lg px-3 text-sm font-medium transition-colors hover:bg-primary/10 hover:text-primary",
+                      active
+                        ? "bg-primary/10 text-primary"
+                        : onDark
+                          ? "text-white/75"
+                          : "text-muted-foreground"
+                    )}
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
           </nav>
 
           {/* Right cluster (desktop) */}
@@ -331,6 +388,7 @@ export function Header({
           open={menuOpen}
           nav={NAV}
           isMember={isMember}
+          brandNav={isBrand ? BRAND_NAV : []}
           user={user}
           locale={locale}
           loginHref={loginHref}

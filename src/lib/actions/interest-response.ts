@@ -9,6 +9,8 @@ import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
 import { createNotification } from "@/lib/data/notifications";
 import { notifyInterestAnswered } from "@/lib/mail";
+import { OFFER_NAME_SELECT, pickPlacementTitle, pickTierName } from "@/lib/data/pick-locale";
+import { DEFAULT_LOCALE } from "@/lib/i18n";
 
 /* Wave 2 of the audit — the answer half of an application.
  *
@@ -68,12 +70,12 @@ export async function respondToInterest(
     include: {
       project: { select: { id: true, title: true, ownerId: true } },
       brand: { select: { id: true, email: true, name: true } },
-      tier: { select: { id: true, name: true, availableSlots: true } },
+      tier: { select: { id: true, ...OFFER_NAME_SELECT.tier, availableSlots: true } },
       // A brand can name a product placement instead of a package (2026-07-29,
       // see the Interest model comment) — slots for those need the same
       // bookkeeping below, tier and placement being mutually exclusive on an
       // application in practice.
-      placement: { select: { id: true, title: true, availableSlots: true } },
+      placement: { select: { id: true, ...OFFER_NAME_SELECT.placement, availableSlots: true } },
     },
   });
   if (!interest) return { ok: false, error: t("interests.errNotFound") };
@@ -162,7 +164,13 @@ export async function respondToInterest(
         // notifyInterestAnswered only knows "tierName" — reuse it for a
         // placement's title too (they're mutually exclusive on one
         // application) rather than change a signature owned by mail.ts.
-        tierName: interest.tier?.name ?? interest.placement?.title,
+        // Named in the default locale: the mail is tri-lingual in its own
+        // labels and has no reader locale to resolve with (same reasoning as
+        // notifyNewInterest in account/brand/actions.ts).
+        tierName:
+          pickTierName(DEFAULT_LOCALE, interest.tier) ||
+          pickPlacementTitle(DEFAULT_LOCALE, interest.placement) ||
+          undefined,
         note: trimmedNote,
         accepted: accept,
       },
