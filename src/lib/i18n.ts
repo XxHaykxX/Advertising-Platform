@@ -1775,7 +1775,11 @@ export const UI: Record<string, Dict> = {
   // Admin redesign phase 1: renamed from "Press-kit details" — this section
   // is now just poster/gallery/video (Comparable titles moved out to its own
   // "Reference Projects" section).
-  "projectForm.section.pressKit": { ru: "Дизайн", en: "Design", hy: "Դիզայն" },
+  // Holds the poster, the gallery, the video AND the presentation deck, so
+  // "Design" sent anyone hunting for the PDF upload straight past it — the
+  // owner reported not being able to find that field at all on 2026-08-05.
+  // The section id has always been `sec-media`; the label now agrees with it.
+  "projectForm.section.pressKit": { ru: "Медиа", en: "Media", hy: "Մեդիա" },
   "projectForm.section.castCrew": { ru: "Актёры и съёмочная группа", en: "Cast & crew", hy: "Դերասաններ և թիմ" },
   // Two different things, and the form used to call the sponsorship one
   // "Placement(s)" (owner correction 2026-07-28). Sponsorship sells the logo:

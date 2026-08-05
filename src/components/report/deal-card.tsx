@@ -132,7 +132,16 @@ export function DealCard({
           : t("report.deal.daysLeft", { n: daysLeft });
 
   return (
-    <div className="flex h-full flex-col gap-4 rounded-2xl border border-border bg-card p-4 sm:p-5">
+    // Deliberately NOT h-full. The card used to stretch to the row height so
+    // its button lined up with the bottom of the video beside it — fine while
+    // the card was the taller of the two. Since the synopsis and the thumbnail
+    // strip moved into the left column (2026-08-05) that column can be the
+    // taller one, and h-full then opened a ~200px hole between the facts and
+    // the button, INSIDE a bordered card. Sized to its content the leftover
+    // space falls outside the card instead, where it reads as page, not as a
+    // gap someone forgot to fill. (`items-start` on the hero grid is what lets
+    // this shrink: without it the grid would stretch the card anyway.)
+    <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 sm:p-5">
       {hasBudget ? (
         <div>
           <Wallet className="h-4 w-4 text-primary" />
