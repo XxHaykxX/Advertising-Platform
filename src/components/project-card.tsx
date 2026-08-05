@@ -57,9 +57,14 @@ function OfferLine({
         <span className="shrink-0 text-muted-foreground">{icon}</span>
         {label}
       </p>
-      <p className="mt-0.5 flex items-baseline justify-between gap-2 pl-5">
-        <span className={cn("text-muted-foreground", detailClass)}>{detail}</span>
-        <span className="shrink-0 tabular-nums">
+      {/* No indent and nowrap on both halves: an eight-figure price ("40 000
+          000 ֏") plus a five-px indent pushed the count onto a second line on
+          a real catalog card. The row is allowed to run full width instead. */}
+      <p className="mt-0.5 flex items-baseline justify-between gap-2">
+        <span className={cn("min-w-0 truncate whitespace-nowrap text-muted-foreground", detailClass)}>
+          {detail}
+        </span>
+        <span className="shrink-0 whitespace-nowrap tabular-nums">
           {price ? (
             <>
               <span className="text-muted-foreground">{fromLabel} </span>
