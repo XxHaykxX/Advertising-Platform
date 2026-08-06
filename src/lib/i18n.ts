@@ -29,19 +29,13 @@ type Dict = Record<Locale, string>;
 export const UI: Record<string, Dict> = {
   // ── header nav ──────────────────────────────
   "nav.catalog": { ru: "Каталог", en: "Catalog", hy: "Նախագծեր" },
-  "nav.how": { ru: "Как это работает", en: "How It Works", hy: "Ինչպես է աշխատում" },
   "nav.portfolio": { ru: "Портфолио", en: "Portfolio", hy: "Պորտֆոլիո" },
-  "nav.partners": { ru: "Партнёры", en: "Partners", hy: "Գործընկերներ" },
-  "nav.faq": { ru: "Вопросы и ответы", en: "FAQ", hy: "Հաճախ տրվող հարցեր" },
   "nav.about": { ru: "О нас", en: "About", hy: "Մեր մասին" },
   "nav.contact": { ru: "Контакты", en: "Contact", hy: "Կոնտակտներ" },
-  "nav.signIn": { ru: "Войти", en: "Sign In", hy: "Մուտք" },
-  "nav.register": { ru: "Регистрация", en: "Register", hy: "Գրանցում" },
   "nav.signInUp": { ru: "Войти / Регистрация", en: "Sign In / Up", hy: "Մուտք / Գրանցում" },
   "nav.cabinet": { ru: "Кабинет", en: "Dashboard", hy: "Անձնական էջ" },
   "nav.logout": { ru: "Выйти", en: "Log out", hy: "Դուրս գալ" },
   "nav.browseProjects": { ru: "Смотреть проекты", en: "Browse Projects", hy: "Տեսնել նախագծերը" },
-  "nav.callUs": { ru: "Позвонить", en: "Call us", hy: "Զանգահարել" },
   "nav.openMenu": { ru: "Открыть меню", en: "Open menu", hy: "Բացել ընտրացանկը" },
   "nav.closeMenu": { ru: "Закрыть меню", en: "Close menu", hy: "Փակել ընտրացանկը" },
 
@@ -137,25 +131,13 @@ export const UI: Record<string, Dict> = {
   // ── buttons / CTAs ──────────────────────────
   "btn.getStarted": { ru: "Начать", en: "Get Started", hy: "Սկսել" },
   "btn.viewReport": { ru: "Подробнее", en: "Learn More", hy: "Տեսնել ավելին" },
-  "btn.requestDetails": { ru: "Связаться", en: "Contact us", hy: "Կապվել" },
   "btn.removeInterest": { ru: "Убрать из интересов", en: "Remove from Interests", hy: "Հանել հետաքրքրություններից" },
   "btn.removeFavorite": { ru: "Убрать", en: "Remove", hy: "Հեռացնել" },
-  "cta.loginToApply": {
-    ru: "Войдите, чтобы оставить заявку",
-    en: "Sign in to express interest",
-    hy: "Մուտք գործեք հայտ ուղարկելու համար",
-  },
   "btn.browseProjects": { ru: "Смотреть проекты", en: "Browse Projects", hy: "Ստեղծել հաշիվ" },
   "btn.viewAll": { ru: "Смотреть все", en: "View All", hy: "Դիտել բոլորը" },
   "btn.listProject": { ru: "Разместить проект", en: "List Your Project", hy: "Գրանցվել" },
-  "btn.send": { ru: "Отправить", en: "Send", hy: "Ուղարկել" },
   "btn.sending": { ru: "Отправка…", en: "Sending…", hy: "Ուղարկվում է…" },
-  "btn.submit": { ru: "Отправить", en: "Submit", hy: "Ուղարկել" },
   "btn.close": { ru: "Закрыть", en: "Close", hy: "Փակել" },
-  "btn.showAll": { ru: "Показать все", en: "Show All", hy: "Ցուցադրել բոլորը" },
-  "btn.showLess": { ru: "Свернуть", en: "Show Less", hy: "Ցուցադրել քիչ" },
-  "btn.share": { ru: "Поделиться", en: "Share", hy: "Կիսվել" },
-  "btn.registerAsPublisher": { ru: "Регистрация как продюсер", en: "Register as Publisher", hy: "Գրանցվել որպես պրոդյուսեր" },
   "btn.becomePartner": { ru: "Стать партнёром", en: "Become a partner", hy: "Դառնալ գործընկեր" },
   "btn.browseCurrentProjects": { ru: "Смотреть текущие проекты", en: "Browse current projects", hy: "Դիտել ընթացիկ նախագծերը" },
   "btn.translate": { ru: "Перевести", en: "Translate", hy: "Թարգմանել" },
@@ -214,7 +196,6 @@ export const UI: Record<string, Dict> = {
   "poster.customTextPlaceholder": { ru: "Оставьте пустым — без текста", en: "Leave empty for no text", hy: "Թողեք դատարկ՝ առանց տեքստի" },
   "poster.fromImage": { ru: "Из своего изображения", en: "From my image", hy: "Իմ նկարից" },
   "poster.fromLibrary": { ru: "Из библиотеки", en: "From library", hy: "Գրադարանից" },
-  "poster.error": { ru: "Не удалось сгенерировать постер", en: "Poster generation failed", hy: "Չհաջողվեց ստեղծել պաստառը" },
 
   // ── footer ──────────────────────────────────
   "footer.tagline": {
@@ -229,7 +210,6 @@ export const UI: Record<string, Dict> = {
   "footer.browseProjects": { ru: "Смотреть проекты", en: "Browse Projects", hy: "Դիտել նախագծերը" },
   "footer.howItWorks": { ru: "Как это работает", en: "How It Works", hy: "Ինչպես է աշխատում" },
   "footer.portfolio": { ru: "Портфолио", en: "Portfolio", hy: "Պորտֆոլիո" },
-  "footer.partners": { ru: "Партнёры", en: "Partners", hy: "Գործընկերներ" },
   "footer.faq": { ru: "Вопросы и ответы", en: "FAQ", hy: "Հաճախ տրվող հարցեր" },
   "footer.about": { ru: "О нас", en: "About", hy: "Մեր մասին" },
   "footer.contact": { ru: "Контакты", en: "Contact", hy: "Կոնտակտներ" },
@@ -248,22 +228,12 @@ export const UI: Record<string, Dict> = {
     en: "Browse film and TV productions open for brand placement — filter by genre, product category, and status.",
     hy: "Ընտրե՛ք Ձեր բրենդին համապատասխան նախագիծ, կա՛պ հաստատեք ստուգված արտադրողների հետ և իրականացրե՛ք արդյունավետ ինտեգրումներ։",
   },
-  "catalog.signIn": { ru: "Войти", en: "Sign In", hy: "Մուտք" },
-  "catalog.register": { ru: "Регистрация", en: "Register", hy: "Գրանցում" },
   "catalog.filters": { ru: "Фильтры", en: "Filters", hy: "ՖԻԼՏՐՆԵՐ" },
   "catalog.genre": { ru: "Жанр", en: "Genre", hy: "Ժանր" },
-  "catalog.targetAudience": { ru: "Целевая аудитория", en: "Target Audience", hy: "Թիրախային լսարան" },
-  "catalog.gender": { ru: "Пол", en: "Gender", hy: "Սեռ" },
-  "catalog.genderAll": { ru: "Все", en: "All", hy: "Բոլորը" },
-  "catalog.genderMale": { ru: "Мужской", en: "Male", hy: "Արական" },
-  "catalog.genderFemale": { ru: "Женский", en: "Female", hy: "Իգական" },
 
   // ── Localized data-value labels (closed sets rendered from DB values) ──
   // Keyed by the raw DB value; localizeValue() falls back to the raw value
   // for anything not listed (e.g. a custom genre an admin types).
-  "gender.All": { ru: "Все", en: "All", hy: "Բոլորը" },
-  "gender.Male": { ru: "Мужской", en: "Male", hy: "Արական" },
-  "gender.Female": { ru: "Женский", en: "Female", hy: "Իգական" },
   "genre.Comedy Film": { ru: "Комедийный фильм", en: "Comedy Film", hy: "Կատակերգական ֆիլմ" },
   "genre.Comedy Series": { ru: "Комедийный сериал", en: "Comedy Series", hy: "Կատակերգական սերիալ" },
   "genre.Drama Series": { ru: "Драматический сериал", en: "Drama Series", hy: "Դրամատիկ սերիալ" },
@@ -385,15 +355,12 @@ export const UI: Record<string, Dict> = {
   "metric.searchLift": { ru: "Рост поиска", en: "Search Lift", hy: "Որոնման աճ" },
   "metric.recallDurability": { ru: "Устойчивость запоминания", en: "Recall Durability", hy: "Հիշվողության կայունություն" },
   "catalog.budgetRange": { ru: "Диапазон бюджета", en: "Budget Range", hy: "Բյուջեի միջակայք" },
-  "catalog.min": { ru: "Мин", en: "Min", hy: "Նվազ." },
-  "catalog.max": { ru: "Макс", en: "Max", hy: "Առավ." },
   "catalog.format": { ru: "Формат", en: "Format", hy: "Ձևաչափ" },
   // 5.8: explicit bucket for rows whose formatCategory heuristic found nothing
   // (deriveFormatCategory can legitimately return "") — lets a visitor opt
   // into seeing them instead of the value silently vanishing from every
   // specific-format selection.
   "catalog.formatUnspecified": { ru: "Не указан", en: "Unspecified", hy: "Չնշված" },
-  "catalog.age": { ru: "Возраст", en: "Age", hy: "Տարիք" },
   "catalog.platform": { ru: "Платформа", en: "Platform", hy: "Հարթակ" },
   "catalog.clearAll": { ru: "Сбросить всё", en: "Clear All", hy: "Մաքրել բոլորը" },
   "catalog.showResults": { ru: "Показать", en: "Show", hy: "Ցուցադրել" },
@@ -402,9 +369,6 @@ export const UI: Record<string, Dict> = {
     en: "Search by genre, market, keyword…",
     hy: "Փնտրել ըստ վերնագրի, ժանրի կամ անվան...",
   },
-  "catalog.sortMostRelevant": { ru: "Сначала релевантные", en: "Most relevant", hy: "Առավել համապատասխան" },
-  "catalog.sortViews": { ru: "Просмотры", en: "Views", hy: "Դիտումներ" },
-  "catalog.sortBudget": { ru: "Бюджет", en: "Budget", hy: "Բյուջե" },
   // 5.7: the actual sort control wired up in catalog-view.tsx (the three keys
   // above were pre-existing scaffolding that was never connected to a select).
   "catalog.sortLabel": { ru: "Сортировка", en: "Sort", hy: "Դասավորել ըստ" },
@@ -431,14 +395,10 @@ export const UI: Record<string, Dict> = {
   "deadline.ongoing": { ru: "Бессрочно", en: "Ongoing", hy: "Ընթացիկ" },
 
   // ── project card / row ──────────────────────
-  "card.projectedViews": { ru: "прогноз. просмотров", en: "projected views", hy: "կանխատեսվող դիտում" },
   "card.release": { ru: "Выход", en: "Release", hy: "Ցուցադրությունը՝" },
   "card.applicationsUntil": { ru: "Заявки до", en: "Applications until", hy: "Հայտեր՝ մինչև" },
-  "card.slotsAvailable": { ru: "мест доступно", en: "slots available", hy: "հասանելի տեղ" },
   // Owner request 2026-07-28: say on the card how many placement opportunities
   // a project carries, the way the competing marketplaces do.
-  "card.placementsOne": { ru: "вариант размещения", en: "placement", hy: "փլեյսմենթ" },
-  "card.placementsMany": { ru: "варианта размещения", en: "placements", hy: "փլեյսմենթ" },
   // IA-41: the platform chip row (Netflix, cinema, …) had no label — a bare
   // row of pills with nothing saying what they were. Prefixes that row on
   // every card that renders it.
@@ -479,7 +439,6 @@ export const UI: Record<string, Dict> = {
   // ── forms (shared) ──────────────────────────
   "form.name": { ru: "Имя", en: "Name", hy: "Անուն" },
   "form.namePlaceholder": { ru: "Ваше имя", en: "Your name", hy: "Ձեր անունը" },
-  "form.phone": { ru: "Телефон", en: "Phone", hy: "Հեռախոս" },
   "form.email": { ru: "Email", en: "Email", hy: "Էլփոստ" },
   "form.company": { ru: "Компания", en: "Company", hy: "Ընկերություն" },
   "form.companyPlaceholder": { ru: "Ваша компания", en: "Your company", hy: "Ձեր ընկերությունը" },
@@ -493,17 +452,6 @@ export const UI: Record<string, Dict> = {
     en: "Please fill in this field",
     hy: "Խնդրում ենք լրացնել դաշտը",
   },
-  "form.consent": {
-    ru: "Я согласен на обработку персональных данных",
-    en: "I agree to the processing of my personal data",
-    hy: "Համաձայն եմ անձնական տվյալների մշակմանը",
-  },
-
-  // ── stats section ────────────────────────────
-  "stats.averageCpm": { ru: "Средний CPM", en: "Average CPM", hy: "Միջին CPM" },
-  "stats.higherBrandRecall": { ru: "Выше запоминаемость бренда", en: "Higher Brand Recall", hy: "Ավելի բարձր բրենդի հիշարժանություն" },
-  "stats.avgProjectedViews": { ru: "Средний прогноз просмотров", en: "Avg Projected Views", hy: "Միջին կանխատեսվող դիտումներ" },
-  "stats.brandRecallRate": { ru: "Уровень запоминаемости бренда", en: "Brand Recall Rate", hy: "Բրենդի հիշարժանության մակարդակ" },
 
   // ── trust section ─────────────────────────────
   "trust.scriptsAnalyzedNumber": { ru: "100 000+", en: "100,000+", hy: "100%" },
@@ -859,7 +807,6 @@ export const UI: Record<string, Dict> = {
   "portfolio.nextCase": { ru: "Следующий кейс", en: "Next case", hy: "Հաջորդ դեպքը" },
 
   // ── partners page ──────────────────────────────
-  "partners.title": { ru: "Наши партнёры", en: "Our Partners", hy: "Մեր գործընկերները" },
   "partners.subtitle": {
     ru: "Продакшен-студии и дистрибьюторские сети, формирующие каталог iGovazd.",
     en: "Production studios and distribution networks building the iGovazd catalog.",
@@ -874,7 +821,6 @@ export const UI: Record<string, Dict> = {
   },
 
   // ── report: hero / key facts / cast ────────────
-  "report.backToCatalog": { ru: "Назад к каталогу", en: "Back to Catalog", hy: "Վերադառնալ կատալոգ" },
   "report.back": { ru: "Назад", en: "Back", hy: "Հետ" },
   "report.video": { ru: "Видео", en: "Video", hy: "Տեսանյութ" },
   "report.catalogLabel": { ru: "Каталог", en: "Catalog", hy: "Կատալոգ" },
@@ -887,8 +833,6 @@ export const UI: Record<string, Dict> = {
   "report.showMore": { ru: "Ещё", en: "More", hy: "Ավելին" },
   "report.showLess": { ru: "Свернуть", en: "Show less", hy: "Ծալել" },
   "report.linkCopied": { ru: "Ссылка скопирована", en: "Link copied", hy: "Հղումը պատճենվեց" },
-  "report.projectedViews": { ru: "Прогноз. просмотры", en: "Projected Views", hy: "Կանխատեսվող դիտումներ" },
-  "report.cpm": { ru: "CPM", en: "CPM", hy: "CPM" },
   // ── report: press-kit additions (Aram) ──
   "cast.crewHeading": { ru: "Команда", en: "Crew", hy: "Թիմ" },
   "cast.castHeading": { ru: "Актёры", en: "Cast", hy: "Դերասաններ" },
@@ -912,7 +856,6 @@ export const UI: Record<string, Dict> = {
   },
   "report.slotsAvailable": { ru: "мест доступно", en: "slots available", hy: "հասանելի տեղ" },
   "report.exclusive": { ru: "Эксклюзив", en: "Exclusive", hy: "Բացառիկ" },
-  "report.budgetRange": { ru: "Диапазон бюджета", en: "Budget Range", hy: "Բյուջեի միջակայք" },
   // Replaces the "Express interest" button once the placement deadline has
   // passed — the page still reads, the offer just can't be made any more.
   "report.offersClosed": {
@@ -920,17 +863,11 @@ export const UI: Record<string, Dict> = {
     en: "Offers closed",
     hy: "Առաջարկների ընդունումը փակ է",
   },
-  "report.tabs.overview": { ru: "Обзор", en: "Overview", hy: "Ընդհանուր տեսք" },
   // The cast section carries crew as well ("Cast & Creators"), so the tab that
   // points at it is "Team" — owner decision 2026-07-29, four tabs.
-  "report.tabs.cast": { ru: "Команда", en: "Team", hy: "Թիմ" },
-  "report.tabs.production": { ru: "Производство", en: "Production", hy: "Արտադրություն" },
   // The commercial section (placements + sponsorship) had no tab at all and
   // sat ~3500px down the page. It is the reason a brand is here, so it gets
   // the last tab and is highlighted as the primary one.
-  "report.tabs.offer": { ru: "Предложение брендам", en: "For brands", hy: "Առաջարկ բրենդներին" },
-  "report.tabs.investment": { ru: "Инвестиции", en: "Investment", hy: "Ներդրում" },
-  "report.tabs.more": { ru: "Ещё", en: "More", hy: "Ավելին" },
 
   // Sticky bar at the bottom of the report: the offer in one line, always
   // within reach. Social proof stays limited to free slots — view and
@@ -1099,121 +1036,26 @@ export const UI: Record<string, Dict> = {
   "cast.subtitle": { ru: "Актёры и создатели, задействованные в проекте", en: "Actors and creators attached to this project", hy: "Այս նախագծին կցված դերասաններ և հեղինակներ" },
 
   "keyFacts.release": { ru: "Выход", en: "Release", hy: "Ցուցադրությունը՝" },
-  "keyFacts.applicationDeadline": { ru: "Срок подачи предложений", en: "Offer deadline", hy: "Առաջարկների ընդունման վերջնաժամկետ" },
-  "keyFacts.price": { ru: "Цена", en: "Price", hy: "Գին" },
-  "keyFacts.onRequest": { ru: "По запросу", en: "On request", hy: "Ըստ պահանջի" },
   "keyFacts.platforms": { ru: "Где смотреть", en: "Available on", hy: "Հասանելի է" },
   // The inline icon row that used to sit under the hero image (genre · format ·
   // studio · countries) moved into this card as a labelled group — an icon with
   // a bare value ("Kinodaran") doesn't say what the value IS (owner decision
   // 2026-07-30, NN/g icon-usability). Group headings order the card the way a
   // brand decides: what it is -> who will see it -> when -> what it resembles.
-  "keyFacts.groupAbout": { ru: "О проекте", en: "About", hy: "Նախագծի մասին" },
-  "keyFacts.groupWhere": { ru: "Где увидят", en: "Where it airs", hy: "Որտեղ կդիտեն" },
-  "keyFacts.groupWhen": { ru: "Когда", en: "When", hy: "Երբ" },
   "keyFacts.genre": { ru: "Жанр", en: "Genre", hy: "Ժանր" },
   "keyFacts.format": { ru: "Формат", en: "Format", hy: "Ձևաչափ" },
   "keyFacts.studio": { ru: "Студия", en: "Studio", hy: "Ստուդիա" },
   "keyFacts.countries": { ru: "Съёмки", en: "Filmed in", hy: "Նկարահանումները" },
-  "keyFacts.boxOffice": { ru: "Кассовый сбор", en: "Box office", hy: "Դրամարկղ" },
-  "keyFacts.productionBudget": { ru: "Бюджет производства", en: "Production budget", hy: "Արտադրության բյուջե" },
   "report.productionBudget": { ru: "Бюджет производства", en: "Production budget", hy: "Արտադրության բյուջե" },
-
-  // ── report: ROI / express interest banner ──────
-  "roi.title": { ru: "Прогноз ROI", en: "Estimated ROI Snapshot", hy: "Կանխատեսվող ROI-ի պատկեր" },
-  "roi.projectedViewers": { ru: "Прогноз. зрители", en: "Projected Viewers", hy: "Կանխատեսվող դիտողներ" },
-  "roi.projectedViewersTooltip": {
-    ru: "Методология: моделируемая аудитория на основе формата, жанра и бенчмарков целевой аудитории.",
-    en: "Methodology: modeled viewership derived from format, genre, and audience benchmarks.",
-    hy: "Մեթոդաբանություն. մոդելավորված դիտողականություն՝ ձևաչափի, ժանրի և լսարանի չափանիշների հիման վրա։",
-  },
-  "roi.cpm": { ru: "CPM", en: "CPM", hy: "CPM" },
-  "roi.cpmTooltip": {
-    ru: "Методология: диапазон цены за тысячу показов, сопоставленный с аналогичными плейсментами.",
-    en: "Methodology: cost-per-thousand-impressions range benchmarked against comparable placements.",
-    hy: "Մեթոդաբանություն. հազար ցուցադրության արժեքի միջակայք՝ համեմատված նմանատիպ տեղադրումների հետ։",
-  },
-  "roi.poweredBy": { ru: "Прогнозы основаны на отраслевых бенчмарках.", en: "Projections powered by industry benchmark data.", hy: "Կանխատեսումները հիմնված են ոլորտի չափանիշային տվյալների վրա։" },
-
-  // ── report: investment ──────────────────────────
-  "investment.title": { ru: "Инвестиции и что входит", en: "Investment & Deliverables", hy: "Ներդրում և մատուցվող ծառայություններ" },
-  "investment.subtitle": { ru: "Пакеты плейсмента и конкурентные цены", en: "Placement packages and competitive pricing", hy: "Տեղադրման փաթեթներ և մրցունակ գներ" },
-  "investment.investmentLabel": { ru: "Инвестиции", en: "Investment", hy: "Ներդրում" },
-  "investment.item1": { ru: "Проверенные посценовые возможности плейсмента", en: "Verified scene-level placement opportunities", hy: "Ստուգված տեսարան առ տեսարան տեղադրման հնարավորություններ" },
-  "investment.item3": { ru: "Прогнозируемые метрики эффективности", en: "Projected performance metrics", hy: "Կանխատեսվող արդյունավետության չափորոշիչներ" },
-  "investment.item4": { ru: "Персональный координатор плейсмента", en: "Dedicated placement coordinator", hy: "Հատուկ նշանակված տեղադրման համակարգող" },
-  "investment.item5": { ru: "Отчёт об эффективности после кампании", en: "Post-campaign performance reporting", hy: "Հետարշավային արդյունավետության հաշվետվություն" },
-  "investment.item6": { ru: "Процесс согласования контента", en: "Content approval workflow", hy: "Բովանդակության հաստատման աշխատընթաց" },
-  "investment.howCompares": { ru: "Как это сравнивается", en: "How This Compares", hy: "Ինչպես է սա համեմատվում" },
-  "investment.cheaperThanTv": { ru: "≈85% дешевле, чем традиционный ТВ CPM", en: "≈85% cheaper than traditional TV CPM", hy: "≈85%-ով ավելի էժան, քան ավանդական TV CPM-ը" },
-  "investment.channel": { ru: "Канал", en: "Channel", hy: "Ալիք" },
-  "investment.typicalCost": { ru: "Типичная стоимость", en: "Typical Cost", hy: "Բնորոշ արժեք" },
-  "investment.tvCommercial": { ru: "ТВ-реклама (30с)", en: "TV Commercial (30s)", hy: "Հեռուստագովազդ (30վ)" },
-  "investment.printAd": { ru: "Печатная реклама", en: "Print Ad Campaign", hy: "Տպագիր գովազդային արշավ" },
-  "investment.influencer": { ru: "Партнёрство с блогером", en: "Influencer Partnership", hy: "Ինֆլուենսերի հետ գործընկերություն" },
-  "investment.thisPlatform": { ru: "Эта платформа", en: "This Platform", hy: "Այս հարթակը" },
-  "investment.bestValue": { ru: "Лучшая цена", en: "Best value", hy: "Լավագույն արժեք" },
-  "investment.readyTitle": { ru: "Готовы разместить свой бренд?", en: "Ready to place your brand?", hy: "Պատրա՞ստ եք տեղադրել ձեր բրենդը" },
-  "investment.readyBody": {
-    ru: "Отправьте заявку, и наша команда свяжется с вами в течение 24 часов.",
-    en: "Submit your interest and our team will reach out within 24 hours.",
-    hy: "Ուղարկեք ձեր հետաքրքրությունը, և մեր թիմը կկապվի ձեզ հետ 24 ժամվա ընթացքում։",
-  },
-
-  // ── report: deep dive ────────────────────────────
-  "deepDive.title": { ru: "Подробный разбор", en: "Deep Dive", hy: "Մանրամասն վերլուծություն" },
-  "deepDive.subtitle": { ru: "Изучите подробный анализ и данные", en: "Explore detailed analysis and data", hy: "Ուսումնասիրեք մանրամասն վերլուծություն և տվյալներ" },
-  "deepDive.allOpportunities": { ru: "Все возможности плейсмента ({n})", en: "All Placement Opportunities ({n})", hy: "Բոլոր տեղադրման հնարավորությունները ({n})" },
-  "deepDive.categoryExclusive": { ru: "Эксклюзив категории", en: "Category Exclusive", hy: "Կատեգորիայի էքսկլյուզիվ" },
-  "deepDive.totalExposure": { ru: "Общая оценка охвата", en: "Total Est. Exposure", hy: "Ընդհանուր գնահատված ազդեցություն" },
-  "deepDive.showing": { ru: "Показано {shown} из {total}", en: "Showing {shown} of {total}", hy: "Ցուցադրված է {shown}՝ {total}-ից" },
-  "deepDive.psychographicsTitle": { ru: "Психографика аудитории", en: "Audience Psychographics", hy: "Լսարանի հոգեբանական բնութագիր" },
-  "deepDive.noData": { ru: "Нет данных для этого отчёта.", en: "No data available for this report.", hy: "Այս հաշվետվության համար տվյալներ չկան։" },
-  "deepDive.valueAlignmentTitle": { ru: "Соответствие ценностям", en: "Value Alignment Details", hy: "Արժեքային համապատասխանության մանրամասներ" },
-  "deepDive.signalsTitle": { ru: "Сигналы проекта", en: "Project Signals", hy: "Նախագծի ազդանշաններ" },
-  "deepDive.placements": { ru: "Плейсменты", en: "Placements", hy: "Տեղադրումներ" },
-  "deepDive.uniqueScenes": { ru: "Уникальные сцены", en: "Unique scenes", hy: "Եզակի տեսարաններ" },
-  "deepDive.totalScreenTime": { ru: "Общее экранное время", en: "Total screen time", hy: "Ընդհանուր էկրանային ժամանակ" },
-  "deepDive.analysisDate": { ru: "Дата анализа", en: "Analysis date", hy: "Վերլուծության ամսաթիվ" },
-  "deepDive.recommendations": { ru: "Рекомендации", en: "Recommendations", hy: "Առաջարկություններ" },
-  "deepDive.rec1": { ru: "Ознакомьтесь с полным сценарием перед финализацией сделки с брендом.", en: "Review the full script before finalizing any brand deal.", hy: "Վերանայեք ամբողջական սցենարը նախքան բրենդային ցանկացած գործարքի ավարտը։" },
-  "deepDive.rec2": { ru: "Согласуйте посценовое утверждение с юридической службой продакшена.", en: "Coordinate scene-level approval with the production's legal team.", hy: "Համակարգեք տեսարան առ տեսարան հաստատումը արտադրության իրավաբանական թիմի հետ։" },
-  "deepDive.rec3": { ru: "Отслеживайте изменения на постпродакшене на предмет поздних правок контента.", en: "Monitor edits during post-production for late content changes.", hy: "Հետևեք հետարտադրական փուլում կատարվող փոփոխություններին՝ ուշացած բովանդակային փոփոխությունների համար։" },
-  "deepDive.recommendedFor": { ru: "Рекомендуется для:", en: "Recommended for:", hy: "Խորհուրդ է տրվում." },
-  "deepDive.useCautionWith": { ru: "Требует осторожности:", en: "Use caution with:", hy: "Զգուշություն է պահանջում." },
-
-  // ── apply dialog ──────────────────────────────
-  "applyDialog.requestTitle": { ru: "Запросить детали", en: "Request Details", hy: "Հարցնել մանրամասներ" },
-  "applyDialog.expressTitle": { ru: "Проявить интерес", en: "Express Interest", hy: "Ցուցաբերել հետաքրքրություն" },
-  "applyDialog.thanks": { ru: "Спасибо — мы свяжемся с вами в течение 24 часов.", en: "Thanks — we'll get back to you within 24 hours.", hy: "Շնորհակալություն․ մենք կկապվենք ձեզ հետ 24 ժամվա ընթացքում։" },
-  "applyDialog.namePlaceholder": { ru: "Ваше имя", en: "Your name", hy: "Ձեր անունը" },
-  "applyDialog.phonePlaceholder": { ru: "+374 __ ______", en: "+374 __ ______", hy: "+374 __ ______" },
-  "applyDialog.emailPlaceholder": { ru: "you@company.com", en: "you@company.com", hy: "you@company.com" },
-  "applyDialog.companyPlaceholder": { ru: "Ваша компания", en: "Your company", hy: "Ձեր ընկերությունը" },
-  "applyDialog.messagePlaceholder": {
-    ru: "Расскажите о своём бренде и целях плейсмента…",
-    en: "Tell us about your brand and placement goals…",
-    hy: "Պատմեք ձեր բրենդի և տեղադրման նպատակների մասին…",
-  },
-  "applyDialog.consentPrefix": {
-    ru: "Я согласен на то, что со мной свяжутся по этому запросу, и принимаю",
-    en: "I agree to be contacted regarding this inquiry and accept the",
-    hy: "Համաձայն եմ, որ ինձ հետ կկապվեն այս հարցման կապակցությամբ և ընդունում եմ",
-  },
-  "applyDialog.privacyPolicy": { ru: "Политику конфиденциальности", en: "Privacy Policy", hy: "Գաղտնիության քաղաքականությունը" },
 
   // ── application / contact form validation (F11/F12) ──
   "formErr.name": { ru: "Введите ваше имя.", en: "Please enter your name.", hy: "Մուտքագրեք ձեր անունը։" },
   "formErr.nameLong": { ru: "Имя слишком длинное.", en: "Name is too long.", hy: "Անունը չափազանց երկար է։" },
-  "formErr.phone": { ru: "Введите номер телефона.", en: "Please enter your phone number.", hy: "Մուտքագրեք ձեր հեռախոսահամարը։" },
-  "formErr.phoneLong": { ru: "Номер телефона слишком длинный.", en: "Phone number is too long.", hy: "Հեռախոսահամարը չափազանց երկար է։" },
   "formErr.email": { ru: "Введите вашу эл. почту.", en: "Please enter your email.", hy: "Մուտքագրեք ձեր էլ. փոստը։" },
   "formErr.emailLong": { ru: "Эл. почта слишком длинная.", en: "Email is too long.", hy: "Էլ. փոստը չափազանց երկար է։" },
   "formErr.emailInvalid": { ru: "Введите корректный адрес эл. почты.", en: "Please enter a valid email address.", hy: "Մուտքագրեք վավեր էլ. փոստի հասցե։" },
   "formErr.message": { ru: "Введите сообщение.", en: "Please enter a message.", hy: "Մուտքագրեք հաղորդագրությունը։" },
   "formErr.messageLong": { ru: "Сообщение слишком длинное.", en: "Message is too long.", hy: "Հաղորդագրությունը չափազանց երկար է։" },
-  "formErr.consent": { ru: "Подтвердите согласие на обратную связь.", en: "Please confirm you agree to be contacted.", hy: "Հաստատեք, որ համաձայն եք կապ հաստատելուն։" },
-  "formErr.rateLimit": { ru: "Слишком много запросов. Попробуйте позже.", en: "Too many requests. Please try again later.", hy: "Չափազանց շատ հարցումներ։ Փորձեք ավելի ուշ։" },
   "formErr.company": { ru: "Введите название.", en: "Please enter a name.", hy: "Մուտքագրեք անվանումը։" },
   "formErr.metricsNotObject": { ru: "Метрики должны быть JSON-объектом.", en: "Metrics must be a JSON object.", hy: "Մետրիկաները պետք է լինեն JSON օբյեկտ։" },
   "formErr.metricsNotJson": { ru: "Метрики: некорректный JSON.", en: "Metrics: invalid JSON.", hy: "Մետրիկաներ՝ անվավեր JSON։" },
@@ -1236,10 +1078,6 @@ export const UI: Record<string, Dict> = {
   "login.emailPlaceholder": { ru: "you@brand.com", en: "you@brand.com", hy: "you@company.com" },
   "login.password": { ru: "Пароль", en: "Password", hy: "Գաղտնաբառ" },
   "login.signIn": { ru: "Войти", en: "Sign In", hy: "Մուտք" },
-  "login.notBrandYet": { ru: "Ещё нет бренд-аккаунта?", en: "Not a brand account yet?", hy: "Դեռ չունե՞ք բրենդային հաշիվ" },
-  "login.expressInterestInstead": { ru: "Проявите интерес вместо этого", en: "Express Interest instead", hy: "Փոխարենը ցուցաբերեք հետաքրքրություն" },
-  "login.creatorOrAdmin": { ru: "Создатель или админ?", en: "Creator or admin?", hy: "Ստեղծագործո՞ղ եք կամ ադմին" },
-  "login.goToAdminLogin": { ru: "Перейти к входу в админку", en: "Go to admin login", hy: "Անցնել ադմինի մուտք" },
 
   "register.title": { ru: "Регистрация", en: "Create Account", hy: "Գրանցում" },
   "register.subtitle": {
@@ -1259,11 +1097,8 @@ export const UI: Record<string, Dict> = {
     en: "Studio name or alias",
     hy: "Օր.` iGovazd Studio",
   },
-  "register.expressInterest": { ru: "Проявить интерес", en: "Express Interest", hy: "Ցուցաբերել հետաքրքրություն" },
   "register.alreadyHaveAccess": { ru: "Уже есть доступ?", en: "Already have access?", hy: "Արդեն ունե՞ք հաշիվ։" },
   "register.signIn": { ru: "Войти", en: "Sign in", hy: "Մուտք գործել" },
-  "register.creatorOrAdmin": { ru: "Создатель или админ?", en: "Creator or admin?", hy: "Ստեղծագործո՞ղ եք կամ ադմին" },
-  "register.goToAdminLogin": { ru: "Перейти к входу в админку", en: "Go to admin login", hy: "Անցնել ադմինի մուտք" },
 
   // ── auth: register (brand + creator self-serve) ──
   "register.accountType": { ru: "Тип аккаунта", en: "Account type", hy: "Հաշվի տեսակ" },
@@ -1282,12 +1117,6 @@ export const UI: Record<string, Dict> = {
   "register.password": { ru: "Пароль", en: "Password", hy: "Գաղտնաբառ" },
   "register.passwordPlaceholder": { ru: "Минимум 8 символов", en: "At least 8 characters", hy: "Առնվազն 8 նիշ" },
   "register.submit": { ru: "Зарегистрироваться", en: "Create account", hy: "Գրանցվել" },
-  "register.pendingTitle": { ru: "Заявка отправлена", en: "Registration received", hy: "Հայտն ուղարկված է" },
-  "register.pendingBody": {
-    ru: "Ваш аккаунт ожидает одобрения администратора. Мы сообщим, когда доступ будет открыт.",
-    en: "Your account is awaiting admin approval. We'll let you know once access is granted.",
-    hy: "Ձեր հաշիվը սպասում է ադմինի հաստատմանը։ Կտեղեկացնենք, երբ հասանելիությունը բացվի։",
-  },
   "register.errEmailTaken": {
     ru: "Этот email уже зарегистрирован.",
     en: "This email is already registered.",
@@ -1349,7 +1178,6 @@ export const UI: Record<string, Dict> = {
   "auth.resetWeak": { ru: "Пароль должен быть не короче 8 символов.", en: "Password must be at least 8 characters.", hy: "Գաղտնաբառը պետք է լինի առնվազն 8 նիշ։" },
   "auth.resetInvalid": { ru: "Ссылка недействительна или уже использована.", en: "This link is invalid or has already been used.", hy: "Հղումն անվավեր է կամ արդեն օգտագործված է։" },
   "auth.resetExpired": { ru: "Срок действия ссылки истёк. Запросите новую.", en: "This link has expired. Please request a new one.", hy: "Հղումի ժամկետը լրացել է։ Հայցեք նոր հղում։" },
-  "auth.resetSuccess": { ru: "Пароль изменён.", en: "Password updated.", hy: "Գաղտնաբառը փոփոխվել է։" },
   "auth.resetInvalidLink": { ru: "Ссылка недействительна.", en: "This link is invalid.", hy: "Հղումն անվավեր է։" },
   "register.completeTitle": { ru: "Завершите профиль", en: "Complete your profile", hy: "Լրացրեք ձեր պրոֆիլը" },
   "register.completeBody": {
@@ -1388,7 +1216,6 @@ export const UI: Record<string, Dict> = {
   "account.profile.memberSince": { ru: "На платформе с", en: "Member since", hy: "Անդամ է" },
   "account.profile.projectsTotal": { ru: "Проектов", en: "Projects", hy: "Նախագծեր" },
   "account.profile.projectsApproved": { ru: "Одобрено", en: "Approved", hy: "Հաստատված" },
-  "account.company": { ru: "Компания", en: "Company", hy: "Ընկերություն" },
   "account.roleBrand": { ru: "Бренд", en: "Brand", hy: "Բրենդ" },
   "account.roleCreator": { ru: "Создатель", en: "Creator", hy: "Հեղինակ" },
   "account.statusApproved": { ru: "Одобрен", en: "Approved", hy: "Հաստատված" },
@@ -1399,15 +1226,6 @@ export const UI: Record<string, Dict> = {
   "ui.remove": { ru: "Удалить", en: "Remove", hy: "Հեռացնել" },
   "ui.close": { ru: "Закрыть", en: "Close", hy: "Փակել" },
 
-  "account.creatorUploadTitle": { ru: "Загрузка сценария", en: "Upload script", hy: "Վերբեռնել սցենարը" },
-  "account.creatorProjectsTitle": { ru: "Мои проекты", en: "My projects", hy: "Իմ նախագծերը" },
-  "account.brandBrowseTitle": { ru: "Каталог проектов", en: "Browse catalog", hy: "Դիտել կատալոգը" },
-  "account.brandBrowseBody": {
-    ru: "Изучайте каталог проектов и выражайте интерес к плейсменту.",
-    en: "Browse the project catalog and express interest in placement.",
-    hy: "Ուսումնասիրեք նախագծերի կատալոգը և ցուցաբերեք հետաքրքրություն տեղադրման հանդեպ։",
-  },
-  "account.brandBrowseCta": { ru: "Открыть каталог", en: "Open catalog", hy: "Բացել կատալոգը" },
 
   // ── creator: "My projects" list + submission form (#16) ──
   "account.myProjects": { ru: "Мои проекты", en: "My projects", hy: "Իմ նախագծերը" },
@@ -1538,46 +1356,8 @@ export const UI: Record<string, Dict> = {
   // everywhere.
   "interests.packagePlacement": { ru: "Продакт-плейсмент", en: "Product placement", hy: "Փրոդակթ փլեյսմենթ" },
   "interests.packageSponsorship": { ru: "Спонсорский пакет", en: "Sponsorship package", hy: "Հովանավորության փաթեթ" },
-  "account.brandOnlyNotice": {
-    ru: "Подача проектов доступна только для аккаунтов создателей.",
-    en: "Submitting projects is only available for creator accounts.",
-    hy: "Նախագծերի ներկայացումը հասանելի է միայն հեղինակների հաշիվների համար։",
-  },
 
   // ── creator: submission form fields ──
-  "account.form.title": { ru: "Название", en: "Title", hy: "Անվանում" },
-  "account.form.titlePlaceholder": { ru: "Название проекта", en: "Project title", hy: "Նախագծի անվանումը" },
-  "account.form.synopsis": { ru: "Синопсис", en: "Synopsis", hy: "Սինոպսիս" },
-  "account.form.synopsisPlaceholder": {
-    ru: "О чём ваш проект",
-    en: "What your project is about",
-    hy: "Ինչի մասին է ձեր նախագիծը",
-  },
-  "account.form.genres": { ru: "Жанры", en: "Genres", hy: "Ժանրեր" },
-  "account.form.genresPlaceholder": { ru: "Выберите жанры", en: "Select genres", hy: "Ընտրեք ժանրերը" },
-  "account.form.kind": { ru: "Тип", en: "Kind", hy: "Տեսակ" },
-  "account.form.kindFilm": { ru: "Фильм", en: "Film", hy: "Ֆիլմ" },
-  "account.form.kindSerial": { ru: "Сериал", en: "Serial", hy: "Սերիալ" },
-  "account.form.episodes": { ru: "Кол-во серий", en: "Episodes", hy: "Սերիաների քանակ" },
-  "account.form.episodesPlaceholder": { ru: "24", en: "24", hy: "24" },
-  "account.form.episodeMinutes": { ru: "Хронометраж серии (мин)", en: "Episode length (min)", hy: "Սերիայի տևողությունը (րոպե)" },
-  "account.form.episodeMinutesPlaceholder": { ru: "50", en: "50", hy: "50" },
-  "account.form.poster": { ru: "Постер (ссылка)", en: "Poster (URL)", hy: "Պաստառ (հղում)" },
-  "account.form.posterPlaceholder": { ru: "https://…", en: "https://…", hy: "https://…" },
-  "account.form.format": { ru: "Формат", en: "Format", hy: "Ձևաչափ" },
-  "account.form.formatPlaceholder": {
-    ru: "Например, 50 серий × 45 мин",
-    en: "e.g. 50 ep × 45 min",
-    hy: "օր.՝ 50 սերիա × 45 րոպե",
-  },
-  "account.form.studio": {
-    ru: "Название студии",
-    en: "Studio name",
-    hy: "Ստուդիայի անվանումը",
-  },
-  "account.form.studioPlaceholder": { ru: "Kinodaran, Sharm…", en: "Kinodaran, Sharm…", hy: "Kinodaran, Sharm…" },
-  "account.form.countries": { ru: "Страны", en: "Countries", hy: "Երկրներ" },
-  "account.form.countriesPlaceholder": { ru: "Армения, Россия", en: "Armenia, Russia", hy: "Հայաստան, Ռուսաստան" },
   "account.form.submit": { ru: "Отправить на модерацию", en: "Submit for review", hy: "Ուղարկել մոդերացիայի" },
   "account.form.cancel": { ru: "Отмена", en: "Cancel", hy: "Չեղարկել" },
   "account.form.errRequired": {
@@ -1604,11 +1384,6 @@ export const UI: Record<string, Dict> = {
     ru: "Достигнут дневной лимит генераций. Попробуйте завтра.",
     en: "Daily generation limit reached. Please try again tomorrow.",
     hy: "Օրական սահմանաչափը սպառված է։ Փորձեք վաղը։",
-  },
-  "account.form.submitted": {
-    ru: "Проект отправлен на модерацию. Мы уведомим вас, когда он будет рассмотрен.",
-    en: "Project submitted for review. We'll let you know once it's been reviewed.",
-    hy: "Նախագիծն ուղարկվել է մոդերացիայի։ Կտեղեկացնենք, երբ այն ստուգվի։",
   },
   // ── Publish-time requirements (owner decision 2026-07-26) ──
   // A missing required field blocks publication, never the save — see
@@ -1721,11 +1496,6 @@ export const UI: Record<string, Dict> = {
   },
   "projectForm.saved": { ru: "Сохранено", en: "Saved", hy: "Պահպանված է" },
   "projectForm.section.general": { ru: "Общее", en: "General", hy: "Ընդհանուր" },
-  "projectForm.section.translations": {
-    ru: "Переводы (hy / ru / en)",
-    en: "Translations (hy / ru / en)",
-    hy: "Թարգմանություններ (hy / ru / en)",
-  },
   // ── About block (#11) ──
   "projectForm.section.about": { ru: "О проекте", en: "About", hy: "Նախագծի մասին" },
   "projectForm.about.title": { ru: "Название", en: "Title", hy: "Վերնագիր" },
@@ -1769,9 +1539,6 @@ export const UI: Record<string, Dict> = {
   "projectForm.field.videoFile": { ru: "Видеофайл (MP4)", en: "Video file (MP4)", hy: "Վիդեոֆայլ (MP4)" },
   "projectForm.video.tabEmbed": { ru: "Ссылка (Embed)", en: "Video link", hy: "Հղում (Embed)" },
   "projectForm.video.tabUpload": { ru: "Загрузить MP4", en: "Upload MP4", hy: "Վերբեռնել MP4" },
-  "projectForm.section.statusRelease": { ru: "Статус и релиз", en: "Status & release", hy: "Կարգավիճակ և թողարկում" },
-  "projectForm.section.placement": { ru: "Размещение", en: "Placement", hy: "Տեղադրում" },
-  "projectForm.section.audienceValue": { ru: "Аудитория и ценность", en: "Audience & value", hy: "Լսարան և արժեք" },
   // Admin redesign phase 1: renamed from "Press-kit details" — this section
   // is now just poster/gallery/video (Comparable titles moved out to its own
   // "Reference Projects" section).
@@ -1813,18 +1580,10 @@ export const UI: Record<string, Dict> = {
   // pulled out of Design into its own section.
   "projectForm.section.production": { ru: "Производство", en: "Production Info", hy: "Արտադրություն" },
   "projectForm.section.references": { ru: "Похожие проекты", en: "Reference Projects", hy: "Նմանատիպ նախագծեր" },
-  "projectForm.field.code": { ru: "Код", en: "Code", hy: "Կոդ" },
-  "projectForm.generatedAutomatically": { ru: "Генерируется автоматически", en: "Generated automatically", hy: "Ստեղծվում է ինքնաշխատ" },
   "projectForm.field.genre": { ru: "Жанр *", en: "Genre *", hy: "Ժանր *" },
   "projectForm.genresPlaceholder": { ru: "Выберите жанры…", en: "Select genres…", hy: "Ընտրեք ժանրերը…" },
-  "projectForm.field.poster": { ru: "Постер", en: "Poster", hy: "Պաստառ" },
   "projectForm.uploadPoster": { ru: "Загрузить постер", en: "Upload poster", hy: "Վերբեռնել պաստառը" },
   "projectForm.or": { ru: "или", en: "or", hy: "կամ" },
-  "projectForm.field.gallery": {
-    ru: "Галерея (кадры — до 5 показываются)",
-    en: "Gallery (storyboard stills — up to 5 shown)",
-    hy: "Պատկերասրահ (կադրեր, ցուցադրվում է մինչև 5-ը)",
-  },
   "projectForm.uploadGalleryImages": { ru: "Загрузить изображения галереи", en: "Upload gallery images", hy: "Վերբեռնել պատկերասրահի նկարները" },
   // Design section cards (owner request 2026-07-30 — "разделы не отличаются"):
   // poster/gallery/video each got a heading (bigger than a normal field
@@ -1887,12 +1646,6 @@ export const UI: Record<string, Dict> = {
     en: "Kinodaran, Sharm…",
     hy: "Kinodaran, Sharm…",
   },
-  "projectForm.field.titleHy": { ru: "Название (HY)", en: "Title (HY)", hy: "Վերնագիր (HY)" },
-  "projectForm.field.titleRu": { ru: "Название (RU)", en: "Title (RU)", hy: "Վերնագիր (RU)" },
-  "projectForm.field.titleEn": { ru: "Название (EN)", en: "Title (EN)", hy: "Վերնագիր (EN)" },
-  "projectForm.field.synopsisHy": { ru: "Синопсис (HY)", en: "Synopsis (HY)", hy: "Սինոպսիս (HY)" },
-  "projectForm.field.synopsisRu": { ru: "Синопсис (RU)", en: "Synopsis (RU)", hy: "Սինոպսիս (RU)" },
-  "projectForm.field.synopsisEn": { ru: "Синопсис (EN)", en: "Synopsis (EN)", hy: "Սինոպսիս (EN)" },
   // "Production stage" (projectForm.field.status / .help.status) and its option
   // labels were removed from both editors on 2026-07-26; the Project.status
   // column itself (and the report.status.*/catalog.status keys that showed it
@@ -1939,26 +1692,12 @@ export const UI: Record<string, Dict> = {
   "projectForm.releasePrecision.month": { ru: "Месяц и год", en: "Month & year", hy: "Ամիս և տարի" },
   "projectForm.releasePrecision.year": { ru: "Только год", en: "Year only", hy: "Միայն տարի" },
   "projectForm.releaseYearPlaceholder": { ru: "2027", en: "2027", hy: "2027" },
-  "projectForm.field.platforms": { ru: "Платформы", en: "Platforms", hy: "Հարթակներ" },
-  "projectForm.platformsPlaceholder": { ru: "YouTube, Kinodaran, TV", en: "YouTube, Kinodaran, TV", hy: "YouTube, Kinodaran, TV" },
   // projectForm.field.streamingSource / .streamingSourcePlaceholder removed
   // 2026-08-04 together with the Project.streamingSource column. The field was
   // merged into "Available on" (platforms) back in #29 and the keys had been
   // orphaned since; leaving them in only gives the translator dead strings to
   // maintain in three languages. The StreamingSource dictionary table itself
   // is untouched — it still feeds the platforms picker.
-  "projectForm.field.priceNote": { ru: "Примечание к цене (необязательно)", en: "Price note (optional caption)", hy: "Գնի նշում (ոչ պարտադիր)" },
-  "projectForm.priceNotePlaceholder": { ru: "/ сцена", en: "/ scene", hy: "/ տեսարան" },
-  "projectForm.field.priceMin": { ru: "Цена мин. (AMD)", en: "Price min (AMD)", hy: "Գին նվազ. (AMD)" },
-  "projectForm.field.priceMax": { ru: "Цена макс. (AMD)", en: "Price max (AMD)", hy: "Գին առավ. (AMD)" },
-  "projectForm.priceHint": {
-    ru: "Оставьте цену пустой → на сайте будет показано «Цена по запросу».",
-    en: "Leave price empty → the site shows “Price on request”.",
-    hy: "Թողեք գինը դատարկ → կայքում կցուցադրվի «Գին՝ հարցումով»։",
-  },
-  "projectForm.field.audienceGender": { ru: "Пол аудитории", en: "Audience gender", hy: "Լսարանի սեռ" },
-  "projectForm.field.audienceAge": { ru: "Возраст аудитории", en: "Audience age", hy: "Լսարանի տարիք" },
-  "projectForm.audienceAgePlaceholder": { ru: "16-30", en: "16-30", hy: "16-30" },
   "projectForm.field.ageRating": { ru: "Возрастной рейтинг (значок на постере)", en: "Age rating (poster badge)", hy: "Տարիքային սահմանափակում (նշան պաստառի վրա)" },
   // The empty option used to render as a bare "—" (a <select> can't take a
   // placeholder) — indistinguishable from a rendering glitch (#20 placeholder
@@ -1969,19 +1708,10 @@ export const UI: Record<string, Dict> = {
     en: "Tagline / logline (one line, shown in the hero)",
     hy: "Կարգախոս (մեկ տող, ցուցադրվում է գլխավոր բլոկում)",
   },
-  "projectForm.field.taglineHy": { ru: "Слоган (HY)", en: "Tagline (HY)", hy: "Կարգախոս (HY)" },
-  "projectForm.field.taglineRu": { ru: "Слоган (RU)", en: "Tagline (RU)", hy: "Կարգախոս (RU)" },
-  "projectForm.field.taglineEn": { ru: "Слоган (EN)", en: "Tagline (EN)", hy: "Կարգախոս (EN)" },
   "projectForm.taglinePlaceholder": {
     ru: "Звезда рождается — и у славы есть цена.",
     en: "A star is born — and fame has a price.",
     hy: "Աստղը ծնվում է, և փառքն ունի իր գինը։",
-  },
-  "projectForm.field.references": { ru: "Похожие тайтлы (через запятую)", en: "Comparable titles (comma-separated)", hy: "Նմանատիպ ֆիլմեր (ստորակետով)" },
-  "projectForm.referencesPlaceholder": {
-    ru: "Богемская рапсодия, Рэй, Майкл",
-    en: "Bohemian Rhapsody, Ray, Michael",
-    hy: "Bohemian Rhapsody, Ray, Michael",
   },
   // Ф2: repeatable Reference Projects editor (replaces the single
   // comma-separated input above, which is now unused).
@@ -2047,9 +1777,6 @@ export const UI: Record<string, Dict> = {
   "projectForm.cast.name": { ru: "Имя", en: "Name", hy: "Անուն" },
   "projectForm.cast.namePlaceholder": { ru: "Найдите или введите новое имя…", en: "Search or type a new name…", hy: "Փնտրեք կամ մուտքագրեք նոր անուն…" },
   "projectForm.cast.role": { ru: "Роль", en: "Role", hy: "Դեր" },
-  "projectForm.cast.kind": { ru: "Категория", en: "Kind", hy: "Կատեգորիա" },
-  "projectForm.cast.kindCast": { ru: "Актёры", en: "Cast", hy: "Դերասաններ" },
-  "projectForm.cast.kindCrew": { ru: "Съёмочная группа", en: "Crew", hy: "Թիմ" },
   "projectForm.cast.photo": { ru: "Фото", en: "Photo", hy: "Լուսանկար" },
   "projectForm.cast.replacePhoto": { ru: "Заменить фото", en: "Replace photo", hy: "Փոխարինել լուսանկարը" },
   "projectForm.cast.uploadPhoto": { ru: "Загрузить фото", en: "Upload photo", hy: "Վերբեռնել լուսանկարը" },
@@ -2057,18 +1784,14 @@ export const UI: Record<string, Dict> = {
   "projectForm.tiers.tiers": { ru: "пакета", en: "packages", hy: "փաթեթ" },
   "projectForm.tiers.addTier": { ru: "Добавить пакет", en: "Add package", hy: "Ավելացնել փաթեթ" },
   "projectForm.tiers.empty": { ru: "Пока нет спонсорских пакетов.", en: "No sponsorship packages yet.", hy: "Դեռ հովանավորության փաթեթներ չկան։" },
-  "projectForm.tiers.name": { ru: "Название пакета", en: "Package name", hy: "Փաթեթի անվանում" },
   "projectForm.tiers.namePlaceholder": { ru: "Официальный спонсор", en: "Official Sponsor", hy: "Պաշտոնական հովանավոր" },
   "projectForm.tiers.price": { ru: "Цена (AMD)", en: "Price (AMD)", hy: "Գին (AMD)" },
-  "projectForm.tiers.slots": { ru: "Доступно", en: "Available", hy: "Հասանելի" },
-  "projectForm.tiers.totalSlots": { ru: "Всего", en: "Total", hy: "Ընդամենը" },
   "projectForm.tiers.exclusive": { ru: "Эксклюзив", en: "Exclusive", hy: "Բացառիկ" },
   "projectForm.tiers.exclusiveHint": {
     ru: "Эксклюзивный плейсмент — всегда один слот",
     en: "An exclusive placement is always a single slot",
     hy: "Բացառիկ փլեյսմենթը միշտ մեկ տեղ է",
   },
-  "projectForm.tiers.duplicate": { ru: "Дублировать", en: "Duplicate", hy: "Կրկնօրինակել" },
   "projectForm.tiers.templates": {
     ru: "Готовые пакеты",
     en: "Ready-made packages",
@@ -2085,7 +1808,6 @@ export const UI: Record<string, Dict> = {
     en: "No placement opportunities yet.",
     hy: "Դեռ փլեյսմենթի հնարավորություններ չկան։",
   },
-  "projectForm.placements.title": { ru: "Название", en: "Title", hy: "Անվանում" },
   "projectForm.placements.titlePlaceholder": {
     ru: "Интеграция в сюжет",
     en: "Integration into the story",
@@ -2095,11 +1817,6 @@ export const UI: Record<string, Dict> = {
     ru: "Что получает бренд (по одному в строке)",
     en: "What the brand gets (one per line)",
     hy: "Ինչ է ստանում բրենդը (մեկը՝ մեկ տողում)",
-  },
-  "projectForm.placements.descriptionPlaceholder": {
-    ru: "Бренд в кадре не менее трёх раз\nУпоминание в диалоге\nКрупный план продукта",
-    en: "Brand on screen at least three times\nMentioned in dialogue\nClose-up of the product",
-    hy: "Բրենդը կադրում առնվազն երեք անգամ\nՀիշատակում երկխոսության մեջ\nԱպրանքի խոշոր պլան",
   },
   "projectForm.placements.image": { ru: "Кадр", en: "Still", hy: "Կադր" },
   // Empty price is not zero — it means the creator hasn't priced this
@@ -2168,20 +1885,8 @@ export const UI: Record<string, Dict> = {
   },
   "projectForm.tiers.image": { ru: "Кадр пакета", en: "Package still", hy: "Փաթեթի կադր" },
 
-  "projectForm.tiers.benefitsPlaceholder": {
-    ru: "Логотип на выбранных промо-материалах\nПродвижение в соцсетях\nБлагодарность в титрах\nПриглашения на премьеру",
-    en: "Logo on selected promo materials\nSocial promo presence\nSpecial thanks in the credits\nPremiere invitations",
-    hy: "Լոգոն ընտրված գովազդային նյութերի վրա\nԱջակցություն սոցիալական ցանցերում\nՀատուկ շնորհակալագիր տիտրերում\nՀրավեր պրեմիերայի",
-  },
 
   // ── admin: member registrations ──
-  "admin.registrations.nav": { ru: "Регистрации", en: "Registrations", hy: "Գրանցումներ" },
-  "admin.registrations.title": { ru: "Регистрации участников", en: "Member registrations", hy: "Անդամների գրանցումներ" },
-  "admin.registrations.subtitle": {
-    ru: "Одобряйте, отклоняйте или блокируйте аккаунты брендов и создателей.",
-    en: "Approve, reject, or block brand and creator accounts.",
-    hy: "Հաստատեք, մերժեք կամ արգելափակեք բրենդների և հեղինակների հաշիվները։",
-  },
   "admin.registrations.colName": { ru: "Имя", en: "Name", hy: "Անուն" },
   "admin.registrations.colEmail": { ru: "Email", en: "Email", hy: "Էլփոստ" },
   "admin.registrations.colRole": { ru: "Роль", en: "Role", hy: "Դեր" },
@@ -2209,7 +1914,6 @@ export const UI: Record<string, Dict> = {
   "account.brand.navFavorites": { ru: "Избранное", en: "Favorites", hy: "Նախընտրելի նախագծեր" },
   "account.brand.navProfile": { ru: "Мой профиль", en: "My Profile", hy: "Պրոֆիլի կարգավորումներ" },
   "account.brand.navNotifications": { ru: "Уведомления", en: "Notifications", hy: "Ծանուցումներ" },
-  "account.brand.soon": { ru: "Скоро", en: "Soon", hy: "Շուտով" },
 
   // ── notifications (#25 / V9) — copy rendered from Notification.type+data in
   // the viewer's locale; {brand}/{project}/{creator} are raw data placeholders ──
@@ -2237,12 +1941,10 @@ export const UI: Record<string, Dict> = {
   "apply.title": { ru: "Отправить предложение", en: "Send an offer", hy: "Ուղարկել առաջարկ" },
   "apply.messageLabel": { ru: "Сообщение (необязательно)", en: "Message (optional)", hy: "Հաղորդագրություն (ըստ ցանկության)" },
   "apply.messagePlaceholder": { ru: "Расскажите о вашем интересе к размещению…", en: "Tell us about your placement interest…", hy: "Պատմեք ձեր տեղադրման հետաքրքրության մասին…" },
-  "apply.contactLabel": { ru: "Контакт (необязательно)", en: "Contact (optional)", hy: "Կոնտակտ (ըստ ցանկության)" },
   // ── Media picker (audit 4.5: the dialog was English-only for members) ──
   "media.chooseImage": { ru: "Выберите изображение", en: "Choose image", hy: "Ընտրեք պատկերը" },
   "media.chooseVideo": { ru: "Выберите видео", en: "Choose video", hy: "Ընտրեք տեսանյութը" },
   "media.chooseFile": { ru: "Выберите файл", en: "Choose file", hy: "Ընտրեք ֆայլը" },
-  "media.upload": { ru: "Загрузить с компьютера", en: "Upload from computer", hy: "Վերբեռնել համակարգչից" },
   // Caption inside the image field's drop zone (2026-07-28) — until then the
   // only way to add a file was to open the picker dialog first.
   "media.dropHere": {
@@ -2335,7 +2037,6 @@ export const UI: Record<string, Dict> = {
     en: "You already have an application for this offer. Sending will update it — the creator's answer will not be kept. To send a separate application, pick a different offer.",
     hy: "Այս առաջարկի համար դուք արդեն ունեք հայտ։ Ուղարկելը կթարմացնի այն — հեղինակի պատասխանը չի պահպանվի։ Առանձին հայտ ներկայացնելու համար ընտրեք այլ առաջարկ։",
   },
-  "apply.tierLabel": { ru: "Спонсорский пакет", en: "Sponsorship package", hy: "Հովանավորության փաթեթ" },
   "apply.tierNone": { ru: "Не выбран — обсудим", en: "Not selected — let's discuss", hy: "Ընտրված չէ — կքննարկենք" },
   "apply.tierSoldOut": { ru: "мест нет", en: "no slots left", hy: "տեղեր չկան" },
   // The picker covers BOTH offers since 2026-07-29 — it used to list
@@ -2348,7 +2049,6 @@ export const UI: Record<string, Dict> = {
   // own currency is shown as an aside, marked as a rate that moves, so nobody
   // reads "€5 988" as the sum being agreed.
   "apply.approxRate": { ru: "≈ {x} по курсу на сегодня", en: "≈ {x} at today's rate", hy: "≈ {x}՝ այսօրվա փոխարժեքով" },
-  "apply.contactPlaceholder": { ru: "Email или телефон", en: "Email or phone", hy: "Էլփոստ կամ հեռախոս" },
   // Required since 2026-07-29 (it was the optional one, with the free-text
   // message mandatory — inverted: without the product the seller cannot tell
   // what the offer is even about).
@@ -2361,16 +2061,11 @@ export const UI: Record<string, Dict> = {
     hy: "Պարտադիր դաշտ է․ առանց դրա վաճառողը չի հասկանա, թե ինչ եք ուզում տեղադրել",
   },
   "apply.phoneLabel": { ru: "Телефон", en: "Phone", hy: "Հեռախոս" },
-  "apply.phonePlaceholder": { ru: "+374 XX XXX XXX", en: "+374 XX XXX XXX", hy: "+374 XX XXX XXX" },
   "apply.phoneInvalid": { ru: "Укажите номер с кодом страны, например +374 XX XXX XXX", en: "Enter the number with its country code, for example +374 XX XXX XXX", hy: "Նշեք համարը երկրի կոդով, օրինակ՝ +374 XX XXX XXX" },
   "apply.submit": { ru: "Отправить предложение", en: "Send offer", hy: "Ուղարկել առաջարկը" },
   "apply.cancel": { ru: "Отмена", en: "Cancel", hy: "Չեղարկել" },
   "apply.success": { ru: "Предложение отправлено", en: "Offer sent", hy: "Առաջարկն ուղարկվեց" },
   "apply.error": { ru: "Не удалось отправить предложение. Попробуйте ещё раз.", en: "Could not send the offer. Please try again.", hy: "Չհաջողվեց ուղարկել առաջարկը։ Փորձեք նորից։" },
-  "admin.interests.approve": { ru: "Одобрить", en: "Approve", hy: "Հաստատել" },
-  "admin.interests.decline": { ru: "Отклонить", en: "Decline", hy: "Մերժել" },
-  "admin.interests.message": { ru: "Сообщение", en: "Message", hy: "Հաղորդագրություն" },
-  "admin.interests.contact": { ru: "Контакт", en: "Contact", hy: "Կոնտակտ" },
   "notif.generic.title": { ru: "Уведомление", en: "Notification", hy: "Ծանուցում" },
   "notif.broadcast.title": { ru: "Объявление", en: "Announcement", hy: "Հայտարարություն" },
   "push.title": { ru: "Уведомления", en: "Notifications", hy: "Ծանուցումներ" },
@@ -2440,7 +2135,6 @@ export const UI: Record<string, Dict> = {
   "account.brand.favoritedOn": { ru: "Сохранено {date}", en: "Saved on {date}", hy: "Պահված է {date}" },
 
   // ── browse ──
-  "account.brand.alreadyInterested": { ru: "Интерес отправлен", en: "Interest Sent", hy: "Հետաքրքրությունն ուղարկված է" },
   "account.brand.expressInterestError": {
     ru: "Что-то пошло не так — попробуйте ещё раз.",
     en: "Something went wrong — please try again.",
@@ -2474,6 +2168,8 @@ export const UI: Record<string, Dict> = {
     hy: "Միայն ազատ տեղերով",
   },
   "account.brand.filtersToggle": { ru: "Фильтры", en: "Filters", hy: "Ֆիլտրներ" },
+  // Unused in code, kept deliberately: the translator has an unpublished draft
+  // on it, and deleting the key drops that row out of /admin/i18n silently.
   "account.brand.filtersClose": { ru: "Свернуть фильтры", en: "Hide filters", hy: "Փակել ֆիլտրները" },
 
   // ── favorites comparison (4.7) ──
