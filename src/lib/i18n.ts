@@ -145,9 +145,9 @@ export const UI: Record<string, Dict> = {
     en: "Sign in to express interest",
     hy: "Մուտք գործեք հայտ ուղարկելու համար",
   },
-  "btn.browseProjects": { ru: "Смотреть проекты", en: "Browse Projects", hy: "Սկսել հիմա" },
+  "btn.browseProjects": { ru: "Смотреть проекты", en: "Browse Projects", hy: "Ստեղծել հաշիվ" },
   "btn.viewAll": { ru: "Смотреть все", en: "View All", hy: "Դիտել բոլորը" },
-  "btn.listProject": { ru: "Разместить проект", en: "List Your Project", hy: "Ստեղծել հաշիվ" },
+  "btn.listProject": { ru: "Разместить проект", en: "List Your Project", hy: "Գրանցվել" },
   "btn.send": { ru: "Отправить", en: "Send", hy: "Ուղարկել" },
   "btn.sending": { ru: "Отправка…", en: "Sending…", hy: "Ուղարկվում է…" },
   "btn.submit": { ru: "Отправить", en: "Submit", hy: "Ուղարկել" },
@@ -581,7 +581,7 @@ export const UI: Record<string, Dict> = {
   },
 
   // ── get started ───────────────────────────────
-  "getStarted.title": { ru: "Начните", en: "Get Started", hy: "Միացեք հիմա" },
+  "getStarted.title": { ru: "Начните", en: "Get Started", hy: "Գրանցվեք հարթակում" },
   "getStarted.forBrandsTitle": { ru: "Для брендов", en: "For Brands", hy: "Բրենդների համար" },
   "getStarted.forBrandsBody": {
     ru: "Изучайте проверенные проекты, посценовые отчёты о плейсменте, платите только по закрытым сделкам.",
