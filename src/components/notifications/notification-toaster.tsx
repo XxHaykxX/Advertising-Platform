@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Bell, CheckCircle2, Clock, Handshake, Megaphone, X, XCircle } from "lucide-react";
-import { makeUI, type Locale } from "@/lib/i18n-client";
+import { useUI, type Locale } from "@/lib/i18n-client";
 import { renderNotification, parseNotificationData } from "@/lib/notifications";
 import { getUnreadNotificationsPreview, markNotificationRead } from "@/lib/actions/notifications";
 
@@ -39,9 +39,9 @@ export function NotificationToaster({ locale }: { locale: Locale }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const seen = useRef<Set<number>>(new Set());
   const seeded = useRef(false);
-  // makeUI() reads React context now, so it has to be called during render —
+  // useUI() reads React context now, so it has to be called during render —
   // the effect below (which runs outside render) just closes over the result.
-  const t = makeUI(locale);
+  const t = useUI(locale);
 
   const remove = useCallback((id: number) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));

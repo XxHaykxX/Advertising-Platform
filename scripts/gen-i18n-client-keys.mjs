@@ -119,13 +119,15 @@ function balancedSpan(src, openIdx) {
 }
 
 function scan(src, keys, prefixes) {
-  // makeUI()'s result isn't always named `t` — e.g. reorder-list.tsx pins a
-  // second, English-only translator as `const tEn = makeUI("en")` for admin
-  // chrome. Collect every local alias (always including the "t" convention)
-  // instead of hardcoding names, so a future alias doesn't silently go
-  // unscanned.
+  // The translator is `makeUI()` on the server (i18n.ts, a plain function) and
+  // `useUI()` in client components (i18n-client.tsx, which reads context and is
+  // therefore a real hook) — match both. Its result isn't always named `t`
+  // either: reorder-list.tsx pins a second, English-only translator as
+  // `const tEn = makeUI("en")` for admin chrome. Collect every local alias
+  // (always including the "t" convention) instead of hardcoding names, so a
+  // future alias doesn't silently go unscanned.
   const translatorNames = new Set(["t"]);
-  for (const m of src.matchAll(/\b(?:const|let)\s+(\w+)\s*=\s*makeUI\(/g)) {
+  for (const m of src.matchAll(/\b(?:const|let)\s+(\w+)\s*=\s*(?:makeUI|useUI)\(/g)) {
     translatorNames.add(m[1]);
   }
 
@@ -157,7 +159,7 @@ function scan(src, keys, prefixes) {
     prefixes.add(`${m[1]}.`);
   }
   // useLocalizer(locale)'s returned callback (conventionally named
-  // `localize`, but collect every alias like the makeUI() ones above) drops
+  // `localize`, but collect every alias like the useUI() ones above) drops
   // the locale arg: localize("prefix", value). Required whenever a component
   // maps localizeValue() over a variable-length array — calling the
   // context-reading localizeValue() itself once per item would violate the

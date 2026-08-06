@@ -5,7 +5,7 @@ import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MediaField } from "@/components/media-field";
 import { PhoneInput } from "@/components/ui/phone-input";
-import { makeUI, type Locale } from "@/lib/i18n-client";
+import { useUI, type Locale } from "@/lib/i18n-client";
 import { updateCreatorProfile, type CreatorProfileFormState } from "../actions";
 import {
   FIELD_ERROR_CLASS,
@@ -46,7 +46,7 @@ export function ProfileForm({
   website: string;
   locale: Locale;
 }) {
-  const t = makeUI(locale);
+  const t = useUI(locale);
   const [phoneValue, setPhoneValue] = useState(phone);
   // Controlled so a successful save can refresh it to the normalised value
   // the server actually stored (IA-35, mirrors the brand profile form) —

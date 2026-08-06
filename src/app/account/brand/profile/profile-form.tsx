@@ -8,7 +8,7 @@ import { MediaField } from "@/components/media-field";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { BRAND_CATEGORIES, BUDGET_RANGES } from "@/lib/brand-categories";
-import { makeUI, useLocalizer, type Locale } from "@/lib/i18n-client";
+import { useUI, useLocalizer, type Locale } from "@/lib/i18n-client";
 import { updateBrandProfile, type BrandProfileFormState } from "../actions";
 import type { BrandProfileDTO } from "@/lib/data/brand-profile";
 import {
@@ -33,7 +33,7 @@ const labelClass = "mb-1.5 block text-sm font-semibold text-foreground";
 const cardClass = "rounded-2xl border border-border bg-card p-6";
 
 export function ProfileForm({ profile, locale }: { profile: BrandProfileDTO; locale: Locale }) {
-  const t = makeUI(locale);
+  const t = useUI(locale);
   // One hook call up front — BRAND_CATEGORIES.map() below calls this per
   // item; localizeValue() itself reads context and can't be called inside a
   // loop.

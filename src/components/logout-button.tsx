@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useTransition, type ButtonHTMLAttributes } from "react";
 import { createPortal } from "react-dom";
-import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n-client";
+import { DEFAULT_LOCALE, useUI, type Locale } from "@/lib/i18n-client";
 import { Button } from "@/components/ui/button";
 import { useModalDialog } from "@/lib/use-modal-dialog";
 
@@ -22,7 +22,7 @@ export function LogoutButton({
 } & Omit<ButtonHTMLAttributes<HTMLButtonElement>, "type" | "action">) {
   const [pending, startTransition] = useTransition();
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const t = makeUI(locale);
+  const t = useUI(locale);
 
   function handleClick(e: React.MouseEvent<HTMLButtonElement>) {
     onClick?.(e);
@@ -65,7 +65,7 @@ function LogoutConfirmDialog({
   onConfirm,
   onCancel,
 }: {
-  t: ReturnType<typeof makeUI>;
+  t: ReturnType<typeof useUI>;
   onConfirm: () => void;
   onCancel: () => void;
 }) {

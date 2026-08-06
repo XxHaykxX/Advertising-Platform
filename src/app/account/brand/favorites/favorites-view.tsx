@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { GenreBadge } from "@/components/ui/badge";
 import { compareDeadline, daysUntil, formatFullDate, isArchived } from "@/lib/data/format";
 import { cn } from "@/lib/utils";
-import { intlLocale, makeUI, useLocalizer, type Locale } from "@/lib/i18n-client";
+import { intlLocale, useUI, useLocalizer, type Locale } from "@/lib/i18n-client";
 import type { BrandFavoriteDTO } from "@/lib/data/brand-favorites";
 import { RemoveFavoriteButton } from "./remove-favorite-button";
 
@@ -19,7 +19,7 @@ type SortKey = "added" | "price" | "deadline";
  *  each report individually. Notes-per-favorite were explicitly out of scope
  *  (would need a DB migration for a new column — flagged in the handoff). */
 export function FavoritesView({ favorites, locale }: { favorites: BrandFavoriteDTO[]; locale: Locale }) {
-  const t = makeUI(locale);
+  const t = useUI(locale);
   // Read the dictionary once here: the genre badge below renders inside
   // favorites.map(), and a context-reading helper called per item would make
   // the hook count track the list length.

@@ -1,7 +1,7 @@
 "use client";
 
 import { Check, Circle } from "lucide-react";
-import { makeUI, type Locale } from "@/lib/i18n-client";
+import { useUI, type Locale } from "@/lib/i18n-client";
 import { flashField } from "@/lib/field-flash";
 import type { CompletenessItem, CompletenessKey } from "@/lib/project-completeness";
 
@@ -73,7 +73,7 @@ export function ProjectCompletenessChecklist({
   items: CompletenessItem[];
   locale?: Locale;
 }) {
-  const t = makeUI(locale);
+  const t = useUI(locale);
   const missing = items.filter((item) => !item.filled);
 
   return (

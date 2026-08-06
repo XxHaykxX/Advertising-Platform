@@ -19,7 +19,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Plus, Trash2 } from "lucide-react";
-import type { makeUI } from "@/lib/i18n-client";
+import type { useUI } from "@/lib/i18n-client";
 import { EMPTY_MILESTONE, type MilestoneRow } from "./form-shared";
 
 // Controlled Production Timeline editor (Ф4/#27). A drag-reorderable list of
@@ -40,7 +40,7 @@ export function MilestonesSection({
   value: MilestoneRow[];
   onChange: (rows: MilestoneRow[]) => void;
   /** ProjectForm's own locale-aware translator — see TiersSection. */
-  t: ReturnType<typeof makeUI>;
+  t: ReturnType<typeof useUI>;
 }) {
   // Stable client-side ids parallel to `value` — see TiersSection for why
   // index/object identity aren't safe keys and how the re-seed effect works.
@@ -163,7 +163,7 @@ function MilestoneTableRow({
 }: {
   id: number;
   row: MilestoneRow;
-  t: ReturnType<typeof makeUI>;
+  t: ReturnType<typeof useUI>;
   onLabel: (label: string) => void;
   onDate: (date: string) => void;
   onNote: (note: string) => void;

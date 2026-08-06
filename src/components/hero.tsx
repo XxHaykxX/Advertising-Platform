@@ -10,7 +10,7 @@ import {
   type MotionValue,
 } from "framer-motion";
 import { ArrowRight, Play, ChevronDown } from "lucide-react";
-import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n-client";
+import { DEFAULT_LOCALE, useUI, type Locale } from "@/lib/i18n-client";
 
 /* Cinematic poster wall — real stills scraped from kinodaran.com, served
    locally from /public/kino (same-origin, no external dependency). */
@@ -77,7 +77,7 @@ function ParallaxColumn({
 export function Hero({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
   const ref = useRef<HTMLElement>(null);
   const reduce = useReducedMotion();
-  const t = makeUI(locale);
+  const t = useUI(locale);
 
   const { scrollYProgress } = useScroll({
     target: ref,

@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { Languages, Loader2 } from "lucide-react";
-import { makeUI } from "@/lib/i18n-client";
+import { useUI } from "@/lib/i18n-client";
 import { MediaField } from "@/components/media-field";
 import { MetricsEditor } from "./metrics-editor";
 import type { PortfolioFormState, PortfolioFormValues } from "./actions";
@@ -57,9 +57,9 @@ export function PortfolioForm({
 }) {
   // Admin chrome is English-only (same as project-form) — used purely for the
   // shared translate.* error strings surfaced by the Translate button. Called
-  // here rather than at module scope: makeUI reads the dictionary off React
+  // here rather than at module scope: useUI reads the dictionary off React
   // context now, so it only works during a render.
-  const t = makeUI("en");
+  const t = useUI("en");
   const [state, formAction, pending] = useActionState<PortfolioFormState, FormData>(action, {});
 
   // Full page load rather than the client router — see the redirect-contract

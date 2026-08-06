@@ -29,7 +29,7 @@ import {
   useSortableRows,
 } from "./offer-card";
 import type { MediaPickerScope } from "@/components/media-picker";
-import type { makeUI, Locale } from "@/lib/i18n-client";
+import type { useUI, Locale } from "@/lib/i18n-client";
 
 // Controlled sponsorship-tiers section (#20²) — the "Sponsors" block: the
 // logo-on-materials deal, as opposed to the brand inside the story
@@ -124,7 +124,7 @@ export function TiersSection({
   onChange: (rows: TierRow[]) => void;
   /** ProjectForm's own locale-aware translator (#15) — see ActorsSection's
    *  matching prop for the reasoning. */
-  t: ReturnType<typeof makeUI>;
+  t: ReturnType<typeof useUI>;
   /** Packages already used on other projects, offered by the Add menu. */
   templates?: TierTemplate[];
   /** "member" keeps a creator's uploads inside their own namespace. */

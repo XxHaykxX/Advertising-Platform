@@ -6,7 +6,7 @@ import { Loader2, Lock, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { login, type LoginState } from "./actions";
 import { GoogleButton } from "@/components/google-button";
-import { makeUI, type Locale } from "@/lib/i18n-client";
+import { useUI, type Locale } from "@/lib/i18n-client";
 import { cn } from "@/lib/utils";
 import { PasswordInput } from "@/components/ui/password-input";
 import {
@@ -37,7 +37,7 @@ export function LoginForm({
    *  server-side; this component just carries it along. */
   from?: string;
 }) {
-  const t = makeUI(locale);
+  const t = useUI(locale);
   const [state, formAction, pending] = useActionState<LoginState, FormData>(login, {});
   const message = state.error ?? notice;
 

@@ -4,7 +4,7 @@ import { useActionState } from "react";
 import { CheckCircle, Loader2, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { submitLead, type LeadState } from "@/lib/actions/leads";
-import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n-client";
+import { DEFAULT_LOCALE, useUI, type Locale } from "@/lib/i18n-client";
 import type { ProjectListDTO } from "@/lib/types";
 import {
   FIELD_ERROR_CLASS,
@@ -31,7 +31,7 @@ export function ContactForm({
   projects: ProjectListDTO[];
   locale?: Locale;
 }) {
-  const t = makeUI(locale);
+  const t = useUI(locale);
   const [state, formAction, pending] = useActionState<LeadState, FormData>(
     submitLead,
     initialState,

@@ -7,7 +7,7 @@ import { Container } from "@/components/ui/container";
 import { Reveal } from "@/components/ui/reveal";
 import { Button } from "@/components/ui/button";
 import { submitLead, type LeadState } from "@/lib/actions/leads";
-import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n-client";
+import { DEFAULT_LOCALE, useUI, type Locale } from "@/lib/i18n-client";
 import {
   FIELD_ERROR_CLASS,
   FieldError,
@@ -27,7 +27,7 @@ const fieldClass =
 const labelClass = "mb-1.5 block text-sm font-semibold text-foreground";
 
 export default function Contact({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
-  const t = makeUI(locale);
+  const t = useUI(locale);
   const [state, formAction, pending] = useActionState<LeadState, FormData>(
     submitLead,
     initialState,

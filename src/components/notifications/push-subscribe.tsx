@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Bell, BellRing, Loader2, X } from "lucide-react";
-import { makeUI, type Locale } from "@/lib/i18n-client";
+import { useUI, type Locale } from "@/lib/i18n-client";
 import { savePushSubscription } from "@/lib/actions/push";
 
 type Status = "loading" | "unsupported" | "prompt" | "enabled" | "denied";
@@ -27,7 +27,7 @@ function urlBase64ToUint8Array(base64: string): Uint8Array {
  *  the server (process.env.VAPID_PUBLIC_KEY) so enabling push in prod needs only
  *  an env var + restart — no rebuild (unlike a NEXT_PUBLIC build-time inline). */
 export function PushSubscribe({ locale, vapidPublicKey }: { locale: Locale; vapidPublicKey: string }) {
-  const t = makeUI(locale);
+  const t = useUI(locale);
   const [status, setStatus] = useState<Status>("loading");
   const [busy, setBusy] = useState(false);
   const [dismissed, setDismissed] = useState(false);

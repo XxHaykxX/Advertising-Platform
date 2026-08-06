@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { LogoutButton } from "@/components/logout-button";
-import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n-client";
+import { DEFAULT_LOCALE, useUI, type Locale } from "@/lib/i18n-client";
 import { DEFAULT_CURRENCY, type CurrencyCode } from "@/lib/currency";
 import { PORTFOLIO_ENABLED } from "@/lib/feature-flags";
 import { cn } from "@/lib/utils";
@@ -61,7 +61,7 @@ const DARK_HERO_PATHS = new Set([
   "/terms",
 ]);
 
-function useNav(t: ReturnType<typeof makeUI>) {
+function useNav(t: ReturnType<typeof useUI>) {
   return [
     { label: t("nav.catalog"), href: "/catalog" },
     // Hidden behind PORTFOLIO_ENABLED while the owner keeps preparing cases
@@ -76,7 +76,7 @@ function useNav(t: ReturnType<typeof makeUI>) {
  *  promoted from BrandSidebar into the header itself, next to the wordmark —
  *  mirrors the "Home / My List" placement on kinodaran.am. Brand-only: never
  *  shown to CREATOR members, guests, or staff (see `isBrand` in Header). */
-function useBrandNav(t: ReturnType<typeof makeUI>) {
+function useBrandNav(t: ReturnType<typeof useUI>) {
   return [
     { label: t("account.title"), href: "/account/brand", exact: true },
     { label: t("account.brand.navFavorites"), href: "/account/brand/favorites" },
@@ -108,8 +108,8 @@ function initials(name: string, email: string): string {
 export function Avatar({ user, onDark }: { user: SiteHeaderUser; onDark: boolean }) {
   const ring = onDark ? "ring-2 ring-white/25" : "ring-2 ring-border";
   if (user.avatar) {
-    // eslint-disable-next-line @next/next/no-img-element -- small avatar, arbitrary user-uploaded URL
     return (
+      // eslint-disable-next-line @next/next/no-img-element -- small avatar, arbitrary user-uploaded URL
       <img
         src={user.avatar}
         alt=""
@@ -143,7 +143,7 @@ function UserMenu({
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const t = makeUI(locale);
+  const t = useUI(locale);
   const isStaff = STAFF_ROLES.includes(user.role);
   const cabinetHref = cabinetHrefFor(user.role);
   const logoutAction = isStaff ? staffLogout : memberLogout;
@@ -243,7 +243,7 @@ export function Header({
   // it to stay mounted after that to animate subsequent closes.
   const [menuEverOpened, setMenuEverOpened] = useState(false);
   const pathname = usePathname();
-  const t = makeUI(locale);
+  const t = useUI(locale);
   const NAV = useNav(t);
   const BRAND_NAV = useBrandNav(t);
   // Signed-in BRAND/CREATOR: header drops the marketing nav entirely — the

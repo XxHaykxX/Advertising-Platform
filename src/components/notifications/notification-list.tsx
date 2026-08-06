@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Bell, Heart, Clapperboard, CheckCircle2, XCircle, CheckCheck, Megaphone } from "lucide-react";
-import { makeUI, type Locale } from "@/lib/i18n-client";
+import { useUI, type Locale } from "@/lib/i18n-client";
 import {
   renderNotification,
   parseNotificationData,
@@ -43,7 +43,7 @@ export function NotificationList({
   items: NotificationItem[];
   locale: Locale;
 }) {
-  const t = makeUI(locale);
+  const t = useUI(locale);
   const router = useRouter();
   const [items, setItems] = useState(initial);
   const [, startTransition] = useTransition();

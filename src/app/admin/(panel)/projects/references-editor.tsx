@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { FileVideo, ImageIcon, Plus, Trash2, X } from "lucide-react";
 import { MediaPicker, isVideoPath, type MediaPickerScope } from "@/components/media-picker";
-import type { Locale, makeUI } from "@/lib/i18n-client";
+import type { Locale, useUI } from "@/lib/i18n-client";
 import type { ReferenceRow } from "./form-shared";
 
 // Controlled Reference Projects editor (admin redesign phase 2): a small
@@ -36,7 +36,7 @@ export function ReferencesSection({
   onChange: (rows: ReferenceRow[]) => void;
   /** ProjectForm's own locale-aware translator (#15) — see ActorsSection's
    *  matching prop for the reasoning. */
-  t: ReturnType<typeof makeUI>;
+  t: ReturnType<typeof useUI>;
   /** "member" keeps a creator's uploads inside their own namespace, same as
    *  every other picker in this form. */
   scope?: MediaPickerScope;

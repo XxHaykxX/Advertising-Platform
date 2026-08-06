@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ProjectCard } from "@/components/project-card";
 import { splitCountries } from "@/lib/data/format";
 import { FORMAT_CATEGORY_VALUES } from "@/app/admin/(panel)/projects/form-shared";
-import { DEFAULT_LOCALE, makeUI, useLocalizer, type Locale } from "@/lib/i18n-client";
+import { DEFAULT_LOCALE, useUI, useLocalizer, type Locale } from "@/lib/i18n-client";
 import type { ProjectListDTO } from "@/lib/types";
 
 /** One checkbox facet group — shared by every filter below (4.4). Simplified
@@ -67,7 +67,7 @@ export function BrowseView({
   locale?: Locale;
   title: string;
 }) {
-  const t = makeUI(locale);
+  const t = useUI(locale);
   // One hook call up front — FORMAT_CATEGORY_VALUES.map() below calls this
   // per item; localizeValue() itself reads context and can't be called
   // inside a loop.

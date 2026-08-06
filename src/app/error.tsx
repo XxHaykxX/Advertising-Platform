@@ -33,6 +33,10 @@ export default function Error({
           Попробовать снова
         </Button>
         <Button variant="ghost" size="md" asChild>
+          {/* Deliberately a plain <a>, not <Link>: this is the error boundary,
+              so the router state we would navigate with is the state that just
+              failed. A full document load is the point. */}
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
           <a href="/">На главную</a>
         </Button>
       </div>

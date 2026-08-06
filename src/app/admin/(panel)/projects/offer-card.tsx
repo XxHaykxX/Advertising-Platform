@@ -20,7 +20,7 @@ import { ConfirmDialog } from "@/components/confirm-dialog";
 import { MediaField } from "@/components/media-field";
 import { BulletListEditor } from "@/components/ui/bullet-list-editor";
 import type { MediaPickerScope } from "@/components/media-picker";
-import type { makeUI, Locale } from "@/lib/i18n-client";
+import type { useUI, Locale } from "@/lib/i18n-client";
 
 /**
  * Shared pieces of the two "offer" editors — product placements
@@ -160,7 +160,7 @@ export function OfferCard({
   onToggle: () => void;
   onDuplicate: () => void;
   onDelete: () => void;
-  t: ReturnType<typeof makeUI>;
+  t: ReturnType<typeof useUI>;
   /** The title input. It rides in the header row — the card's identity belongs
    *  next to its controls, and it keeps the body's full width for the fields
    *  (the action buttons used to eat ~100px off every row below them). */
@@ -321,7 +321,7 @@ export function OfferStill({
 }: {
   value: string;
   onChange: (path: string) => void;
-  t: ReturnType<typeof makeUI>;
+  t: ReturnType<typeof useUI>;
   scope: MediaPickerScope;
   locale?: Locale;
   label: string;
@@ -435,7 +435,7 @@ export function OfferPriceField({
   value: number | null;
   onChange: (price: number | null) => void;
   label: string;
-  t: ReturnType<typeof makeUI>;
+  t: ReturnType<typeof useUI>;
   allowOnRequest?: boolean;
 }) {
   const [draft, setDraft] = useState<string | null>(null);
@@ -518,7 +518,7 @@ export function OfferSlotsField({
   onTotal: (v: number | null) => void;
   totalDisabled?: boolean;
   totalTitle?: string;
-  t: ReturnType<typeof makeUI>;
+  t: ReturnType<typeof useUI>;
 }) {
   const parse = (v: string) => (v === "" ? null : Number(v));
   return (
@@ -559,7 +559,7 @@ export function OfferBullets({
   value: string;
   onChange: (v: string) => void;
   label: string;
-  t: ReturnType<typeof makeUI>;
+  t: ReturnType<typeof useUI>;
 }) {
   return (
     <div>
@@ -606,7 +606,7 @@ export function OfferPreviewDialog({
   onClose: () => void;
   title: string;
   items: OfferPreviewItem[];
-  t: ReturnType<typeof makeUI>;
+  t: ReturnType<typeof useUI>;
 }) {
   useEffect(() => {
     if (!open) return;

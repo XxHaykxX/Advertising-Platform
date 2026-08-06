@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import type { InterestStatus } from "@prisma/client";
-import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n-client";
+import { DEFAULT_LOCALE, useUI, type Locale } from "@/lib/i18n-client";
 import { ApplicationDialog, type ApplicationOffer } from "@/components/report/application-dialog";
 import { NO_OFFER_KEY } from "@/lib/offer-value";
 
@@ -104,7 +104,7 @@ export function ReportInterestProvider({
   const [isOpen, setIsOpen] = useState(false);
   /** offerValue the popup should open on, or "" for "let them choose". */
   const [preselected, setPreselected] = useState("");
-  const t = makeUI(locale);
+  const t = useUI(locale);
 
   // Coming back from the login wall: /reports/34?offer=P:5 reopens the popup
   // on the card the guest clicked before signing in. The parameter is wiped

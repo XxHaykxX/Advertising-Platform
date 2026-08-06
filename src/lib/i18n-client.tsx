@@ -3,11 +3,15 @@
 /* Client-side counterpart to i18n.ts (server-only, see the guard there).
    Carries no dictionary data itself — a layout computes the per-locale slice
    server-side (clientDict() in i18n.ts) and hands it down through
-   <I18nProvider>. makeUI() keeps the exact signature and fallback behavior of
-   its server counterpart, so call sites in client components don't change at
-   all — only the import path. Value localization is the one exception: it is
-   `useLocalizer(locale)` here, not `localizeValue(locale, ...)` — see the note
-   above that function (bundle audit 2026-07-31, task #18).
+   <I18nProvider>. useUI() keeps the exact signature and fallback behavior of
+   its server counterpart, so call sites in client components differ only in the
+   import path and the name: the server's is `makeUI()` because it is a plain
+   function over a static table, this one is `useUI()` because it reads context
+   and is a hook in fact as well as in spirit — naming it `make*` had the linter
+   unable to enforce the Rules of Hooks on it at all. Value localization is the
+   one exception to the mirrored API: it is `useLocalizer(locale)` here, not
+   `localizeValue(locale, ...)` — see the note above that function (bundle
+   audit 2026-07-31, task #18).
 
    Why React context and not a module-level variable: on the server this module
    is one instance shared by every in-flight request. A provider that assigned
@@ -103,7 +107,7 @@ export function useLocalizer(locale: Locale) {
   };
 }
 
-export function makeUI(locale: Locale) {
+export function useUI(locale: Locale) {
   const dict = useDict(locale);
   return function t(key: string, vars?: Record<string, string | number>): string {
     let s = dict[key] ?? key;

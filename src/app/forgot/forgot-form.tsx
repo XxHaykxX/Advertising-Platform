@@ -4,7 +4,7 @@ import { useActionState } from "react";
 import { CheckCircle2, Loader2, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { requestPasswordReset, type ForgotState } from "./actions";
-import { makeUI, type Locale } from "@/lib/i18n-client";
+import { useUI, type Locale } from "@/lib/i18n-client";
 import {
   FIELD_ERROR_CLASS,
   FieldError,
@@ -20,7 +20,7 @@ const inputClass =
   "w-full rounded-xl border border-border bg-background py-3 pl-10 pr-4 text-sm text-foreground outline-none transition-colors focus:border-primary/50";
 
 export function ForgotForm({ locale }: { locale: Locale }) {
-  const t = makeUI(locale);
+  const t = useUI(locale);
   const [state, formAction, pending] = useActionState<ForgotState, FormData>(
     requestPasswordReset,
     {},

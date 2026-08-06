@@ -20,7 +20,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { ChevronDown, ChevronUp, GripVertical, Loader2, Plus, Search, X } from "lucide-react";
-import { makeUI } from "@/lib/i18n-client";
+import { useUI } from "@/lib/i18n-client";
 import { ActiveToggle, DeleteButton } from "./row-actions";
 import { reorderProjects } from "./actions";
 
@@ -90,8 +90,8 @@ function IncompleteBadge({ n }: { n: number }) {
   // English, like the rest of the admin panel — but read from the dictionary
   // rather than typed out here: the creator's list shows the same two strings,
   // and a hardcoded copy would drift the moment they are edited in /admin/i18n.
-  // Inside the component because makeUI reads React context now.
-  const tEn = makeUI("en");
+  // Inside the component because useUI reads React context now.
+  const tEn = useUI("en");
   return (
     <span
       title={tEn("completeness.badgeTitle", { n })}

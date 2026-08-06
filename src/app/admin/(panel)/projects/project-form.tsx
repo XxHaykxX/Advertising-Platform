@@ -40,7 +40,7 @@ import { GENRES } from "@/lib/genres";
 import { type ProjectFormState, type ProjectFormValues } from "./actions";
 import { translateProjectAction, type TranslateProjectState } from "./translate-action";
 import { generatePosterAction } from "./poster-action";
-import { makeUI, type Locale } from "@/lib/i18n-client";
+import { useUI, type Locale } from "@/lib/i18n-client";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 
 // @dnd-kit (core + sortable + utilities, ~126 KB total) backs the
@@ -366,7 +366,7 @@ function PresentationField({
   name: string;
   initial: string;
   scope: "staff" | "member";
-  t: ReturnType<typeof makeUI>;
+  t: ReturnType<typeof useUI>;
 }) {
   const [value, setValue] = useState(initial);
   const [job, setJob] = useState<{ file: File; loaded: number; total: number } | null>(null);
@@ -631,7 +631,7 @@ export function ProjectForm({
   // Admin panel chrome stays English-only (#21/#15) — mode="creator" is the
   // only side that follows the caller's locale; admin ignores it entirely so
   // this component renders byte-identical to before for staff.
-  const t = makeUI(mode === "creator" ? locale : "en");
+  const t = useUI(mode === "creator" ? locale : "en");
   // Creator forms upload to the member's own namespace and the picker shows
   // only their files; admin forms use the shared staff library.
   const uploaderScope = mode === "creator" ? "member" : "staff";

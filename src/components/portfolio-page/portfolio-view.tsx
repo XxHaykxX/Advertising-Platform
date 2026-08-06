@@ -6,7 +6,7 @@ import { Header, type SiteHeaderUser } from "@/components/header";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { PageHero } from "@/components/ui/page-hero";
-import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n-client";
+import { DEFAULT_LOCALE, useUI, type Locale } from "@/lib/i18n-client";
 import { DEFAULT_CURRENCY, type CurrencyCode } from "@/lib/currency";
 import type { PortfolioDTO } from "@/lib/types";
 import { CaseCard } from "./case-card";
@@ -30,7 +30,7 @@ export function PortfolioView({
    *  every page's client bundle, not just this one. */
   footer: ReactNode;
 }) {
-  const t = makeUI(locale);
+  const t = useUI(locale);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   return (

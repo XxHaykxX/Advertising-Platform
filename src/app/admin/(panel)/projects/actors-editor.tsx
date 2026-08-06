@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import Image from "next/image";
 import {
   DndContext,
@@ -26,7 +26,7 @@ import type { PersonSuggestion } from "@/lib/data/actors";
 import { allSpellings, pickPersonName } from "@/lib/person-name";
 import { matchesAnyNameQuery } from "@/lib/translit";
 import { cn } from "@/lib/utils";
-import { DEFAULT_LOCALE, type makeUI, type Locale } from "@/lib/i18n-client";
+import { DEFAULT_LOCALE, type useUI, type Locale } from "@/lib/i18n-client";
 
 // Controlled cast/crew section (#20²). Rows are owned by the parent ProjectForm —
 // cast/crew save together with the main project in a single submit; the parent
@@ -84,7 +84,7 @@ export function ActorsSection({
   /** ProjectForm's own locale-aware translator (#15) — "en" in admin mode,
    *  the creator's locale in mode="creator". Passed down rather than called
    *  fresh here so both sections always agree with the parent form. */
-  t: ReturnType<typeof makeUI>;
+  t: ReturnType<typeof useUI>;
 }) {
   // Stable client-side ids parallel to `value`. ActorRow has no id (the data
   // contract is index-based) and update() rebuilds row objects on every edit,
@@ -282,6 +282,9 @@ function PersonNameField({
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
+  // The combobox has many instances on the page (one per cast row), so the
+  // listbox it owns needs a per-instance id for aria-controls to point at.
+  const listboxId = useId();
 
   const filtered = useMemo(
     // Search every spelling, not just the displayed one: typing "Арам" must
@@ -340,6 +343,7 @@ function PersonNameField({
         placeholder={placeholder}
         role="combobox"
         aria-expanded={open}
+        aria-controls={listboxId}
         aria-autocomplete="list"
         className={cn(cellCls, unlinked && "border-danger/60 focus:border-danger")}
       />
@@ -348,6 +352,7 @@ function PersonNameField({
       )}
       {open && filtered.length > 0 && (
         <ul
+          id={listboxId}
           role="listbox"
           // Belt and braces: /admin runs without Lenis, but if smooth scrolling
           // is ever re-enabled here this list must keep its wheel.
@@ -405,7 +410,7 @@ function ActorTableRow({
 }: {
   id: number;
   row: ActorRow;
-  t: ReturnType<typeof makeUI>;
+  t: ReturnType<typeof useUI>;
   knownPeople: PersonSuggestion[];
   nameLocale: Locale;
   onName: (name: string) => void;

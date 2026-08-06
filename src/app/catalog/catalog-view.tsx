@@ -24,7 +24,7 @@ import { Header, type SiteHeaderUser } from "@/components/header";
 import { compareDeadline, daysUntil, formatFullDate, parseStringArray, splitCountries } from "@/lib/data/format";
 import { FORMAT_CATEGORY_VALUES } from "@/app/admin/(panel)/projects/form-shared";
 import { cn } from "@/lib/utils";
-import { DEFAULT_LOCALE, intlLocale, makeUI, useLocalizer, type Locale } from "@/lib/i18n-client";
+import { DEFAULT_LOCALE, intlLocale, useUI, useLocalizer, type Locale } from "@/lib/i18n-client";
 import { DEFAULT_CURRENCY, type CurrencyCode } from "@/lib/currency";
 import { NO_OFFER_KEY } from "@/lib/offer-value";
 import type { ProjectListDTO } from "@/lib/types";
@@ -55,7 +55,7 @@ function ProjectRow({
   canFavorite?: boolean;
   signedIn?: boolean;
 }) {
-  const t = makeUI(locale);
+  const t = useUI(locale);
   // One hook call up front — shownExtraGenres.map() below (variable-length,
   // depends on the project) calls this per item; localizeValue() itself
   // reads context and can't be called inside a loop.
@@ -233,7 +233,7 @@ export function CatalogView({
    *  client bundle, not just this one. */
   footer: ReactNode;
 }) {
-  const t = makeUI(locale);
+  const t = useUI(locale);
   // One hook call up front — genres.map()/FORMAT_CATEGORY_VALUES.map() below
   // call this per item; localizeValue() itself reads context and can't be
   // called inside a loop.

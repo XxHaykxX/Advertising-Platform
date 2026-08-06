@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { FavoriteHeart } from "@/components/favorite-heart";
 import { daysUntil, formatFullDate, formatReleaseDate, parseStringArray, splitCountries } from "@/lib/data/format";
 import { cn } from "@/lib/utils";
-import { DEFAULT_LOCALE, intlLocale, makeUI, useLocalizer, type Locale } from "@/lib/i18n-client";
+import { DEFAULT_LOCALE, intlLocale, useUI, useLocalizer, type Locale } from "@/lib/i18n-client";
 import { NO_OFFER_KEY } from "@/lib/offer-value";
 import type { SiteHeaderUser } from "@/components/header";
 import type { ProjectListDTO } from "@/lib/types";
@@ -100,7 +100,7 @@ export function ProjectCard({
   canFavorite?: boolean;
   signedIn?: boolean;
 }) {
-  const t = makeUI(locale);
+  const t = useUI(locale);
   // One hook call up front — shownGenres.map() below (variable-length,
   // depends on the project) calls this per item; localizeValue() itself
   // reads context and can't be called inside a loop.

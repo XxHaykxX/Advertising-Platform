@@ -7,7 +7,7 @@ import { Section } from "@/components/ui/section";
 import { Container } from "@/components/ui/container";
 import { Reveal } from "@/components/ui/reveal";
 import { cn } from "@/lib/utils";
-import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n-client";
+import { DEFAULT_LOCALE, useUI, type Locale } from "@/lib/i18n-client";
 
 interface FaqItem {
   question: string;
@@ -25,7 +25,7 @@ export default function Faq({
    *  the h2 instead of stacking two competing titles on top of each other. */
   showTitle?: boolean;
 }) {
-  const t = makeUI(locale);
+  const t = useUI(locale);
   // q1..q6, no gap. The list used to skip q2 (q1, q3..q7), which is what sent
   // the content writer's numbered rows one key off when her sheet was applied.
   const items: FaqItem[] = [1, 2, 3, 4, 5, 6].map((n) => ({

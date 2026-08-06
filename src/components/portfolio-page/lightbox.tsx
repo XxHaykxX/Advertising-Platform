@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, Film, X } from "lucide-react";
-import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n-client";
+import { DEFAULT_LOCALE, useUI, type Locale } from "@/lib/i18n-client";
 import type { PortfolioDTO } from "@/lib/types";
 import { useMetricLabeler, parseMetrics } from "./metrics";
 
@@ -21,7 +21,7 @@ export function CaseLightbox({
   onNavigate: (index: number) => void;
   locale?: Locale;
 }) {
-  const t = makeUI(locale);
+  const t = useUI(locale);
   const metricLabel = useMetricLabeler(locale);
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);

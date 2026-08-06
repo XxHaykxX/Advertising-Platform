@@ -5,7 +5,7 @@ import { Building2, Loader2, Lock, Mail, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { register, type RegisterState } from "./actions";
 import { GoogleButton } from "@/components/google-button";
-import { makeUI, type Locale } from "@/lib/i18n-client";
+import { useUI, type Locale } from "@/lib/i18n-client";
 import { cn } from "@/lib/utils";
 import { PasswordInput } from "@/components/ui/password-input";
 import {
@@ -40,7 +40,7 @@ export function RegisterForm({
    *  ?role=creator instead of dropping them on the brand tab (audit 5.9). */
   initialType?: "brand" | "creator";
 }) {
-  const t = makeUI(locale);
+  const t = useUI(locale);
   const [state, formAction, pending] = useActionState<RegisterState, FormData>(register, {});
   const [type, setType] = useState<"brand" | "creator">(initialType);
   // Password isn't echoed back via server state (avoid round-tripping a

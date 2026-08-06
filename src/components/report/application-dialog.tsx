@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { useModalDialog } from "@/lib/use-modal-dialog";
 import { submitApplication } from "@/app/account/brand/actions";
-import type { makeUI } from "@/lib/i18n-client";
+import type { useUI } from "@/lib/i18n-client";
 import { NO_OFFER_KEY, offerValue, parseOfferValue } from "@/lib/offer-value";
 import { RequiredMark } from "@/components/ui/field";
 
@@ -92,7 +92,7 @@ export function ApplicationDialog({
    *  told the same exclusive slot was theirs. Empty list → the picker is
    *  hidden and the application is sent without one, exactly as before. */
   offers?: ApplicationOffer[];
-  t: ReturnType<typeof makeUI>;
+  t: ReturnType<typeof useUI>;
   onClose: () => void;
   /** Reports the offerKey the application was sent for, so the page can flip
    *  that one card — and only that one — to "already sent". */

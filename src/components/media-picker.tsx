@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Download, Loader2, X } from "lucide-react";
 import { listUploads, uploadImage, type MediaFile } from "@/lib/actions/uploads";
 import { listMemberUploads, uploadMemberImage } from "@/lib/actions/member-uploads";
-import { makeUI, type Locale } from "@/lib/i18n-client";
+import { useUI, type Locale } from "@/lib/i18n-client";
 import { captureVideoPoster, isPosterPath, posterPathFor } from "@/lib/video-poster";
 import { Dropzone, DropzoneEmptyState } from "@/components/ui/dropzone";
 
@@ -58,7 +58,7 @@ export function MediaPicker({
    *  Armenian inside an otherwise English panel. */
   locale?: Locale;
 }) {
-  const t = makeUI(locale);
+  const t = useUI(locale);
   const [items, setItems] = useState<MediaFile[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

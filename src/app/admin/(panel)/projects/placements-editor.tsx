@@ -22,7 +22,7 @@ import {
   useSortableRows,
 } from "./offer-card";
 import type { MediaPickerScope } from "@/components/media-picker";
-import type { makeUI, Locale } from "@/lib/i18n-client";
+import type { useUI, Locale } from "@/lib/i18n-client";
 
 // Controlled Product Placements section (owner correction 2026-07-28): the
 // brand appearing INSIDE the story (a scene, a prop, the hero's car) — a
@@ -106,7 +106,7 @@ export function PlacementsSection({
   onChange: (rows: PlacementRow[]) => void;
   /** ProjectForm's own locale-aware translator (#15) — see TiersSection's
    *  matching prop for the reasoning. */
-  t: ReturnType<typeof makeUI>;
+  t: ReturnType<typeof useUI>;
   /** "member" keeps a creator's uploads inside their own namespace, same as
    *  every other picker in this form. */
   scope?: MediaPickerScope;
