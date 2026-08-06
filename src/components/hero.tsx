@@ -201,7 +201,7 @@ export function Hero({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
 
       {/* ── Scroll indicator ─────────────────────────────────── */}
       <motion.a
-        href="#how-it-works"
+        href="#trust"
         aria-label={t("hero.scrollDown")}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

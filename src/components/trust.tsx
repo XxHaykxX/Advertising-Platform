@@ -21,8 +21,11 @@ export function Trust({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
     },
   ];
 
+  // The id is the hero's scroll-down target: since IA-48 §3 this is the section
+  // directly below the fold, and the arrow has to land on it rather than jump
+  // over it to #how-it-works.
   return (
-    <Section muted>
+    <Section id="trust" muted>
       <Container>
         <Reveal>
           <div className="grid grid-cols-2 gap-8 max-sm:grid-cols-1 md:gap-12">

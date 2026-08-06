@@ -133,7 +133,15 @@ export const UI: Record<string, Dict> = {
   "btn.viewReport": { ru: "Подробнее", en: "Learn More", hy: "Տեսնել ավելին" },
   "btn.removeInterest": { ru: "Убрать из интересов", en: "Remove from Interests", hy: "Հանել հետաքրքրություններից" },
   "btn.removeFavorite": { ru: "Убрать", en: "Remove", hy: "Հեռացնել" },
-  "btn.browseProjects": { ru: "Смотреть проекты", en: "Browse Projects", hy: "Ստեղծել հաշիվ" },
+  // IA-48 §5: this key is the "go to the catalog" CTA and is shared by the hero,
+  // /about, /how-it-works and the about hero. It briefly carried "Ստեղծել հաշիվ"
+  // because the registration card downstairs reused it for a button that means
+  // something else; that card now has btn.createAccount, so this one is back to
+  // saying what all four of its call sites do.
+  "btn.browseProjects": { ru: "Смотреть проекты", en: "Browse Projects", hy: "Տեսնել նախագծերը" },
+  /** "Get started" card for brands — creates an account, so it must not borrow
+   *  the catalog CTA's wording (IA-48 §1, §5). */
+  "btn.createAccount": { ru: "Создать аккаунт", en: "Create account", hy: "Ստեղծել հաշիվ" },
   "btn.viewAll": { ru: "Смотреть все", en: "View All", hy: "Դիտել բոլորը" },
   "btn.listProject": { ru: "Разместить проект", en: "List Your Project", hy: "Գրանցվել" },
   "btn.sending": { ru: "Отправка…", en: "Sending…", hy: "Ուղարկվում է…" },

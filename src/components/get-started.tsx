@@ -6,10 +6,18 @@ import { Reveal } from "@/components/ui/reveal";
 import { Button } from "@/components/ui/button";
 import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
 
-export default function GetStarted({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
+export default function GetStarted({
+  locale = DEFAULT_LOCALE,
+  className,
+}: {
+  locale?: Locale;
+  /** Lets a page trim this section's own spacing where it butts against
+   *  another one — see the homepage (IA-48 §4). */
+  className?: string;
+}) {
   const t = makeUI(locale);
   return (
-    <Section id="get-started">
+    <Section id="get-started" className={className}>
       <Container>
         <div className="mb-16 text-center">
           <Reveal>
@@ -29,7 +37,11 @@ export default function GetStarted({ locale = DEFAULT_LOCALE }: { locale?: Local
                 {t("getStarted.forBrandsBody")}
               </p>
               <Button asChild variant="primary" size="md">
-                <Link href="/catalog">{t("btn.browseProjects")}</Link>
+                {/* IA-48 §1: this card is the brand half of "register on the
+                    platform", so it goes to the sign-up form, not the catalog.
+                    ?role=brand is what the picker defaults to anyway — spelled
+                    out so the link says which half it opens. */}
+                <Link href="/register?role=brand">{t("btn.createAccount")}</Link>
               </Button>
             </div>
           </Reveal>
