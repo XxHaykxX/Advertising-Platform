@@ -152,7 +152,7 @@ export async function rejectProject(projectId: number, reason?: string) {
     await createNotification(project.ownerId, {
       type: "PROJECT_REJECTED",
       data: { projectId: project.id, projectTitle: project.title, reason: trimmedReason },
-      link: "/account/projects",
+      link: "/account",
     });
   }
   revalidateModerationPaths(project.id);

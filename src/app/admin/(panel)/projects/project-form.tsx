@@ -1376,7 +1376,7 @@ export function ProjectForm({
               not a left-aligned back-link (user request 2026-07-24). */}
           <div className="flex shrink-0 items-center gap-2">
             <Link
-              href={mode === "creator" ? "/account/projects" : "/admin/projects"}
+              href={mode === "creator" ? "/account" : "/admin/projects"}
               className="inline-flex items-center rounded-lg border border-border px-5 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
             >
               {t("projectForm.cancel")}
@@ -2176,7 +2176,7 @@ export function ProjectForm({
           </button>
         )}
         <Link
-          href={mode === "creator" ? "/account/projects" : "/admin/projects"}
+          href={mode === "creator" ? "/account" : "/admin/projects"}
           className="text-sm text-muted-foreground hover:text-foreground"
         >
           {t("projectForm.cancel")}

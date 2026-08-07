@@ -736,10 +736,10 @@ export async function createCreatorProject(
       });
 
       updateTag("projects");
-      revalidatePath("/account/projects");
+      revalidatePath("/account");
       revalidatePath("/admin/moderation");
       revalidateStorefront();
-      return { ok: true, redirect: "/account/projects" };
+      return { ok: true, redirect: "/account" };
     } catch (e) {
       if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") {
         if (autoCode && attempt < maxAttempts) continue; // regenerate + retry
@@ -892,8 +892,8 @@ export async function updateCreatorProject(
   });
 
   updateTag("projects");
-  revalidatePath("/account/projects");
+  revalidatePath("/account");
   revalidatePath("/admin/moderation");
   revalidateStorefront();
-  return { ok: true, redirect: "/account/projects" };
+  return { ok: true, redirect: "/account" };
 }

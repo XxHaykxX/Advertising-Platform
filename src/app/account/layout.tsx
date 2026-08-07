@@ -35,7 +35,6 @@ export default async function AccountLayout({ children }: { children: ReactNode 
           sidebar={
             <CreatorSidebar
               labels={{
-                home: t("account.title"),
                 projects: t("account.myProjects"),
                 submit: t("account.submitProject"),
                 notifications: t("notif.title"),

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, FolderKanban, FileUp, Bell, User, LogOut } from "lucide-react";
+import { FolderKanban, FileUp, Bell, User, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutButton } from "@/components/logout-button";
 import type { Locale } from "@/lib/i18n-client";
@@ -12,7 +12,7 @@ import { getUnreadNotificationCount } from "@/lib/actions/notifications";
 type NavItem = {
   href: string;
   label: string;
-  icon: typeof LayoutDashboard;
+  icon: typeof FolderKanban;
   exact?: boolean;
 };
 
@@ -28,7 +28,6 @@ export function CreatorSidebar({
   locale,
 }: {
   labels: {
-    home: string;
     projects: string;
     submit: string;
     notifications: string;
@@ -41,8 +40,10 @@ export function CreatorSidebar({
   const pathname = usePathname();
 
   const items: NavItem[] = [
-    { href: "/account", label: labels.home, icon: LayoutDashboard, exact: true },
-    { href: "/account/projects", label: labels.projects, icon: FolderKanban, exact: true },
+    // "Dashboard" and "My projects" are the same screen since 2026-08-07 — the
+    // dashboard was three cards repeating this very menu, so the list took its
+    // place. One entry, under the name of what it shows.
+    { href: "/account", label: labels.projects, icon: FolderKanban, exact: true },
     { href: "/account/projects/new", label: labels.submit, icon: FileUp },
     // No "Brand offers" entry: a brand's application is run by staff, so the
     // creator has nothing to answer here (owner decision 2026-08-07).
