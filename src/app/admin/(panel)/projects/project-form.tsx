@@ -35,6 +35,7 @@ import { UploadProgress } from "@/components/ui/upload-progress";
 import { holdProgress, uploadViaXhr } from "@/lib/upload-xhr";
 import { PosterGenerator, type PosterGenerateInput, type PosterGenerateResult } from "@/components/poster-generator";
 import { ProjectCompletenessChecklist } from "@/components/project-completeness-checklist";
+import { FormSectionNav } from "@/components/form-section-nav";
 import type { CompletenessItem } from "@/lib/project-completeness";
 import { GENRES } from "@/lib/genres";
 import { type ProjectFormState, type ProjectFormValues } from "./actions";
@@ -1002,6 +1003,33 @@ export function ProjectForm({
   const sectionNote = (anchor: string) =>
     publishGaps.has(anchor) ? <PublishGapNote note={t("publish.gapNote")} /> : null;
 
+  /** Jump-to-section strip in the sticky bar. Listed in DOM order — main column
+   *  first, then the meta sidebar — so the strip reads like the page. The second
+   *  member of each pair lists the publish-gap anchors that live inside that
+   *  section, which is what turns its warning dot on; a section with none simply
+   *  never warns. */
+  const navSections = (
+    [
+      ["sec-about", "projectForm.section.about", ["sec-about"]],
+      ["sec-media", "projectForm.section.pressKit", ["field-poster"]],
+      ["sec-cast", "projectForm.section.castCrew", []],
+      ["sec-placements", "projectForm.section.placements", ["sec-placements"]],
+      ["sec-tiers", "projectForm.section.sponsorshipTiers", ["sec-tiers"]],
+      ["sec-references", "projectForm.section.references", []],
+      ["sec-milestones", "projectForm.section.milestones", []],
+      ["sec-general", "projectForm.section.general", ["field-runtime", "field-formatCategory"]],
+      ["sec-production", "projectForm.section.production", ["field-studio", "field-deadline"]],
+      // Visibility is staff-only — the section isn't rendered in creator mode.
+      ...(mode === "creator"
+        ? []
+        : [["sec-visibility", "projectForm.section.visibility", []] as const]),
+    ] as ReadonlyArray<readonly [string, string, readonly string[]]>
+  ).map(([id, labelKey, gapAnchors]) => ({
+    id,
+    label: t(labelKey),
+    gap: gapAnchors.some((a) => publishGaps.has(a)),
+  }));
+
   function recomputePublishGaps() {
     const form = formRef.current;
     if (!form) return;
@@ -1277,7 +1305,18 @@ export function ProjectForm({
       ref={formRef}
       action={formAction}
       onInput={handleFormInput}
-      className="max-w-[1400px] space-y-4"
+      // Width: the admin panel caps the form itself at 1400px because its shell
+      // has no cap at all. In the cabinet the cap lives on the shell
+      // (creator-shell.tsx, 1600px), so a second one here would just waste the
+      // difference.
+      //
+      // scroll-mt: sections carry scroll-mt-24 (96px) for the admin's one-line
+      // sticky bar. In creator mode the same bar sits under the 64px site header
+      // and now has a second row, so a jump would park the heading underneath
+      // both — 160px clears them.
+      className={`space-y-4 ${
+        mode === "creator" ? "[&_section]:scroll-mt-40" : "max-w-[1400px]"
+      }`}
     >
       {/* Hidden mirrors of the inline cast/crew + tier editors, submitted with
           the main form and parsed by create/updateProject (#20²). */}
@@ -1299,40 +1338,58 @@ export function ProjectForm({
           without scrolling to the bottom of a long form. Duplicates the
           bottom Submit button below (same <form>, both are plain
           type="submit"); the bottom one stays for the natural end-of-form
-          flow. */}
-      <div className="sticky top-14 z-20 -mx-4 flex items-center justify-between gap-3 border-b border-border bg-card/95 px-4 py-2.5 backdrop-blur sm:-mx-6 sm:px-6 md:-mx-10 md:top-0 md:px-10">
-        <div className="flex min-w-0 items-center gap-3">
-          {isDirty && !navigating ? (
-            <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-xs font-medium text-danger">
-              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-danger" aria-hidden="true" />
-              {t("projectForm.unsavedChanges")}
-            </span>
-          ) : saved ? (
-            <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-xs font-medium text-success">
-              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-success" aria-hidden="true" />
-              {t("projectForm.saved")}
-            </span>
-          ) : null}
+          flow.
+
+          The offset differs by side because the chrome above it does: the admin
+          panel has no site header (its own is mobile-only, h-14), while the
+          member cabinet sits under the sticky SiteHeader — 64px, `h-16` in
+          header.tsx. Creator mode used `md:top-0` too and the bar slid *under*
+          the header on desktop; z-30 keeps it above the page but below the
+          header's z-50. */}
+      <div
+        className={`sticky -mx-4 flex flex-col gap-2 border-b border-border bg-card/95 px-4 py-2.5 backdrop-blur sm:-mx-6 sm:px-6 md:-mx-10 md:px-10 ${
+          mode === "creator" ? "top-16 z-30" : "top-14 z-20 md:top-0"
+        }`}
+      >
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            {isDirty && !navigating ? (
+              <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-xs font-medium text-danger">
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-danger" aria-hidden="true" />
+                {t("projectForm.unsavedChanges")}
+              </span>
+            ) : saved ? (
+              <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-xs font-medium text-success">
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-success" aria-hidden="true" />
+                {t("projectForm.saved")}
+              </span>
+            ) : null}
+          </div>
+          {/* Actions grouped on the right: Cancel (outline) beside Save. Back nav
+              lives in the top "Back to projects" link, so Cancel here is a button,
+              not a left-aligned back-link (user request 2026-07-24). */}
+          <div className="flex shrink-0 items-center gap-2">
+            <Link
+              href={mode === "creator" ? "/account/projects" : "/admin/projects"}
+              className="inline-flex items-center rounded-lg border border-border px-5 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
+            >
+              {t("projectForm.cancel")}
+            </Link>
+            <button
+              type="submit"
+              disabled={pending || navigating}
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:opacity-90 disabled:opacity-70"
+            >
+              {(pending || navigating) && <Loader2 className="h-4 w-4 animate-spin" />}
+              {submitLabel}
+            </button>
+          </div>
         </div>
-        {/* Actions grouped on the right: Cancel (outline) beside Save. Back nav
-            lives in the top "Back to projects" link, so Cancel here is a button,
-            not a left-aligned back-link (user request 2026-07-24). */}
-        <div className="flex shrink-0 items-center gap-2">
-          <Link
-            href={mode === "creator" ? "/account/projects" : "/admin/projects"}
-            className="inline-flex items-center rounded-lg border border-border px-5 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
-          >
-            {t("projectForm.cancel")}
-          </Link>
-          <button
-            type="submit"
-            disabled={pending || navigating}
-            className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:opacity-90 disabled:opacity-70"
-          >
-            {(pending || navigating) && <Loader2 className="h-4 w-4 animate-spin" />}
-            {submitLabel}
-          </button>
-        </div>
+
+        {/* Second row: jump-to-section. The warning dots read from the same live
+            publishGaps set that paints the amber shells below, so the strip and
+            the fields never disagree. */}
+        <FormSectionNav sections={navSections} />
       </div>
 
       {draftFound && (

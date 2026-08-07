@@ -177,79 +177,81 @@ export default async function EditCreatorProjectPage({
         <p className="mb-6 text-muted-foreground">{t("account.editProjectSubtitle")}</p>
       </Reveal>
 
-      <Reveal delay={0.05}>
-        <ProjectForm
-          action={action}
-          initial={initial}
-          initialActors={p.actors.map((a) => ({
-            // Shown in the member's own language; the server re-snapshots every
-            // spelling from the Person directory on save.
-            name: pickPersonName(locale, a, a.name),
-            roles: parseRolesInput(a.roles, a.role),
-            kind: a.kind,
-            photo: a.photo ?? "",
-            personId: a.personId,
-          }))}
-          initialTiers={p.tiers.map((tier) => ({
-            // Carries the DB id so a save updates this tier in place instead of
-            // deleting and re-creating it (which detached brand applications
-            // and dropped any slot already reserved on it).
-            dbId: tier.id,
-            // Legacy columns first, then the per-locale trio (IA-44). A row
-            // saved before the language tabs existed has only the legacy pair
-            // filled; the hy tab falls back to it in the editor the same way
-            // the public page does, so nothing opens blank.
-            name: tier.name,
-            nameHy: tier.nameHy || tier.name,
-            nameRu: tier.nameRu,
-            nameEn: tier.nameEn,
-            priceAmd: tier.priceAmd,
-            benefits: parseBenefitsInput(tier.benefits),
-            benefitsHy: parseBenefitsInput(tier.benefitsHy ?? tier.benefits),
-            benefitsRu: parseBenefitsInput(tier.benefitsRu),
-            benefitsEn: parseBenefitsInput(tier.benefitsEn),
-            image: tier.image ?? "",
-            isExclusive: tier.isExclusive,
-            availableSlots: tier.availableSlots,
-            totalSlots: tier.totalSlots,
-          }))}
-          initialPlacements={p.placements.map((pl) => ({
-            // Same "carry the id" reasoning as initialTiers above.
-            dbId: pl.id,
-            title: pl.title,
-            titleHy: pl.titleHy || pl.title,
-            titleRu: pl.titleRu,
-            titleEn: pl.titleEn,
-            description: parseBenefitsInput(pl.description),
-            descriptionHy: parseBenefitsInput(pl.descriptionHy ?? pl.description),
-            descriptionRu: parseBenefitsInput(pl.descriptionRu),
-            descriptionEn: parseBenefitsInput(pl.descriptionEn),
-            image: pl.image ?? "",
-            priceAmd: pl.priceAmd,
-            availableSlots: pl.availableSlots,
-            totalSlots: pl.totalSlots,
-          }))}
-          initialMilestones={p.milestones.map((m) => ({
-            label: m.label,
-            date: formatDateInput(m.date),
-            note: m.note,
-            active: m.isActive,
-          }))}
-          mode="creator"
-          locale={locale}
-          translateAction={translateCreatorProjectAction}
-          posterAction={generateCreatorPosterAction}
-          submitLabel={t("account.form.submit")}
-          studios={studios}
-          tierTemplates={tierTemplates}
-          streamingSources={streamingSources}
-        countryOptions={countryOptions}
-          knownPeople={knownPeople}
-          projectId={pid}
-          ownerHasAvatar={!!p.owner.avatar}
-          completeness={completeness}
-        />
-      </Reveal>
+      {/* Deliberately NOT wrapped in <Reveal>: framer-motion animates it with a
+          `transform`, and a transformed ancestor becomes the containing block
+          for `position: sticky` — which silently broke the form's own sticky
+          save bar. */}
+      <ProjectForm
+        action={action}
+        initial={initial}
+        initialActors={p.actors.map((a) => ({
+          // Shown in the member's own language; the server re-snapshots every
+          // spelling from the Person directory on save.
+          name: pickPersonName(locale, a, a.name),
+          roles: parseRolesInput(a.roles, a.role),
+          kind: a.kind,
+          photo: a.photo ?? "",
+          personId: a.personId,
+        }))}
+        initialTiers={p.tiers.map((tier) => ({
+          // Carries the DB id so a save updates this tier in place instead of
+          // deleting and re-creating it (which detached brand applications
+          // and dropped any slot already reserved on it).
+          dbId: tier.id,
+          // Legacy columns first, then the per-locale trio (IA-44). A row
+          // saved before the language tabs existed has only the legacy pair
+          // filled; the hy tab falls back to it in the editor the same way
+          // the public page does, so nothing opens blank.
+          name: tier.name,
+          nameHy: tier.nameHy || tier.name,
+          nameRu: tier.nameRu,
+          nameEn: tier.nameEn,
+          priceAmd: tier.priceAmd,
+          benefits: parseBenefitsInput(tier.benefits),
+          benefitsHy: parseBenefitsInput(tier.benefitsHy ?? tier.benefits),
+          benefitsRu: parseBenefitsInput(tier.benefitsRu),
+          benefitsEn: parseBenefitsInput(tier.benefitsEn),
+          image: tier.image ?? "",
+          isExclusive: tier.isExclusive,
+          availableSlots: tier.availableSlots,
+          totalSlots: tier.totalSlots,
+        }))}
+        initialPlacements={p.placements.map((pl) => ({
+          // Same "carry the id" reasoning as initialTiers above.
+          dbId: pl.id,
+          title: pl.title,
+          titleHy: pl.titleHy || pl.title,
+          titleRu: pl.titleRu,
+          titleEn: pl.titleEn,
+          description: parseBenefitsInput(pl.description),
+          descriptionHy: parseBenefitsInput(pl.descriptionHy ?? pl.description),
+          descriptionRu: parseBenefitsInput(pl.descriptionRu),
+          descriptionEn: parseBenefitsInput(pl.descriptionEn),
+          image: pl.image ?? "",
+          priceAmd: pl.priceAmd,
+          availableSlots: pl.availableSlots,
+          totalSlots: pl.totalSlots,
+        }))}
+        initialMilestones={p.milestones.map((m) => ({
+          label: m.label,
+          date: formatDateInput(m.date),
+          note: m.note,
+          active: m.isActive,
+        }))}
+        mode="creator"
+        locale={locale}
+        translateAction={translateCreatorProjectAction}
+        posterAction={generateCreatorPosterAction}
+        submitLabel={t("account.form.submit")}
+        studios={studios}
+        tierTemplates={tierTemplates}
+        streamingSources={streamingSources}
+      countryOptions={countryOptions}
+        knownPeople={knownPeople}
+        projectId={pid}
+        ownerHasAvatar={!!p.owner.avatar}
+        completeness={completeness}
+      />
     </>
   );
 }

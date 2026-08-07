@@ -74,22 +74,24 @@ export default async function NewProjectPage() {
         </a>
       </Reveal>
 
-      <Reveal delay={0.05}>
-        <ProjectForm
-          action={createCreatorProject}
-          mode="creator"
-          locale={locale}
-          translateAction={translateCreatorProjectAction}
-          posterAction={generateCreatorPosterAction}
-          submitLabel={t("account.form.submit")}
-          studios={studios}
-          tierTemplates={tierTemplates}
-          streamingSources={streamingSources}
+      {/* Deliberately NOT wrapped in <Reveal>: framer-motion animates it with a
+          `transform`, and a transformed ancestor becomes the containing block
+          for `position: sticky` — which silently broke the form's own sticky
+          save bar. */}
+      <ProjectForm
+        action={createCreatorProject}
+        mode="creator"
+        locale={locale}
+        translateAction={translateCreatorProjectAction}
+        posterAction={generateCreatorPosterAction}
+        submitLabel={t("account.form.submit")}
+        studios={studios}
+        tierTemplates={tierTemplates}
+        streamingSources={streamingSources}
         countryOptions={countryOptions}
-          knownPeople={knownPeople}
-          ownerHasAvatar={!!me?.avatar}
-        />
-      </Reveal>
+        knownPeople={knownPeople}
+        ownerHasAvatar={!!me?.avatar}
+      />
     </>
   );
 }

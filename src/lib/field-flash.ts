@@ -13,11 +13,14 @@ const FLASH_CLASS = "field-flash";
 /** Matches the animation length in globals.css (.field-flash). */
 const FLASH_MS = 2200;
 
-export function flashField(anchorId: string) {
+/** `block` defaults to "center", which is right for a single field. Whole
+ *  sections (the section-nav chips) pass "start" instead — centring a section
+ *  that is taller than the viewport parks its heading off-screen above. */
+export function flashField(anchorId: string, block: ScrollLogicalPosition = "center") {
   const el = document.getElementById(anchorId);
   if (!el) return;
 
-  el.scrollIntoView({ behavior: "smooth", block: "center" });
+  el.scrollIntoView({ behavior: "smooth", block });
 
   // Restart the animation if the same field is clicked twice in a row —
   // re-adding a class the element already has does nothing on its own.
