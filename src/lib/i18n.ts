@@ -2031,6 +2031,18 @@ export const UI: Record<string, Dict> = {
     en: "Drop to replace",
     hy: "Բաց թողեք՝ փոխարինելու համար",
   },
+  // Crop step for the square profile pictures (avatar, brand logo). The offer
+  // card has its own 16:9 copy under projectForm.offer.crop.* — the ratio is
+  // named in the title, so the two can't share one string.
+  "media.crop.title": { ru: "Кадрирование фото", en: "Crop the picture", hy: "Նկարի կադրում" },
+  "media.crop.zoom": { ru: "Масштаб", en: "Zoom", hy: "Մասշտաբ" },
+  "media.crop.apply": { ru: "Применить", en: "Apply", hy: "Կիրառել" },
+  "media.crop.cancel": { ru: "Отмена", en: "Cancel", hy: "Չեղարկել" },
+  "media.crop.hint": {
+    ru: "Тяните картинку, колесо — масштаб. В круг попадёт то, что внутри рамки.",
+    en: "Drag the image, scroll to zoom. What's inside the frame is what others see.",
+    hy: "Քաշեք նկարը, պտտեք՝ մասշտաբի համար։ Շրջանակի ներսինը տեսնում են մյուսները։",
+  },
   "media.addImage": { ru: "Добавить", en: "Add", hy: "Ավելացնել" },
   "media.close": { ru: "Закрыть", en: "Close", hy: "Փակել" },
   "media.all": { ru: "Все", en: "All", hy: "Բոլորը" },

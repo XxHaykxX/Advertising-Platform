@@ -36,25 +36,48 @@ export default async function CreatorProfilePage() {
     ? new Intl.DateTimeFormat(locale, { day: "numeric", month: "long", year: "numeric" }).format(dbUser.createdAt)
     : "";
 
+  // Was hardcoded to "Approved" in the markup, so a blocked account was told
+  // it was in good standing (2026-08-07). Read it from the row instead.
+  const statusKey = {
+    PENDING: "admin.registrations.statusPending",
+    APPROVED: "admin.registrations.statusApproved",
+    REJECTED: "admin.registrations.statusRejected",
+    BLOCKED: "admin.registrations.statusBlocked",
+  } as const;
+
   return (
     <div>
       <h1 className="text-2xl font-bold text-foreground md:text-3xl">{t("account.profile")}</h1>
       <p className="mt-2 text-muted-foreground">{t("account.profile.subtitle")}</p>
 
-      <div className="mt-8 rounded-2xl border border-border bg-card p-6">
+      {/* The form first — it's what the page is for. The read-only figures
+          below it are reference, not a task (2026-08-07). */}
+      <ProfileForm
+        name={dbUser?.name ?? user.name}
+        email={dbUser?.email ?? user.email}
+        avatar={dbUser?.avatar ?? ""}
+        phone={dbUser?.phone ?? ""}
+        website={dbUser?.website ?? ""}
+        locale={locale}
+      />
+
+      <div className="mt-6 rounded-2xl border border-border bg-card p-6">
         <h2 className="text-lg font-semibold text-foreground">{t("account.profile.stats")}</h2>
-        <dl className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <dl className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
           <div>
             <dt className="text-sm text-muted-foreground">{t("account.profile.memberSince")}</dt>
             <dd className="mt-1 text-sm font-semibold text-foreground">{memberSince}</dd>
           </div>
           <div>
             <dt className="text-sm text-muted-foreground">{t("admin.registrations.colRole")}</dt>
+            {/* Safe as a constant: a non-CREATOR was redirected above. */}
             <dd className="mt-1 text-sm font-semibold text-foreground">{t("account.roleCreator")}</dd>
           </div>
           <div>
             <dt className="text-sm text-muted-foreground">{t("admin.registrations.colStatus")}</dt>
-            <dd className="mt-1 text-sm font-semibold text-foreground">{t("account.statusApproved")}</dd>
+            <dd className="mt-1 text-sm font-semibold text-foreground">
+              {t(statusKey[dbUser?.status ?? "APPROVED"])}
+            </dd>
           </div>
           <div>
             <dt className="text-sm text-muted-foreground">{t("account.profile.projectsTotal")}</dt>
@@ -66,15 +89,6 @@ export default async function CreatorProfilePage() {
           </div>
         </dl>
       </div>
-
-      <ProfileForm
-        name={dbUser?.name ?? user.name}
-        email={dbUser?.email ?? user.email}
-        avatar={dbUser?.avatar ?? ""}
-        phone={dbUser?.phone ?? ""}
-        website={dbUser?.website ?? ""}
-        locale={locale}
-      />
     </div>
   );
 }

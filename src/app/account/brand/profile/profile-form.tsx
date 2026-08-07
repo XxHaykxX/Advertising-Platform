@@ -116,62 +116,40 @@ export function ProfileForm({ profile, locale }: { profile: BrandProfileDTO; loc
 
   return (
     <div className="mt-8 flex flex-col gap-6">
-      {/* Account — email is read-only, outside the editable form */}
-      <div className={cardClass}>
-        <h2 className="text-lg font-semibold text-foreground">{t("account.brand.accountSection")}</h2>
-        <label className="mt-4 block">
-          <span className={labelClass}>{t("form.email")}</span>
-          <input type="email" value={profile.email} readOnly disabled className={`${fieldClass} opacity-60`} />
-          <span className="mt-1.5 block text-xs text-muted-foreground">{t("account.brand.emailReadonlyNote")}</span>
-        </label>
-      </div>
-
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+        {/* Same order as the creator's profile (2026-08-07): the picture, then
+            the fields, then the account's own read-only data. The separate
+            "Account" card above the form is gone — one read-only field never
+            justified a card of its own. */}
         <div className={cardClass}>
           <h2 className="text-lg font-semibold text-foreground">{t("account.brand.companyDetails")}</h2>
 
-          {/* Added 2026-08-05. The name was fetched by the page and rendered
-              by nothing, so the one string creators and admins actually see —
-              the "From" on every application, and the only identifier in the
-              e-mail a creator receives — could not be corrected after
-              registration. The logo had never existed on this side at all,
-              while the creator's form has had an avatar since #23. */}
-          <div className="mt-4 max-w-md">
-            <label className="block">
-              <span className={labelClass}>
-                {t("form.name")}
-                <RequiredMark />
-              </span>
-              <div className="relative">
-                <input
-                  name="name"
-                  type="text"
-                  defaultValue={profile.name}
-                  placeholder={t("form.name")}
-                  onInput={() => clear("name")}
-                  {...fieldProps("name")}
-                  className={cn(fieldClass, errors.name && FIELD_ERROR_CLASS)}
-                />
-                {errors.name && <FieldErrorIcon />}
-              </div>
-            </label>
-            <FieldError id="name-error" message={errors.name} />
-          </div>
-
           <div className="mt-4">
             <span className={labelClass}>{t("account.brand.logo")}</span>
-            <p className="mb-2 text-xs text-muted-foreground">{t("account.brand.logoHint")}</p>
             {/* Member-scoped, exactly like the creator's avatar: uploads land
                 in /uploads/members/<id>/avatars and the picker only ever shows
                 this brand's own files. Every caption is localized — the
-                component's English defaults would otherwise show through. */}
+                component's English defaults would otherwise show through.
+                Square, not round: a wordmark cropped to a circle is
+                unreadable. */}
             <MediaField
               name="avatar"
               initial={profile.avatar}
               uploadDir="avatars"
               scope="member"
               label={t("btn.browse")}
-              previewShape="square"
+              previewShape="logo"
+              // The hint has always said "a square image" — now the field
+              // makes one instead of hoping the file already is one.
+              cropAspect={1}
+              cropLabels={{
+                title: t("media.crop.title"),
+                zoom: t("media.crop.zoom"),
+                apply: t("media.crop.apply"),
+                cancel: t("media.crop.cancel"),
+                hint: t("media.crop.hint"),
+              }}
+              locale={locale}
               dropTitle={t("media.dropTitleOne")}
               dropLabel={t("media.dropHereOne")}
               errTooLargeLabel={t("media.errTooLargeShort")}
@@ -179,9 +157,38 @@ export function ProfileForm({ profile, locale }: { profile: BrandProfileDTO; loc
               removeLabel={t("ui.remove")}
               dropReplaceLabel={t("media.dropToReplace")}
             />
+            <p className="mt-2 text-xs text-muted-foreground">{t("account.brand.logoHint")}</p>
           </div>
 
-          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            {/* Added 2026-08-05. The name was fetched by the page and rendered
+                by nothing, so the one string creators and admins actually see —
+                the "From" on every application, and the only identifier in the
+                e-mail a creator receives — could not be corrected after
+                registration. The logo had never existed on this side at all,
+                while the creator's form has had an avatar since #23. */}
+            <div className="block">
+              <label className="block">
+                <span className={labelClass}>
+                  {t("form.name")}
+                  <RequiredMark />
+                </span>
+                <div className="relative">
+                  <input
+                    name="name"
+                    type="text"
+                    defaultValue={profile.name}
+                    placeholder={t("form.name")}
+                    onInput={() => clear("name")}
+                    {...fieldProps("name")}
+                    className={cn(fieldClass, errors.name && FIELD_ERROR_CLASS)}
+                  />
+                  {errors.name && <FieldErrorIcon />}
+                </div>
+              </label>
+              <FieldError id="name-error" message={errors.name} />
+            </div>
+
             <label className="block">
               <span className={labelClass}>{t("form.company")}</span>
               <input
@@ -212,6 +219,15 @@ export function ProfileForm({ profile, locale }: { profile: BrandProfileDTO; loc
               <PhoneInput value={phone} onChange={setPhone} />
               <input type="hidden" name="phone" value={phone} />
             </div>
+
+            {/* Read-only — same treatment as the creator's form. */}
+            <label className="block">
+              <span className={labelClass}>{t("form.email")}</span>
+              <input type="email" value={profile.email} readOnly disabled className={`${fieldClass} opacity-60`} />
+              <span className="mt-1.5 block text-xs text-muted-foreground">
+                {t("account.brand.emailReadonlyNote")}
+              </span>
+            </label>
           </div>
         </div>
 

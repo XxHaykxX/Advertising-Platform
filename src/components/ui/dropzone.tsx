@@ -231,35 +231,54 @@ export const DropzonePreview = ({
   replaceLabel,
   removeLabel,
   onRemove,
+  iconOnly = false,
+  round = false,
 }: {
   children: ReactNode;
   replaceLabel: string;
   removeLabel?: string;
   onRemove?: () => void;
+  /** Drops the button captions, keeping the icons and their aria-labels. A
+   *  96px avatar has no room for two labelled buttons side by side. */
+  iconOnly?: boolean;
+  /** Circular frame — the overlay has to follow the picture, or a round
+   *  avatar grows square corners the moment it's hovered. */
+  round?: boolean;
 }) => {
   const open = useDropzoneOpen();
+  const shape = round ? "rounded-full" : "rounded-xl";
+  const buttonClass = cn(
+    "inline-flex items-center gap-1.5 rounded-lg border border-border bg-card text-xs font-medium text-foreground shadow-sm hover:border-primary/40",
+    iconOnly ? "p-1.5" : "px-2.5 py-1.5",
+  );
 
   return (
-    <div className="group relative overflow-hidden rounded-xl">
+    <div className={cn("group relative overflow-hidden", shape)}>
       {children}
-      <div className="absolute inset-0 flex items-center justify-center gap-2 bg-background/70 opacity-0 backdrop-blur-[1px] transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+      <div
+        className={cn(
+          "absolute inset-0 flex items-center justify-center gap-2 bg-background/70 opacity-0 backdrop-blur-[1px] transition-opacity group-hover:opacity-100 focus-within:opacity-100",
+          shape,
+        )}
+      >
         <button
           type="button"
           onClick={() => open?.()}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs font-medium text-foreground shadow-sm hover:border-primary/40"
+          aria-label={iconOnly ? replaceLabel : undefined}
+          className={buttonClass}
         >
           <RefreshCw className="h-3.5 w-3.5" />
-          {replaceLabel}
+          {iconOnly ? null : replaceLabel}
         </button>
         {onRemove && removeLabel ? (
           <button
             type="button"
             onClick={onRemove}
             aria-label={removeLabel}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs font-medium text-foreground shadow-sm hover:border-primary/40 hover:text-primary"
+            className={cn(buttonClass, "hover:text-primary")}
           >
             <Trash2 className="h-3.5 w-3.5" />
-            {removeLabel}
+            {iconOnly ? null : removeLabel}
           </button>
         ) : null}
       </div>

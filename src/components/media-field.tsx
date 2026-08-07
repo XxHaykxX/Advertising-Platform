@@ -3,7 +3,7 @@
 import { useRef, useState, type ReactNode } from "react";
 import Image from "next/image";
 import dynamic from "next/dynamic";
-import { FileVideo, ImageIcon } from "lucide-react";
+import { FileVideo, ImageIcon, UserRound } from "lucide-react";
 import { MediaPicker, isVideoPath, type MediaPickerAccept, type MediaPickerScope } from "@/components/media-picker";
 import { UploadProgress } from "@/components/ui/upload-progress";
 import { holdProgress, uploadViaXhr } from "@/lib/upload-xhr";
@@ -89,9 +89,15 @@ export function MediaField({
   removeLabel?: string;
   /** Shown while a file hovers over an already filled field. */
   dropReplaceLabel?: string;
-  /** Frame of the filled preview. "square" suits a portrait (an avatar), the
-   *  16:9 default suits stills, logos and video. */
-  previewShape?: "video" | "square";
+  /** Frame of the filled preview. "square" suits a portrait, the 16:9 default
+   *  suits stills and video.
+   *
+   *  "avatar" / "logo" are the compact profile variants (2026-08-07): a 96px
+   *  thumbnail — round for a face, square for a wordmark — with the empty zone
+   *  shrunk to the same 96px and the browse button beside it rather than under
+   *  it. The full-width field it replaces was ~300px tall for one small
+   *  picture. */
+  previewShape?: "video" | "square" | "avatar" | "logo";
   /** Row-in-a-table mode: smaller preview, one-line empty zone, no size hint.
    *  A full-width field's three lines of copy get clipped mid-word in a 150px
    *  column, and its size hint repeats on every row. */
@@ -237,13 +243,25 @@ export function MediaField({
   // Filled → the file itself is the zone (replace by dropping on it or via the
   // overlay); empty → the drop zone. The old layout showed both at once plus a
   // 64px thumbnail underneath, which read as two separate targets.
+  // The two profile variants share every measurement and differ only in the
+  // corner radius, so they're one branch everywhere below.
+  const isProfile = previewShape === "avatar" || previewShape === "logo";
+  const round = previewShape === "avatar";
   const frame = compact
     ? "aspect-video w-full"
-    : previewShape === "square"
-      ? "aspect-square w-40"
-      : "aspect-video w-72";
+    : isProfile
+      ? `size-24 ${round ? "rounded-full" : "rounded-xl"}`
+      : previewShape === "square"
+        ? "aspect-square w-40"
+        : "aspect-video w-72";
   const filled = value ? (
-    <DropzonePreview replaceLabel={replaceLabel} removeLabel={removeLabel} onRemove={() => update("")}>
+    <DropzonePreview
+      replaceLabel={replaceLabel}
+      removeLabel={removeLabel}
+      onRemove={() => update("")}
+      iconOnly={isProfile}
+      round={round}
+    >
       <div className={`relative ${frame} max-w-full overflow-hidden bg-muted`}>
         {isVideoPath(value) ? (
           <VideoThumbnail key={value} path={value} />
@@ -268,18 +286,22 @@ export function MediaField({
     <UploadProgress
       value={job.loaded}
       max={job.total}
-      size={previewShape === "square" && !compact ? "square" : "block"}
-      caption={job.file.name}
+      size={(previewShape === "square" || isProfile) && !compact ? "square" : "block"}
+      // At 96px the file name is a row of clipped characters — the percentage
+      // alone says everything the block has room to say.
+      caption={isProfile ? undefined : job.file.name}
       onCancel={() => abortRef.current?.abort()}
       cancelLabel={cancelLabel}
-      className={`border-0 ${compact ? "w-full" : previewShape === "square" ? "w-40" : "w-72"}`}
+      className={`border-0 ${
+        compact ? "w-full" : isProfile ? "w-24" : previewShape === "square" ? "w-40" : "w-72"
+      }`}
     />
   ) : (
     filled
   );
 
   return (
-    <div className={compact ? "space-y-1.5" : "space-y-3"}>
+    <div className={isProfile ? "flex flex-wrap items-center gap-4" : compact ? "space-y-1.5" : "space-y-3"}>
       {name ? <input type="hidden" name={name} value={value} /> : null}
 
       {/* Empty: click opens the OS picker, dragging a file onto it uploads. The
@@ -296,12 +318,36 @@ export function MediaField({
         preview={preview}
         // Filled: the zone wraps the picture, and its default w-fit would
         // collapse a w-full preview to nothing. Empty: tighter padding than the
-        // full-width field, which is sized for three lines of copy.
-        className={compact ? (preview ? "w-full" : "w-full p-3") : undefined}
+        // full-width field, which is sized for three lines of copy. A profile
+        // field keeps the empty zone at exactly the size of the picture that
+        // will land in it.
+        className={
+          isProfile
+            ? preview
+              ? round
+                ? "rounded-full"
+                : undefined
+              : `size-24 shrink-0 p-0 ${round ? "rounded-full" : ""}`
+            : compact
+              ? preview
+                ? "w-full"
+                : "w-full p-3"
+              : undefined
+        }
       >
         {/* In a table cell the standard three lines don't fit — they were being
-            clipped mid-word. Icon plus one word says the same thing. */}
-        {compact ? (
+            clipped mid-word. Icon plus one word says the same thing. The 96px
+            profile circle has room for the icon only; its caption sits beside
+            the field, not inside it. */}
+        {isProfile ? (
+          <DropzoneEmptyState>
+            {round ? (
+              <UserRound className="h-6 w-6 text-muted-foreground" />
+            ) : (
+              <ImageIcon className="h-6 w-6 text-muted-foreground" />
+            )}
+          </DropzoneEmptyState>
+        ) : compact ? (
           <DropzoneEmptyState>
             <span className="flex flex-col items-center gap-1 text-xs text-muted-foreground">
               <ImageIcon className="h-4 w-4" />
@@ -313,7 +359,11 @@ export function MediaField({
         )}
       </Dropzone>
 
-      <div className="flex flex-wrap items-center gap-3">
+      <div
+        className={
+          isProfile ? "flex min-w-0 flex-col items-start gap-1.5" : "flex flex-wrap items-center gap-3"
+        }
+      >
         <button
           type="button"
           onClick={() => setOpen(true)}
@@ -326,15 +376,26 @@ export function MediaField({
           <ImageIcon className={compact ? "h-3.5 w-3.5" : "h-4 w-4"} />
           {label}
         </button>
+        {/* The zone itself is only an icon here, so the "drag or click" line
+            that normally lives inside it moves next to the button. */}
+        {isProfile ? <p className="text-xs text-muted-foreground">{dropLabel}</p> : null}
       </div>
-      {dropError ? <p className="text-xs text-danger">{dropError}</p> : null}
-      {dropWarning ? <p className="text-xs text-muted-foreground">{dropWarning}</p> : null}
+      {/* basis-full: in the profile field's single row an error would otherwise
+          sit next to the button and squeeze it. */}
+      {dropError ? (
+        <p className={`text-xs text-danger ${isProfile ? "basis-full" : ""}`}>{dropError}</p>
+      ) : null}
+      {dropWarning ? (
+        <p className={`text-xs text-muted-foreground ${isProfile ? "basis-full" : ""}`}>{dropWarning}</p>
+      ) : null}
 
       {/* Video fields state the format + the 50 MB per-file cap enforced by
           the upload store (MAX_BYTES_VIDEO) — the old silent limit was half the
           "MP4 upload doesn't work" confusion. Repeated once per row it is just
-          noise, so a compact field leaves it to the section. */}
-      {compact ? null : (
+          noise, so a compact field leaves it to the section. A profile field
+          drops it too: the caller already says what the picture is for, and
+          the crop step makes the exact pixel size moot. */}
+      {compact || isProfile ? null : (
         <p className="text-xs text-muted-foreground">
           {accept === "video" ? "MP4 / WebM · ≤50 MB" : imageSizeHint(uploadDir)}
         </p>

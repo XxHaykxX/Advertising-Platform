@@ -69,16 +69,6 @@ export function ProfileForm({
 
   return (
     <div className="mt-8 flex flex-col gap-6">
-      {/* Account — email is read-only, outside the editable form */}
-      <div className={cardClass}>
-        <h2 className="text-lg font-semibold text-foreground">{t("account.brand.accountSection")}</h2>
-        <label className="mt-4 block">
-          <span className={labelClass}>{t("form.email")}</span>
-          <input type="email" value={email} readOnly disabled className={`${fieldClass} opacity-60`} />
-          <span className="mt-1.5 block text-xs text-muted-foreground">{t("account.brand.emailReadonlyNote")}</span>
-        </label>
-      </div>
-
       <form
         action={formAction}
         // Own validation instead of the browser's: see field.tsx.
@@ -92,34 +82,15 @@ export function ProfileForm({
         }}
         className="flex flex-col gap-6"
       >
+        {/* One card, in the order a profile is read: who you are (picture +
+            name), how to reach you, and last the account's own fixed data.
+            The avatar used to be a full-width drop zone in the middle of the
+            fields — ~300px of chrome for a 96px picture (2026-08-07). */}
         <div className={cardClass}>
           <h2 className="text-lg font-semibold text-foreground">{t("account.profile")}</h2>
 
-          <div className="mt-4 max-w-md">
-            <label className="block">
-              <span className={labelClass}>
-                {t("form.name")}
-                <RequiredMark />
-              </span>
-              <div className="relative">
-                <input
-                  name="name"
-                  type="text"
-                  defaultValue={name}
-                  placeholder={t("form.name")}
-                  onInput={() => clear("name")}
-                  {...fieldProps("name")}
-                  className={cn(fieldClass, errors.name && FIELD_ERROR_CLASS)}
-                />
-                {errors.name && <FieldErrorIcon />}
-              </div>
-            </label>
-            <FieldError id="name-error" message={errors.name} />
-          </div>
-
           <div className="mt-4">
             <span className={labelClass}>{t("account.profile.avatar")}</span>
-            <p className="mb-2 text-xs text-muted-foreground">{t("account.profile.avatarHint")}</p>
             {/* Member-facing, so every caption is localized — the component's
                 English defaults would otherwise show through here. */}
             <MediaField
@@ -128,7 +99,20 @@ export function ProfileForm({
               uploadDir="avatars"
               scope="member"
               label={t("btn.browse")}
-              previewShape="square"
+              previewShape="avatar"
+              // Square crop up front: the picture is shown in a circle
+              // everywhere (header menu, poster logo), and an uncropped
+              // landscape photo lost its sides there with no way to choose
+              // which sides.
+              cropAspect={1}
+              cropLabels={{
+                title: t("media.crop.title"),
+                zoom: t("media.crop.zoom"),
+                apply: t("media.crop.apply"),
+                cancel: t("media.crop.cancel"),
+                hint: t("media.crop.hint"),
+              }}
+              locale={locale}
               dropTitle={t("media.dropTitleOne")}
               dropLabel={t("media.dropHereOne")}
               errTooLargeLabel={t("media.errTooLargeShort")}
@@ -136,29 +120,65 @@ export function ProfileForm({
               removeLabel={t("ui.remove")}
               dropReplaceLabel={t("media.dropToReplace")}
             />
+            <p className="mt-2 text-xs text-muted-foreground">{t("account.profile.avatarHint")}</p>
           </div>
 
-          <div className="mt-4 block max-w-md">
-            <span className={labelClass}>{t("account.profile.phone")}</span>
-            {/* Country picker with the flag and dial code (2026-07-29). The
-                visible field is controlled by the component, so the value the
-                action reads travels in a hidden input — always E.164, never
-                the masked string with spaces in it. */}
-            <PhoneInput value={phoneValue} onChange={setPhoneValue} />
-            <input type="hidden" name="phone" value={phoneValue} />
-          </div>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            <div className="block">
+              <label className="block">
+                <span className={labelClass}>
+                  {t("form.name")}
+                  <RequiredMark />
+                </span>
+                <div className="relative">
+                  <input
+                    name="name"
+                    type="text"
+                    defaultValue={name}
+                    placeholder={t("form.name")}
+                    onInput={() => clear("name")}
+                    {...fieldProps("name")}
+                    className={cn(fieldClass, errors.name && FIELD_ERROR_CLASS)}
+                  />
+                  {errors.name && <FieldErrorIcon />}
+                </div>
+              </label>
+              <FieldError id="name-error" message={errors.name} />
+            </div>
 
-          <label className="mt-4 block max-w-md">
-            <span className={labelClass}>{t("account.profile.website")}</span>
-            <input
-              name="website"
-              type="url"
-              value={websiteValue}
-              onChange={(e) => setWebsiteValue(e.target.value)}
-              placeholder={t("account.profile.website")}
-              className={fieldClass}
-            />
-          </label>
+            <div className="block">
+              <span className={labelClass}>{t("account.profile.phone")}</span>
+              {/* Country picker with the flag and dial code (2026-07-29). The
+                  visible field is controlled by the component, so the value the
+                  action reads travels in a hidden input — always E.164, never
+                  the masked string with spaces in it. */}
+              <PhoneInput value={phoneValue} onChange={setPhoneValue} />
+              <input type="hidden" name="phone" value={phoneValue} />
+            </div>
+
+            <label className="block">
+              <span className={labelClass}>{t("account.profile.website")}</span>
+              <input
+                name="website"
+                type="url"
+                value={websiteValue}
+                onChange={(e) => setWebsiteValue(e.target.value)}
+                placeholder={t("account.profile.website")}
+                className={fieldClass}
+              />
+            </label>
+
+            {/* Read-only, and inside the card rather than in one of its own:
+                it belongs to the same "who you are" block, it just can't be
+                edited here. */}
+            <label className="block">
+              <span className={labelClass}>{t("form.email")}</span>
+              <input type="email" value={email} readOnly disabled className={`${fieldClass} opacity-60`} />
+              <span className="mt-1.5 block text-xs text-muted-foreground">
+                {t("account.brand.emailReadonlyNote")}
+              </span>
+            </label>
+          </div>
         </div>
 
         {state.error && (
