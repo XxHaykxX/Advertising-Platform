@@ -1716,6 +1716,7 @@ export function ProjectForm({
               scope={uploaderScope}
               pickerLocale={locale}
               nameLocale={mode === "creator" ? locale : "en"}
+              lockDirectoryPeople={mode === "creator"}
             />
           </section>
 

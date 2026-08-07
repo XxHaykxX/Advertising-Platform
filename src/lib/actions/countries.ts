@@ -8,15 +8,13 @@ import { canEditContent } from "@/lib/auth/permissions";
    Countries" picker — a direct mirror of src/lib/actions/streaming-sources.ts,
    including its authorization split, so both dictionaries behave the same. */
 
-/** Anyone allowed to author a project, and therefore to widen the dictionary:
- *  staff content editors and self-serve members (a CREATOR submitting a project
- *  may name a country we don't list yet). Returns a boolean instead of
- *  redirecting — see addCountries. */
-async function mayAuthorProjects(): Promise<boolean> {
+/** Who may WIDEN the dictionary: staff content editors only. Members write the
+ *  value onto their own Project row instead — see the same guard in
+ *  src/lib/actions/studios.ts for the full reasoning (owner decision
+ *  2026-08-07). Returns a boolean instead of redirecting — see addCountries. */
+async function mayEditDictionary(): Promise<boolean> {
   const user = await loadCurrentUser();
-  if (!user) return false;
-  if (canEditContent(user.role)) return true;
-  return user.role === "CREATOR" || user.role === "BRAND";
+  return !!user && canEditContent(user.role);
 }
 
 /**
@@ -31,7 +29,7 @@ async function mayAuthorProjects(): Promise<boolean> {
  * reach the dictionary.
  */
 export async function addCountries(names: string[]): Promise<void> {
-  if (!(await mayAuthorProjects())) return;
+  if (!(await mayEditDictionary())) return;
 
   const unique = [...new Set(names.map((n) => n.trim()).filter(Boolean))];
   if (!unique.length) return;

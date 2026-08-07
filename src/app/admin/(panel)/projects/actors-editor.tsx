@@ -19,7 +19,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Plus, Trash2, User, X } from "lucide-react";
+import { GripVertical, Plus, Trash2, Unlink, User, X } from "lucide-react";
 import { MediaPicker, type MediaPickerScope } from "@/components/media-picker";
 import { ROLE_VALUES, kindForRole } from "./form-shared";
 import type { PersonSuggestion } from "@/lib/data/actors";
@@ -63,10 +63,16 @@ export function ActorsSection({
   scope = "staff",
   pickerLocale,
   nameLocale = DEFAULT_LOCALE,
+  lockDirectoryPeople = false,
 }: {
   value: ActorRow[];
   onChange: (rows: ActorRow[]) => void;
   scope?: MediaPickerScope;
+  /** Creator side: rows linked to the shared Person directory show their name
+   *  and headshot read-only, with an "Unlink" escape hatch. The directory is
+   *  everyone's; a creator editing it would rename that person across every
+   *  project using them (owner decision 2026-08-07). */
+  lockDirectoryPeople?: boolean;
   /** Which spelling of a person's name to show and store on the row — the
    *  form's own language ("en" in admin, the creator's locale otherwise). The
    *  three spellings live on the Person directory; the server re-snapshots
@@ -78,8 +84,8 @@ export function ActorsSection({
   /** The Person directory (Ф3) — backs a searchable dropdown on the Name
    *  field. Picking a person fills name/photo/personId for that row (and, if
    *  the row has no roles yet, prefills their default role); typing a
-   *  brand-new name leaves personId null so a new Person is created on
-   *  save. */
+   *  brand-new name leaves personId null — staff-side that means the row is
+   *  dropped on save, creator-side it is kept as a project-local person. */
   knownPeople?: PersonSuggestion[];
   /** ProjectForm's own locale-aware translator (#15) — "en" in admin mode,
    *  the creator's locale in mode="creator". Passed down rather than called
@@ -223,7 +229,12 @@ export function ActorsSection({
                     onRoles={(roles) => update(i, { roles, kind: kindForRole(roles[0] ?? "") })}
                     onClearPhoto={() => update(i, { photo: "" })}
                     onOpenPhoto={() => setPickerFor(ids[i])}
+                    // Detaching from the directory clears the headshot too: it
+                    // was the Person's, and keeping it would re-attach their
+                    // face to a row that is no longer them.
+                    onUnlinkPerson={() => update(i, { personId: null, photo: "" })}
                     onDelete={() => removeRow(i)}
+                    lockDirectoryPeople={lockDirectoryPeople}
                     nameInputRef={(el) => {
                       if (el) nameInputs.current.set(ids[i], el);
                       else nameInputs.current.delete(ids[i]);
@@ -266,6 +277,7 @@ function PersonNameField({
   inputRef,
   unlinked = false,
   unlinkedHint,
+  note,
 }: {
   value: string;
   knownPeople: PersonSuggestion[];
@@ -278,6 +290,9 @@ function PersonNameField({
    *  saved (cast is pick-only). Show a hint so it isn't a silent drop. */
   unlinked?: boolean;
   unlinkedHint: string;
+  /** Neutral counterpart to `unlinked` for the creator side, where an unmatched
+   *  row IS saved — it just stays local to the project. */
+  note?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -350,6 +365,9 @@ function PersonNameField({
       {unlinked && !open && (
         <p className="mt-0.5 px-2 text-[11px] leading-tight text-danger">{unlinkedHint}</p>
       )}
+      {!unlinked && note && !open && (
+        <p className="mt-0.5 px-2 text-[11px] leading-tight text-muted-foreground">{note}</p>
+      )}
       {open && filtered.length > 0 && (
         <ul
           id={listboxId}
@@ -405,8 +423,10 @@ function ActorTableRow({
   onRoles,
   onClearPhoto,
   onOpenPhoto,
+  onUnlinkPerson,
   onDelete,
   nameInputRef,
+  lockDirectoryPeople = false,
 }: {
   id: number;
   row: ActorRow;
@@ -418,10 +438,16 @@ function ActorTableRow({
   onRoles: (roles: string[]) => void;
   onClearPhoto: () => void;
   onOpenPhoto: () => void;
+  onUnlinkPerson: () => void;
   onDelete: () => void;
   nameInputRef: (el: HTMLInputElement | null) => void;
+  /** Creator side: a row attached to the shared Person directory shows its
+   *  name and headshot read-only — those belong to the directory, not to this
+   *  project (owner decision 2026-08-07). */
+  lockDirectoryPeople?: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const locked = lockDirectoryPeople && r.personId != null;
 
   // Same transform+transition lift as reorder-list.tsx / cast-manager.tsx.
   const style: React.CSSProperties = {
@@ -454,48 +480,95 @@ function ActorTableRow({
         <GripVertical className="h-4 w-4" />
       </button>
 
+      {/* A row linked to the shared directory is read-only for a creator: the
+          name and the headshot belong to a Person other projects use too, and
+          the server re-snapshots both from the directory on save regardless of
+          what the form posts. Showing editable controls that silently lose
+          their value would be worse than showing none. "Unlink" turns the row
+          back into this project's own entry. */}
       <div className="group relative col-start-2 row-span-2 h-9 w-9 self-center sm:row-span-1">
-        <button
-          type="button"
-          onClick={onOpenPhoto}
-          className="relative h-9 w-9 overflow-hidden rounded-full border border-border bg-muted"
-          aria-label={r.photo ? t("projectForm.cast.replacePhoto") : t("projectForm.cast.uploadPhoto")}
-        >
-          {r.photo ? (
-            <Image src={r.photo} alt="" fill className="object-cover" sizes="36px" unoptimized />
-          ) : (
-            <span className="grid h-full w-full place-items-center text-muted-foreground">
-              <User className="h-4 w-4" />
-            </span>
-          )}
-        </button>
-        {r.photo && (
-          <button
-            type="button"
-            onClick={onClearPhoto}
-            aria-label={t("ui.remove")}
-            className="absolute -right-1 -top-1 hidden h-4 w-4 place-items-center rounded-full bg-primary text-white group-hover:grid"
+        {locked ? (
+          <span
+            className="relative block h-9 w-9 overflow-hidden rounded-full border border-border bg-muted"
+            title={t("projectForm.cast.directoryOwned")}
           >
-            <X className="h-3 w-3" />
-          </button>
+            {r.photo ? (
+              <Image src={r.photo} alt="" fill className="object-cover" sizes="36px" unoptimized />
+            ) : (
+              <span className="grid h-full w-full place-items-center text-muted-foreground">
+                <User className="h-4 w-4" />
+              </span>
+            )}
+          </span>
+        ) : (
+          <>
+            <button
+              type="button"
+              onClick={onOpenPhoto}
+              className="relative h-9 w-9 overflow-hidden rounded-full border border-border bg-muted"
+              aria-label={r.photo ? t("projectForm.cast.replacePhoto") : t("projectForm.cast.uploadPhoto")}
+            >
+              {r.photo ? (
+                <Image src={r.photo} alt="" fill className="object-cover" sizes="36px" unoptimized />
+              ) : (
+                <span className="grid h-full w-full place-items-center text-muted-foreground">
+                  <User className="h-4 w-4" />
+                </span>
+              )}
+            </button>
+            {r.photo && (
+              <button
+                type="button"
+                onClick={onClearPhoto}
+                aria-label={t("ui.remove")}
+                className="absolute -right-1 -top-1 hidden h-4 w-4 place-items-center rounded-full bg-primary text-white group-hover:grid"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            )}
+          </>
         )}
       </div>
 
       <div className="col-start-3 row-start-1">
-        <PersonNameField
-          value={r.name}
-          knownPeople={knownPeople}
-          nameLocale={nameLocale}
-          onChangeName={onName}
-          onSelectPerson={onSelectPerson}
-          // A ready-made namePlaceholder key already existed for this field
-          // (t("projectForm.cast.name") repeats the "Name" column header
-          // instead) but nothing pointed at it (#20 placeholder audit).
-          placeholder={t("projectForm.cast.namePlaceholder")}
-          inputRef={nameInputRef}
-          unlinked={!!r.name.trim() && r.personId == null}
-          unlinkedHint={t("projectForm.cast.notInDirectory")}
-        />
+        {locked ? (
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="min-w-0 flex-1 truncate text-sm text-foreground" title={r.name}>
+              {r.name}
+            </span>
+            <button
+              type="button"
+              onClick={onUnlinkPerson}
+              className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-border px-2 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+            >
+              <Unlink className="h-3 w-3" />
+              {t("projectForm.cast.unlinkPerson")}
+            </button>
+          </div>
+        ) : (
+          <PersonNameField
+            value={r.name}
+            knownPeople={knownPeople}
+            nameLocale={nameLocale}
+            onChangeName={onName}
+            onSelectPerson={onSelectPerson}
+            // A ready-made namePlaceholder key already existed for this field
+            // (t("projectForm.cast.name") repeats the "Name" column header
+            // instead) but nothing pointed at it (#20 placeholder audit).
+            placeholder={t("projectForm.cast.namePlaceholder")}
+            inputRef={nameInputRef}
+            // The red "won't be saved" warning is an ADMIN truth: staff cast is
+            // pick-only. A creator's unmatched row IS saved (it just stays
+            // project-local), so it gets a neutral note instead.
+            unlinked={!!r.name.trim() && r.personId == null && !lockDirectoryPeople}
+            unlinkedHint={t("projectForm.cast.notInDirectory")}
+            note={
+              lockDirectoryPeople && !!r.name.trim() && r.personId == null
+                ? t("projectForm.cast.customPerson")
+                : undefined
+            }
+          />
+        )}
       </div>
       <div className="col-start-3 row-start-2 sm:col-start-4 sm:row-start-1">
         {/* One role per person (owner request 2026-07-28). The column still

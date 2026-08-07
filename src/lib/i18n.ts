@@ -1786,6 +1786,25 @@ export const UI: Record<string, Dict> = {
     en: "Not in the directory — pick from the list or it won't be saved.",
     hy: "Չկա տեղեկատուում — ընտրեք ցանկից, այլապես չի պահպանվի։",
   },
+  /* The creator-side counterpart of notInDirectory above. Same situation, the
+     opposite outcome: staff cast is pick-only and an unmatched row is dropped,
+     while a creator's unmatched row is saved with the project and simply stays
+     local to it (2026-08-07). */
+  "projectForm.cast.customPerson": {
+    ru: "Нет в справочнике — сохраним как есть, в вашем проекте.",
+    en: "Not in the directory — saved as typed, within your project.",
+    hy: "Չկա տեղեկատուում — կպահվի ինչպես կա՝ ձեր նախագծում։",
+  },
+  "projectForm.cast.directoryOwned": {
+    ru: "Имя и фото ведёт редакция",
+    en: "Name and photo are maintained by the editors",
+    hy: "Անունը և լուսանկարը վարում է խմբագրությունը",
+  },
+  "projectForm.cast.unlinkPerson": {
+    ru: "Отвязать",
+    en: "Unlink",
+    hy: "Անջատել",
+  },
   "projectForm.cast.name": { ru: "Имя", en: "Name", hy: "Անուն" },
   "projectForm.cast.namePlaceholder": { ru: "Найдите или введите новое имя…", en: "Search or type a new name…", hy: "Փնտրեք կամ մուտքագրեք նոր անուն…" },
   "projectForm.cast.role": { ru: "Роль", en: "Role", hy: "Դեր" },

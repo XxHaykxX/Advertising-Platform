@@ -4,15 +4,14 @@ import { prisma } from "@/lib/prisma";
 import { loadCurrentUser, requireContentEditor } from "@/lib/auth/require";
 import { canEditContent } from "@/lib/auth/permissions";
 
-/** True for anyone allowed to author a project, and therefore to widen the
- *  streaming-source dictionary: staff content editors and self-serve members
- *  (a CREATOR submitting a project may type a platform we don't know yet).
- *  Returns a boolean instead of redirecting — see addStreamingSources. */
-async function mayAuthorProjects(): Promise<boolean> {
+/** Who may WIDEN the streaming-source dictionary: staff content editors only.
+ *  Members write the value onto their own Project row instead — see the same
+ *  guard in src/lib/actions/studios.ts for the full reasoning (owner decision
+ *  2026-08-07). Returns a boolean instead of redirecting — see
+ *  addStreamingSources. */
+async function mayEditDictionary(): Promise<boolean> {
   const user = await loadCurrentUser();
-  if (!user) return false;
-  if (canEditContent(user.role)) return true;
-  return user.role === "CREATOR" || user.role === "BRAND";
+  return !!user && canEditContent(user.role);
 }
 
 /** Upsert any not-yet-known streaming-source names into the global dictionary
@@ -21,14 +20,12 @@ async function mayAuthorProjects(): Promise<boolean> {
  *  project too. Blank/duplicate names are skipped; failures here must never
  *  block a project save — callers wrap this in try/catch.
  *
- *  Guarded by mayAuthorProjects() rather than a require*() helper on purpose:
- *  this used to be `requireUser()` (staff-only), which threw the redirect for
- *  every CREATOR submission — swallowed by the caller's try/catch, so a
- *  creator's custom platform silently never reached the dictionary. A plain
- *  no-op for anyone else keeps that failure mode impossible while still
- *  refusing anonymous callers. */
+ *  Guarded by a boolean check rather than a require*() helper on purpose: a
+ *  redirect thrown in here would be swallowed by the caller's try/catch and
+ *  read as "saved fine". A plain no-op for anyone without the right keeps that
+ *  failure mode impossible. */
 export async function addStreamingSources(names: string[]): Promise<void> {
-  if (!(await mayAuthorProjects())) return;
+  if (!(await mayEditDictionary())) return;
 
   const unique = [...new Set(names.map((n) => n.trim()).filter(Boolean))];
   if (!unique.length) return;

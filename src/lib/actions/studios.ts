@@ -9,15 +9,21 @@ import { canEditContent } from "@/lib/auth/permissions";
    split, so all three dictionaries (streaming sources, countries, studios)
    behave the same. */
 
-/** Anyone allowed to author a project, and therefore to widen the dictionary:
- *  staff content editors and self-serve members (a CREATOR submitting a project
- *  may name a production company we don't list yet). Returns a boolean instead
- *  of redirecting — see addStudios. */
-async function mayAuthorProjects(): Promise<boolean> {
+/** Who may WIDEN the dictionary: staff content editors only.
+ *
+ *  Members used to be allowed too, on the theory that a creator naming a
+ *  production company we don't list yet should not be blocked. They still
+ *  aren't: the value they type is stored on their own Project row (free text)
+ *  and renders everywhere, exactly like the `cinemas` field which never had a
+ *  dictionary at all. What changed on 2026-08-07 (owner decision) is that one
+ *  creator's spelling — "Армения" vs "армения" vs "Armenia" — no longer becomes
+ *  a permanent global option for everyone else. Staff promote it during
+ *  moderation if it deserves promoting.
+ *
+ *  Returns a boolean instead of redirecting — see addStudios. */
+async function mayEditDictionary(): Promise<boolean> {
   const user = await loadCurrentUser();
-  if (!user) return false;
-  if (canEditContent(user.role)) return true;
-  return user.role === "CREATOR" || user.role === "BRAND";
+  return !!user && canEditContent(user.role);
 }
 
 /**
@@ -32,7 +38,7 @@ async function mayAuthorProjects(): Promise<boolean> {
  * dictionary.
  */
 export async function addStudios(names: string[]): Promise<void> {
-  if (!(await mayAuthorProjects())) return;
+  if (!(await mayEditDictionary())) return;
 
   const unique = [...new Set(names.map((n) => n.trim()).filter(Boolean))];
   if (!unique.length) return;

@@ -11,9 +11,6 @@ import { makeUI, type Locale } from "@/lib/i18n";
 import { seedNames } from "@/lib/person-name";
 import { notifyNewProjectForModeration } from "@/lib/mail";
 import { notifyRoles } from "@/lib/data/notifications";
-import { addStreamingSources } from "@/lib/actions/streaming-sources";
-import { addCountries } from "@/lib/actions/countries";
-import { addStudios } from "@/lib/actions/studios";
 import {
   KIND_VALUES,
   RELEASE_PRECISION_VALUES,
@@ -23,7 +20,6 @@ import {
   deriveFormatCategory,
   firstFilledLocale,
   kindForRole,
-  parseCsvInput,
   publishBlockers,
   validateReleaseDateValue,
 } from "@/app/admin/(panel)/projects/form-shared";
@@ -317,19 +313,27 @@ function parseActorRows(fd: FormData) {
     });
 }
 
-/** Resolve each cast/crew row to a Person — FIND-OR-CREATE on this side, unlike
-   the admin action's find-only version.
+/** Resolve each cast/crew row to a Person — FIND-ONLY, and a miss is kept as a
+   project-local row rather than dropped.
 
-   The find-only rule ("cast can only be attached from the /admin/cast
-   directory", 2026-07-25) makes sense for staff, who can open that directory.
-   A Creator can't: they typed a real name, the row matched nothing, and the
-   save silently dropped it — cast entered by a creator simply vanished (audit
-   1.3). The owner's answer on 2026-07-26 was to let creators add people
-   themselves: the Person is created together with the project and goes through
-   the same moderation, with duplicate names cleaned up by hand in the
-   directory. */
+   History: staff are find-only ("cast can only be attached from the /admin/cast
+   directory", 2026-07-25) because they can open that directory. A creator
+   can't, and until 2026-07-26 their unmatched rows were silently dropped
+   (audit 1.3). The fix back then was find-or-CREATE — which quietly handed
+   every creator write access to a directory shared by the whole platform,
+   headshot included, with duplicate names to be cleaned up by hand.
+
+   Owner's decision 2026-08-07: a person the creator typed lives in their
+   project only. The Actor row keeps its own name/photo snapshot with
+   personId = null, brands see it on the listing exactly as before, and staff
+   decide during moderation whether it deserves a directory entry.
+
+   A row that DOES match an existing entry still gets linked — and the
+   directory then owns its spelling and headshot (see snapshotPersonNames),
+   which is what makes "creators can't edit directory people" true on the
+   server and not just in the editor UI. */
 type ResolvedActorRow = ReturnType<typeof parseActorRows>[number] & {
-  personId: number;
+  personId: number | null;
   nameHy: string;
   nameRu: string;
   nameEn: string;
@@ -343,7 +347,7 @@ async function resolveActorPersonIds(
    *  in /admin/cast; until then pickPersonName falls back. */
   locale: Locale,
 ): Promise<ResolvedActorRow[]> {
-  const resolved: (ReturnType<typeof parseActorRows>[number] & { personId: number })[] = [];
+  const resolved: (ReturnType<typeof parseActorRows>[number] & { personId: number | null })[] = [];
   for (const r of rows) {
     if (r.personId != null) {
       resolved.push({ ...r, personId: r.personId });
@@ -355,50 +359,51 @@ async function resolveActorPersonIds(
       where: {
         OR: [{ name: r.name }, { nameHy: r.name }, { nameRu: r.name }, { nameEn: r.name }],
       },
-    });
-    if (existing) {
-      resolved.push({ ...r, personId: existing.id });
-      continue;
-    }
-    const created = await tx.person.create({
-      data: {
-        name: r.name,
-        ...seedNames(r.name, locale),
-        role: r.role,
-        kind: r.kind,
-        // The headshot the creator uploaded on the row seeds the directory
-        // entry too, so the person isn't left as a bare initials avatar.
-        photo: r.photo,
-      },
       select: { id: true },
     });
-    resolved.push({ ...r, personId: created.id });
+    resolved.push({ ...r, personId: existing?.id ?? null });
   }
-  return snapshotPersonNames(tx, resolved);
+  return snapshotPersonNames(tx, resolved, locale);
 }
 
 /** Mirror of the admin action's snapshotPersonNames: the directory owns the
- *  spellings, the Actor row is a snapshot refreshed on every save. The form
- *  only carries one name (the locale it was shown in), so it must not be
- *  trusted for the name columns. */
+ *  spellings AND the headshot, the Actor row is a snapshot refreshed on every
+ *  save. The form only carries one name (the locale it was shown in), so it
+ *  must not be trusted for the name columns.
+ *
+ *  Unlinked rows (personId === null) have no directory entry to read, so they
+ *  keep what the creator typed — seeded into the locale column matching the
+ *  language the form was in, the same way a directory entry would have been.
+ *  Without that seeding pickPersonName would fall through to the legacy base
+ *  column on every locale, which is a fallback, not a spelling. */
 async function snapshotPersonNames(
   tx: Prisma.TransactionClient,
-  rows: (ReturnType<typeof parseActorRows>[number] & { personId: number })[],
+  rows: (ReturnType<typeof parseActorRows>[number] & { personId: number | null })[],
+  locale: Locale,
 ): Promise<ResolvedActorRow[]> {
   if (rows.length === 0) return [];
-  const persons = await tx.person.findMany({
-    where: { id: { in: [...new Set(rows.map((r) => r.personId))] } },
-    select: { id: true, name: true, nameHy: true, nameRu: true, nameEn: true },
-  });
+  const linkedIds = [...new Set(rows.map((r) => r.personId).filter((id): id is number => id != null))];
+  const persons = linkedIds.length
+    ? await tx.person.findMany({
+        where: { id: { in: linkedIds } },
+        select: { id: true, name: true, nameHy: true, nameRu: true, nameEn: true, photo: true },
+      })
+    : [];
   const byId = new Map(persons.map((p) => [p.id, p]));
   return rows.map((r) => {
-    const p = byId.get(r.personId);
+    const p = r.personId == null ? undefined : byId.get(r.personId);
+    if (!p) {
+      return { ...r, ...seedNames(r.name, locale) };
+    }
     return {
       ...r,
-      name: p?.name || r.name,
-      nameHy: p?.nameHy ?? "",
-      nameRu: p?.nameRu ?? "",
-      nameEn: p?.nameEn ?? "",
+      name: p.name || r.name,
+      nameHy: p.nameHy ?? "",
+      nameRu: p.nameRu ?? "",
+      nameEn: p.nameEn ?? "",
+      // The directory's headshot wins over whatever the form posted: a creator
+      // must not be able to repoint a shared person's photo at their own upload.
+      photo: p.photo ?? null,
     };
   });
 }
@@ -625,21 +630,13 @@ export async function createCreatorProject(
   const error = validate(data, t);
   if (error) return { error, values: data };
 
-  // Persist any custom Available-on values into the global Streaming Source
-  // dictionary (Ф2/#25) so future projects offer them too — never blocks the
-  // save. #29 merged the old per-project Streaming source field into
-  // `platforms`, so that's the source now (the dictionary itself is unaffected
-  // by the 2026-08-04 removal of the Project.streamingSource column).
-  try {
-    await addStreamingSources(parseCsvInput(data.platforms));
-    // Same for the country dictionary: a country typed into this project is
-    // offered on every future one (2026-07-27).
-    await addCountries(parseCsvInput(data.countries));
-    // …and for studios (2026-07-27).
-    await addStudios(parseCsvInput(data.studio));
-  } catch {
-    /* ignore */
-  }
+  // NB: no dictionary writes here. Until 2026-08-07 this side pushed every
+  // custom platform / country / studio into the global dictionaries, so one
+  // creator's spelling became a permanent option for everyone. Those values
+  // still survive — they live on this project's own free-text columns and
+  // render as chips wherever the project does, exactly like `cinemas`, which
+  // never had a dictionary. Staff promote one during moderation if it's worth
+  // promoting (see mayEditDictionary in src/lib/actions/studios.ts).
 
   // Same auto-code retry loop as admin createProject — the form never
   // submits a code (readonly/hidden in create mode), so this always runs.
@@ -784,7 +781,7 @@ export async function updateCreatorProject(
   // createdAt feeds submitGate's placements grandfather clause below.
   const existing = await prisma.project.findUnique({
     where: { id },
-    select: { ownerId: true, createdAt: true },
+    select: { ownerId: true, createdAt: true, code: true },
   });
   if (!existing) notFound();
   if (existing.ownerId !== user.id) notFound();
@@ -793,19 +790,7 @@ export async function updateCreatorProject(
   const error = validate(data, t);
   if (error) return { error, values: data };
 
-  // Persist any custom Available-on values into the global Streaming Source
-  // dictionary (Ф2/#25) so future projects offer them too — never blocks the
-  // save. Same as createCreatorProject above.
-  try {
-    await addStreamingSources(parseCsvInput(data.platforms));
-    // Same for the country dictionary: a country typed into this project is
-    // offered on every future one (2026-07-27).
-    await addCountries(parseCsvInput(data.countries));
-    // …and for studios (2026-07-27).
-    await addStudios(parseCsvInput(data.studio));
-  } catch {
-    /* ignore */
-  }
+  // No dictionary writes on this side either — see createCreatorProject above.
 
   const actorRows = parseActorRows(fd);
   const tierRows = parseTierRows(fd);
@@ -848,8 +833,11 @@ export async function updateCreatorProject(
           videoEmbedUrl: data.videoEmbedUrl || null,
           videoFile: data.videoFile || null,
           // ── Never trusted from the form — forced server-side ──
-          // ownerId/code stay untouched (code arrives as a hidden readonly
-          // field mirroring the existing value, same as admin edit).
+          // `code` is the public #PP-… identifier. It reaches the form as a
+          // hidden readonly mirror, and `...data` above carries whatever came
+          // back — so a hand-crafted POST could rename someone's project to any
+          // free code. Re-assert the stored one. (ownerId is never in `data`.)
+          code: existing.code,
           // A creator-edited project always goes back to moderation (C.6):
           // an APPROVED listing disappears from the catalog until it's
           // re-checked, and a REJECTED one becomes a genuine resubmission —
