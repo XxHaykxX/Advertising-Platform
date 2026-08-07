@@ -403,7 +403,10 @@ export const UI: Record<string, Dict> = {
   "deadline.ongoing": { ru: "Бессрочно", en: "Ongoing", hy: "Ընթացիկ" },
 
   // ── project card / row ──────────────────────
-  "card.release": { ru: "Выход", en: "Release", hy: "Ցուցադրությունը՝" },
+  /** Inline label on the catalog card, so it carries its own separator — a
+   *  colon in ru/en, a but (՝) in hy. Keep the punctuation here: the card used
+   *  to add ": " in JSX, which doubled up on the Armenian but. */
+  "card.release": { ru: "Выход:", en: "Release:", hy: "Ցուցադրությունը՝" },
   "card.applicationsUntil": { ru: "Заявки до", en: "Applications until", hy: "Հայտեր՝ մինչև" },
   // Owner request 2026-07-28: say on the card how many placement opportunities
   // a project carries, the way the competing marketplaces do.

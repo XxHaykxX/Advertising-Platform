@@ -244,7 +244,11 @@ export function ProjectCard({
           {releaseLabel ? (
             <div className="flex items-center gap-2">
               <Calendar className="h-3.5 w-3.5 shrink-0" />
-              <span>{t("card.release")}: {releaseLabel}</span>
+              {/* The separator lives in the dictionary, not here (same as
+                  card.availableOn): Armenian separates a label from its value
+                  with a but (՝), not a colon, so a hardcoded ":" printed
+                  "Ցուցադրությունը՝: 2026 թ." on the Armenian card. */}
+              <span>{t("card.release")} {releaseLabel}</span>
             </div>
           ) : null}
           {project.applicationDeadline || project.applicationDeadlineOngoing ? (
