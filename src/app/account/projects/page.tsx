@@ -36,7 +36,6 @@ export default async function MyProjectsPage() {
         _count: {
           select: {
             favorites: true,
-            interests: true,
             // Feed the "profile incomplete" badge (audit B8) — an empty block
             // is invisible on the public page, so this list was the last place
             // a creator could notice one before a brand didn't.
@@ -198,11 +197,10 @@ export default async function MyProjectsPage() {
                           {labelSep(locale)}{" "}
                           <span className="font-semibold text-foreground">{p._count.favorites}</span>
                         </span>
-                        <span>
-                          {t("account.stats.applications")}
-                          {labelSep(locale)}{" "}
-                          <span className="font-semibold text-foreground">{p._count.interests}</span>
-                        </span>
+                        {/* No application count: brand applications are handled
+                            by staff, and a number the creator can't act on or
+                            open only invites "where do I see them?" (owner
+                            decision 2026-08-07). */}
                       </div>
                     ) : null}
                     {/* Why the moderator turned it down. The reason was typed but

@@ -242,10 +242,13 @@ export async function notifyNewProjectForModeration(project: ProjectMailInput) {
 }
 
 /* ── Application (Interest) loop ──────────────────────────────────────
-   Audit 2.7: a brand's application only ever produced an in-app notification
-   and a push, so a creator who doesn't live in the cabinet never learned a
-   lead had arrived. Audit 2.2: the answer never reached the brand at all,
-   because MUTUAL/DECLINED were unreachable. Both directions send email now. */
+   Audit 2.2: an answer never reached the brand at all, because MUTUAL/DECLINED
+   were unreachable. It does now.
+
+   The other direction — telling the project's owner that a brand had applied —
+   was removed on 2026-08-07: staff run the negotiation, so an email inviting
+   the creator to open an inbox they no longer have would have been a dead end.
+   Staff learn about a new application in-app and by push. */
 
 type InterestMailInput = {
   projectId: number;
@@ -258,53 +261,11 @@ type InterestMailInput = {
   message?: string;
   contact?: string;
   note?: string;
-  // The brief (2026-07-26): carried into the email so the creator can size up
-  // the lead from the notification itself instead of having to open the
-  // cabinet to find out what is even being offered. Down to one field since
-  // 2026-08-05 — the brand's price, the deal type and the timing left the
-  // application form altogether.
   productInfo?: string;
   /** Budget bracket + categories from the brand's profile, already formatted
    *  by the caller — the email is tri-lingual and has no locale of its own. */
   brandBudget?: string;
 };
-
-export function newInterestTemplate(input: InterestMailInput, base: string = siteUrl()) {
-  const url = `${base}/account/interests`;
-  const subject = `Նոր հայտ / Новая заявка: «${input.projectTitle}» — ${input.brandName}`;
-  const details = [
-    // An application names EITHER a placement OR a tier — never both. The two
-    // are labelled (the way DEAL_LABEL is) because the names alone don't say
-    // which offer this is, and they are sold and priced differently.
-    input.placementName
-      ? `<br/>Փլեյսմենթ / Плейсмент / Placement: <strong>${escapeHtml(input.placementName)}</strong>`
-      : "",
-    input.tierName
-      ? `<br/>Հովանավորություն / Спонсорство / Sponsorship: <strong>${escapeHtml(input.tierName)}</strong>`
-      : "",
-    input.productInfo ? `<br/>${escapeHtml(input.productInfo)}` : "",
-    input.brandBudget ? `<br/>${escapeHtml(input.brandBudget)}` : "",
-    input.message ? `<br/>${escapeHtml(input.message)}` : "",
-    input.contact ? `<br/>${escapeHtml(input.contact)}` : "",
-  ].join("");
-  const html = layout(
-    `
-    <p><strong>Նոր հայտ ձեր նախագծի համար</strong><br/>
-    ${escapeHtml(input.brandName)} — «${input.projectTitle}»${details}</p>
-    <p><strong>Новая заявка на ваш проект</strong><br/>
-    ${escapeHtml(input.brandName)} — «${input.projectTitle}»${details}</p>
-    <p><strong>New application for your project</strong><br/>
-    ${escapeHtml(input.brandName)} — «${input.projectTitle}»${details}</p>
-    `,
-    "Բացել հայտերը / Открыть заявки / Open applications",
-    url,
-  );
-  const text = [
-    `${input.brandName} — «${input.projectTitle}». ${input.message ?? ""} ${url}`,
-    `${input.brandName} — «${input.projectTitle}». ${input.message ?? ""} ${url}`,
-  ].join("\n\n");
-  return { subject, html, text };
-}
 
 export function interestAnsweredTemplate(
   input: InterestMailInput & { accepted: boolean },
@@ -333,12 +294,6 @@ export function interestAnsweredTemplate(
   );
   const text = [hy, ru, en, input.note ?? "", url].filter(Boolean).join("\n\n");
   return { subject, html, text };
-}
-
-/** Sent to the creator who owns the project a brand just applied for. */
-export async function notifyNewInterest(input: InterestMailInput, ownerEmail: string) {
-  const { subject, html, text } = newInterestTemplate(input);
-  return sendMail({ to: ownerEmail, subject, html, text });
 }
 
 /** Sent to the brand once the creator accepted or declined. */

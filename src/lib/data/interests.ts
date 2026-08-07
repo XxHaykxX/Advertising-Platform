@@ -206,20 +206,11 @@ export async function getAllInterests(locale: Locale): Promise<InterestInboxDTO[
   return rows.map((r) => toDTO(locale, r));
 }
 
-/** Applications on projects owned by `ownerId` — the creator's own inbox. */
-export async function getInterestsForOwner(ownerId: number, locale: Locale): Promise<InterestInboxDTO[]> {
-  const rows = await prisma.interest.findMany({
-    where: { project: { ownerId } },
-    include: INTEREST_INCLUDE,
-    orderBy: { createdAt: "desc" },
-  });
-  return rows.map((r) => toDTO(locale, r));
-}
-
-/** Applications still awaiting an answer — drives the sidebar/nav badges. */
-export async function getPendingInterestCountForOwner(ownerId: number): Promise<number> {
-  return prisma.interest.count({ where: { status: "SENT", project: { ownerId } } });
-}
+/* getInterestsForOwner / getPendingInterestCountForOwner used to live here and
+   backed the creator's own inbox at /account/interests. That inbox was removed
+   on 2026-08-07 (owner decision — staff run the negotiation), and with it the
+   only callers. The admin panel counts pending applications with its own
+   role-aware query in admin/(panel)/interests/actions.ts. */
 
 export async function getPendingInterestCount(): Promise<number> {
   return prisma.interest.count({ where: { status: "SENT" } });

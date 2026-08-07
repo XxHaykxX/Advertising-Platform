@@ -8,12 +8,10 @@ import { getLocale } from "@/lib/data/locale";
 import { getBrandProfile } from "@/lib/data/brand-profile";
 import { getBrandInterestCount, getBrandInterests } from "@/lib/data/brand-interests";
 import { BRAND_CATEGORIES, BUDGET_RANGES } from "@/lib/brand-categories";
-import { DEFAULT_LOCALE, makeUI } from "@/lib/i18n";
-import { createNotification, notifyRoles } from "@/lib/data/notifications";
-import { notifyNewInterest } from "@/lib/mail";
+import { makeUI } from "@/lib/i18n";
+import { notifyRoles } from "@/lib/data/notifications";
 import { offerKeyOf } from "@/lib/offer-value";
 import { parseWebsiteUrl } from "@/lib/website-url";
-import { OFFER_NAME_SELECT, pickPlacementTitle, pickTierName } from "@/lib/data/pick-locale";
 
 /* #23 — BRAND-cabinet server actions. Every action re-checks requireMember()
  * + role === "BRAND" itself (defense in depth — the layout gate already
@@ -99,7 +97,6 @@ export async function withdrawInterest(interestId: number): Promise<ExpressInter
   // are part of the cached catalog DTOs — same reasoning as respondToInterest.
   updateTag("projects");
   revalidateBrandPaths();
-  revalidatePath("/account/interests");
   revalidatePath("/admin/interests");
   return { ok: true };
 }
@@ -340,71 +337,23 @@ export async function submitApplication(
 
   // Notification is best-effort — the application is already saved, so a DB
   // hiccup here must not 500 the request or fail the submit.
+  //
+  // Staff only, as of 2026-08-07. The project's owner used to get an in-app
+  // row, a web push and an e-mail here; with the negotiation run entirely by
+  // staff, notifying the creator would announce a lead they have no way to
+  // answer. Moderators joined superadmins because they are the ones who can
+  // now accept or decline (see respondToInterest).
   try {
     const project = await prisma.project.findUnique({
       where: { id: projectId },
-      select: { ownerId: true, title: true, owner: { select: { email: true } } },
+      select: { title: true },
     });
     if (project) {
-      const payload = {
+      await notifyRoles(["SUPERADMIN", "MODERATOR"], {
         type: "INTEREST" as const,
         data: { projectId, projectTitle: project.title, brandName: user.name },
-      };
-      // Owning creator (or staff owner) — link straight to the application.
-      await createNotification(project.ownerId, { ...payload, link: "/account/interests" });
-      // Superadmins watch all interests; exclude the owner to avoid a duplicate.
-      await notifyRoles(["SUPERADMIN"], { ...payload, link: "/admin/interests" }, project.ownerId);
-      // Audit 2.7: only in-app + push went out before, so a creator who doesn't
-      // open the cabinet never learned a lead had arrived.
-      // The e-mail carries all three languages in its own labels and has no
-      // locale to resolve with (see the comment on budgetLabel below), so the
-      // offer is named in the site's default locale — hy, with the usual
-      // fallback — rather than in whichever column happens to be filled.
-      const tierName = resolvedTierId
-        ? pickTierName(
-            DEFAULT_LOCALE,
-            await prisma.sponsorshipTier.findUnique({
-              where: { id: resolvedTierId },
-              select: OFFER_NAME_SELECT.tier,
-            }),
-          ) || undefined
-        : undefined;
-      // The placement is the other half of the offer since 2026-07-29 — an
-      // e-mail naming only the sponsorship package would silently drop the
-      // very thing most brands apply for.
-      const placementName = resolvedPlacementId
-        ? pickPlacementTitle(
-            DEFAULT_LOCALE,
-            await prisma.placement.findUnique({
-              where: { id: resolvedPlacementId },
-              select: OFFER_NAME_SELECT.placement,
-            }),
-          ) || undefined
-        : undefined;
-      // The brand's own budget bracket, resolved to its label here: the email
-      // is tri-lingual and has no locale to localize with. Read from the DB —
-      // AuthedUser carries only id/email/role/name/isActive.
-      const brandRow = await prisma.user.findUnique({
-        where: { id: user.id },
-        select: { budgetRange: true },
+        link: "/admin/interests",
       });
-      const budgetLabel = brandRow?.budgetRange
-        ? (BUDGET_RANGES.find((b) => b.value === brandRow.budgetRange)?.label ?? brandRow.budgetRange)
-        : undefined;
-      await notifyNewInterest(
-        {
-          projectId,
-          projectTitle: project.title,
-          brandName: user.name,
-          tierName,
-          placementName,
-          message: trimmedMessage ?? undefined,
-          contact: trimmedContact ?? user.email,
-          productInfo: productInfo ?? undefined,
-          brandBudget: budgetLabel,
-        },
-        project.owner.email,
-      );
     }
   } catch {
     // best-effort notification — ignore
@@ -416,7 +365,6 @@ export async function submitApplication(
   // respondToInterest in src/lib/actions/interest-response.ts.
   updateTag("projects");
   revalidateBrandPaths();
-  revalidatePath("/account/interests");
   revalidatePath("/admin/interests");
   return { ok: true };
 }

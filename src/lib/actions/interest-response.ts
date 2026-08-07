@@ -2,7 +2,7 @@
 
 import { revalidatePath, updateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { loadCurrentMember, loadStaffUser } from "@/lib/auth/require";
+import { loadStaffUser } from "@/lib/auth/require";
 import { canEditContent } from "@/lib/auth/permissions";
 import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
@@ -16,9 +16,9 @@ import { DEFAULT_LOCALE } from "@/lib/i18n";
  * MUTUAL / DECLINED existed in the enum, the brand cabinet already drew their
  * badges and the notification types were declared, but nothing in the codebase
  * ever set them (audit 2.2): every application stayed "Sent" forever and the
- * brand never heard back. This action is what sets them, and it is shared by
- * both places an answer can be given — the creator's own inbox
- * (/account/interests) and the staff inbox (/admin/interests).
+ * brand never heard back. This action is what sets them. It used to serve two
+ * inboxes; since 2026-08-07 the only one left is the staff inbox
+ * (/admin/interests).
  *
  * Accepting also takes the slot the application is for (audit 2.3): two brands
  * could each be told an exclusive placement was theirs, because availableSlots
@@ -28,21 +28,15 @@ export type RespondResult = { ok: true } | { ok: false; error: string };
 
 type Responder = { id: number; role: string };
 
-/** The signed-in user, whichever cabinet they came from — a creator answering
-   in their own inbox, or a staff member who owns the project themselves.
-   Members must still be APPROVED and active; staff must hold a content-editing
-   role. Ownership is checked separately by the caller: since 2026-07-26 only
-   the project's owner may answer an application (owner decision — the deal is
-   the seller's to run), so passing this check is necessary but not sufficient. */
-async function loadResponder(): Promise<Responder | null> {
-  // Both cabinets answer here, and since IA-47 they arrive on different
-  // cookies — so both are consulted, each through its own loader (which
-  // re-checks isActive/status against the DB). The creator is tried first:
-  // this action is called from their inbox far more often than from the
-  // staff one, and a browser may now hold both sessions at once.
-  const member = await loadCurrentMember();
-  if (member && member.role === "CREATOR") return { id: member.id, role: member.role };
+/** The staff member answering. Must be signed in on the staff cookie and hold
+   a content-editing role; which of them may actually decide is narrowed
+   further by the caller.
 
+   Creators used to be accepted here too, and answered in their own inbox. That
+   inbox is gone as of 2026-08-07 (owner decision): the negotiation with a brand
+   is run by staff end to end, so the creator is not part of this chain at all
+   any more. */
+async function loadResponder(): Promise<Responder | null> {
   const staff = await loadStaffUser();
   if (staff && canEditContent(staff.role)) return { id: staff.id, role: staff.role };
   return null;
@@ -75,14 +69,14 @@ export async function respondToInterest(
     },
   });
   if (!interest) return { ok: false, error: t("interests.errNotFound") };
-  // The seller answers their own applications. A superadmin may answer any of
-  // them: they own the marketplace, and without this nobody could answer at
-  // all once projects belong to creators — an application from a brand would
-  // sit unanswered forever if the creator went quiet. Publishers and
-  // moderators still can't decide someone else's deal.
-  const isOwner = interest.project.ownerId === responder.id;
-  const isSuperadmin = responder.role === "SUPERADMIN";
-  if (!isOwner && !isSuperadmin) {
+  // Who decides: superadmins and moderators (owner decision 2026-08-07).
+  // Before that it was "the project's owner, or a superadmin" — but with the
+  // creator out of this flow entirely, owner-only left every application
+  // waiting on one person. Publishers edit content and still don't decide
+  // deals. A staff member who happens to own the project is covered by their
+  // role, not by their ownership.
+  const mayDecide = responder.role === "SUPERADMIN" || responder.role === "MODERATOR";
+  if (!mayDecide) {
     return { ok: false, error: t("interests.errOwnerOnly") };
   }
 
@@ -115,9 +109,10 @@ export async function respondToInterest(
     await tx.interestEvent.create({
       data: {
         interestId,
-        // A superadmin answering for the seller is recorded as such, so the
-        // history says who actually made the call.
-        kind: isOwner ? "RESPONSE" : "RESPONSE_STAFF",
+        // Always staff now — the creator no longer answers applications at all,
+        // so the plain "RESPONSE" (the seller answered) can't happen any more.
+        // The kind is kept in the enum for the history rows already written.
+        kind: "RESPONSE_STAFF",
         status,
         body: trimmedNote || null,
         authorId: responder.id,
@@ -182,7 +177,6 @@ export async function respondToInterest(
   // 300s cache window.
   updateTag("projects");
   revalidatePath("/admin/interests");
-  revalidatePath("/account/interests");
   revalidatePath("/account/brand/interests");
   revalidatePath(`/reports/${interest.project.id}`);
   return { ok: true };
