@@ -18,6 +18,20 @@ export function canModerate(role: Role): boolean {
   return role === "SUPERADMIN" || role === "MODERATOR";
 }
 
+/** True when `role` may read and answer brands' applications (/admin/interests).
+ *  Same pair as canModerate, and deliberately its own function: these are two
+ *  different jobs that happen to be staffed by the same two roles, and the
+ *  owner may split them later.
+ *
+ *  Not canEditContent: a Publisher edits listings but does not close deals,
+ *  and until 2026-08-07 this section was gated on content editing while the
+ *  answer action required SUPERADMIN or MODERATOR — an intersection of exactly
+ *  one role, with the Moderator getting a 404 on the very page their
+ *  new-application notification linked to. */
+export function canHandleInterests(role: Role): boolean {
+  return role === "SUPERADMIN" || role === "MODERATOR";
+}
+
 /** True when `role` may create/edit project content. */
 export function canEditContent(role: Role): boolean {
   return role === "SUPERADMIN" || role === "PUBLISHER";

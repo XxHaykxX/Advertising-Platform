@@ -21,6 +21,7 @@ import {
 import type { Role } from "@prisma/client";
 import {
   canEditContent,
+  canHandleInterests,
   canEditTranslations,
   canManageUsers,
   canModerate,
@@ -72,7 +73,7 @@ const NAV_GROUPS: {
       { href: "/admin/moderation", label: "Moderation", icon: ShieldCheck, show: canModerate },
       // Audit 2.1: the applications section was deleted in July, which left a
       // brand's message and contact stored but readable by nobody.
-      { href: "/admin/interests", label: "Offers", icon: Inbox, show: canEditContent },
+      { href: "/admin/interests", label: "Offers", icon: Inbox, show: canHandleInterests },
       { href: "/admin/projects", label: "Projects", icon: Film, show: canEditContent },
       { href: "/admin/cast", label: "Cast & Crew", icon: Users2, show: canEditContent },
       { href: "/admin/media", label: "Media", icon: FolderOpen, show: canEditContent },

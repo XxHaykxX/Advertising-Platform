@@ -3,7 +3,7 @@
 import { revalidatePath, updateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { loadStaffUser } from "@/lib/auth/require";
-import { canEditContent } from "@/lib/auth/permissions";
+import { canHandleInterests } from "@/lib/auth/permissions";
 import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
 import { createNotification } from "@/lib/data/notifications";
@@ -28,17 +28,20 @@ export type RespondResult = { ok: true } | { ok: false; error: string };
 
 type Responder = { id: number; role: string };
 
-/** The staff member answering. Must be signed in on the staff cookie and hold
-   a content-editing role; which of them may actually decide is narrowed
-   further by the caller.
+/** The staff member answering: signed in on the staff cookie and holding a
+   role that handles applications — superadmin or moderator.
 
    Creators used to be accepted here too, and answered in their own inbox. That
    inbox is gone as of 2026-08-07 (owner decision): the negotiation with a brand
    is run by staff end to end, so the creator is not part of this chain at all
-   any more. */
+   any more.
+
+   This used to ask canEditContent and then re-check for SUPERADMIN/MODERATOR
+   below — an intersection of one role, which locked moderators out of the very
+   job they were given. One predicate now, checked once. */
 async function loadResponder(): Promise<Responder | null> {
   const staff = await loadStaffUser();
-  if (staff && canEditContent(staff.role)) return { id: staff.id, role: staff.role };
+  if (staff && canHandleInterests(staff.role)) return { id: staff.id, role: staff.role };
   return null;
 }
 
@@ -69,16 +72,11 @@ export async function respondToInterest(
     },
   });
   if (!interest) return { ok: false, error: t("interests.errNotFound") };
-  // Who decides: superadmins and moderators (owner decision 2026-08-07).
-  // Before that it was "the project's owner, or a superadmin" — but with the
-  // creator out of this flow entirely, owner-only left every application
-  // waiting on one person. Publishers edit content and still don't decide
-  // deals. A staff member who happens to own the project is covered by their
-  // role, not by their ownership.
-  const mayDecide = responder.role === "SUPERADMIN" || responder.role === "MODERATOR";
-  if (!mayDecide) {
-    return { ok: false, error: t("interests.errOwnerOnly") };
-  }
+  // Who decides is settled by loadResponder above: superadmins and moderators
+  // (owner decision 2026-08-07). Before that it was "the project's owner, or a
+  // superadmin" — but with the creator out of this flow entirely, owner-only
+  // left every application waiting on one person. Publishers edit content and
+  // still don't decide deals.
 
   const status = accept ? "MUTUAL" : "DECLINED";
   const trimmedNote = note.trim().slice(0, 2000);
@@ -156,8 +154,7 @@ export async function respondToInterest(
         // placement's title too (they're mutually exclusive on one
         // application) rather than change a signature owned by mail.ts.
         // Named in the default locale: the mail is tri-lingual in its own
-        // labels and has no reader locale to resolve with (same reasoning as
-        // notifyNewInterest in account/brand/actions.ts).
+        // labels and has no reader locale to resolve with.
         tierName:
           pickTierName(DEFAULT_LOCALE, interest.tier) ||
           pickPlacementTitle(DEFAULT_LOCALE, interest.placement) ||

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Mail, Phone, Globe, Inbox } from "lucide-react";
-import { requireContentEditor } from "@/lib/auth/require";
+import { requireInterestHandler } from "@/lib/auth/require";
 import { getLocale } from "@/lib/data/locale";
 import { getAllInterests } from "@/lib/data/interests";
 import { formatFullDate } from "@/lib/data/format";
@@ -34,7 +34,7 @@ const STATUS_PILL: Record<InterestStatus, string> = {
 const AMD_ONLY = { AMD: 1, USD: 1, EUR: 1, RUB: 1 };
 
 export default async function InterestsAdminPage() {
-  const staff = await requireContentEditor();
+  await requireInterestHandler();
   // The admin panel is English-only (see admin-nav.tsx and the other
   // sections, which hardcode English) — pin the translator, but keep the
   // visitor's locale for date/number formatting.
@@ -244,23 +244,19 @@ export default async function InterestsAdminPage() {
                 </details>
               ) : null}
 
-              {/* Answering is the seller's call, but a superadmin can answer
-                  any application: they own the marketplace, and restricting it
-                  to the exact owner id meant nobody could answer at all once
-                  projects belong to creators. Publishers and moderators still
-                  only see who decides. */}
+              {/* Anyone who can reach this page can answer: the guard above
+                  already narrowed it to superadmins and moderators, who run
+                  the negotiation end to end (owner decision 2026-08-07).
+                  Ownership no longer enters into it — the projects belong to
+                  creators, and the creator is not part of this chain. */}
               <div className="mt-4">
-                {interest.project.ownerId === staff.id || staff.role === "SUPERADMIN" ? (
-                  <RowActions
-                    interestId={interest.id}
-                    status={interest.status}
-                    acceptLabel={t("interests.accept")}
-                    declineLabel={t("interests.decline")}
-                    answerPrompt={t("interests.answerPrompt")}
-                  />
-                ) : interest.status === "SENT" ? (
-                  <p className="text-xs text-muted-foreground">{t("interests.ownerDecides")}</p>
-                ) : null}
+                <RowActions
+                  interestId={interest.id}
+                  status={interest.status}
+                  acceptLabel={t("interests.accept")}
+                  declineLabel={t("interests.decline")}
+                  answerPrompt={t("interests.answerPrompt")}
+                />
               </div>
             </div>
           ))}

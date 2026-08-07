@@ -12,6 +12,7 @@ import { prisma } from "@/lib/prisma";
 import {
   canEditContent,
   canEditTranslations,
+  canHandleInterests,
   canModerate,
   isTranslatorOnly,
 } from "@/lib/auth/permissions";
@@ -164,6 +165,15 @@ export async function requireSuperadmin(): Promise<AuthedUser> {
 export async function requireContentEditor(): Promise<AuthedUser> {
   const user = await requireUser();
   if (!canEditContent(user.role)) notFound();
+  return user;
+}
+
+/** Require a logged-in, active staff user who may answer brands' applications
+   (SUPERADMIN or MODERATOR — see permissions.ts). 404s otherwise, same
+   disguise-as-not-found pattern as the guards around it. */
+export async function requireInterestHandler(): Promise<AuthedUser> {
+  const user = await requireUser();
+  if (!canHandleInterests(user.role)) notFound();
   return user;
 }
 
