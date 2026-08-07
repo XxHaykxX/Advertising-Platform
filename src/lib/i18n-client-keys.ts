@@ -376,6 +376,7 @@ export const CLIENT_KEYS: readonly string[] = [
   "projectForm.section.references",
   "projectForm.section.sponsorshipTiers",
   "projectForm.section.visibility",
+  "projectForm.sectionNav",
   "projectForm.studioPlaceholder",
   "projectForm.tiers.addTier",
   "projectForm.tiers.benefits",

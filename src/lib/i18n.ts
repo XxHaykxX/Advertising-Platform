@@ -1531,6 +1531,12 @@ export const UI: Record<string, Dict> = {
     hy: "Կան չպահպանված փոփոխություններ",
   },
   "projectForm.saved": { ru: "Сохранено", en: "Saved", hy: "Պահպանված է" },
+  // Screen-reader name of the jump-to-section strip in the sticky bar.
+  "projectForm.sectionNav": {
+    ru: "Разделы формы",
+    en: "Form sections",
+    hy: "Ձևի բաժինները",
+  },
   "projectForm.section.general": { ru: "Общее", en: "General", hy: "Ընդհանուր" },
   // ── About block (#11) ──
   "projectForm.section.about": { ru: "О проекте", en: "About", hy: "Նախագծի մասին" },

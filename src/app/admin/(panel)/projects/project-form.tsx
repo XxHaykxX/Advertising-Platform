@@ -1377,7 +1377,10 @@ export function ProjectForm({
           <div className="flex shrink-0 items-center gap-2">
             <Link
               href={mode === "creator" ? "/account" : "/admin/projects"}
-              className="inline-flex items-center rounded-lg border border-border px-5 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
+              // min-h-11 under sm: 36px is fine for a cursor and short of the
+              // 44px a finger needs — and on a phone this bar IS the form's
+              // only control surface.
+              className="inline-flex min-h-11 items-center rounded-lg border border-border px-5 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-muted sm:min-h-0"
             >
               {t("projectForm.cancel")}
             </Link>
@@ -1385,7 +1388,7 @@ export function ProjectForm({
               <button
                 type="submit"
                 disabled={pending || navigating}
-                className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:opacity-90 disabled:opacity-70"
+                className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:opacity-90 disabled:opacity-70 sm:min-h-0"
               >
                 {(pending || navigating) && <Loader2 className="h-4 w-4 animate-spin" />}
                 {submitLabel}
@@ -1397,7 +1400,7 @@ export function ProjectForm({
         {/* Second row: jump-to-section. The warning dots read from the same live
             publishGaps set that paints the amber shells below, so the strip and
             the fields never disagree. */}
-        <FormSectionNav sections={navSections} />
+        <FormSectionNav sections={navSections} label={t("projectForm.sectionNav")} />
       </div>
 
       {readOnly && (

@@ -327,7 +327,12 @@ export const DropzoneEmptyState = ({ children }: DropzoneEmptyStateProps) => {
       <p className="w-full truncate text-xs text-muted-foreground">
         {labels?.hint ?? "Drag and drop or click to upload"}
       </p>
-      {caption && <p className="text-xs text-muted-foreground">{caption}.</p>}
+      {/* The caption is built from `accept`/`maxSize` in English and can't be
+          translated from here. A caller that passed its own labels is
+          member-facing — "Accepts image/* less than 8.00MB." underneath two
+          Armenian lines was the one English string on the creator's form. The
+          admin panel is English anyway, so it keeps it. */}
+      {caption && !labels ? <p className="text-xs text-muted-foreground">{caption}.</p> : null}
     </>
   );
 };
