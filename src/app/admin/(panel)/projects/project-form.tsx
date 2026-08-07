@@ -3,7 +3,7 @@
 import { createContext, useActionState, useContext, useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { AlertTriangle, FileText, Languages, Loader2, RotateCcw, Sparkles, X } from "lucide-react";
+import { AlertTriangle, FileText, Languages, Loader2, Lock, RotateCcw, Sparkles, X } from "lucide-react";
 import {
   AGE_RATING_VALUES,
   DEFAULT_PLACEMENT_SET,
@@ -550,8 +550,14 @@ export function ProjectForm({
   posterAction,
   completeness,
   placementsRequired,
+  readOnly = false,
 }: {
   action: (prev: ProjectFormState, fd: FormData) => Promise<ProjectFormState>;
+  /** Show the whole form but let nothing be changed or submitted. Used by the
+   *  creator's edit page once a project is APPROVED: it is live in the catalog
+   *  and further edits go through staff (owner decision 2026-08-07). Enforced
+   *  server-side too — updateCreatorProject refuses an approved row. */
+  readOnly?: boolean;
   initial?: ProjectFormInitial;
   /** Cast & crew rows (#20²) — inline in this form now, saved in the same
    *  submit as the project. Empty on create. */
@@ -1375,14 +1381,16 @@ export function ProjectForm({
             >
               {t("projectForm.cancel")}
             </Link>
-            <button
-              type="submit"
-              disabled={pending || navigating}
-              className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:opacity-90 disabled:opacity-70"
-            >
-              {(pending || navigating) && <Loader2 className="h-4 w-4 animate-spin" />}
-              {submitLabel}
-            </button>
+            {!readOnly && (
+              <button
+                type="submit"
+                disabled={pending || navigating}
+                className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:opacity-90 disabled:opacity-70"
+              >
+                {(pending || navigating) && <Loader2 className="h-4 w-4 animate-spin" />}
+                {submitLabel}
+              </button>
+            )}
           </div>
         </div>
 
@@ -1391,6 +1399,16 @@ export function ProjectForm({
             the fields never disagree. */}
         <FormSectionNav sections={navSections} />
       </div>
+
+      {readOnly && (
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-xl border border-border bg-muted/40 px-4 py-3 text-sm text-foreground">
+          <Lock className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+          <span>{t("account.form.approvedLocked")}</span>
+          <Link href="/contact" className="font-medium text-primary underline-offset-2 hover:underline">
+            {t("account.form.approvedLockedCta")}
+          </Link>
+        </div>
+      )}
 
       {draftFound && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-primary/40 bg-primary/10 px-4 py-3 text-sm">
@@ -1418,7 +1436,16 @@ export function ProjectForm({
           sections split: main column carries About → Design → Cast & crew →
           Placement(s) → Reference Projects; sidebar carries General →
           Production Info → Visibility. */}
-      <div className="items-start gap-4 space-y-4 lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:space-y-0">
+      {/* Read-only mode is one native `disabled` fieldset rather than a
+          `disabled` prop threaded through ~200 controls: the attribute disables
+          every descendant control and drops them all from the submission, so
+          there is no path where a stray input stays live. It wraps the FIELDS
+          only — the sticky bar above keeps its section links and Cancel
+          working. */}
+      <fieldset
+        disabled={readOnly}
+        className="m-0 min-w-0 items-start gap-4 space-y-4 border-0 p-0 lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:space-y-0"
+      >
         {/* ══ Main column ══ */}
         <div className="min-w-0 space-y-4">
           {/* ── About (#11) ── per-locale Title / Description / Short description,
@@ -2126,7 +2153,7 @@ export function ProjectForm({
             <ProjectCompletenessChecklist items={completeness} locale={mode === "creator" ? locale : "en"} />
           )}
         </div>
-      </div>
+      </fieldset>
 
       {state.error && (
         <p
@@ -2138,14 +2165,16 @@ export function ProjectForm({
       )}
 
       <div className="flex items-center gap-3">
-        <button
-          type="submit"
-          disabled={pending || navigating}
-          className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:opacity-90 disabled:opacity-70"
-        >
-          {(pending || navigating) && <Loader2 className="h-4 w-4 animate-spin" />}
-          {submitLabel}
-        </button>
+        {!readOnly && (
+          <button
+            type="submit"
+            disabled={pending || navigating}
+            className="inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:opacity-90 disabled:opacity-70"
+          >
+            {(pending || navigating) && <Loader2 className="h-4 w-4 animate-spin" />}
+            {submitLabel}
+          </button>
+        )}
         <Link
           href={mode === "creator" ? "/account/projects" : "/admin/projects"}
           className="text-sm text-muted-foreground hover:text-foreground"

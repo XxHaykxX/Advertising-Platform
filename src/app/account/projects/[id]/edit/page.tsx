@@ -171,10 +171,15 @@ export default async function EditCreatorProjectPage({
           {t("account.form.cancel")}
         </Link>
         <h1 className="mb-2 mt-4 text-3xl font-bold text-foreground md:text-4xl">
-          {t("account.editProject")}
+          {p.moderationStatus === "APPROVED" ? t("account.viewProject") : t("account.editProject")}
           {labelSep(locale)} {p.title}
         </h1>
-        <p className="mb-6 text-muted-foreground">{t("account.editProjectSubtitle")}</p>
+        {/* "Saving sends the project back to moderation" is only true while it
+            can still be saved — a published one is read-only, and the banner
+            inside the form says what to do instead. */}
+        {p.moderationStatus === "APPROVED" ? null : (
+          <p className="mb-6 text-muted-foreground">{t("account.editProjectSubtitle")}</p>
+        )}
       </Reveal>
 
       {/* Deliberately NOT wrapped in <Reveal>: framer-motion animates it with a
@@ -251,6 +256,11 @@ export default async function EditCreatorProjectPage({
         projectId={pid}
         ownerHasAvatar={!!p.owner.avatar}
         completeness={completeness}
+        // Published listings are read-only for their creator — everything is
+        // still visible, nothing is editable, and the banner points at the
+        // editors (owner decision 2026-08-07). updateCreatorProject refuses
+        // these server-side too.
+        readOnly={p.moderationStatus === "APPROVED"}
       />
     </>
   );

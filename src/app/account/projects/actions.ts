@@ -751,13 +751,16 @@ export async function createCreatorProject(
   return { error: t("account.form.errCode"), values: data };
 }
 
-/** Edit a Creator's OWN project (audit 2.4 / owner decision C.6). Until now the
-   only creator-owned mutation was create — a REJECTED (or already-APPROVED)
-   project was a dead end, even though the rejection email tells the creator to
-   "edit and resubmit". This closes that loop: any save here re-enters
-   moderation (PENDING + inactive), whether the project was previously
-   REJECTED (a genuine resubmission) or APPROVED (per C.6, editing a published
-   project pulls it from the catalog until a moderator re-checks it). Modeled
+/** Edit a Creator's OWN project (audit 2.4 / owner decision C.6). Until this
+   existed, the only creator-owned mutation was create — a REJECTED project was
+   a dead end, even though the rejection email tells the creator to "edit and
+   resubmit". Any save here re-enters moderation (PENDING + inactive), which is
+   what makes a resubmission a resubmission.
+
+   APPROVED projects are refused outright as of 2026-08-07 (owner decision).
+   They used to be editable, and the edit pulled the listing out of the catalog
+   until a moderator re-checked it (C.6) — so a typo fix took a live project
+   offline. Those edits go through staff now. Modeled
    on admin's updateProject (same notFound-for-both-"missing"-and-"not yours"
    pattern) but reuses this file's create-side helpers (buildData/validate/
    submitGate/parseActorRows/parseTierRows/resolveActorPersonIds) rather than
@@ -781,10 +784,18 @@ export async function updateCreatorProject(
   // createdAt feeds submitGate's placements grandfather clause below.
   const existing = await prisma.project.findUnique({
     where: { id },
-    select: { ownerId: true, createdAt: true, code: true },
+    select: { ownerId: true, createdAt: true, code: true, moderationStatus: true },
   });
   if (!existing) notFound();
   if (existing.ownerId !== user.id) notFound();
+  // A published project is out of the creator's hands (owner decision
+  // 2026-08-07): it is live in the catalog, brands are reading it, and an edit
+  // used to pull it back out until a moderator re-checked it. The edit page
+  // renders read-only for these, so reaching this is either a stale tab or a
+  // hand-made POST — an error is the honest answer to both.
+  if (existing.moderationStatus === "APPROVED") {
+    return { error: t("account.form.errApproved") };
+  }
 
   const data = buildData(fd);
   const error = validate(data, t);
@@ -838,10 +849,10 @@ export async function updateCreatorProject(
           // back — so a hand-crafted POST could rename someone's project to any
           // free code. Re-assert the stored one. (ownerId is never in `data`.)
           code: existing.code,
-          // A creator-edited project always goes back to moderation (C.6):
-          // an APPROVED listing disappears from the catalog until it's
-          // re-checked, and a REJECTED one becomes a genuine resubmission —
-          // either way the stale rejectionReason no longer applies.
+          // Back to moderation on every save. Only DRAFT/PENDING/REJECTED rows
+          // reach this line (APPROVED is refused above), so this is either a
+          // resubmission after a rejection or another pass at something not yet
+          // published — and a stale rejectionReason no longer applies to either.
           moderationStatus: "PENDING",
           isActive: false,
           rejectionReason: null,

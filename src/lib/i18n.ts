@@ -1281,6 +1281,13 @@ export const UI: Record<string, Dict> = {
   "account.stats.applications": { ru: "Заявки", en: "Applications", hy: "Հայտեր" },
   // ── creator: edit + resubmit own project (audit 2.4 / owner decision C.6) ──
   "account.editProject": { ru: "Редактировать проект", en: "Edit project", hy: "Խմբագրել նախագիծը" },
+  /* Replaces "Edit project" on a published card — the form opens read-only. */
+  "account.viewProject": { ru: "Посмотреть проект", en: "View project", hy: "Դիտել նախագիծը" },
+  "account.editsViaEditors": {
+    ru: "правки — через редакцию",
+    en: "edits go through the editors",
+    hy: "փոփոխությունները՝ խմբագրության միջոցով",
+  },
   "account.editProjectSubtitle": {
     ru: "Изменения снова отправят проект на модерацию.",
     en: "Saving changes sends the project back for moderation.",
@@ -1372,6 +1379,23 @@ export const UI: Record<string, Dict> = {
   // ── creator: submission form fields ──
   "account.form.submit": { ru: "Отправить на модерацию", en: "Submit for review", hy: "Ուղարկել մոդերացիայի" },
   "account.form.cancel": { ru: "Отмена", en: "Cancel", hy: "Չեղարկել" },
+  /* Shown on the creator's edit page once the project is APPROVED: it is live
+     in the catalog, so further edits go through staff (2026-08-07). */
+  "account.form.approvedLocked": {
+    ru: "Проект опубликован, поэтому правки вносит редакция.",
+    en: "This project is published, so edits are made by the editors.",
+    hy: "Նախագիծը հրապարակված է, ուստի փոփոխությունները կատարում է խմբագրությունը։",
+  },
+  "account.form.approvedLockedCta": {
+    ru: "Написать нам",
+    en: "Contact us",
+    hy: "Գրել մեզ",
+  },
+  "account.form.errApproved": {
+    ru: "Проект уже опубликован — правки вносит редакция.",
+    en: "This project is already published — edits are made by the editors.",
+    hy: "Նախագիծն արդեն հրապարակված է — փոփոխությունները կատարում է խմբագրությունը։",
+  },
   "account.form.errRequired": {
     ru: "Заполните название, синопсис и минимум один жанр.",
     en: "Fill in the title, synopsis, and at least one genre.",

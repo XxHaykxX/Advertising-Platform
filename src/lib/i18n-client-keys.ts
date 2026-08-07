@@ -41,6 +41,8 @@ export const CLIENT_KEYS: readonly string[] = [
   "account.brand.sortPriceAsc",
   "account.brand.website",
   "account.brand.websitePlaceholder",
+  "account.form.approvedLocked",
+  "account.form.approvedLockedCta",
   "account.profile",
   "account.profile.avatar",
   "account.profile.avatarHint",

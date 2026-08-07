@@ -213,16 +213,32 @@ export default async function MyProjectsPage() {
                       </p>
                     ) : null}
                     {/* Closes the "edit and resubmit" loop the rejection email
-                        promises (audit 2.4 / owner decision C.6) — shown for
-                        every status, not just REJECTED, since editing an
-                        APPROVED listing is also allowed (it just goes back to
-                        moderation on save). */}
-                    <Link
-                      href={`/account/projects/${p.id}/edit`}
-                      className="mt-3 inline-block text-sm font-medium text-primary hover:underline"
-                    >
-                      {t("account.editProject")}
-                    </Link>
+                        promises (audit 2.4 / owner decision C.6). A published
+                        project is no longer editable here — it is live in the
+                        catalog and its changes go through staff (2026-08-07) —
+                        so the link becomes "view what was submitted", which is
+                        also the only place the creator can see the fields that
+                        never reach the public page. */}
+                    {p.moderationStatus === "APPROVED" ? (
+                      <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">
+                        <Link
+                          href={`/account/projects/${p.id}/edit`}
+                          className="text-sm font-medium text-primary hover:underline"
+                        >
+                          {t("account.viewProject")}
+                        </Link>
+                        <span className="text-xs text-muted-foreground">
+                          {t("account.editsViaEditors")}
+                        </span>
+                      </div>
+                    ) : (
+                      <Link
+                        href={`/account/projects/${p.id}/edit`}
+                        className="mt-3 inline-block text-sm font-medium text-primary hover:underline"
+                      >
+                        {t("account.editProject")}
+                      </Link>
+                    )}
                   </div>
                 </div>
               </Reveal>
