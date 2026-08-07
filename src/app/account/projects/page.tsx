@@ -6,7 +6,7 @@ import { requireMember } from "@/lib/auth/require";
 import { prisma } from "@/lib/prisma";
 import { getLocale } from "@/lib/data/locale";
 import { isArchived } from "@/lib/data/format";
-import { makeUI } from "@/lib/i18n";
+import { labelSep, makeUI } from "@/lib/i18n";
 import { missingCount, projectCompleteness } from "@/lib/project-completeness";
 import type { ModerationStatus } from "@prisma/client";
 
@@ -189,14 +189,18 @@ export default async function MyProjectsPage() {
                     {p.moderationStatus === "APPROVED" ? (
                       <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
                         <span>
-                          {t("account.stats.views")}: <span className="font-semibold text-foreground">{p.viewCount}</span>
+                          {t("account.stats.views")}
+                          {labelSep(locale)}{" "}
+                          <span className="font-semibold text-foreground">{p.viewCount}</span>
                         </span>
                         <span>
-                          {t("account.stats.favorites")}:{" "}
+                          {t("account.stats.favorites")}
+                          {labelSep(locale)}{" "}
                           <span className="font-semibold text-foreground">{p._count.favorites}</span>
                         </span>
                         <span>
-                          {t("account.stats.applications")}:{" "}
+                          {t("account.stats.applications")}
+                          {labelSep(locale)}{" "}
                           <span className="font-semibold text-foreground">{p._count.interests}</span>
                         </span>
                       </div>

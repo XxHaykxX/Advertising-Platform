@@ -8,7 +8,7 @@ import { requireMember } from "@/lib/auth/require";
 import { getLocale } from "@/lib/data/locale";
 import { getBrandInterests } from "@/lib/data/brand-interests";
 import { formatFullDate } from "@/lib/data/format";
-import { intlLocale, localizeValue, makeUI } from "@/lib/i18n";
+import { intlLocale, labelSep, localizeValue, makeUI } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import type { InterestStatus } from "@prisma/client";
 import { RemoveInterestButton } from "./remove-interest-button";
@@ -100,9 +100,9 @@ export default async function BrandInterestsPage() {
                   {/* An application names EITHER a placement OR a tier — never
                       both — so the label says which one this is (2026-07-29). */}
                   {interest.placementTitle
-                    ? ` · ${t("interests.packagePlacement")}: ${interest.placementTitle}`
+                    ? ` · ${t("interests.packagePlacement")}${labelSep(locale)} ${interest.placementTitle}`
                     : interest.tierName
-                      ? ` · ${t("interests.packageSponsorship")}: ${interest.tierName}`
+                      ? ` · ${t("interests.packageSponsorship")}${labelSep(locale)} ${interest.tierName}`
                       : ""}
                 </p>
                 {/* What this brand itself sent (2026-07-26). Without it the
@@ -128,7 +128,10 @@ export default async function BrandInterestsPage() {
                         : "border-danger/30 bg-danger/5",
                     )}
                   >
-                    <span className="font-semibold">{t("interests.answerFromSeller")}:</span>{" "}
+                    <span className="font-semibold">
+                      {t("interests.answerFromSeller")}
+                      {labelSep(locale)}
+                    </span>{" "}
                     {interest.responseNote || STATUS_LABEL[interest.status]}
                   </p>
                 ) : null}

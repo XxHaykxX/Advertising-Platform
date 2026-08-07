@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { useModalDialog } from "@/lib/use-modal-dialog";
 import { submitApplication } from "@/app/account/brand/actions";
-import type { useUI } from "@/lib/i18n-client";
+import { DEFAULT_LOCALE, labelSep, type Locale, type useUI } from "@/lib/i18n-client";
 import { NO_OFFER_KEY, offerValue, parseOfferValue } from "@/lib/offer-value";
 import { RequiredMark } from "@/components/ui/field";
 
@@ -71,6 +71,7 @@ export function ApplicationDialog({
   appliedOffers,
   brandPhone = "",
   t,
+  locale = DEFAULT_LOCALE,
   onClose,
   onSubmitted,
 }: {
@@ -93,6 +94,8 @@ export function ApplicationDialog({
    *  hidden and the application is sent without one, exactly as before. */
   offers?: ApplicationOffer[];
   t: ReturnType<typeof useUI>;
+  /** Only for punctuation the dictionary can't carry — see labelSep. */
+  locale?: Locale;
   onClose: () => void;
   /** Reports the offerKey the application was sent for, so the page can flip
    *  that one card — and only that one — to "already sent". */
@@ -333,7 +336,8 @@ export function ApplicationDialog({
                 field only appears when the profile has nothing usable. */}
             {hasProfilePhone ? (
               <p className="text-xs text-muted-foreground">
-                {t("apply.phoneLabel")}: <span className="text-foreground">{brandPhone}</span>
+                {t("apply.phoneLabel")}
+                {labelSep(locale)} <span className="text-foreground">{brandPhone}</span>
               </p>
             ) : (
               <div>

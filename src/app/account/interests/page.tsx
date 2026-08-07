@@ -7,7 +7,7 @@ import { getLocale } from "@/lib/data/locale";
 import { getInterestsForOwner } from "@/lib/data/interests";
 import { formatFullDate } from "@/lib/data/format";
 import { formatMoney } from "@/lib/currency";
-import { intlLocale, localizeValue, makeUI } from "@/lib/i18n";
+import { intlLocale, labelSep, localizeValue, makeUI } from "@/lib/i18n";
 import { BUDGET_RANGES } from "@/lib/brand-categories";
 import { cn } from "@/lib/utils";
 import type { InterestStatus } from "@prisma/client";
@@ -112,14 +112,16 @@ export default async function AccountInterestsPage() {
                         Its budget bracket and the categories it advertises in
                         are the two facts that actually decide the answer. */}
                     <p className="mt-2 text-xs text-muted-foreground">
-                      {t("interests.brandBudget")}:{" "}
+                      {t("interests.brandBudget")}
+                      {labelSep(locale)}{" "}
                       <span className="font-medium text-foreground">
                         {budgetLabel(interest.brand.budgetRange) || t("interests.brandBudgetUnset")}
                       </span>
                     </p>
                     {interest.brand.categories.length > 0 ? (
                       <p className="mt-1 text-xs text-muted-foreground">
-                        {t("interests.brandCategories")}:{" "}
+                        {t("interests.brandCategories")}
+                        {labelSep(locale)}{" "}
                         <span className="text-foreground">
                           {interest.brand.categories
                             .map((c) => localizeValue(locale, "category", c) || c)

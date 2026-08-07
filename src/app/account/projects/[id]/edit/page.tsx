@@ -12,7 +12,7 @@ import { getCountryOptions } from "@/lib/data/countries";
 import { getStudioOptions } from "@/lib/data/studios";
 import { getTierTemplates } from "@/lib/data/tier-templates";
 import { projectCompleteness } from "@/lib/project-completeness";
-import { makeUI } from "@/lib/i18n";
+import { labelSep, makeUI } from "@/lib/i18n";
 import {
   formatDateInput,
   formatReleaseDateInput,
@@ -171,7 +171,8 @@ export default async function EditCreatorProjectPage({
           {t("account.form.cancel")}
         </Link>
         <h1 className="mb-2 mt-4 text-3xl font-bold text-foreground md:text-4xl">
-          {t("account.editProject")}: {p.title}
+          {t("account.editProject")}
+          {labelSep(locale)} {p.title}
         </h1>
         <p className="mb-6 text-muted-foreground">{t("account.editProjectSubtitle")}</p>
       </Reveal>

@@ -16,7 +16,7 @@ import { getLocale } from "@/lib/data/locale";
 import { getCurrency } from "@/lib/data/currency";
 import { getProject } from "@/lib/data/projects";
 import { prisma } from "@/lib/prisma";
-import { makeUI } from "@/lib/i18n";
+import { labelSep, makeUI } from "@/lib/i18n";
 
 export const metadata: Metadata = {
   title: "For Creators — iGovazd",
@@ -149,7 +149,10 @@ export default async function ForCreatorsPage() {
                       <p>{t(field.descKey)}</p>
                       {example ? (
                         <p className="mt-2">
-                          <span className="font-medium text-foreground">{t("forCreators.exampleLabel")}:</span>{" "}
+                          <span className="font-medium text-foreground">
+                            {t("forCreators.exampleLabel")}
+                            {labelSep(locale)}
+                          </span>{" "}
                           {example}
                         </p>
                       ) : null}

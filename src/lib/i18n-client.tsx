@@ -30,10 +30,11 @@ import {
   LOCALE_COOKIE,
   isLocale,
   intlLocale,
+  labelSep,
   type Locale,
 } from "@/lib/i18n-base";
 
-export { LOCALES, DEFAULT_LOCALE, LOCALE_COOKIE, isLocale, intlLocale };
+export { LOCALES, DEFAULT_LOCALE, LOCALE_COOKIE, isLocale, intlLocale, labelSep };
 export type { Locale };
 
 export type Dicts = Partial<Record<Locale, Record<string, string>>>;

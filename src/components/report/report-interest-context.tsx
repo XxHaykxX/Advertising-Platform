@@ -174,6 +174,7 @@ export function ReportInterestProvider({
           appliedOffers={sentOffers}
           brandPhone={brandPhone}
           t={t}
+          locale={locale}
           onClose={() => setIsOpen(false)}
           // The popup reports WHICH offer was sent, so only that card flips to
           // "already sent" — applying for one placement must not read as all

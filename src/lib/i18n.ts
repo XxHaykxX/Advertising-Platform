@@ -19,6 +19,7 @@ export {
   LOCALE_COOKIE,
   isLocale,
   intlLocale,
+  labelSep,
   type Locale,
 } from "@/lib/i18n-base";
 import { LOCALES, type Locale } from "@/lib/i18n-base";
