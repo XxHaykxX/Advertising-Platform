@@ -211,7 +211,7 @@ export const UI: Record<string, Dict> = {
   "footer.product": { ru: "Продукт", en: "Product", hy: "Արտադրանք" },
   "footer.company": { ru: "Компания", en: "Company", hy: "Ընկերություն" },
   "footer.legal": { ru: "Правовая информация", en: "Legal", hy: "Իրավական տեղեկություններ" },
-  "footer.contacts": { ru: "Контакты", en: "Contacts", hy: "Կոնտակտներ" },
+  "footer.contacts": { ru: "Контакты", en: "Contacts", hy: "Կապ մեզ հետ" },
   "footer.browseProjects": { ru: "Смотреть проекты", en: "Browse Projects", hy: "Դիտել նախագծերը" },
   "footer.howItWorks": { ru: "Как это работает", en: "How It Works", hy: "Ինչպես է աշխատում" },
   "footer.portfolio": { ru: "Портфолио", en: "Portfolio", hy: "Պորտֆոլիո" },
