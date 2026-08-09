@@ -74,11 +74,11 @@ export const UI: Record<string, Dict> = {
     en: "List your project, showcase opportunities for brands and secure funding for production — while keeping creative control.",
     hy: "Տեղադրեք ձեր նախագիծը, ցույց տվեք բրենդների հնարավորությունները և ապահովեք ֆինանսավորում նկարահանումների համար՝ պահպանելով ստեղծագործական վերահսկողությունը։",
   },
-  "about.ctaTitle": { ru: "Готовы начать?", en: "Ready to start?", hy: "Պատրա՞ստ եք սկսել։" },
+  "about.ctaTitle": { ru: "Готовы начать?", en: "Ready to start?", hy: "Պատրա՞ստ եք սկսել" },
   "about.ctaBody": {
     ru: "Изучите активные проекты или зарегистрируйтесь, чтобы разместить свой.",
     en: "Explore active projects or register to list your own.",
-    hy: "Ուսումնասիրեք ակտիվ նախագծերը կամ գրանցվեք՝ ձերը տեղադրելու համար։",
+    hy: "Լավագույն բրենդներն ու ստեղծագործողներն արդեն հարթակում են: Գրանցվե՛ք մի քանի վայրկյանում։",
   },
   "about.registerCta": { ru: "Зарегистрироваться", en: "Register", hy: "Գրանցվել" },
   "about.heroEyebrow": { ru: "Маркетплейс product placement", en: "Product-placement marketplace", hy: "Մեր մասին" },
@@ -1545,7 +1545,7 @@ export const UI: Record<string, Dict> = {
     en: "The Old Bridge Mystery",
     hy: "Հին կամրջի առեղծվածը",
   },
-  "projectForm.about.description": { ru: "Описание", en: "Description", hy: "Նկարագրություն" },
+  "projectForm.about.description": { ru: "Описание", en: "Description", hy: "Սինոփսիս/Նկարագրություն" },
   "projectForm.about.descriptionPlaceholder": {
     ru: "Опишите проект…",
     en: "Describe the project…",
@@ -1744,7 +1744,7 @@ export const UI: Record<string, Dict> = {
   "projectForm.field.tagline": {
     ru: "Слоган (одна строка, показывается в шапке)",
     en: "Tagline / logline (one line, shown in the hero)",
-    hy: "Կարգախոս (մեկ տող, ցուցադրվում է գլխավոր բլոկում)",
+    hy: "Լոգլայն/Կարգախոս",
   },
   "projectForm.taglinePlaceholder": {
     ru: "Звезда рождается — и у славы есть цена.",
@@ -2385,11 +2385,11 @@ export const UI: Record<string, Dict> = {
     en: "Five steps, from the project's texts to what you're selling a brand. Open any row to see the requirements and an example.",
     hy: "Հինգ քայլ՝ նախագծի տեքստերից մինչև այն, ինչ վաճառում եք բրենդին։ Բացեք ցանկացած կետ՝ պահանջներն ու օրինակը տեսնելու համար։",
   },
-  "forCreators.expandAll": { ru: "Развернуть всё", en: "Expand all", hy: "Բացել բոլորը" },
-  "forCreators.collapseAll": { ru: "Свернуть всё", en: "Collapse all", hy: "Ծալել բոլորը" },
+  "forCreators.expandAll": { ru: "Развернуть всё", en: "Expand all", hy: "Տեսնել մանրամասն" },
+  "forCreators.collapseAll": { ru: "Свернуть всё", en: "Collapse all", hy: "Փակել" },
   "forCreators.exampleLabel": { ru: "Например", en: "Example", hy: "Օրինակ" },
 
-  "forCreators.step.texts.title": { ru: "Тексты о проекте", en: "Texts about the project", hy: "Նախագծի տեքստեր" },
+  "forCreators.step.texts.title": { ru: "Тексты о проекте", en: "Texts about the project", hy: "Հիմնական" },
   "forCreators.step.texts.subtitle": {
     ru: "Название, синопсис, логлайн и жанры — на любом из трёх языков, остальные можно добавить позже.",
     en: "Title, synopsis, logline and genres — in any one of the three languages; the rest can be added later.",
@@ -2426,22 +2426,22 @@ export const UI: Record<string, Dict> = {
   "forCreators.field.title.desc": {
     ru: "До 191 символа. Заполните хотя бы на одном языке — армянском, русском или английском; остальные можно дописать позже.",
     en: "Up to 191 characters. Fill in at least one of the three languages (Armenian, Russian or English) — the rest can wait.",
-    hy: "Մինչև 191 նիշ։ Լրացրեք գոնե մեկ լեզվով՝ հայերեն, ռուսերեն կամ անգլերեն, մնացածը կարող եք ավելացնել հետո։",
+    hy: "Առավելագույնը՝ 50 նիշ։",
   },
   "forCreators.field.synopsis.desc": {
     ru: "Длина не ограничена. Поддерживает простую разметку: **жирный**, *курсив*, [текст](ссылка) и переносы строк.",
     en: "No length limit. Supports simple formatting: **bold**, *italic*, [text](link) and line breaks.",
-    hy: "Երկարությունը սահմանափակված չէ։ Աջակցում է պարզ ձևաչափում՝ **թավ**, *շեղ*, [տեքստ](հղում) և նոր տողեր։",
+    hy: "Սիմվոլների քանակը սահմանափակված չէ։",
   },
   "forCreators.field.logline.desc": {
     ru: "Одна фраза, строго до 140 символов — показывается в шапке страницы проекта.",
     en: "One sentence, strictly under 140 characters — shown in the project page's hero.",
-    hy: "Մեկ նախադասություն, խստորեն մինչև 140 նիշ, ցուցադրվում է նախագծի էջի վերևում։",
+    hy: "Առավելագույնը` 140 նիշ։",
   },
   "forCreators.field.genres.desc": {
     ru: "Выбирается только из готового списка жанров — добавить свой вариант нельзя.",
     en: "Picked from the fixed genre list only — you can't add a custom one.",
-    hy: "Ընտրվում է միայն պատրաստի ժանրերի ցանկից, սեփական տարբերակ ավելացնել հնարավոր չէ։",
+    hy: "Նշեք ժանր(եր)ը հնարավորինս համապատասխան առաջարկներ ստանալու համար։",
   },
   "forCreators.field.poster.desc": {
     ru: "Соотношение 16:9, рекомендуем 1600×900, до 8 МБ, JPG/PNG/WebP/GIF/AVIF. Вертикальный постер будет обрезан по центру до 16:9 — заранее подготовьте горизонтальный кадр.",
@@ -2544,11 +2544,11 @@ export const UI: Record<string, Dict> = {
     hy: "Նմանատիպ նախկին նախագծեր՝ անվանում, հղում, նկար կամ տեսահոլովակ։",
   },
 
-  "forCreators.fileReq.title": { ru: "Требования к файлам", en: "File requirements", hy: "Ֆայլերի պահանջներ" },
+  "forCreators.fileReq.title": { ru: "Требования к файлам", en: "File requirements", hy: "Տեխնիկական չափորոշիչներ" },
   "forCreators.fileReq.subtitle": {
     ru: "Сводная таблица лимитов по каждому типу медиа.",
     en: "A quick reference table of the limits for each media type.",
-    hy: "Յուրաքանչյուր մեդիա տեսակի սահմանափակումների ամփոփ աղյուսակ։",
+    hy: "Մեդիա ֆայլերի և ձևաչափերի տեխնիկական պահանջներն ու սահմանափակումները։",
   },
   "forCreators.fileReq.col.type": { ru: "Тип", en: "Type", hy: "Տեսակ" },
   "forCreators.fileReq.col.ratio": { ru: "Соотношение", en: "Aspect ratio", hy: "Հարաբերակցություն" },
