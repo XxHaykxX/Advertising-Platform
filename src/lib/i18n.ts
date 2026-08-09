@@ -50,11 +50,11 @@ export const UI: Record<string, Dict> = {
   "logout.confirmYes": { ru: "Да, выйти", en: "Yes, log out", hy: "Այո, դուրս գալ" },
   "logout.confirmNo": { ru: "Отмена", en: "No", hy: "Ոչ" },
 
-  "about.heroTitle": { ru: "О нас", en: "About us", hy: "Մեր մասին" },
+  "about.heroTitle": { ru: "О нас", en: "About us", hy: "ՓՐՈԴԱՔԹ ՓԼԵՅՍՄԵՆԹԻ ՀԱՐԹԱԿ" },
   "about.heroSubtitle": {
     ru: "iGovazd — маркетплейс, который соединяет бренды с создателями фильмов и контента для честного product placement.",
     en: "iGovazd is a marketplace connecting brands with film and content creators for authentic product placement.",
-    hy: "iGovazd-ը շուկա է, որ կապում է բրենդներին ֆիլմերի ու բովանդակության հեղինակների հետ՝ ազնիվ ապրանքի տեղաբաշխման համար։",
+    hy: "iGovazd-ը հայկական առաջին թվային հարթակն է, որը կապում է բրենդներին մեդիա նախագծերի հեղինակների հետ՝ ապահովելով օրգանական և արդյունավետ գովազդային ինտեգրումներ:",
   },
   "about.missionTitle": { ru: "Наша миссия", en: "Our mission", hy: "Մեր առաքելությունը" },
   "about.missionBody": {
@@ -81,11 +81,7 @@ export const UI: Record<string, Dict> = {
     hy: "Ուսումնասիրեք ակտիվ նախագծերը կամ գրանցվեք՝ ձերը տեղադրելու համար։",
   },
   "about.registerCta": { ru: "Зарегистрироваться", en: "Register", hy: "Գրանցվել" },
-  "about.heroEyebrow": {
-    ru: "Маркетплейс product placement",
-    en: "Product-placement marketplace",
-    hy: "Փրոդակթ փլեյսմենթի շուկա",
-  },
+  "about.heroEyebrow": { ru: "Маркетплейс product placement", en: "Product-placement marketplace", hy: "Մեր մասին" },
   "about.connectTitle": { ru: "Как мы соединяем", en: "How we connect", hy: "Ինչպես ենք կապում" },
   // IA-26: the ru value was the English phrase, so the badge stayed in Latin
   // while everything around it on /about translated. Transliterated to match
