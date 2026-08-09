@@ -1115,7 +1115,7 @@ export const UI: Record<string, Dict> = {
   // ── auth: register (brand + creator self-serve) ──
   "register.accountType": { ru: "Тип аккаунта", en: "Account type", hy: "Հաշվի տեսակ" },
   "register.typeBrand": { ru: "Бренд", en: "Brand", hy: "Բրենդ" },
-  "register.typeCreator": { ru: "Создатель", en: "Creator", hy: "Հեղինակ" },
+  "register.typeCreator": { ru: "Создатель", en: "Creator", hy: "Արտադրող" },
   "register.typeBrandHint": {
     ru: "Хочу разместить бренд в проектах",
     en: "Place my brand in productions",
@@ -1124,7 +1124,7 @@ export const UI: Record<string, Dict> = {
   "register.typeCreatorHint": {
     ru: "Монетизирую свой контент плейсментом",
     en: "Monetize my content with placement",
-    hy: "Ներկայացնել իմ նախագծերը և գտնել գործընկերներ։",
+    hy: "Ներկայացնել նախագծեր և գտնել գործընկերներ։",
   },
   "register.password": { ru: "Пароль", en: "Password", hy: "Գաղտնաբառ" },
   "register.passwordPlaceholder": { ru: "Минимум 8 символов", en: "At least 8 characters", hy: "Առնվազն 8 նիշ" },
