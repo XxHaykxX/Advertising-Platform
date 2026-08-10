@@ -296,7 +296,12 @@ export function Header({
         // under it with exactly -mt-16 (64px) — the leftover 1px showed as a
         // white hairline above every dark hero.
         "sticky top-0 z-50 transition-[color,background-color,box-shadow] duration-300",
-        scrolled ? "bg-background/80 shadow-[0_1px_0_0_var(--border)] backdrop-blur-md" : "bg-transparent"
+        // Opaque, not `bg-background/80 backdrop-blur-md` (dropped 2026-08-10):
+        // a full-width blur behind a sticky element is re-rasterised on every
+        // scrolled frame, and this one spans the viewport for the entire page.
+        // It was the most expensive thing running during a scroll; at 80%
+        // opacity over the same background the difference is barely visible.
+        scrolled ? "bg-background shadow-[0_1px_0_0_var(--border)]" : "bg-transparent"
       )}
     >
       <Container>

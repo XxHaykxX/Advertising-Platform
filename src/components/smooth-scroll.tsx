@@ -46,7 +46,11 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
 
   return (
     <Suspense fallback={children}>
-      <ReactLenis root options={{ lerp: 0.1, duration: 1.2, smoothWheel: true }}>
+      {/* duration was lenis' own default, 1.2s — a full second of glide after
+          the wheel stops, which the owner read as the page hanging rather than
+          as an effect (reported 2026-08-10: "тяжело скроллить"). 0.6 keeps the
+          easing but lets the page settle roughly when the hand does. */}
+      <ReactLenis root options={{ lerp: 0.1, duration: 0.6, smoothWheel: true }}>
         {children}
       </ReactLenis>
     </Suspense>
