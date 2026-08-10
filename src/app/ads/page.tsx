@@ -69,6 +69,16 @@ export default async function AdsPage() {
                     {channels.map((channel) => {
                       const Icon = AD_CHANNEL_ICONS[channel.code];
                       return (
+                        // Still the channel's own page, not /catalog?channel=
+                        // (2026-08-10, stage B): this overview is the map of
+                        // what each channel IS, and the channel page carries
+                        // its hero plus `about` and `buy1-3` in three
+                        // languages. Sending the tile past all of that to the
+                        // shopping list would leave that copy with no way in
+                        // but the header dropdown. The channel page ends in
+                        // "see everything in the catalogue", so the trip is
+                        // one click longer only for someone who already knows
+                        // what a lift screen is.
                         <Link
                           key={channel.code}
                           href={`/ads/${channel.slug}`}

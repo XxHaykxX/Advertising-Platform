@@ -15,8 +15,9 @@ import { getLocale } from "@/lib/data/locale";
 import { getCurrency } from "@/lib/data/currency";
 import { getProjects } from "@/lib/data/projects";
 import { getAdSpacesByChannel } from "@/lib/data/ad-spaces";
-import { getBrandFavoriteSet } from "@/lib/data/favorites";
+import { getBrandFavoriteSet, getOwnedProjectIdSet } from "@/lib/data/favorites";
 import { loadCurrentUser } from "@/lib/auth/require";
+import { canBuy, canSell } from "@/lib/auth/capabilities";
 import { AD_CHANNELS, findAdChannel, type AdChannel } from "@/lib/ad-channels";
 import { ADS_ENABLED } from "@/lib/feature-flags";
 import { makeUI } from "@/lib/i18n";
@@ -47,6 +48,10 @@ export async function generateStaticParams() {
 }
 
 const BUY_KEYS = ["buy1", "buy2", "buy3"] as const;
+
+// The inventory grid here is a teaser (2026-08-10, stage B) — the catalog is
+// where browsing/filtering/sorting actually happens now.
+const TEASER_SIZE = 6;
 
 /** Which existing projects count as this channel's inventory. Only the two
  *  PROJECT channels get here; the seven AD_SPACE ones have no table yet
@@ -86,7 +91,14 @@ export default async function AdChannelPage({
     channel.entity === "AD_SPACE" ? await getAdSpacesByChannel(channel.code, locale, currency) : [];
   // Favorites (#22) are a BRAND-only private shortlist — same rule as /catalog.
   const favorites =
-    currentUser?.role === "BRAND" ? await getBrandFavoriteSet(currentUser.id) : new Set<number>();
+    currentUser != null && canBuy(currentUser)
+      ? await getBrandFavoriteSet(currentUser.id)
+      : new Set<number>();
+  // Nobody buys from themselves — same rule as /catalog.
+  const ownIds =
+    currentUser != null && canSell(currentUser)
+      ? await getOwnedProjectIdSet(currentUser.id)
+      : new Set<number>();
 
   return (
     <>
@@ -166,18 +178,26 @@ export default async function AdChannelPage({
                 </p>
               </Reveal>
               {projects.length > 0 ? (
-                <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                  {projects.map((project) => (
-                    <ProjectCard
-                      key={project.id}
-                      project={project}
-                      locale={locale}
-                      favorited={favorites.has(project.id)}
-                      canFavorite={currentUser?.role === "BRAND"}
-                      signedIn={currentUser !== null}
-                    />
-                  ))}
-                </div>
+                <>
+                  <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    {projects.slice(0, TEASER_SIZE).map((project) => (
+                      <ProjectCard
+                        key={project.id}
+                        project={project}
+                        locale={locale}
+                        favorited={favorites.has(project.id)}
+                        canFavorite={canBuy(currentUser) && !ownIds.has(project.id)}
+                        isOwn={ownIds.has(project.id)}
+                        signedIn={currentUser !== null}
+                      />
+                    ))}
+                  </div>
+                  <div className="mt-8">
+                    <Button asChild variant="secondary" size="md">
+                      <Link href={`/catalog?channel=${channel.code}`}>{t("ads.viewAllInCatalog")}</Link>
+                    </Button>
+                  </div>
+                </>
               ) : (
                 <Reveal delay={0.16}>
                   <p className="mt-8 max-w-3xl rounded-2xl border border-border bg-card px-6 py-5 text-sm text-muted-foreground">
@@ -188,7 +208,8 @@ export default async function AdChannelPage({
             </>
           ) : spaces.length > 0 ? (
             /* The spaces creators have listed on this channel and moderation
-               has approved (stage 3). */
+               has approved (stage 3) — first TEASER_SIZE, same as the PROJECT
+               branch above; the catalog is where the whole list lives now. */
             <>
               <Reveal delay={0.08}>
                 <p className="mt-3 max-w-3xl text-muted-foreground">
@@ -196,7 +217,7 @@ export default async function AdChannelPage({
                 </p>
               </Reveal>
               <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                {spaces.map((space) => (
+                {spaces.slice(0, TEASER_SIZE).map((space) => (
                   <AdSpaceCard
                     key={space.id}
                     space={space}
@@ -204,6 +225,11 @@ export default async function AdChannelPage({
                     locale={locale}
                   />
                 ))}
+              </div>
+              <div className="mt-8">
+                <Button asChild variant="secondary" size="md">
+                  <Link href={`/catalog?channel=${channel.code}`}>{t("ads.viewAllInCatalog")}</Link>
+                </Button>
               </div>
             </>
           ) : (
