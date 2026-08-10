@@ -5,6 +5,7 @@ import { Film, FolderSearch, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GenreBadge } from "@/components/ui/badge";
 import { requireMember } from "@/lib/auth/require";
+import { canBuy } from "@/lib/auth/capabilities";
 import { getLocale } from "@/lib/data/locale";
 import { getBrandProfile } from "@/lib/data/brand-profile";
 import { getBrandInterests } from "@/lib/data/brand-interests";
@@ -71,7 +72,7 @@ function RecentCard({ project, locale }: { project: DashboardProjectDTO; locale:
  *  and Recently Added. */
 export default async function BrandDashboardPage() {
   const user = await requireMember();
-  if (user.role !== "BRAND") redirect("/account");
+  if (!canBuy(user)) redirect("/account");
 
   const locale = await getLocale();
   const t = makeUI(locale);

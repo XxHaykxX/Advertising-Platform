@@ -58,12 +58,16 @@ function CheckboxFilter({
 export function BrowseView({
   projects,
   favorites,
+  ownIds = new Set(),
   locale = DEFAULT_LOCALE,
   title,
 }: {
   projects: ProjectListDTO[];
   /** projectIds the brand has favorited (heart's initial filled state). */
   favorites: Set<number>;
+  /** projectIds this same user OWNS (2026-08-11, dual-side accounts) — a
+   *  dual member's own listing shows up in this list too; no heart on it. */
+  ownIds?: Set<number>;
   locale?: Locale;
   title: string;
 }) {
@@ -220,8 +224,10 @@ export function BrowseView({
               locale={locale}
               favorited={favorites.has(project.id)}
               // A brand is signed in by definition here — the heart is live,
-              // never the "sign in to save" stub.
-              canFavorite
+              // never the "sign in to save" stub — unless this is a dual
+              // member's own listing, which gets neither heart nor apply.
+              canFavorite={!ownIds.has(project.id)}
+              isOwn={ownIds.has(project.id)}
               signedIn
             />
           ))}

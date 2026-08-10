@@ -7,7 +7,7 @@ import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
 import type { AccountStatus } from "@prisma/client";
 import { RowActions as StaffRowActions, RoleControl, DeleteAccountButton } from "./user-form";
-import { RowActions as MemberRowActions } from "../registrations/row-actions";
+import { RowActions as MemberRowActions, SideBadges } from "../registrations/row-actions";
 import { UsersTabs } from "./users-tabs";
 
 function formatDate(d: Date) {
@@ -30,7 +30,10 @@ export default async function UsersAdminPage() {
     prisma.user.findMany({
       where: { role: { in: [...STAFF_ROLES] } },
       orderBy: { createdAt: "asc" },
-      include: { _count: { select: { projects: true } } },
+      // adSpaces alongside projects — both are required, unguarded relations
+      // to User (#60), so the delete button needs both counts to gate itself
+      // the same way deleteAccount() does.
+      include: { _count: { select: { projects: true, adSpaces: true } } },
     }),
     // MySQL orders an ENUM column by declaration order, not alphabetically —
     // AccountStatus is declared PENDING, APPROVED, REJECTED, BLOCKED, so
@@ -38,7 +41,7 @@ export default async function UsersAdminPage() {
     prisma.user.findMany({
       where: { role: { in: ["BRAND", "CREATOR"] } },
       orderBy: [{ status: "asc" }, { createdAt: "desc" }],
-      include: { _count: { select: { projects: true } } },
+      include: { _count: { select: { projects: true, adSpaces: true } } },
     }),
   ]);
 
@@ -105,10 +108,10 @@ export default async function UsersAdminPage() {
                   <StaffRowActions
                     id={u.id}
                     name={u.name}
-                    role={u.role}
                     isActive={u.isActive}
                     isSelf={u.id === me.id}
                     projectCount={u._count.projects}
+                    adSpaceCount={u._count.adSpaces}
                   />
                 </td>
               </tr>
@@ -146,8 +149,17 @@ export default async function UsersAdminPage() {
                 <tr key={m.id} className="border-b border-border align-top last:border-b-0 hover:bg-muted/50">
                   <td className="px-4 py-3 font-medium text-foreground">{m.name}</td>
                   <td className="px-4 py-3 text-muted-foreground">{m.email}</td>
-                  <td className="px-4 py-3 text-muted-foreground">
-                    {MEMBER_ROLE_LABEL[m.role as "BRAND" | "CREATOR"]}
+                  <td className="px-4 py-3">
+                    <SideBadges
+                      userId={m.id}
+                      isCreator={m.isCreator}
+                      isBrand={m.isBrand}
+                      creatorLabel={MEMBER_ROLE_LABEL.CREATOR}
+                      brandLabel={MEMBER_ROLE_LABEL.BRAND}
+                    />
+                    <p className="mt-1 text-[11px] text-muted-foreground">
+                      {ui("admin.registrations.registeredAs")}: {MEMBER_ROLE_LABEL[m.role as "BRAND" | "CREATOR"]}
+                    </p>
                   </td>
                   <td className="px-4 py-3 text-muted-foreground">{m.company || "—"}</td>
                   <td className="px-4 py-3">
@@ -171,9 +183,10 @@ export default async function UsersAdminPage() {
                       <DeleteAccountButton
                         id={m.id}
                         name={m.name}
-                        role={m.role}
+                        isBrand={m.isBrand}
                         isSelf={m.id === me.id}
                         projectCount={m._count.projects}
+                        adSpaceCount={m._count.adSpaces}
                       />
                     </div>
                   </td>

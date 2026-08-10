@@ -47,3 +47,22 @@ export async function getPendingCount(): Promise<number> {
     where: { role: { in: ["BRAND", "CREATOR"] }, status: "PENDING" },
   });
 }
+
+/** Turn a member's sell/buy sides on or off from /admin/users (2026-08-11,
+   dual-side accounts). Same scoping guard as setMemberStatus above —
+   updateMany with role IN (BRAND, CREATOR) — so a stray id can never touch a
+   staff row's flags. Refuses to leave a member with neither side reachable:
+   the write is silently skipped rather than producing a member with no
+   cabinet at all. */
+export async function setMemberSides(
+  userId: number,
+  sides: { isCreator: boolean; isBrand: boolean },
+): Promise<void> {
+  await requireSuperadmin();
+  if (!sides.isCreator && !sides.isBrand) return;
+  await prisma.user.updateMany({
+    where: { id: userId, role: { in: ["BRAND", "CREATOR"] } },
+    data: sides,
+  });
+  revalidatePath("/admin/users");
+}

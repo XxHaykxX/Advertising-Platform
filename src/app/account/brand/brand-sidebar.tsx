@@ -64,7 +64,7 @@ export function BrandSidebar({
   const [unreadCount, setUnreadCount] = useState(0);
   useEffect(() => {
     let alive = true;
-    getUnreadNotificationCount()
+    getUnreadNotificationCount("member")
       .then((n) => {
         if (alive) setUnreadCount(n);
       })

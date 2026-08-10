@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { HelpCircle, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/ui/reveal";
@@ -33,8 +32,10 @@ const SUMMARY_ORDER: ModerationStatus[] = ["PENDING", "APPROVED", "REJECTED"];
 
 export default async function AccountPage() {
   const user = await requireMember();
-  // F13: BRAND members have a full cabinet at /account/brand — send them there.
-  if (user.role === "BRAND") redirect("/account/brand");
+  // F13: whoever can't sell gets bounced to their brand cabinet — handled by
+  // the (creator) route group's own layout, which runs before this page (see
+  // account/(creator)/layout.tsx). `role` alone can't answer that anymore for
+  // a dual member, so this page no longer re-checks it itself.
 
   const [locale, projects] = await Promise.all([
     getLocale(),

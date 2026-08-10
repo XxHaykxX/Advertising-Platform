@@ -4,6 +4,7 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Reveal } from "@/components/ui/reveal";
 import { requireMember } from "@/lib/auth/require";
+import { canSell } from "@/lib/auth/capabilities";
 import { prisma } from "@/lib/prisma";
 import { getLocale } from "@/lib/data/locale";
 import { labelSep, makeUI } from "@/lib/i18n";
@@ -25,7 +26,7 @@ export default async function MyAdSpacesPage() {
   const user = await requireMember();
   // BRAND members buy inventory, they don't own it (same guard as the project
   // list).
-  if (user.role !== "CREATOR") redirect("/account");
+  if (!canSell(user)) redirect("/account");
 
   const [locale, spaces] = await Promise.all([
     getLocale(),

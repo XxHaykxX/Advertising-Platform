@@ -3,7 +3,6 @@
 import { useActionState, useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { Loader2, KeyRound, Ban, RotateCcw, CheckCircle2, Trash2 } from "lucide-react";
-import type { Role } from "@prisma/client";
 import type { FormState, ResetState, RoleState, DeleteState } from "./actions";
 import { setUserActive, resetUserPassword, setUserRole, deleteUserAccount } from "./actions";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -245,33 +244,48 @@ export function RoleControl({
 /** Delete button for a single account row — staff or member, so it's used
    both from RowActions below and directly from the Members tab in page.tsx.
    Trash2 + a ConfirmDialog naming what disappears (see deleteAccountMessage),
-   never the native confirm(). Disabled up front for the two cases the caller
+   never the native confirm(). Disabled up front for the cases the caller
    already has the data for — your own row, and an account that still owns
-   projects — with a tooltip explaining why; the last-super-admin guard can't
-   be predicted per-row like that, so it only surfaces as a returned error
-   after confirming (same split as RoleControl's last_superadmin handling). */
+   projects and/or ad spaces — with a tooltip explaining why; the
+   last-super-admin guard can't be predicted per-row like that, so it only
+   surfaces as a returned error after confirming (same split as RoleControl's
+   last_superadmin handling).
+   projectCount/adSpaceCount have to mirror exactly what deleteAccount()
+   itself gates on — #60: this was projectCount-only, so a row with ad spaces
+   but no projects rendered an enabled button that then crashed on a raw FK
+   error at confirm time instead of being disabled up front like a row with
+   projects always was. */
 export function DeleteAccountButton({
   id,
   name,
-  role,
+  isBrand = false,
   isSelf,
   projectCount,
+  adSpaceCount = 0,
 }: {
   id: number;
   name: string;
-  role: Role;
+  /** Whether this account can buy (Interest/Favorite rows exist) — the
+   *  member's isBrand flag, not the legacy role column (QA-5). Staff rows
+   *  never have it, hence the default. */
+  isBrand?: boolean;
   isSelf: boolean;
   projectCount: number;
+  /** Staff rows never own ad spaces, hence the default. */
+  adSpaceCount?: number;
 }) {
   const [pending, start] = useTransition();
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const disabled = isSelf || projectCount > 0;
+  const disabled = isSelf || projectCount > 0 || adSpaceCount > 0;
+  const owns: string[] = [];
+  if (projectCount > 0) owns.push(`${projectCount} project${projectCount === 1 ? "" : "s"}`);
+  if (adSpaceCount > 0) owns.push(`${adSpaceCount} ad space${adSpaceCount === 1 ? "" : "s"}`);
   const title = isSelf
     ? "You can't delete your own account"
-    : projectCount > 0
-      ? `Can't delete — owns ${projectCount} project${projectCount === 1 ? "" : "s"}. Reassign or remove them first.`
+    : owns.length > 0
+      ? `Can't delete — owns ${owns.join(" and ")}. Reassign or remove them first.`
       : undefined;
 
   function confirm() {
@@ -298,7 +312,7 @@ export function DeleteAccountButton({
       <ConfirmDialog
         open={open}
         title="Delete account?"
-        message={deleteAccountMessage(name, role)}
+        message={deleteAccountMessage(name, isBrand)}
         confirmLabel="Delete"
         pending={pending}
         onConfirm={confirm}
@@ -314,17 +328,17 @@ export function DeleteAccountButton({
 export function RowActions({
   id,
   name,
-  role,
   isActive,
   isSelf,
   projectCount,
+  adSpaceCount = 0,
 }: {
   id: number;
   name: string;
-  role: Role;
   isActive: boolean;
   isSelf: boolean;
   projectCount: number;
+  adSpaceCount?: number;
 }) {
   const [pending, start] = useTransition();
   const [resetting, setResetting] = useState(false);
@@ -356,7 +370,13 @@ export function RowActions({
         >
           <KeyRound className="h-4 w-4" />
         </button>
-        <DeleteAccountButton id={id} name={name} role={role} isSelf={isSelf} projectCount={projectCount} />
+        <DeleteAccountButton
+          id={id}
+          name={name}
+          isSelf={isSelf}
+          projectCount={projectCount}
+          adSpaceCount={adSpaceCount}
+        />
       </div>
       {resetting && <ResetPasswordForm id={id} onDone={() => setResetting(false)} />}
     </div>

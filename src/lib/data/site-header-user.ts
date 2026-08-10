@@ -24,7 +24,22 @@ export async function getSiteHeaderUser(
 
   const dbUser = await prisma.user.findUnique({
     where: { id: authUser.id },
-    select: { avatar: true },
+    select: {
+      avatar: true,
+      // Both counts unconditionally. Gating them on the member's own flags
+      // (`projects: authUser.isCreator`) looked like it saved work, but a
+      // staff row has both sides off and Prisma rejects an all-false _count
+      // select outright: "The `select` statement for type UserCountOutputType
+      // needs at least one truthy value" — every admin page 500'd. Two
+      // COUNTs on indexed FKs of a row we're already fetching is not the
+      // thing to economise on.
+      _count: {
+        select: {
+          projects: true,
+          interests: true,
+        },
+      },
+    },
   });
 
   return {
@@ -32,5 +47,9 @@ export async function getSiteHeaderUser(
     email: authUser.email,
     role: authUser.role,
     avatar: dbUser?.avatar ?? null,
+    isCreator: authUser.isCreator,
+    isBrand: authUser.isBrand,
+    projectCount: dbUser?._count.projects ?? 0,
+    interestCount: dbUser?._count.interests ?? 0,
   };
 }

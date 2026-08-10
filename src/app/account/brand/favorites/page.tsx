@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { requireMember } from "@/lib/auth/require";
+import { canBuy } from "@/lib/auth/capabilities";
 import { getLocale } from "@/lib/data/locale";
 import { getCurrency } from "@/lib/data/currency";
 import { getBrandFavorites } from "@/lib/data/brand-favorites";
@@ -12,7 +13,7 @@ import { FavoritesView } from "./favorites-view";
  *  FavoritesView; this server component only fetches. */
 export default async function BrandFavoritesPage() {
   const user = await requireMember();
-  if (user.role !== "BRAND") redirect("/account");
+  if (!canBuy(user)) redirect("/account");
 
   const locale = await getLocale();
   const currency = await getCurrency();

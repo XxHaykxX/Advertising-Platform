@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { Reveal } from "@/components/ui/reveal";
 import { requireMember } from "@/lib/auth/require";
+import { canSell } from "@/lib/auth/capabilities";
 import { prisma } from "@/lib/prisma";
 import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
@@ -37,7 +38,7 @@ export default async function EditCreatorAdSpacePage({
   });
   // 404 for "doesn't exist", "not a CREATOR" and "not yours" alike.
   if (!space) notFound();
-  if (user.role !== "CREATOR" || space.ownerId !== user.id) notFound();
+  if (!canSell(user) || space.ownerId !== user.id) notFound();
 
   const backLink = (
     <Link

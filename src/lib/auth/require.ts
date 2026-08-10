@@ -55,6 +55,8 @@ export type AuthedUser = {
   role: Role;
   name: string;
   isActive: boolean;
+  isCreator: boolean;
+  isBrand: boolean;
 };
 
 /** Reads one named session cookie and loads its user from the DB. Returns null
@@ -79,6 +81,8 @@ function toAuthedUser(user: {
   role: Role;
   name: string;
   isActive: boolean;
+  isCreator: boolean;
+  isBrand: boolean;
 }): AuthedUser {
   return {
     id: user.id,
@@ -86,6 +90,8 @@ function toAuthedUser(user: {
     role: user.role,
     name: user.name,
     isActive: user.isActive,
+    isCreator: user.isCreator,
+    isBrand: user.isBrand,
   };
 }
 

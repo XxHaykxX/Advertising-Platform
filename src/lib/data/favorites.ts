@@ -14,3 +14,16 @@ export async function getBrandFavoriteSet(brandId: number): Promise<Set<number>>
   });
   return new Set(rows.map((r) => r.projectId));
 }
+
+/** projectIds the given user OWNS (2026-08-11, dual-side accounts) — feeds
+ *  the `ownIds` prop that keeps a dual member from applying/favoriting their
+ *  own listing. Callers skip this entirely for anyone who can't sell (same
+ *  "only fetch what a side needs" rule as the projectCount/interestCount in
+ *  site-header-user.ts). */
+export async function getOwnedProjectIdSet(ownerId: number): Promise<Set<number>> {
+  const rows = await prisma.project.findMany({
+    where: { ownerId },
+    select: { id: true },
+  });
+  return new Set(rows.map((r) => r.id));
+}

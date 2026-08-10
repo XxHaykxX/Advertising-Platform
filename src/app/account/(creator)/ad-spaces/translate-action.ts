@@ -6,6 +6,7 @@
 // behind one exported helper. Only the state type is imported (type-only,
 // erased at compile time).
 import { requireMember } from "@/lib/auth/require";
+import { canSell } from "@/lib/auth/capabilities";
 import { translateFields, TranslateError, type TranslateLang } from "@/lib/translate";
 import type { TranslateAdSpaceState } from "@/app/admin/(panel)/ad-spaces/translate-shared";
 
@@ -19,7 +20,7 @@ export async function translateCreatorAdSpaceAction(fd: FormData): Promise<Trans
   const user = await requireMember();
   // Defense in depth: the cabinet hides ad spaces from BRAND accounts, but a
   // hand-made POST has to be refused, same as createCreatorAdSpace.
-  if (user.role !== "CREATOR") return { errorCode: "genericError" };
+  if (!canSell(user)) return { errorCode: "genericError" };
 
   const sourceLangRaw = String(fd.get("sourceLang") || "");
   const title = String(fd.get("title") || "");

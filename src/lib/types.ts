@@ -160,6 +160,9 @@ export interface AdSpaceListDTO {
   title: string;
   /** City + address, joined for display; "" when neither was filled. */
   location: string;
+  /** Raw city, separate from `location` (2026-08-10) — the catalog's City
+   *  facet filters on this alone, not the address half. */
+  city: string;
   /** "3×6 м", "30 сек" — the unit differs per channel, so it is free text. */
   sizeFormat: string;
   /** Audience or traffic per day; null when the owner gave no figure. */
@@ -169,6 +172,9 @@ export interface AdSpaceListDTO {
    *  "on request". */
   priceFromDisplay: string;
   offersCount: number;
+  /** ISO timestamp (2026-08-10) — the catalog's "newest first" sort needs a
+   *  recency signal for a space the same way releaseDate is one for a project. */
+  createdAt: string;
 }
 
 export interface AdSpaceDetailDTO extends AdSpaceListDTO {

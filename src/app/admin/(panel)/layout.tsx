@@ -28,7 +28,7 @@ export default async function PanelLayout({
             on: the prompt was mounted only in the member cabinet. So a new offer
             created an in-app row and then tried to push to an account that could
             never have had a subscription. English, like the rest of the panel. */}
-        <PushSubscribe locale="en" vapidPublicKey={process.env.VAPID_PUBLIC_KEY ?? ""} />
+        <PushSubscribe locale="en" vapidPublicKey={process.env.VAPID_PUBLIC_KEY ?? ""} scope="staff" />
       </AdminShell>
     </I18nProvider>
   );

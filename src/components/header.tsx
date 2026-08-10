@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import dynamic from "next/dynamic";
-import { LayoutDashboard, LogIn, LogOut, Menu, X } from "lucide-react";
+import { Check, ChevronDown, LayoutDashboard, LogIn, LogOut, Menu, X } from "lucide-react";
 import type { Role } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
@@ -13,10 +13,18 @@ import { LogoutButton } from "@/components/logout-button";
 import { DEFAULT_LOCALE, useUI, type Locale } from "@/lib/i18n-client";
 import { DEFAULT_CURRENCY, type CurrencyCode } from "@/lib/currency";
 import { ADS_ENABLED, PORTFOLIO_ENABLED } from "@/lib/feature-flags";
-import { AD_CHANNELS } from "@/lib/ad-channels";
+import { AD_CHANNELS, adChannelsByGroup, type AdChannelGroup } from "@/lib/ad-channels";
+import { canSell } from "@/lib/auth/capabilities";
+import { showsBrandNav } from "@/lib/nav-mode";
+import { useDismissable } from "@/lib/use-dismissable";
 import { cn } from "@/lib/utils";
 import { logout as staffLogout } from "@/app/admin/actions";
-import { logout as memberLogout } from "@/app/account/actions";
+import {
+  logout as memberLogout,
+  enableBrandSide,
+  enableCreatorSide,
+  type EnableSideResult,
+} from "@/app/account/actions";
 
 // framer-motion (~131 KB) lives entirely in mobile-nav-panel.tsx now, loaded
 // only once someone actually opens the mobile menu — see the "Mobile
@@ -34,18 +42,27 @@ export type SiteHeaderUser = {
   email: string;
   role: Role;
   avatar: string | null;
+  isCreator: boolean;
+  isBrand: boolean;
+  // Subtitle counts for the side-switcher panel ("Создатель · 2 проекта" /
+  // "Бренд · 1 заявка") — only fetched for the side that's actually on.
+  projectCount: number;
+  interestCount: number;
 };
 
 const STAFF_ROLES: Role[] = ["SUPERADMIN", "PUBLISHER", "MODERATOR", "TRANSLATOR"];
 
-/** Cabinet path for a signed-in user's role — staff (SUPERADMIN/PUBLISHER/
- *  MODERATOR) land in `/admin`, members (BRAND/CREATOR) in `/account`. A
- *  TRANSLATOR's only admin page is the dictionary editor, so send them there
- *  directly (the dashboard redirects anyway). Shared by UserMenu and the
- *  Wordmark so both routes stay in sync. */
-function cabinetHrefFor(role: Role): string {
-  if (role === "TRANSLATOR") return "/admin/i18n";
-  return STAFF_ROLES.includes(role) ? "/admin" : "/account";
+/** Cabinet path for a signed-in user — staff (SUPERADMIN/PUBLISHER/
+ *  MODERATOR) land in `/admin`, members in whichever cabinet they can sell
+ *  from (or /account/brand if they can't). A TRANSLATOR's only admin page is
+ *  the dictionary editor, so send them there directly (the dashboard
+ *  redirects anyway). Takes the whole user, not just `role`, since 2026-08-11:
+ *  a dual member's role no longer says which side to land on. Shared by
+ *  UserMenu and the Wordmark so both routes stay in sync. */
+function cabinetHrefFor(user: SiteHeaderUser): string {
+  if (user.role === "TRANSLATOR") return "/admin/i18n";
+  if (STAFF_ROLES.includes(user.role)) return "/admin";
+  return canSell(user) ? "/account" : "/account/brand";
 }
 
 /** Pages opening on the dark cinematic hero (landing's own + every
@@ -66,17 +83,49 @@ const DARK_HERO_PATHS = new Set([
   ...AD_CHANNELS.map((c) => `/ads/${c.slug}`),
 ]);
 
-function useNav(t: ReturnType<typeof useUI>) {
+/** One heading inside the "Advertising" dropdown — a channel group plus its
+ *  channels, in adChannelsByGroup() order. Shared with MobileNavPanel, which
+ *  renders the same channels as a flat indented list instead of grouping them
+ *  under headings (see mobile-nav-panel.tsx, plan's C2 — no accordion). */
+export type NavChildGroup = {
+  group: AdChannelGroup;
+  groupLabel: string;
+  channels: { code: string; label: string; href: string }[];
+};
+
+export type NavItem = { label: string; href: string; children?: NavChildGroup[] };
+
+function useNav(t: ReturnType<typeof useUI>): NavItem[] {
   return [
     { label: t("nav.catalog"), href: "/catalog" },
     // Hidden behind ADS_ENABLED (src/lib/feature-flags.ts) — the routes 404 too.
-    ...(ADS_ENABLED ? [{ label: t("nav.ads"), href: "/ads" }] : []),
+    // `children` feeds the desktop dropdown (AdsNavDropdown below) and the
+    // mobile panel's indented sublist — nine channels, already grouped by
+    // adChannelsByGroup(), zero new dictionary keys (adGroup.*/adChannel.*
+    // already exist for the /ads pages).
+    ...(ADS_ENABLED
+      ? [
+          {
+            label: t("nav.ads"),
+            href: "/ads",
+            children: adChannelsByGroup().map(({ group, channels }) => ({
+              group,
+              groupLabel: t(`adGroup.${group}`),
+              channels: channels.map((c) => ({
+                code: c.code,
+                label: t(`adChannel.${c.code}`),
+                href: `/ads/${c.slug}`,
+              })),
+            })),
+          },
+        ]
+      : []),
     // Hidden behind PORTFOLIO_ENABLED while the owner keeps preparing cases
     // (see src/lib/feature-flags.ts) — the route itself 404s too.
     ...(PORTFOLIO_ENABLED ? [{ label: t("nav.portfolio"), href: "/portfolio" }] : []),
     { label: t("nav.about"), href: "/about" },
     { label: t("nav.contact"), href: "/contact" },
-  ] as const;
+  ];
 }
 
 /** IA-46: the BRAND cabinet's two most-used pages (dashboard + favorites),
@@ -99,6 +148,101 @@ function isNavItemActive(
 ): boolean {
   if (!pathname) return false;
   return item.exact ? pathname === item.href : pathname.startsWith(item.href);
+}
+
+/** Desktop-only dropdown under "Advertising" (C2/C3) — a plain `<ul>` of
+ *  links, not `role="menu"`: that role promises arrow-key navigation, which
+ *  neither this list nor UserMenu's actually implements, and a link list
+ *  already gets correct Tab order and screen-reader announcement for free.
+ *  Opens on click (not hover — hover-only menus are the classic touch-device
+ *  failure), closes on outside click/Escape/route change, and Escape returns
+ *  focus to the trigger button. */
+function AdsNavDropdown({
+  item,
+  t,
+  onDark,
+}: {
+  item: NavItem & { children: NavChildGroup[] };
+  t: ReturnType<typeof useUI>;
+  onDark: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const pathname = usePathname();
+  const close = useCallback(() => setOpen(false), []);
+  useDismissable(open, close, containerRef, triggerRef);
+
+  useEffect(() => setOpen(false), [pathname]);
+
+  return (
+    <div ref={containerRef} className="relative">
+      <button
+        ref={triggerRef}
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className={cn(
+          "flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors hover:bg-primary/10 hover:text-primary",
+          onDark ? "text-white/75" : "text-muted-foreground"
+        )}
+      >
+        {item.label}
+        <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", open && "rotate-180")} />
+      </button>
+
+      {open && (
+        // Two columns, not one (2026-08-10): nine channels under five group
+        // headings plus the two full-width rows stack to 584px, and 70vh on a
+        // 720px-tall laptop is 502 — the catalog row, the whole point of the
+        // panel, sat below the fold. Side by side it's ~330 and fits every
+        // screen; max-h stays as the backstop.
+        <ul className="absolute left-0 top-full z-50 mt-2 grid max-h-[70vh] w-[30rem] grid-cols-2 gap-x-2 overflow-y-auto rounded-xl border border-border bg-card py-1 shadow-lg shadow-black/10">
+          <li className="col-span-2 border-b border-border">
+            <Link
+              href={item.href}
+              onClick={() => setOpen(false)}
+              className="block px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+            >
+              {t("ads.backToAll")}
+            </Link>
+          </li>
+          {item.children.map((g) => (
+            <li key={g.group}>
+              <p className="px-4 pt-2.5 pb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                {g.groupLabel}
+              </p>
+              <ul>
+                {g.channels.map((c) => (
+                  <li key={c.code}>
+                    <Link
+                      href={c.href}
+                      onClick={() => setOpen(false)}
+                      className="block px-4 py-2 text-sm text-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+                    >
+                      {c.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </li>
+          ))}
+          <li className="col-span-2 border-t border-border">
+            <Link
+              href="/catalog"
+              onClick={() => setOpen(false)}
+              className="block px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+            >
+              {/* Not nav.catalog — "Catalogue" is already a sibling item in
+                  this very header, and the same word twice a centimetre apart
+                  reads as a mistake. This row says what the trip is for. */}
+              {t("ads.viewAllInCatalog")}
+            </Link>
+          </li>
+        </ul>
+      )}
+    </div>
+  );
 }
 
 /** "Hayk Karapetyan" → "HK"; "Hayk" → "H"; falls back to the email's first
@@ -136,9 +280,79 @@ export function Avatar({ user, onDark }: { user: SiteHeaderUser; onDark: boolean
   );
 }
 
-/** Avatar button + dropdown (own account link / logout) shown instead of the
- *  guest "Sign In / Up" button once a session is present. Modeled on
- *  CurrencySwitcher's outside-click / Escape pattern. */
+/** One row of the side-switcher panel (A5, 2026-08-11) — either a link into
+ *  a side that's already on (checkmark if it's the one currently open, a
+ *  subtitle count under the name) or, when that side is off, an invitation
+ *  that turns it on via the given action. Both rows share this shape so
+ *  Instagram's "both always visible" fix isn't undone by a special case for
+ *  the off side. */
+export function SideRow({
+  active,
+  href,
+  label,
+  subtitle,
+  inviteLabel,
+  onInvite,
+  pending,
+  onNavigate,
+  user,
+  onDark,
+}: {
+  active: boolean;
+  href: string | null;
+  label: string;
+  subtitle: string | null;
+  inviteLabel: string;
+  onInvite: () => void;
+  pending: boolean;
+  onNavigate: () => void;
+  user: SiteHeaderUser;
+  onDark: boolean;
+}) {
+  const content = (
+    <>
+      <span className="grid h-4 w-4 shrink-0 place-items-center">
+        {active && <Check className="h-4 w-4 text-primary" />}
+      </span>
+      <Avatar user={user} onDark={onDark} />
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-sm font-medium text-foreground">{label}</span>
+        <span className="block truncate text-xs text-muted-foreground">
+          {subtitle ?? <span className="text-primary">{inviteLabel}</span>}
+        </span>
+      </span>
+    </>
+  );
+
+  if (href) {
+    return (
+      <Link
+        href={href}
+        role="menuitem"
+        onClick={onNavigate}
+        className="flex items-center gap-2 px-4 py-2.5 text-sm text-foreground transition-colors hover:bg-primary/10"
+      >
+        {content}
+      </Link>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      role="menuitem"
+      disabled={pending}
+      onClick={onInvite}
+      className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm text-foreground transition-colors hover:bg-primary/10 disabled:opacity-60"
+    >
+      {content}
+    </button>
+  );
+}
+
+/** Avatar button + dropdown (side switcher / own account link / logout)
+ *  shown instead of the guest "Sign In / Up" button once a session is
+ *  present. Modeled on CurrencySwitcher's outside-click / Escape pattern. */
 function UserMenu({
   user,
   locale,
@@ -151,25 +365,31 @@ function UserMenu({
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const t = useUI(locale);
+  const pathname = usePathname();
+  const [pending, startTransition] = useTransition();
   const isStaff = STAFF_ROLES.includes(user.role);
-  const cabinetHref = cabinetHrefFor(user.role);
+  const cabinetHref = cabinetHrefFor(user);
   const logoutAction = isStaff ? staffLogout : memberLogout;
+  // Which cabinet the switcher panel checkmarks — only meaningful inside
+  // /account/**, same "mode lives in the URL, nowhere else" rule as A2's
+  // redirects; elsewhere neither row claims to be the active one.
+  const brandActive = pathname?.startsWith("/account/brand") ?? false;
 
-  useEffect(() => {
-    if (!open) return;
-    function onPointer(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpen(false);
-    }
-    document.addEventListener("mousedown", onPointer);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onPointer);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
+  function enableSide(action: () => Promise<EnableSideResult>) {
+    startTransition(async () => {
+      try {
+        const res = await action();
+        if (res.ok) window.location.assign(res.redirect);
+      } catch {
+        // Same fallback as LogoutButton: reload so the app re-evaluates
+        // auth/side state instead of leaving the row stuck disabled.
+        window.location.reload();
+      }
+    });
+  }
+
+  const close = useCallback(() => setOpen(false), []);
+  useDismissable(open, close, ref);
 
   return (
     <div ref={ref} className="relative">
@@ -179,9 +399,17 @@ function UserMenu({
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={user.name || user.email}
-        className="block rounded-full transition-opacity hover:opacity-80"
+        className="flex items-center gap-2 rounded-full transition-opacity hover:opacity-80"
       >
         <Avatar user={user} onDark={onDark} />
+        <span
+          className={cn(
+            "hidden max-w-[9rem] truncate text-sm font-medium xl:inline",
+            onDark ? "text-white" : "text-foreground"
+          )}
+        >
+          {user.name || user.email}
+        </span>
       </button>
 
       {open && (
@@ -195,6 +423,38 @@ function UserMenu({
             </p>
             <p className="truncate text-xs text-muted-foreground">{user.email}</p>
           </div>
+          {/* Side switcher (A5) — both rows always shown once either side is
+              on; nothing renders for staff or a member with neither flag set
+              (can't happen for an approved member, only for staff, whose
+              isCreator/isBrand are both false). */}
+          {(user.isCreator || user.isBrand) && (
+            <div className="border-b border-border py-1">
+              <SideRow
+                user={user}
+                onDark={onDark}
+                active={user.isCreator && !brandActive}
+                href={user.isCreator ? "/account" : null}
+                label={t("nav.sideCreator")}
+                subtitle={user.isCreator ? t("nav.sideCreatorSubtitle", { n: user.projectCount }) : null}
+                inviteLabel={t("nav.startSelling")}
+                onInvite={() => enableSide(enableCreatorSide)}
+                pending={pending}
+                onNavigate={() => setOpen(false)}
+              />
+              <SideRow
+                user={user}
+                onDark={onDark}
+                active={user.isBrand && brandActive}
+                href={user.isBrand ? "/account/brand" : null}
+                label={t("nav.sideBrand")}
+                subtitle={user.isBrand ? t("nav.sideBrandSubtitle", { n: user.interestCount }) : null}
+                inviteLabel={t("nav.startBuying")}
+                onInvite={() => enableSide(enableBrandSide)}
+                pending={pending}
+                onNavigate={() => setOpen(false)}
+              />
+            </div>
+          )}
           <Link
             href={cabinetHref}
             role="menuitem"
@@ -222,7 +482,7 @@ function UserMenu({
 function Wordmark({ onDark, user }: { onDark: boolean; user: SiteHeaderUser | null }) {
   return (
     <Link
-      href={user ? cabinetHrefFor(user.role) : "/"}
+      href={user ? cabinetHrefFor(user) : "/"}
       className={cn(
         "text-lg font-bold tracking-tight",
         onDark ? "text-white" : "text-foreground"
@@ -257,10 +517,17 @@ export function Header({
   // cabinet is reachable via the avatar menu / Wordmark instead
   // (see docs/superpowers/specs/2026-07-19-member-header-nav-design.md).
   const isMember = user != null && !STAFF_ROLES.includes(user.role);
-  // IA-46: BRAND (not CREATOR, not staff, not guests) gets its two most-used
-  // cabinet pages promoted into the header nav slot, replacing the sidebar
-  // entries removed in brand-sidebar.tsx.
-  const isBrand = user?.role === "BRAND";
+  // IA-46: gets its two most-used cabinet pages promoted into the header nav
+  // slot, replacing the sidebar entries removed in brand-sidebar.tsx. Not
+  // staff, not guests, and — since 2026-08-11 — not a dual member currently
+  // sitting in their creator cabinet: `role` alone can't tell BRAND apart
+  // from a dual member browsing /account/projects, only the path can (same
+  // "mode lives in the URL" rule the account redirects follow). The exclusion
+  // is the *creator cabinet*, not "everywhere but the brand cabinet": gating
+  // on /account/brand also stripped these links on /catalog and every other
+  // public page, where `isMember` already hides the marketing nav — a brand
+  // browsing the catalogue was left with an empty nav bar.
+  const isBrand = showsBrandNav(user, pathname);
   // Every page that opens on the dark cinematic PageHero (plus the landing
   // page, which has its own bespoke hero) — while the transparent header
   // floats over it, switch text to a light-on-dark scheme.
@@ -319,18 +586,27 @@ export function Header({
             )}
           >
             {!isMember &&
-              NAV.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors hover:bg-primary/10 hover:text-primary",
-                    onDark ? "text-white/75" : "text-muted-foreground"
-                  )}
-                >
-                  {item.label}
-                </Link>
-              ))}
+              NAV.map((item) =>
+                item.children ? (
+                  <AdsNavDropdown
+                    key={item.href}
+                    item={item as NavItem & { children: NavChildGroup[] }}
+                    t={t}
+                    onDark={onDark}
+                  />
+                ) : (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors hover:bg-primary/10 hover:text-primary",
+                      onDark ? "text-white/75" : "text-muted-foreground"
+                    )}
+                  >
+                    {item.label}
+                  </Link>
+                )
+              )}
             {isBrand &&
               BRAND_NAV.map((item) => {
                 const active = isNavItemActive(pathname, item);
@@ -408,7 +684,7 @@ export function Header({
           // sending a TRANSLATOR through an extra redirect hop (the dashboard
           // bounces that role straight to /admin/i18n anyway). cabinetHrefFor
           // is the same helper the desktop UserMenu/Wordmark already use.
-          cabinetHref={user ? cabinetHrefFor(user.role) : ""}
+          cabinetHref={user ? cabinetHrefFor(user) : ""}
           logoutAction={user && STAFF_ROLES.includes(user.role) ? staffLogout : memberLogout}
           signInLabel={t("nav.signInUp")}
           cabinetLabel={t("nav.cabinet")}

@@ -40,6 +40,16 @@ export const UI: Record<string, Dict> = {
   "nav.browseProjects": { ru: "Смотреть проекты", en: "Browse Projects", hy: "Տեսնել նախագծերը" },
   "nav.openMenu": { ru: "Открыть меню", en: "Open menu", hy: "Բացել ընտրացանկը" },
   "nav.closeMenu": { ru: "Закрыть меню", en: "Close menu", hy: "Փակել ընտրացանկը" },
+  // Side-switcher panel under the avatar (2026-08-11, dual-side accounts) —
+  // both rows are always shown when both sides are on; the other row becomes
+  // an invitation (startBuying/startSelling) when only one is. Deliberately
+  // under nav., not account.: this is a header element, not a cabinet page.
+  "nav.sideCreator": { ru: "Создатель", en: "Creator", hy: "Հեղինակ" },
+  "nav.sideBrand": { ru: "Бренд", en: "Brand", hy: "Բրենդ" },
+  "nav.sideCreatorSubtitle": { ru: "{n} проектов", en: "{n} projects", hy: "{n} նախագիծ" },
+  "nav.sideBrandSubtitle": { ru: "{n} заявок", en: "{n} applications", hy: "{n} հայտ" },
+  "nav.startBuying": { ru: "Начать покупать", en: "Start buying", hy: "Սկսել գնել" },
+  "nav.startSelling": { ru: "Начать продавать", en: "Start selling", hy: "Սկսել վաճառել" },
 
   // ── logout confirm popup ────────────────────
   "logout.confirmTitle": { ru: "Выйти из аккаунта?", en: "Log out?", hy: "Դուրս գալ հաշվից" },
@@ -348,6 +358,14 @@ export const UI: Record<string, Dict> = {
   "placementType.LOGO": { ru: "Логотип в титрах", en: "Logo placement", hy: "Լոգոյի տեղաբաշխում" },
   "placementType.VERBAL": { ru: "Упоминание в диалоге", en: "Verbal mention", hy: "Բանավոր հիշատակում" },
   "placementType.NAMING": { ru: "Права на название", en: "Naming rights", hy: "Անվանակոչման իրավունք" },
+  // QA-8: "Available on" (project.platforms) mixes brand names (never
+  // translate — "Kinodaran", "YouTube") with these three generic category
+  // words, which do need a translation. Only these three get a dictionary
+  // entry; localize("platformCategory", v) falls back to the raw value for
+  // everything else, same contract as genre/formatCategory.
+  "platformCategory.TV": { ru: "ТВ", en: "TV", hy: "Հեռուստատեսություն" },
+  "platformCategory.Cinema": { ru: "Кинотеатры", en: "Cinema", hy: "Կինոթատրոններ" },
+  "platformCategory.Festivals": { ru: "Фестивали", en: "Festivals", hy: "Փառատոներ" },
   "placementTypeHint.PRODUCT": {
     ru: "Товар или бренд виден в кадре — герой им пользуется или носит его.",
     en: "The product or brand is visible on screen — the character uses or wears it.",
@@ -421,8 +439,25 @@ export const UI: Record<string, Dict> = {
   "catalog.gridView": { ru: "Вид сеткой", en: "Grid view", hy: "Ցանցի տեսք" },
   "catalog.listView": { ru: "Вид списком", en: "List view", hy: "Ցուցակի տեսք" },
   "catalog.showingProjectsPrefix": { ru: "Показано", en: "Showing", hy: "Ցուցադրված է" },
-  "catalog.projectSingular": { ru: "проект", en: "project", hy: "նախագիծ" },
-  "catalog.projectPlural": { ru: "проектов", en: "projects", hy: "նախագիծ" },
+  // QA-9: three keys instead of one singular/plural switch — ru needs "1
+  // проект" / "2 проекта" / "5 проектов", not two forms. See src/lib/plural.ts
+  // (pluralForm) for which key a given count picks; en/hy only ever reach
+  // .one/.many (CLDR has no "few" for them), .few carries the same text as
+  // .many there so the row is never blank if something calls it anyway.
+  "catalog.projectCount.one": { ru: "{n} проект", en: "{n} project", hy: "{n} նախագիծ" },
+  "catalog.projectCount.few": { ru: "{n} проекта", en: "{n} projects", hy: "{n} նախագիծ" },
+  "catalog.projectCount.many": { ru: "{n} проектов", en: "{n} projects", hy: "{n} նախագիծ" },
+  // Ad spaces get their own count (2026-08-10, stage B) — the counter line
+  // reads "12 projects · 8 ad spaces" instead of one number covering two
+  // different kinds of listing.
+  "catalog.adSpaceCount.one": { ru: "{n} рекламное место", en: "{n} ad space", hy: "{n} գովազդային տարածք" },
+  "catalog.adSpaceCount.few": { ru: "{n} рекламных места", en: "{n} ad spaces", hy: "{n} գովազդային տարածք" },
+  "catalog.adSpaceCount.many": { ru: "{n} рекламных мест", en: "{n} ad spaces", hy: "{n} գովազդային տարածք" },
+  // The new top facet (2026-08-10) — every channel a project or ad space can
+  // belong to, checkboxes over AD_CHANNELS.
+  "catalog.channel": { ru: "Канал", en: "Channel", hy: "Ալիք" },
+  // The one ad-space-only facet the rail carries (plan B3).
+  "catalog.city": { ru: "Город", en: "City", hy: "Քաղաք" },
   "catalog.noResults": {
     ru: "Нет проектов, соответствующих фильтрам.",
     en: "No projects match your filters.",
@@ -1179,13 +1214,27 @@ export const UI: Record<string, Dict> = {
     en: "Monetize my content with placement",
     hy: "Ներկայացնել նախագծեր և գտնել գործընկերներ։",
   },
+  // Dual-side accounts (2026-08-11) — this choice only decides where the
+  // account lands first; the other side is one click away later, in the
+  // profile / header switcher, not a second registration.
+  "register.bothSidesLater": {
+    ru: "Это выбор стартовой стороны — вторую можно включить позже в профиле.",
+    en: "This just picks where you start — turn the other side on later from your profile.",
+    hy: "Սա միայն մեկնարկային կողմն է․ երկրորդը հետո կարող եք միացնել պրոֆիլում։",
+  },
   "register.password": { ru: "Пароль", en: "Password", hy: "Գաղտնաբառ" },
   "register.passwordPlaceholder": { ru: "Минимум 8 символов", en: "At least 8 characters", hy: "Առնվազն 8 նիշ" },
   "register.submit": { ru: "Зарегистрироваться", en: "Create account", hy: "Գրանցվել" },
+  // Reworded 2026-08-11 (dual-side accounts) — used to just say "taken"; now
+  // points at the actual fix, which is signing in and turning the other side
+  // on from the profile rather than trying a second account. Text stays
+  // identical whether the existing row is a member or staff, or this message
+  // becomes an oracle for staff emails (see createMember/createGoogleMember —
+  // neither branches on that).
   "register.errEmailTaken": {
-    ru: "Этот email уже зарегистрирован.",
-    en: "This email is already registered.",
-    hy: "Այս էլփոստն արդեն գրանցված է։",
+    ru: "На этот адрес уже есть аккаунт. Войдите — вторую сторону можно включить в профиле.",
+    en: "There's already an account for this address. Sign in — you can turn on the other side from your profile.",
+    hy: "Այս հասցեին արդեն կա հաշիվ։ Մուտք գործեք․ երկրորդ կողմը կարող եք միացնել պրոֆիլում։",
   },
   "register.errFields": { ru: "Заполните все обязательные поля.", en: "Please fill in all required fields.", hy: "Լրացրեք բոլոր պարտադիր դաշտերը։" },
   "register.errPasswordShort": { ru: "Пароль должен быть не короче 8 символов.", en: "Password must be at least 8 characters.", hy: "Գաղտնաբառը պետք է լինի առնվազն 8 նիշ։" },
@@ -2012,6 +2061,14 @@ export const UI: Record<string, Dict> = {
   "admin.registrations.colName": { ru: "Имя", en: "Name", hy: "Անուն" },
   "admin.registrations.colEmail": { ru: "Email", en: "Email", hy: "Էլփոստ" },
   "admin.registrations.colRole": { ru: "Роль", en: "Role", hy: "Դեր" },
+  // Dual-side accounts (2026-08-11) — the Role column now shows toggleable
+  // Creator/Brand badges plus this caption naming how the account originally
+  // signed up (role itself no longer says what the member can do).
+  "admin.registrations.registeredAs": {
+    ru: "Зарегистрирован как",
+    en: "Registered as",
+    hy: "Գրանցվել է որպես",
+  },
   "admin.registrations.colCompany": { ru: "Компания", en: "Company", hy: "Ընկերություն" },
   "admin.registrations.colStatus": { ru: "Статус", en: "Status", hy: "Կարգավիճակ" },
   "admin.registrations.colDate": { ru: "Дата", en: "Date", hy: "Ամսաթիվ" },
@@ -2080,6 +2137,10 @@ export const UI: Record<string, Dict> = {
   "notif.interestDeclined.body": { ru: "Ваше предложение по проекту «{project}» отклонено.", en: "Your offer for “{project}” was declined.", hy: "«{project}» նախագծի համար ձեր առաջարկը մերժվեց։" },
   "favorite.addAria": { ru: "Добавить в избранное", en: "Add to favorites", hy: "Ավելացնել ընտրյալում" },
   "favorite.removeAria": { ru: "Убрать из избранного", en: "Remove from favorites", hy: "Հեռացնել ընտրյալից" },
+  // QA-4: the disabled heart on a visitor's own listing used to keep
+  // favorite.addAria, so a screen reader announced an action that could
+  // never work on that card.
+  "favorite.ownAria": { ru: "Это ваш проект — добавить в избранное нельзя", en: "This is your own project — can't be favorited", hy: "Սա ձեր նախագիծն է՝ ընտրյալում ավելացնել հնարավոր չէ" },
   "apply.title": { ru: "Отправить предложение", en: "Send an offer", hy: "Ուղարկել առաջարկ" },
   "apply.messageLabel": { ru: "Сообщение (необязательно)", en: "Message (optional)", hy: "Հաղորդագրություն (ըստ ցանկության)" },
   "apply.messagePlaceholder": { ru: "Расскажите о вашем интересе к размещению…", en: "Tell us about your placement interest…", hy: "Պատմեք ձեր տեղադրման հետաքրքրության մասին…" },
@@ -2298,6 +2359,14 @@ export const UI: Record<string, Dict> = {
     ru: "Этот проект сейчас недоступен для заявок.",
     en: "This project is not open for applications right now.",
     hy: "Այս նախագիծը այս պահին հայտեր չի ընդունում։",
+  },
+  // Dual-side accounts (2026-08-11) — a member who also sells cannot apply to
+  // their own listing. Kept separate from applyNotAvailable: that one means
+  // "not for sale", this one means "it's yours".
+  "account.brand.selfApplyError": {
+    ru: "Нельзя подать заявку на собственный проект.",
+    en: "You can't apply to your own project.",
+    hy: "Հնարավոր չէ հայտ ուղարկել սեփական նախագծին։",
   },
   "account.brand.applyPhoneRequired": {
     ru: "Укажите телефон с кодом страны, например +374 XX XXX XXX.",
@@ -2765,6 +2834,16 @@ export const UI: Record<string, Dict> = {
     hy: "Ինը ալիք՝ հինգ խմբում։ Յուրաքանչյուրն ունի իր էջը՝ նկարագրությամբ և հասանելի գույքագրմամբ։",
   },
   "ads.channelCta": { ru: "Подробнее о канале", en: "About this channel", hy: "Ալիքի մասին" },
+  // The catalog is now the actual shopping list (2026-08-10, stage B), and
+  // this channel's own inventory grid became a 6-item teaser that ends here
+  // with the channel pre-selected. Also the last row of the header's ads
+  // dropdown. The /ads overview tiles do NOT use this — they still lead into
+  // the channel's explanatory page, which is the only way into that copy.
+  "ads.viewAllInCatalog": {
+    ru: "Смотреть в каталоге",
+    en: "View in catalog",
+    hy: "Տեսնել կատալոգում",
+  },
   "ads.backToAll": { ru: "Все каналы", en: "All channels", hy: "Բոլոր ալիքները" },
   "ads.about.title": { ru: "Что это", en: "What this is", hy: "Ի՞նչ է սա" },
   "ads.buy.title": { ru: "Что можно купить", en: "What you can buy", hy: "Ի՞նչ կարելի է գնել" },

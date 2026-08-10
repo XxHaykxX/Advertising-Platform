@@ -150,13 +150,13 @@ export function AdminNav({ role, collapsed = false }: { role: Role; collapsed?: 
       getPendingOfferCount()
         .then((n) => alive && setPendingOfferCount(n))
         .catch(() => {});
-      getUnreadNotificationCount()
+      getUnreadNotificationCount("staff")
         .then((n) => alive && setUnreadCount(n))
         .catch(() => {});
     }
     document.addEventListener("visibilitychange", refresh);
     window.addEventListener("focus", refresh);
-    getUnreadNotificationCount()
+    getUnreadNotificationCount("staff")
       .then((n) => {
         if (alive) setUnreadCount(n);
       })

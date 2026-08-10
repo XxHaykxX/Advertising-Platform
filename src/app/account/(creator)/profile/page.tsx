@@ -1,16 +1,18 @@
 import { redirect } from "next/navigation";
 import { requireMember } from "@/lib/auth/require";
+import { canSell } from "@/lib/auth/capabilities";
 import { prisma } from "@/lib/prisma";
 import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
 import { ProfileForm } from "./profile-form";
 
 /** CREATOR "My Profile" — edit display name + avatar. Renders bare (the
- *  account/layout.tsx creator shell supplies the Container + sidebar). BRAND
- *  members have their own profile at /account/brand/profile — bounce them. */
+ *  account/layout.tsx creator shell supplies the Container + sidebar). A
+ *  member who can't sell has their own profile at /account/brand/profile —
+ *  bounce them. */
 export default async function CreatorProfilePage() {
   const user = await requireMember();
-  if (user.role !== "CREATOR") redirect("/account/brand");
+  if (!canSell(user)) redirect("/account/brand");
 
   const locale = await getLocale();
   const t = makeUI(locale);

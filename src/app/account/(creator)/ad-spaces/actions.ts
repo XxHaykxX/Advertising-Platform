@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireMember } from "@/lib/auth/require";
+import { canSell } from "@/lib/auth/capabilities";
 import { recordVersion } from "@/lib/history/record";
 import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
@@ -40,7 +41,7 @@ async function guardCreator() {
   // Defense in depth: the cabinet entry points are hidden from BRAND accounts,
   // but a direct POST has to be refused rather than quietly create a space
   // owned by a brand.
-  return { user, t, isCreator: user.role === "CREATOR" };
+  return { user, t, isCreator: canSell(user) };
 }
 
 /** Submitting IS this side's publication step — there is no creator-owned

@@ -42,7 +42,14 @@ export default async function RegisterPage({
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
             {t("register.alreadyHaveAccess")}{" "}
-            <Link href="/login" className="font-medium text-primary hover:underline">
+            {/* Carries ?from= (2026-08-11) — this is also where the
+                errEmailTaken message above sends someone whose address
+                already has an account: straight to the sign-in they need,
+                without losing the page they started from. */}
+            <Link
+              href={from ? `/login?from=${encodeURIComponent(from)}` : "/login"}
+              className="font-medium text-primary hover:underline"
+            >
               {t("register.signIn")}
             </Link>
           </p>

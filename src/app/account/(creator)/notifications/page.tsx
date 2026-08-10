@@ -1,9 +1,10 @@
 import { redirect } from "next/navigation";
 import { Reveal } from "@/components/ui/reveal";
 import { requireMember } from "@/lib/auth/require";
+import { canSell } from "@/lib/auth/capabilities";
 import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
-import { getNotifications } from "@/lib/data/notifications";
+import { getNotificationItems } from "@/lib/data/notifications";
 import { NotificationList } from "@/components/notifications/notification-list";
 
 /** CREATOR cabinet notifications feed (#25 / V9) — mirrors the BRAND page at
@@ -13,19 +14,11 @@ import { NotificationList } from "@/components/notifications/notification-list";
  *  own cabinet since this page lives under the CREATOR-facing /account root. */
 export default async function AccountNotificationsPage() {
   const user = await requireMember();
-  if (user.role !== "CREATOR") redirect("/account/brand");
+  if (!canSell(user)) redirect("/account/brand");
 
   const locale = await getLocale();
   const t = makeUI(locale);
-  const rows = await getNotifications(user.id);
-  const items = rows.map((n) => ({
-    id: n.id,
-    type: n.type,
-    data: n.data,
-    link: n.link,
-    read: n.read,
-    createdAt: n.createdAt.toISOString(),
-  }));
+  const items = await getNotificationItems(user.id);
 
   return (
     <>
@@ -35,7 +28,7 @@ export default async function AccountNotificationsPage() {
       </Reveal>
 
       <Reveal delay={0.05} className="mt-10">
-        <NotificationList items={items} locale={locale} />
+        <NotificationList items={items} locale={locale} scope="member" />
       </Reveal>
     </>
   );

@@ -42,6 +42,10 @@ export async function createMember(input: {
       role: input.role,
       status: "APPROVED",
       company: input.company?.trim() || null,
+      // Dual-side accounts (2026-08-11) — the side chosen at registration
+      // starts on; the other can be turned on later from the header switcher.
+      isCreator: input.role === "CREATOR",
+      isBrand: input.role === "BRAND",
     },
   });
   return { ok: true, userId: user.id };
@@ -116,6 +120,10 @@ export async function createGoogleMember(input: {
       role: input.role,
       status: "APPROVED",
       company: input.company?.trim() || null,
+      // Same as createMember above — mirrored in register/complete/actions.ts,
+      // the other Google entry point (see the 🔴 note there).
+      isCreator: input.role === "CREATOR",
+      isBrand: input.role === "BRAND",
     },
   });
   return { ok: true, userId: user.id };

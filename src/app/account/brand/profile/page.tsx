@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { requireMember } from "@/lib/auth/require";
+import { canBuy } from "@/lib/auth/capabilities";
 import { getLocale } from "@/lib/data/locale";
 import { getBrandProfile } from "@/lib/data/brand-profile";
 import { makeUI } from "@/lib/i18n";
@@ -10,7 +11,7 @@ import { DownloadDataButton } from "./download-data-button";
  *  website, brand categories, budget range, plus a JSON data export. */
 export default async function BrandProfilePage() {
   const user = await requireMember();
-  if (user.role !== "BRAND") redirect("/account");
+  if (!canBuy(user)) redirect("/account");
 
   const locale = await getLocale();
   const t = makeUI(locale);

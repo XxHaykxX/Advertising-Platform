@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { Reveal } from "@/components/ui/reveal";
 import { requireMember } from "@/lib/auth/require";
+import { canSell } from "@/lib/auth/capabilities";
 import { prisma } from "@/lib/prisma";
 import { getLocale } from "@/lib/data/locale";
 import { getPersonDirectory } from "@/lib/data/actors";
@@ -62,7 +63,7 @@ export default async function EditCreatorProjectPage({
   // navigating directly to someone else's edit URL gets the same response as
   // a bad id (same reasoning as the admin edit page's ownership check).
   if (!p) notFound();
-  if (user.role !== "CREATOR" || p.ownerId !== user.id) notFound();
+  if (!canSell(user) || p.ownerId !== user.id) notFound();
 
   // Studio options — the shared dictionary, same as the admin form (2026-07-27).
   const studios = await getStudioOptions();

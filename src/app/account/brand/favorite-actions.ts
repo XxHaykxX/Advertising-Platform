@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireMember } from "@/lib/auth/require";
+import { canBuy } from "@/lib/auth/capabilities";
 import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
 
@@ -26,9 +27,16 @@ export async function addFavorite(projectId: number): Promise<FavoriteResult> {
   const user = await requireMember();
   const locale = await getLocale();
   const t = makeUI(locale);
-  if (user.role !== "BRAND") return { ok: false, error: t("account.brand.expressInterestError") };
+  if (!canBuy(user)) return { ok: false, error: t("account.brand.expressInterestError") };
 
   if (!Number.isInteger(projectId)) return { ok: false, error: t("account.brand.expressInterestError") };
+
+  // Nobody favorites their own listing (2026-08-11, dual-side accounts) — one
+  // extra findUnique, same self-deal rule as submitApplication in actions.ts.
+  const listing = await prisma.project.findUnique({ where: { id: projectId }, select: { ownerId: true } });
+  if (listing?.ownerId === user.id) {
+    return { ok: false, error: t("account.brand.selfApplyError") };
+  }
 
   try {
     await prisma.favorite.upsert({
@@ -51,7 +59,7 @@ export async function removeFavorite(projectId: number): Promise<FavoriteResult>
   const user = await requireMember();
   const locale = await getLocale();
   const t = makeUI(locale);
-  if (user.role !== "BRAND") return { ok: false, error: t("account.brand.expressInterestError") };
+  if (!canBuy(user)) return { ok: false, error: t("account.brand.expressInterestError") };
 
   if (!Number.isInteger(projectId)) return { ok: false, error: t("account.brand.expressInterestError") };
 

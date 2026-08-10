@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { Reveal } from "@/components/ui/reveal";
 import { requireMember } from "@/lib/auth/require";
+import { canSell } from "@/lib/auth/capabilities";
 import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
 import { AdSpaceForm } from "@/app/admin/(panel)/ad-spaces/ad-space-form";
@@ -15,7 +16,7 @@ import { translateCreatorAdSpaceAction } from "../translate-action";
  *  account/projects/new/page.tsx. */
 export default async function NewAdSpacePage() {
   const user = await requireMember();
-  if (user.role !== "CREATOR") redirect("/account");
+  if (!canSell(user)) redirect("/account");
 
   const locale = await getLocale();
   const t = makeUI(locale);

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTransition } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -8,9 +9,10 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { LocaleSwitcher } from "@/components/locale-switcher";
 import { LogoutButton } from "@/components/logout-button";
-import { Avatar, type SiteHeaderUser } from "@/components/header";
+import { Avatar, SideRow, type NavItem, type SiteHeaderUser } from "@/components/header";
+import { enableBrandSide, enableCreatorSide, type EnableSideResult } from "@/app/account/actions";
+import { useUI, type Locale } from "@/lib/i18n-client";
 import { cn } from "@/lib/utils";
-import type { Locale } from "@/lib/i18n-client";
 
 /** The mobile slide-down nav — split out of header.tsx and loaded via
  *  next/dynamic so framer-motion (~131 KB) only ships once someone actually
@@ -34,7 +36,10 @@ export function MobileNavPanel({
   onNavigate,
 }: {
   open: boolean;
-  nav: readonly { label: string; href: string }[];
+  /** `children` (only ever set on the "Advertising" item, C2) render as a
+   *  flat indented list right under the parent link — no accordion, no group
+   *  headings, the parent link still goes to /ads. */
+  nav: readonly NavItem[];
   isMember: boolean;
   /** IA-46: BRAND's two promoted cabinet pages (dashboard + favorites) —
    *  empty for everyone else. Rendered in the same slot marketing `nav`
@@ -57,6 +62,21 @@ export function MobileNavPanel({
   onNavigate: () => void;
 }) {
   const pathname = usePathname();
+  const t = useUI(locale);
+  const [pending, startTransition] = useTransition();
+  // Same "mode lives in the URL" rule as UserMenu's desktop switcher.
+  const brandActive = pathname?.startsWith("/account/brand") ?? false;
+
+  function enableSide(action: () => Promise<EnableSideResult>) {
+    startTransition(async () => {
+      try {
+        const res = await action();
+        if (res.ok) window.location.assign(res.redirect);
+      } catch {
+        window.location.reload();
+      }
+    });
+  }
 
   return (
     <AnimatePresence>
@@ -71,14 +91,29 @@ export function MobileNavPanel({
           <Container className="flex flex-col gap-1 py-4">
             {!isMember &&
               nav.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={onNavigate}
-                  className="rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-                >
-                  {item.label}
-                </Link>
+                <div key={item.href}>
+                  <Link
+                    href={item.href}
+                    onClick={onNavigate}
+                    className="rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+                  >
+                    {item.label}
+                  </Link>
+                  {item.children && (
+                    <div className="ml-3 flex flex-col gap-1 border-l border-border pl-3">
+                      {item.children.flatMap((g) => g.channels).map((c) => (
+                        <Link
+                          key={c.code}
+                          href={c.href}
+                          onClick={onNavigate}
+                          className="rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+                        >
+                          {c.label}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
               ))}
             {brandNav.map((item) => {
               const active = item.exact
@@ -109,6 +144,37 @@ export function MobileNavPanel({
             )}
             {user ? (
               <div className="flex flex-col gap-2 border-t border-border pt-4">
+                {/* Side switcher (A5's gap on mobile) — same rows, same actions
+                    as UserMenu's desktop panel; nothing renders for staff or a
+                    member with neither flag set. */}
+                {(user.isCreator || user.isBrand) && (
+                  <div className="-mx-3 flex flex-col rounded-xl border border-border">
+                    <SideRow
+                      user={user}
+                      onDark={false}
+                      active={user.isCreator && !brandActive}
+                      href={user.isCreator ? "/account" : null}
+                      label={t("nav.sideCreator")}
+                      subtitle={user.isCreator ? t("nav.sideCreatorSubtitle", { n: user.projectCount }) : null}
+                      inviteLabel={t("nav.startSelling")}
+                      onInvite={() => enableSide(enableCreatorSide)}
+                      pending={pending}
+                      onNavigate={onNavigate}
+                    />
+                    <SideRow
+                      user={user}
+                      onDark={false}
+                      active={user.isBrand && brandActive}
+                      href={user.isBrand ? "/account/brand" : null}
+                      label={t("nav.sideBrand")}
+                      subtitle={user.isBrand ? t("nav.sideBrandSubtitle", { n: user.interestCount }) : null}
+                      inviteLabel={t("nav.startBuying")}
+                      onInvite={() => enableSide(enableBrandSide)}
+                      pending={pending}
+                      onNavigate={onNavigate}
+                    />
+                  </div>
+                )}
                 <Link
                   href={cabinetHref}
                   onClick={onNavigate}

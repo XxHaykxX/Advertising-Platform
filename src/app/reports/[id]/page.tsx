@@ -8,6 +8,7 @@ import { getBrandInterestOffers } from "@/lib/data/brand-interests";
 import { prisma } from "@/lib/prisma";
 import { loadCurrentUser } from "@/lib/auth/require";
 import { isStaff } from "@/lib/auth/permissions";
+import { canBuy } from "@/lib/auth/capabilities";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";
 import { ReportHero } from "@/components/report/report-hero";
@@ -78,7 +79,7 @@ export default async function ReportPage({
   // a real path — but it means a rejected project stays a 404 for the brand
   // too, same as for everyone but staff and the owner.
   const myInterest =
-    authed?.role === "BRAND"
+    authed != null && canBuy(authed)
       ? await prisma.interest.findFirst({
           where: { brandId: authed.id, projectId: pid },
           select: { project: { select: { moderationStatus: true, isActive: true } } },
@@ -93,12 +94,12 @@ export default async function ReportPage({
   // placement and a fresh application on another, so "have you applied?" only
   // has an answer once you say what for.
   const appliedOffers =
-    authed?.role === "BRAND" ? await getBrandInterestOffers(authed.id, pid) : {};
+    authed != null && canBuy(authed) ? await getBrandInterestOffers(authed.id, pid) : {};
   // The application now requires a phone number (owner decision 2026-07-26 —
   // the seller has to be able to call back). Seeded from the brand's profile
   // so a returning buyer doesn't retype it.
   const brandPhone =
-    authed?.role === "BRAND"
+    authed != null && canBuy(authed)
       ? ((await prisma.user.findUnique({ where: { id: authed.id }, select: { phone: true } }))?.phone ?? "")
       : "";
 
@@ -106,10 +107,13 @@ export default async function ReportPage({
 
   // Who is looking decides what every offer card's button is: a brand opens
   // the application popup, a guest is sent to sign in and brought back to the
-  // same card, and a creator or staff member — who has nothing to apply for —
-  // is shown no button at all.
+  // same card, and a creator, staff member, or the project's own owner — who
+  // has nothing to apply for — is shown no button at all. `ownsThis` is
+  // already computed above; reusing it here is what keeps a dual member from
+  // seeing an Apply button on their own listing (2026-08-11), at no extra
+  // query.
   const viewer: ReportViewer =
-    authed == null ? "guest" : authed.role === "BRAND" ? "brand" : "none";
+    authed == null ? "guest" : canBuy(authed) && !ownsThis ? "brand" : "none";
 
   // Summary for the sticky bar (audit C3): a brand shouldn't have to read nine
   // cards to learn the entry price and what is still free. Placements and

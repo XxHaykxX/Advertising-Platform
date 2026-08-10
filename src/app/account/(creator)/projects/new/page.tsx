@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { ArrowLeft, HelpCircle } from "lucide-react";
 import { Reveal } from "@/components/ui/reveal";
 import { requireMember } from "@/lib/auth/require";
+import { canSell } from "@/lib/auth/capabilities";
 import { prisma } from "@/lib/prisma";
 import { getLocale } from "@/lib/data/locale";
 import { getPersonDirectory } from "@/lib/data/actors";
@@ -24,7 +25,7 @@ import { generateCreatorPosterAction } from "../poster-action";
  *  /account/projects). */
 export default async function NewProjectPage() {
   const user = await requireMember();
-  if (user.role !== "CREATOR") redirect("/account");
+  if (!canSell(user)) redirect("/account");
 
   const locale = await getLocale();
   const t = makeUI(locale);

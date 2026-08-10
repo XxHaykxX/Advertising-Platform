@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { Container } from "@/components/ui/container";
 import { requireMember } from "@/lib/auth/require";
+import { canBuy } from "@/lib/auth/capabilities";
 import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
 import { logout } from "../actions";
@@ -11,11 +12,11 @@ import { BrandSidebar } from "./brand-sidebar";
  *  supplied by the parent /account/layout.tsx (requireMember() there is
  *  re-checked here too — defense in depth, same pattern as
  *  account/projects/page.tsx) — this layout only adds the two-column
- *  sidebar+content shell. CREATOR members (and anyone else) are bounced back
- *  to /account, which routes them to their own cabinet. */
+ *  sidebar+content shell. A member who can't buy (and anyone else) is
+ *  bounced back to /account, which routes them to a cabinet they can reach. */
 export default async function BrandLayout({ children }: { children: ReactNode }) {
   const user = await requireMember();
-  if (user.role !== "BRAND") redirect("/account");
+  if (!canBuy(user)) redirect("/account");
 
   const locale = await getLocale();
   const t = makeUI(locale);

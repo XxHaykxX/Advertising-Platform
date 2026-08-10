@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { MediaField } from "@/components/media-field";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { useUI, type Locale } from "@/lib/i18n-client";
-import { updateCreatorProfile, type CreatorProfileFormState } from "../actions";
+import { updateCreatorProfile, type CreatorProfileFormState } from "../../actions";
 import {
   FIELD_ERROR_CLASS,
   FieldError,

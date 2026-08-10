@@ -8,6 +8,7 @@
 // type is imported (type-only, erased at compile time) so this drops
 // straight into ProjectForm's translateAction prop.
 import { requireMember } from "@/lib/auth/require";
+import { canSell } from "@/lib/auth/capabilities";
 import { translateFields, TranslateError, type TranslateLang } from "@/lib/translate";
 import type { TranslateProjectState } from "@/app/admin/(panel)/projects/translate-action";
 
@@ -24,7 +25,7 @@ function isLang(v: string): v is TranslateLang {
  *  via the normal form submit. */
 export async function translateCreatorProjectAction(fd: FormData): Promise<TranslateProjectState> {
   const user = await requireMember();
-  if (user.role !== "CREATOR") {
+  if (!canSell(user)) {
     return { errorCode: "genericError" };
   }
 

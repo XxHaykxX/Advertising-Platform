@@ -62,6 +62,14 @@ model User {
   role         Role          @default(PUBLISHER)
   status       AccountStatus @default(APPROVED)
   name         String
+  // ── member sides (2026-08-11) — one account can sell (CREATOR) and/or buy
+  // (BRAND) at the same time. `role` stays what it always was: how the
+  // account registered / the member-vs-staff discriminator (see
+  // src/lib/auth/require.ts, staff-roles.ts). Every "what can they do" check
+  // goes through these two flags via src/lib/auth/capabilities.ts, never
+  // through `role`. Staff rows keep both false. ──
+  isCreator    Boolean       @default(false) // may sell (project/ad-space owner)
+  isBrand      Boolean       @default(false) // may buy (apply/favorite)
   company      String?
   isActive     Boolean       @default(true)
   createdAt    DateTime      @default(now())

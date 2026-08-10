@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireMember } from "@/lib/auth/require";
+import { canSell } from "@/lib/auth/capabilities";
 import { recordVersion } from "@/lib/history/record";
 import { getLocale } from "@/lib/data/locale";
 import { makeUI, type Locale } from "@/lib/i18n";
@@ -627,7 +628,7 @@ export async function createCreatorProject(
   // BRAND accounts (see account/page.tsx + account/projects/page.tsx), but a
   // direct POST must still be rejected rather than silently creating a
   // project owned by a brand.
-  if (user.role !== "CREATOR") {
+  if (!canSell(user)) {
     return { error: t("account.form.errRequired") };
   }
 
@@ -780,7 +781,7 @@ export async function updateCreatorProject(
   const locale = await getLocale();
   const t = makeUI(locale);
 
-  if (user.role !== "CREATOR") {
+  if (!canSell(user)) {
     return { error: t("account.form.errRequired") };
   }
 

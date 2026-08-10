@@ -136,6 +136,10 @@ export function RegisterForm({
             </span>
           </button>
         </div>
+        {/* Dual-side accounts (2026-08-11) — removes the reason to make a
+            second account with the other type: this choice only decides
+            where you land first. */}
+        <p className="mt-2 text-xs text-muted-foreground">{t("register.bothSidesLater")}</p>
       </div>
 
       <div>

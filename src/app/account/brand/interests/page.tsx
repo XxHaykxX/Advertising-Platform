@@ -5,6 +5,7 @@ import { Film, Handshake } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GenreBadge } from "@/components/ui/badge";
 import { requireMember } from "@/lib/auth/require";
+import { canBuy } from "@/lib/auth/capabilities";
 import { getLocale } from "@/lib/data/locale";
 import { getBrandInterests } from "@/lib/data/brand-interests";
 import { formatFullDate } from "@/lib/data/format";
@@ -25,7 +26,7 @@ const STATUS_PILL: Record<InterestStatus, string> = {
  *  starts and stays SENT (TODO, see #23 report). */
 export default async function BrandInterestsPage() {
   const user = await requireMember();
-  if (user.role !== "BRAND") redirect("/account");
+  if (!canBuy(user)) redirect("/account");
 
   const locale = await getLocale();
   const t = makeUI(locale);

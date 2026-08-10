@@ -4,6 +4,7 @@ import { revalidatePath, updateTag } from "next/cache";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireMember } from "@/lib/auth/require";
+import { canBuy } from "@/lib/auth/capabilities";
 import { getLocale } from "@/lib/data/locale";
 import { getBrandProfile } from "@/lib/data/brand-profile";
 import { getBrandInterestCount, getBrandInterests } from "@/lib/data/brand-interests";
@@ -14,8 +15,8 @@ import { offerKeyOf } from "@/lib/offer-value";
 import { parseWebsiteUrl } from "@/lib/website-url";
 
 /* #23 — BRAND-cabinet server actions. Every action re-checks requireMember()
- * + role === "BRAND" itself (defense in depth — the layout gate already
- * bounces non-brand members, but actions are reachable via direct POST). */
+ * + canBuy() itself (defense in depth — the layout gate already bounces
+ * non-buying members, but actions are reachable via direct POST). */
 
 function revalidateBrandPaths() {
   revalidatePath("/account/brand");
@@ -43,7 +44,7 @@ export async function withdrawInterest(interestId: number): Promise<ExpressInter
   const user = await requireMember();
   const locale = await getLocale();
   const t = makeUI(locale);
-  if (user.role !== "BRAND") return { ok: false, error: t("account.brand.expressInterestError") };
+  if (!canBuy(user)) return { ok: false, error: t("account.brand.expressInterestError") };
 
   if (!Number.isInteger(interestId)) return { ok: false, error: t("account.brand.expressInterestError") };
 
@@ -105,7 +106,7 @@ export async function withdrawInterest(interestId: number): Promise<ExpressInter
  *  direct-Server-Action-call pattern as admin-nav's getPendingModerationCount. */
 export async function getInterestCount(): Promise<number> {
   const user = await requireMember();
-  if (user.role !== "BRAND") return 0;
+  if (!canBuy(user)) return 0;
   return getBrandInterestCount(user.id);
 }
 
@@ -160,7 +161,7 @@ export async function submitApplication(
   const user = await requireMember();
   const locale = await getLocale();
   const t = makeUI(locale);
-  if (user.role !== "BRAND") return { ok: false, error: t("account.brand.expressInterestError") };
+  if (!canBuy(user)) return { ok: false, error: t("account.brand.expressInterestError") };
 
   if (!Number.isInteger(projectId)) return { ok: false, error: t("account.brand.expressInterestError") };
 
@@ -171,10 +172,18 @@ export async function submitApplication(
   // on something not actually on sale.
   const listing = await prisma.project.findUnique({
     where: { id: projectId },
-    select: { isActive: true, moderationStatus: true },
+    select: { isActive: true, moderationStatus: true, ownerId: true },
   });
   if (!listing || !listing.isActive || listing.moderationStatus !== "APPROVED") {
     return { ok: false, error: t("account.brand.applyNotAvailable") };
+  }
+  // Nobody buys from themselves (2026-08-11, dual-side accounts) — a member
+  // who also sells could otherwise apply to their own listing. A distinct
+  // error from applyNotAvailable above: that one means "not for sale", this
+  // one means "yours" — telling those apart is the whole point of a
+  // dedicated message here.
+  if (listing.ownerId === user.id) {
+    return { ok: false, error: t("account.brand.selfApplyError") };
   }
 
   const trimmedMessage = message.trim().slice(0, 2000) || null;
@@ -403,7 +412,7 @@ export async function updateBrandProfile(
   const user = await requireMember();
   const locale = await getLocale();
   const t = makeUI(locale);
-  if (user.role !== "BRAND") return { error: t("account.brand.expressInterestError") };
+  if (!canBuy(user)) return { error: t("account.brand.expressInterestError") };
 
   // The display name. Fixed 2026-08-05: the profile page fetched it and then
   // rendered nothing for it, so a brand could edit its company, site, phone,
@@ -461,6 +470,10 @@ export async function updateBrandProfile(
   });
 
   revalidateBrandPaths();
+  // name/avatar/phone/website are the same User columns the creator profile
+  // form edits (QA-5, 2026-08-11) — same reasoning as updateCreatorProfile's
+  // mirrored revalidatePath.
+  revalidatePath("/account/profile");
   return { ok: true, website };
 }
 
@@ -469,7 +482,7 @@ export async function updateBrandProfile(
  *  from this string, no separate API route needed). */
 export async function getBrandDataExport(): Promise<string> {
   const user = await requireMember();
-  if (user.role !== "BRAND") return JSON.stringify({ error: "forbidden" });
+  if (!canBuy(user)) return JSON.stringify({ error: "forbidden" });
 
   const locale = await getLocale();
   const [profile, interests] = await Promise.all([
