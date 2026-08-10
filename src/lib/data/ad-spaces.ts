@@ -7,6 +7,7 @@ import { formatMoney, type CurrencyCode } from "@/lib/currency";
 import { getRates } from "@/lib/currency/rates";
 import { formatPriceFrom } from "@/lib/data/format";
 import { parseJsonList, pickLocale, pickLocaleList } from "@/lib/data/pick-locale";
+import { localizeCity } from "@/lib/cities";
 
 /* Read side of AdSpace — advertising inventory that lives outside a film
    (stage 3 of docs/plan-multichannel-ads.md). Deliberately the same shape as
@@ -35,6 +36,7 @@ const LIST_SELECT = {
   sizeFormat: true,
   reachPerDay: true,
   image: true,
+  createdAt: true,
   offers: { select: { priceAmd: true } },
 } as const;
 
@@ -51,6 +53,7 @@ type ListRow = {
   sizeFormat: string;
   reachPerDay: number | null;
   image: string | null;
+  createdAt: Date;
   offers: { priceAmd: number | null }[];
 };
 
@@ -71,7 +74,11 @@ function toListDTO(
     code: row.code,
     channel: row.channel,
     title: pickLocale(locale, { hy: row.titleHy, ru: row.titleRu, en: row.titleEn }, row.title),
-    location: joinLocation(row.city, row.address),
+    // QA-8: `location` is display-only, so the city half is localized here;
+    // `city` below stays the raw DB value — it's what the catalog's City
+    // facet filters by, and the facet localizes only the checkbox label.
+    location: joinLocation(localizeCity(locale, row.city), row.address),
+    city: row.city,
     sizeFormat: row.sizeFormat,
     reachPerDay: row.reachPerDay,
     image: row.image ?? "",
@@ -82,6 +89,7 @@ function toListDTO(
       locale,
     ),
     offersCount: row.offers.length,
+    createdAt: row.createdAt.toISOString(),
   };
 }
 
@@ -118,6 +126,30 @@ export function getAdSpacesByChannel(
   activeOnly = true,
 ): Promise<AdSpaceListDTO[]> {
   return getAdSpacesByChannelCached(channel, locale, currency, activeOnly);
+}
+
+/** Every approved, visible ad space across all channels (2026-08-10) — the
+ *  catalog's half of its unified inventory. Public-only, deliberately: unlike
+ *  getAdSpacesByChannel this takes no `activeOnly` — /catalog has no admin
+ *  call site, and exporting a gate-off mode here would just be a trap for the
+ *  next caller. Tagged "ad-spaces", same family as the by-channel query, so
+ *  approving/editing a space invalidates both without a second write path. */
+const getAllAdSpacesCached = unstable_cache(
+  async (locale: Locale, currency: CurrencyCode): Promise<AdSpaceListDTO[]> => {
+    const rows = await prisma.adSpace.findMany({
+      where: { isActive: true, moderationStatus: "APPROVED" },
+      orderBy: [{ channel: "asc" }, { sortOrder: "asc" }],
+      select: LIST_SELECT,
+    });
+    const rates = await getRates();
+    return rows.map((row) => toListDTO(locale, currency, rates, row));
+  },
+  ["ad-spaces-all"],
+  { revalidate: REVALIDATE_SECONDS, tags: ["ad-spaces"] },
+);
+
+export function getAllAdSpaces(locale: Locale, currency: CurrencyCode): Promise<AdSpaceListDTO[]> {
+  return getAllAdSpacesCached(locale, currency);
 }
 
 const getAdSpaceCached = unstable_cache(

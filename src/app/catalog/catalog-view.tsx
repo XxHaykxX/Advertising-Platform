@@ -7,9 +7,13 @@ import {
   ChevronDown,
   ChevronRight,
   Clock,
+  Eye,
   Film,
   LayoutGrid,
   List,
+  MapPin,
+  Megaphone,
+  Ruler,
   Search,
   SlidersHorizontal,
   X,
@@ -17,8 +21,9 @@ import {
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { PageHero } from "@/components/ui/page-hero";
-import { GenreBadge } from "@/components/ui/badge";
+import { GenreBadge, AccentBadge } from "@/components/ui/badge";
 import { ProjectCard } from "@/components/project-card";
+import { AdSpaceCard } from "@/components/ad-space-card";
 import { FavoriteHeart } from "@/components/favorite-heart";
 import { Header, type SiteHeaderUser } from "@/components/header";
 import { compareDeadline, daysUntil, formatFullDate, parseStringArray, splitCountries } from "@/lib/data/format";
@@ -30,7 +35,11 @@ import { cn } from "@/lib/utils";
 import { DEFAULT_LOCALE, intlLocale, useUI, useLocalizer, type Locale } from "@/lib/i18n-client";
 import { DEFAULT_CURRENCY, type CurrencyCode } from "@/lib/currency";
 import { NO_OFFER_KEY } from "@/lib/offer-value";
-import type { ProjectListDTO } from "@/lib/types";
+import { AD_CHANNELS, findAdChannel } from "@/lib/ad-channels";
+import { adSpacePath } from "@/lib/ad-space-url";
+import { localizeCity } from "@/lib/cities";
+import { pluralForm } from "@/lib/plural";
+import type { AdSpaceListDTO, ProjectListDTO } from "@/lib/types";
 
 type ViewMode = "grid" | "list";
 
@@ -43,12 +52,26 @@ type SortOption = "default" | "newest" | "deadline" | "title";
 // once. 12 = 4 full rows of 3 in the grid view.
 const PAGE_SIZE = 12;
 
+/** One entry in the unified catalog (2026-08-10, stage B) — a project selling
+ *  placement/sponsorship, or a standalone ad space (billboard, radio slot,
+ *  …). ProjectCard and AdSpaceCard stay two different components (they show
+ *  different facts), so this only unifies what the shared mechanics — search,
+ *  sort, the channel facet — need to agree on. Built server-side in
+ *  catalog/page.tsx; `channels` and `haystack` are precomputed there so the
+ *  client never has to know the ad-channel rules or re-join genre/country
+ *  strings on every keystroke. */
+export type CatalogRow = { key: string; channels: string[]; title: string; haystack: string } & (
+  | { kind: "PROJECT"; project: ProjectListDTO }
+  | { kind: "AD_SPACE"; space: AdSpaceListDTO; channelSlug: string }
+);
+
 function ProjectRow({
   project,
   locale = DEFAULT_LOCALE,
   user = null,
   favorited = false,
   canFavorite = false,
+  isOwn = false,
   signedIn = false,
 }: {
   project: ProjectListDTO;
@@ -56,6 +79,8 @@ function ProjectRow({
   user?: SiteHeaderUser | null;
   favorited?: boolean;
   canFavorite?: boolean;
+  /** See FavoriteHeart. */
+  isOwn?: boolean;
   signedIn?: boolean;
 }) {
   const t = useUI(locale);
@@ -103,9 +128,11 @@ function ProjectRow({
           projectId={project.id}
           initialFavorite={favorited}
           canFavorite={canFavorite}
+          isOwn={isOwn}
           signedIn={signedIn}
           addAria={t("favorite.addAria")}
           removeAria={t("favorite.removeAria")}
+          ownAria={t("favorite.ownAria")}
         />
       </div>
 
@@ -167,6 +194,84 @@ function ProjectRow({
   );
 }
 
+/** The AdSpaceCard counterpart of ProjectRow above — same layout, an address
+ *  and a size/reach line instead of genres and a deadline. */
+function AdSpaceRow({
+  space,
+  channelSlug,
+  locale = DEFAULT_LOCALE,
+}: {
+  space: AdSpaceListDTO;
+  channelSlug: string;
+  locale?: Locale;
+}) {
+  const t = useUI(locale);
+  const href = adSpacePath(channelSlug, space.code);
+  const channel = findAdChannel(channelSlug);
+  return (
+    <div className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 card-lift sm:flex-row sm:items-center">
+      <div className="relative aspect-video w-full shrink-0 overflow-hidden rounded-lg sm:w-48">
+        {space.image ? (
+          <Image src={space.image} alt={space.title} fill className="object-cover" sizes="192px" />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
+            <Megaphone className="h-8 w-8 text-primary/40" />
+          </div>
+        )}
+      </div>
+
+      <div className="min-w-0 flex-1">
+        <h3 className="text-lg font-semibold text-foreground">{space.title}</h3>
+        {/* QA-2: same channel chip as AdSpaceCard's grid view — a list row
+            gave a title and an address, never what kind of space it is. */}
+        {channel ? (
+          <div className="mt-1.5 flex flex-wrap items-center gap-2">
+            <AccentBadge>{t(`adChannel.${channel.code}`)}</AccentBadge>
+          </div>
+        ) : null}
+        {/* Same "no value, no row" rule as ProjectRow/AdSpaceCard — a radio
+            slot has no address, a newly-listed panel has no traffic figure. */}
+        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+          {space.location ? (
+            <span className="inline-flex items-center gap-1">
+              <MapPin className="h-3 w-3 shrink-0" />
+              {space.location}
+            </span>
+          ) : null}
+          {space.sizeFormat ? (
+            <span className="inline-flex items-center gap-1">
+              <Ruler className="h-3 w-3 shrink-0" />
+              {space.sizeFormat}
+            </span>
+          ) : null}
+          {space.reachPerDay != null ? (
+            <span className="inline-flex items-center gap-1">
+              <Eye className="h-3 w-3 shrink-0" />
+              {t("adSpacePublic.reach")} {new Intl.NumberFormat(intlLocale(locale)).format(space.reachPerDay)}
+            </span>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="flex shrink-0 flex-col gap-2 sm:items-end">
+        <p className="text-base font-bold tabular-nums text-foreground">
+          {space.priceFromDisplay ? (
+            <>
+              <span className="text-xs font-medium text-muted-foreground">{t("card.priceFrom")} </span>
+              {space.priceFromDisplay}
+            </>
+          ) : (
+            <span className="text-sm font-medium text-muted-foreground">{t("card.priceOnRequest")}</span>
+          )}
+        </p>
+        <Button asChild variant="secondary" size="sm" className="w-full sm:w-auto">
+          <Link href={href}>{t("adSpacePublic.cardCta")}</Link>
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function CheckboxFilter({
   label,
   options,
@@ -211,24 +316,38 @@ function CheckboxFilter({
 }
 
 export function CatalogView({
-  projects,
+  rows,
   locale = DEFAULT_LOCALE,
   currency = DEFAULT_CURRENCY,
   user = null,
   favorites = new Set(),
+  ownIds = new Set(),
   signedIn = false,
   isBrand = false,
+  initialChannel,
   footer,
 }: {
-  projects: ProjectListDTO[];
+  /** Every project and ad space in the marketplace, one flat list (2026-08-10,
+   *  stage B) — see CatalogRow above. */
+  rows: CatalogRow[];
   locale?: Locale;
   currency?: CurrencyCode;
   user?: SiteHeaderUser | null;
   /** projectIds the current BRAND visitor has favorited (#22) — empty for
    *  guests/non-brand members, which renders every heart outline/inert. */
   favorites?: Set<number>;
+  /** projectIds the current visitor OWNS (2026-08-11, dual-side accounts) —
+   *  same shape as `favorites`; a dual member can't apply/favorite their own
+   *  listing, so its card renders with neither. Empty for anyone who can't
+   *  sell — see catalog/page.tsx. */
+  ownIds?: Set<number>;
   signedIn?: boolean;
   isBrand?: boolean;
+  /** AD_CHANNELS code from `?channel=` (2026-08-10) — set when a visitor
+   *  arrived from a channel's "view all in catalog" teaser. Only seeds the
+   *  channel facet's initial value; a full filter↔URL sync is out of scope
+   *  (see the plan). */
+  initialChannel?: string;
   /** <Footer/>, rendered by the server page (catalog/page.tsx) and passed
    *  down instead of imported here — Footer is a plain Server Component used
    *  by many pure-server pages (bundle audit 2026-07-31); importing it
@@ -236,27 +355,73 @@ export function CatalogView({
    *  client bundle, not just this one. */
   footer: ReactNode;
 }) {
+  // ponytail: the whole catalog is serialized to the client and filtered/sorted
+  // there — fine at a few hundred rows, move to searchParams-driven server
+  // filtering once it stops being fine.
   const t = useUI(locale);
   // One hook call up front — genres.map()/FORMAT_CATEGORY_VALUES.map() below
   // call this per item; localizeValue() itself reads context and can't be
   // called inside a loop.
   const localize = useLocalizer(locale);
+
+  const [selectedChannels, setSelectedChannels] = useState<string[]>(
+    initialChannel ? [initialChannel] : [],
+  );
+  const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
+  const [selectedFormats, setSelectedFormats] = useState<string[]>([]);
+  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
+  const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
+  const [selectedPlacementTypes, setSelectedPlacementTypes] = useState<string[]>([]);
+  const [selectedCities, setSelectedCities] = useState<string[]>([]);
+  const [search, setSearch] = useState("");
+  const [view, setView] = useState<ViewMode>("grid");
+  const [sortBy, setSortBy] = useState<SortOption>("default");
+
+  // Channel facet options: codes actually present across the whole catalog
+  // (not narrowed by any other filter — a facet whose own checkboxes vanish
+  // as you use it is a broken facet), in the director's AD_CHANNELS order.
+  const channelOptions = useMemo(() => {
+    const present = new Set(rows.flatMap((r) => r.channels));
+    return AD_CHANNELS.filter((c) => present.has(c.code));
+  }, [rows]);
+
+  // Rows that survive the channel facet alone — every other facet's option
+  // list is derived from THIS, not from `rows` and not from the fully
+  // filtered set: picking BILLBOARD should narrow which genres show (there
+  // are none), but picking Comedy must not make BILLBOARD itself disappear
+  // from the channel checkboxes.
+  const channelFiltered = useMemo(
+    () =>
+      selectedChannels.length === 0
+        ? rows
+        : rows.filter((r) => r.channels.some((c) => selectedChannels.includes(c))),
+    [rows, selectedChannels],
+  );
+  const channelFilteredProjects = useMemo(
+    () => channelFiltered.flatMap((r) => (r.kind === "PROJECT" ? [r.project] : [])),
+    [channelFiltered],
+  );
+  const channelFilteredSpaces = useMemo(
+    () => channelFiltered.flatMap((r) => (r.kind === "AD_SPACE" ? [r.space] : [])),
+    [channelFiltered],
+  );
+
   // 5.6: the genre facet (and the filter match below) now considers every
   // genre a project carries, not just genres[0] — a project tagged
   // Comedy+Drama should surface under either filter, not just the first.
   const genres = useMemo(
     () =>
       Array.from(
-        new Set(projects.flatMap((p) => (p.genres.length > 0 ? p.genres : [p.genre]))),
+        new Set(channelFilteredProjects.flatMap((p) => (p.genres.length > 0 ? p.genres : [p.genre]))),
       ).sort(),
-    [projects],
+    [channelFilteredProjects],
   );
   // 5.8: only offer the "Unspecified" format bucket when the catalog actually
   // has a row with an empty formatCategory — same pattern as platform/country
   // below, so the checkbox never appears with nothing behind it.
   const hasUnspecifiedFormat = useMemo(
-    () => projects.some((p) => !p.formatCategory),
-    [projects],
+    () => channelFilteredProjects.some((p) => !p.formatCategory),
+    [channelFilteredProjects],
   );
   // Formats actually present in the catalog, kept in FORMAT_CATEGORY_VALUES
   // order rather than sorted: that order is editorial (Feature film → Series →
@@ -266,35 +431,33 @@ export function CatalogView({
   // holding three formats, nine of which filtered to nothing (owner report
   // 2026-07-31).
   const formatOptions = useMemo(() => {
-    const present = new Set(projects.map((p) => p.formatCategory).filter(Boolean));
+    const present = new Set(channelFilteredProjects.map((p) => p.formatCategory).filter(Boolean));
     return FORMAT_CATEGORY_VALUES.filter((v) => present.has(v));
-  }, [projects]);
+  }, [channelFilteredProjects]);
   // Distinct platforms / countries actually present across the projects.
   const platformOptions = useMemo(
-    () => Array.from(new Set(projects.flatMap((p) => parseStringArray(p.platforms)))).sort(),
-    [projects],
+    () => Array.from(new Set(channelFilteredProjects.flatMap((p) => parseStringArray(p.platforms)))).sort(),
+    [channelFilteredProjects],
   );
   const countryOptions = useMemo(
-    () => Array.from(new Set(projects.flatMap((p) => splitCountries(p.countries)))).sort(),
-    [projects],
+    () => Array.from(new Set(channelFilteredProjects.flatMap((p) => splitCountries(p.countries)))).sort(),
+    [channelFilteredProjects],
   );
   // Integration kinds actually on offer across the catalog (2026-08-10), in
   // PLACEMENT_TYPE_VALUES order for the same editorial reason as formatOptions
   // above. Nothing classified yet -> no facet at all, rather than four
   // checkboxes that each filter to zero.
   const placementTypeOptions = useMemo(() => {
-    const present = new Set(projects.flatMap((p) => p.placementTypes));
+    const present = new Set(channelFilteredProjects.flatMap((p) => p.placementTypes));
     return PLACEMENT_TYPE_VALUES.filter((v) => present.has(v));
-  }, [projects]);
-
-  const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
-  const [selectedFormats, setSelectedFormats] = useState<string[]>([]);
-  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
-  const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
-  const [selectedPlacementTypes, setSelectedPlacementTypes] = useState<string[]>([]);
-  const [search, setSearch] = useState("");
-  const [view, setView] = useState<ViewMode>("grid");
-  const [sortBy, setSortBy] = useState<SortOption>("default");
+  }, [channelFilteredProjects]);
+  // The one ad-space facet (plan B3) — sizeFormat is free text and
+  // reachPerDay wants a range slider the rail doesn't have; City is the only
+  // one that's a clean closed set today.
+  const cityOptions = useMemo(
+    () => Array.from(new Set(channelFilteredSpaces.map((s) => s.city).filter(Boolean))).sort(),
+    [channelFilteredSpaces],
+  );
   // How many of the filtered+sorted results are currently rendered — the
   // "Show more" button below the list grows this by PAGE_SIZE at a time.
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
@@ -316,18 +479,22 @@ export function CatalogView({
       const raw = sessionStorage.getItem(FILTERS_KEY);
       if (!raw) return;
       const f = JSON.parse(raw);
+      // A `?channel=` arrival wins over a stored channel selection (B5) — the
+      // rest of the blob still restores normally underneath it.
+      if (!initialChannel && Array.isArray(f.channels)) setSelectedChannels(f.channels);
       if (Array.isArray(f.genres)) setSelectedGenres(f.genres);
       if (Array.isArray(f.formats)) setSelectedFormats(f.formats);
       if (Array.isArray(f.platforms)) setSelectedPlatforms(f.platforms);
       if (Array.isArray(f.countries)) setSelectedCountries(f.countries);
       if (Array.isArray(f.placementTypes)) setSelectedPlacementTypes(f.placementTypes);
+      if (Array.isArray(f.cities)) setSelectedCities(f.cities);
       if (typeof f.search === "string") setSearch(f.search);
       if (f.view === "grid" || f.view === "list") setView(f.view);
       if (["default", "newest", "deadline", "title"].includes(f.sortBy)) setSortBy(f.sortBy);
     } catch {
       /* corrupt/blocked storage — fall back to defaults */
     }
-  }, []);
+  }, [initialChannel]);
 
   useEffect(() => {
     // Skip the very first render so we don't clobber stored filters with the
@@ -337,11 +504,13 @@ export function CatalogView({
       sessionStorage.setItem(
         FILTERS_KEY,
         JSON.stringify({
+          channels: selectedChannels,
           genres: selectedGenres,
           formats: selectedFormats,
           platforms: selectedPlatforms,
           countries: selectedCountries,
           placementTypes: selectedPlacementTypes,
+          cities: selectedCities,
           search,
           view,
           sortBy,
@@ -351,11 +520,13 @@ export function CatalogView({
       /* storage blocked — persistence is best-effort */
     }
   }, [
+    selectedChannels,
     selectedGenres,
     selectedFormats,
     selectedPlatforms,
     selectedCountries,
     selectedPlacementTypes,
+    selectedCities,
     search,
     view,
     sortBy,
@@ -369,11 +540,13 @@ export function CatalogView({
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
   }, [
+    selectedChannels,
     selectedGenres,
     selectedFormats,
     selectedPlatforms,
     selectedCountries,
     selectedPlacementTypes,
+    selectedCities,
     search,
     sortBy,
   ]);
@@ -381,11 +554,13 @@ export function CatalogView({
   // Count of active filter facets (excluding free-text search, which has its
   // own always-visible box) — shown as a badge on the mobile "Filters" button.
   const activeFilterCount =
+    selectedChannels.length +
     selectedGenres.length +
     selectedFormats.length +
     selectedPlatforms.length +
     selectedCountries.length +
-    selectedPlacementTypes.length;
+    selectedPlacementTypes.length +
+    selectedCities.length;
 
   // Lock the page scroll behind the open filter sheet.
   useEffect(() => {
@@ -398,19 +573,23 @@ export function CatalogView({
   }, [filtersOpen]);
 
   const hasFilters =
+    selectedChannels.length > 0 ||
     selectedGenres.length > 0 ||
     selectedFormats.length > 0 ||
     selectedPlatforms.length > 0 ||
     selectedCountries.length > 0 ||
     selectedPlacementTypes.length > 0 ||
+    selectedCities.length > 0 ||
     search !== "";
 
   const clearAll = () => {
+    setSelectedChannels([]);
     setSelectedGenres([]);
     setSelectedFormats([]);
     setSelectedPlatforms([]);
     setSelectedCountries([]);
     setSelectedPlacementTypes([]);
+    setSelectedCities([]);
     setSearch("");
   };
 
@@ -420,16 +599,41 @@ export function CatalogView({
     (setter: React.Dispatch<React.SetStateAction<string[]>>) => (value: string) =>
       setter((prev) => (prev.includes(value) ? prev.filter((x) => x !== value) : [...prev, value]));
 
+  const toggleChannel = makeToggle(setSelectedChannels);
   const toggleGenre = makeToggle(setSelectedGenres);
   const toggleFormat = makeToggle(setSelectedFormats);
   const togglePlatform = makeToggle(setSelectedPlatforms);
   const toggleCountry = makeToggle(setSelectedCountries);
   const togglePlacementType = makeToggle(setSelectedPlacementTypes);
+  const toggleCity = makeToggle(setSelectedCities);
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
+    // A project-only facet asks for something an ad space can never carry
+    // (a genre, a platform, …), and City is the reverse — the one ad-space
+    // facet. Either one active implies "only that kind" (plan B3: "a facet
+    // of one kind implies its own kind"), which is what makes selecting a
+    // genre also clear the billboards out of the list without a second
+    // "kind" control anywhere in the UI.
+    const isProjectFacetActive =
+      selectedGenres.length > 0 ||
+      selectedFormats.length > 0 ||
+      selectedPlatforms.length > 0 ||
+      selectedCountries.length > 0 ||
+      selectedPlacementTypes.length > 0;
+    const isCityFacetActive = selectedCities.length > 0;
 
-    let list = projects.filter((p) => {
+    return channelFiltered.filter((row) => {
+      if (row.kind === "AD_SPACE") {
+        if (isProjectFacetActive) return false;
+        const s = row.space;
+        if (selectedCities.length > 0 && !selectedCities.includes(s.city)) return false;
+        if (term && !row.haystack.includes(term)) return false;
+        return true;
+      }
+
+      if (isCityFacetActive) return false;
+      const p = row.project;
       if (selectedGenres.length > 0) {
         const gs = p.genres.length > 0 ? p.genres : [p.genre];
         if (!selectedGenres.some((s) => gs.includes(s))) return false;
@@ -460,45 +664,69 @@ export function CatalogView({
         if (!selectedPlacementTypes.some((s) => p.placementTypes.includes(s))) return false;
       }
 
-      if (term) {
-        const haystack = `${p.title} ${p.genre} ${p.countries} ${p.synopsis}`.toLowerCase();
-        if (!haystack.includes(term)) return false;
-      }
+      if (term && !row.haystack.includes(term)) return false;
 
       return true;
     });
-
-    return list;
   }, [
-    projects,
+    channelFiltered,
     selectedGenres,
     selectedFormats,
     selectedPlatforms,
     selectedCountries,
     selectedPlacementTypes,
+    selectedCities,
     search,
   ]);
 
+  // Only offer "Deadline soonest" when there's at least one project in the
+  // visible set — same "no data, no control" rule as the facets. An
+  // ad-space-only result (say, a BILLBOARD channel pick) has nothing this
+  // sort could order.
+  const hasProjectInResults = useMemo(() => filtered.some((r) => r.kind === "PROJECT"), [filtered]);
+
   // 5.7: re-sort the already-filtered list. "default" is a no-op — `filtered`
   // preserves the source array's order (Array.prototype.filter doesn't
-  // reorder), which is exactly the sortOrder the projects arrive in.
+  // reorder): projects in their own sortOrder, then ad spaces by channel and
+  // sortOrder, because that's the order `rows` arrived in from the server and
+  // nothing here reorders it.
   const sorted = useMemo(() => {
     if (sortBy === "default") return filtered;
     const list = [...filtered];
     if (sortBy === "newest") {
-      // releaseDate desc, projects with no release date sink to the end.
+      // Recency desc: a project's releaseDate, an ad space's createdAt. Two
+      // different things ("when the film comes out" vs. "when the listing
+      // was added") sharing one axis — fine for ordering, not for math, so
+      // don't reuse this value anywhere numbers get compared. Rows with no
+      // timestamp (a project missing releaseDate) sink to the end.
       list.sort((a, b) => {
-        const at = a.releaseDate ? new Date(a.releaseDate).getTime() : null;
-        const bt = b.releaseDate ? new Date(b.releaseDate).getTime() : null;
+        const at =
+          a.kind === "PROJECT"
+            ? a.project.releaseDate
+              ? new Date(a.project.releaseDate).getTime()
+              : null
+            : new Date(a.space.createdAt).getTime();
+        const bt =
+          b.kind === "PROJECT"
+            ? b.project.releaseDate
+              ? new Date(b.project.releaseDate).getTime()
+              : null
+            : new Date(b.space.createdAt).getTime();
         if (at === null) return bt === null ? 0 : 1;
         if (bt === null) return -1;
         return bt - at;
       });
     } else if (sortBy === "deadline") {
       // applicationDeadline asc (soonest first); an Ongoing project (IA-42)
-      // sorts after every dated one, and a project with no deadline at all
-      // sorts after even that — see compareDeadline.
-      list.sort(compareDeadline);
+      // sorts after every dated one, a project with no deadline sorts after
+      // even that, and an ad space (no deadline concept at all) sorts in the
+      // same "truly unset" bucket — see compareDeadline.
+      list.sort((a, b) =>
+        compareDeadline(
+          a.kind === "PROJECT" ? a.project : { applicationDeadline: null, applicationDeadlineOngoing: false },
+          b.kind === "PROJECT" ? b.project : { applicationDeadline: null, applicationDeadlineOngoing: false },
+        ),
+      );
     } else if (sortBy === "title") {
       list.sort((a, b) => a.title.localeCompare(b.title, intlLocale(locale)));
     }
@@ -507,32 +735,55 @@ export function CatalogView({
 
   // The client-side "page" currently on screen.
   const visible = useMemo(() => sorted.slice(0, visibleCount), [sorted, visibleCount]);
+  const projectCount = useMemo(() => sorted.filter((r) => r.kind === "PROJECT").length, [sorted]);
+  const adSpaceCount = sorted.length - projectCount;
 
   // Shared filter controls — rendered in the desktop sidebar AND the mobile
   // bottom-sheet, so the two never drift out of sync.
   const filterGroups = (
     <>
-      <CheckboxFilter
-        label={t("catalog.genre")}
-        options={genres.map((g) => ({ value: g, label: localize("genre", g) }))}
-        selected={selectedGenres}
-        onToggle={toggleGenre}
-      />
+      {/* Channel — new top facet (2026-08-10): everything on offer, projects
+          and ad spaces together. Only channels present anywhere in the
+          catalog render, same "no data no facet" rule as the rest. */}
+      {channelOptions.length > 0 ? (
+        <CheckboxFilter
+          label={t("catalog.channel")}
+          options={channelOptions.map((c) => ({ value: c.code, label: t(`adChannel.${c.code}`) }))}
+          selected={selectedChannels}
+          onToggle={toggleChannel}
+        />
+      ) : null}
 
-      <CheckboxFilter
-        label={t("catalog.format")}
-        options={[
-          ...formatOptions.map((v) => ({
-            value: v,
-            label: localize("formatCategory", v),
-          })),
-          // 5.8: explicit opt-in bucket for formatCategory === "" — see the
-          // filtering comment above for why this keeps those rows visible.
-          ...(hasUnspecifiedFormat ? [{ value: "", label: t("catalog.formatUnspecified") }] : []),
-        ]}
-        selected={selectedFormats}
-        onToggle={toggleFormat}
-      />
+      {/* Guarded like Platform below, which these two weren't until 2026-08-10:
+          while the catalog held nothing but films every film had a genre and a
+          format, so the arrays were never empty. Pick the Billboards channel
+          now and the result set is pure ad space — both came out as bare
+          headers that open onto nothing. */}
+      {genres.length > 0 ? (
+        <CheckboxFilter
+          label={t("catalog.genre")}
+          options={genres.map((g) => ({ value: g, label: localize("genre", g) }))}
+          selected={selectedGenres}
+          onToggle={toggleGenre}
+        />
+      ) : null}
+
+      {formatOptions.length > 0 || hasUnspecifiedFormat ? (
+        <CheckboxFilter
+          label={t("catalog.format")}
+          options={[
+            ...formatOptions.map((v) => ({
+              value: v,
+              label: localize("formatCategory", v),
+            })),
+            // 5.8: explicit opt-in bucket for formatCategory === "" — see the
+            // filtering comment above for why this keeps those rows visible.
+            ...(hasUnspecifiedFormat ? [{ value: "", label: t("catalog.formatUnspecified") }] : []),
+          ]}
+          selected={selectedFormats}
+          onToggle={toggleFormat}
+        />
+      ) : null}
 
       {/* Platform only appears when the catalog actually carries such values —
           an empty facet would render a bare header with no options. The
@@ -544,7 +795,11 @@ export function CatalogView({
       {platformOptions.length > 0 ? (
         <CheckboxFilter
           label={t("catalog.platform")}
-          options={platformOptions.map((p) => ({ value: p, label: p }))}
+          // QA-8: "Available on" mixes brand names ("Kinodaran", "YouTube" —
+          // left as-is) with a few generic category words ("TV", "Cinema",
+          // "Festivals"), which do get a label — same "label localizes, value
+          // stays canonical" split as Genre/Format above.
+          options={platformOptions.map((p) => ({ value: p, label: localize("platformCategory", p) }))}
           selected={selectedPlatforms}
           onToggle={togglePlatform}
         />
@@ -565,6 +820,18 @@ export function CatalogView({
         />
       ) : null}
 
+      {/* City — the one ad-space facet the rail carries (plan B3); see
+          cityOptions above for why sizeFormat/reachPerDay aren't checkboxes. */}
+      {cityOptions.length > 0 ? (
+        <CheckboxFilter
+          label={t("catalog.city")}
+          // QA-8: same split as Genre/Format — the checkbox reads in the
+          // visitor's language, filtering still compares the raw city value.
+          options={cityOptions.map((c) => ({ value: c, label: localizeCity(locale, c) }))}
+          selected={selectedCities}
+          onToggle={toggleCity}
+        />
+      ) : null}
     </>
   );
 
@@ -640,7 +907,10 @@ export function CatalogView({
               >
                 <option value="default">{t("catalog.sortDefault")}</option>
                 <option value="newest">{t("catalog.sortNewest")}</option>
-                <option value="deadline">{t("catalog.sortDeadline")}</option>
+                {/* Nothing in the visible set has a deadline to sort by once
+                    it's all ad spaces (B4) — same "no data, no control" rule
+                    as the facets. */}
+                {hasProjectInResults ? <option value="deadline">{t("catalog.sortDeadline")}</option> : null}
                 <option value="title">{t("catalog.sortTitle")}</option>
               </select>
 
@@ -672,8 +942,19 @@ export function CatalogView({
 
             <p className="mb-4 text-sm text-muted-foreground">
               {t("catalog.showingProjectsPrefix")}{" "}
-              <span className="font-semibold text-foreground">{sorted.length}</span>{" "}
-              {sorted.length === 1 ? t("catalog.projectSingular") : t("catalog.projectPlural")}
+              {/* Split count (plan B4) — a project and an ad space are too
+                  different to lump into one number, and either half drops out
+                  entirely once a channel pick leaves nothing of that kind. */}
+              {[
+                projectCount > 0
+                  ? t(`catalog.projectCount.${pluralForm(locale, projectCount)}`, { n: projectCount })
+                  : null,
+                adSpaceCount > 0
+                  ? t(`catalog.adSpaceCount.${pluralForm(locale, adSpaceCount)}`, { n: adSpaceCount })
+                  : null,
+              ]
+                .filter(Boolean)
+                .join(" · ")}
             </p>
 
             {sorted.length === 0 ? (
@@ -682,31 +963,41 @@ export function CatalogView({
               </div>
             ) : view === "grid" ? (
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
-                {visible.map((project) => (
-                  <ProjectCard
-                    key={project.id}
-                    project={project}
-                    locale={locale}
-                    user={user}
-                    favorited={favorites.has(project.id)}
-                    canFavorite={isBrand}
-                    signedIn={signedIn}
-                  />
-                ))}
+                {visible.map((row) =>
+                  row.kind === "PROJECT" ? (
+                    <ProjectCard
+                      key={row.key}
+                      project={row.project}
+                      locale={locale}
+                      user={user}
+                      favorited={favorites.has(row.project.id)}
+                      canFavorite={isBrand && !ownIds.has(row.project.id)}
+                      isOwn={ownIds.has(row.project.id)}
+                      signedIn={signedIn}
+                    />
+                  ) : (
+                    <AdSpaceCard key={row.key} space={row.space} channelSlug={row.channelSlug} locale={locale} />
+                  ),
+                )}
               </div>
             ) : (
               <div className="flex flex-col gap-4">
-                {visible.map((project) => (
-                  <ProjectRow
-                    key={project.id}
-                    project={project}
-                    locale={locale}
-                    user={user}
-                    favorited={favorites.has(project.id)}
-                    canFavorite={isBrand}
-                    signedIn={signedIn}
-                  />
-                ))}
+                {visible.map((row) =>
+                  row.kind === "PROJECT" ? (
+                    <ProjectRow
+                      key={row.key}
+                      project={row.project}
+                      locale={locale}
+                      user={user}
+                      favorited={favorites.has(row.project.id)}
+                      canFavorite={isBrand && !ownIds.has(row.project.id)}
+                      isOwn={ownIds.has(row.project.id)}
+                      signedIn={signedIn}
+                    />
+                  ) : (
+                    <AdSpaceRow key={row.key} space={row.space} channelSlug={row.channelSlug} locale={locale} />
+                  ),
+                )}
               </div>
             )}
 

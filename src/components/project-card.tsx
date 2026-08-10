@@ -91,6 +91,7 @@ export function ProjectCard({
   user = null,
   favorited = false,
   canFavorite = false,
+  isOwn = false,
   signedIn = false,
 }: {
   project: ProjectListDTO;
@@ -98,6 +99,9 @@ export function ProjectCard({
   user?: SiteHeaderUser | null;
   favorited?: boolean;
   canFavorite?: boolean;
+  /** See FavoriteHeart — this visitor's own listing, distinct from "not a
+   *  brand at all". */
+  isOwn?: boolean;
   signedIn?: boolean;
 }) {
   const t = useUI(locale);
@@ -202,9 +206,11 @@ export function ProjectCard({
           projectId={project.id}
           initialFavorite={favorited}
           canFavorite={canFavorite}
+          isOwn={isOwn}
           signedIn={signedIn}
           addAria={t("favorite.addAria")}
           removeAria={t("favorite.removeAria")}
+          ownAria={t("favorite.ownAria")}
         />
       </div>
 
@@ -293,7 +299,7 @@ export function ProjectCard({
                 key={p}
                 className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
               >
-                {p}
+                {localize("platformCategory", p)}
               </span>
             ))}
           </div>

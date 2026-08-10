@@ -1,9 +1,13 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import { Eye, MapPin, Megaphone, Ruler } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AccentBadge } from "@/components/ui/badge";
 import { adSpacePath } from "@/lib/ad-space-url";
-import { DEFAULT_LOCALE, intlLocale, makeUI, type Locale } from "@/lib/i18n";
+import { findAdChannel } from "@/lib/ad-channels";
+import { DEFAULT_LOCALE, intlLocale, useUI, type Locale } from "@/lib/i18n-client";
 import type { AdSpaceListDTO } from "@/lib/types";
 
 /** One ad space in a channel's showcase grid — the AdSpace counterpart of
@@ -11,9 +15,12 @@ import type { AdSpaceListDTO } from "@/lib/types";
  *  decide, then what it costs above the button) so a brand reads the two
  *  showcases the same way.
  *
- *  Unlike ProjectCard this is a Server Component: an ad space has no favorite
- *  heart and no apply button, so nothing here needs the browser — and staying
- *  on the server keeps its keys out of the client dictionary bundle.
+ *  "use client" (2026-08-10, catalog unification): this used to be a Server
+ *  Component — an ad space has no favorite heart or apply button, so nothing
+ *  in it needed the browser. It now renders inside CatalogView, a Client
+ *  Component, alongside the already-client ProjectCard — so it needs the
+ *  browser anyway. The bundle cost this used to avoid is near zero since
+ *  ProjectCard is already paying it on the same page.
  *
  *  Prices arrive preformatted in the visitor's currency (see
  *  src/lib/data/ad-spaces.ts); "" means nothing on this space is priced, which
@@ -28,8 +35,9 @@ export function AdSpaceCard({
   channelSlug: string;
   locale?: Locale;
 }) {
-  const t = makeUI(locale);
+  const t = useUI(locale);
   const href = adSpacePath(channelSlug, space.code);
+  const channel = findAdChannel(channelSlug);
 
   return (
     <div className="relative flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card card-lift">
@@ -54,6 +62,16 @@ export function AdSpaceCard({
 
       <div className="flex flex-1 flex-col p-6">
         <h3 className="text-lg font-semibold text-foreground md:text-xl">{space.title}</h3>
+
+        {/* QA-2: a bare title didn't say what kind of space this is — a
+            billboard read the same as an elevator panel until the reader
+            opened it. Same AccentBadge ProjectCard leads its facts with
+            (the "what this IS" chip). */}
+        {channel ? (
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <AccentBadge>{t(`adChannel.${channel.code}`)}</AccentBadge>
+          </div>
+        ) : null}
 
         {/* Each row drops out on its own: a radio slot has no address, a
             newly-listed panel has no traffic figure, and a bare icon next to
