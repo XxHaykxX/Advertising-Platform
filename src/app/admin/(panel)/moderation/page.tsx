@@ -3,7 +3,9 @@ import { prisma } from "@/lib/prisma";
 import { requireModerator } from "@/lib/auth/require";
 import { canEditContent } from "@/lib/auth/permissions";
 import type { ModerationStatus } from "@prisma/client";
-import { RowActions } from "./row-actions";
+import { findAdChannelByCode } from "@/lib/ad-channels";
+import { makeUI } from "@/lib/i18n";
+import { AdSpaceRowActions, RowActions } from "./row-actions";
 
 /* #13: project-level moderation queue. Accounts self-approve (see
    lib/auth/members.ts); what actually gates the public catalog is each
@@ -49,19 +51,36 @@ export default async function ModerationAdminPage({
   // gets the public report page instead, which they can actually open (see
   // the activeOnly bypass in app/reports/[id]/page.tsx).
   const canEdit = canEditContent(staff.role);
+  // The panel is English-only; the channel names live in the dictionary.
+  const tEn = makeUI("en");
 
   const { tab: rawTab } = await searchParams;
   const tab: "PENDING" | "REJECTED" | "ALL" =
     rawTab === "REJECTED" || rawTab === "ALL" ? rawTab : "PENDING";
 
-  const [projects, pendingCount, rejectedCount] = await Promise.all([
+  // Ad spaces (stage 3) share this queue: same statuses, same two answers, so
+  // the tab counts are the sum — a badge that only counted projects would let
+  // a submitted billboard sit behind a zero.
+  const [projects, adSpaces, pendingCount, rejectedCount] = await Promise.all([
     prisma.project.findMany({
       where: tab === "ALL" ? undefined : { moderationStatus: tab },
       orderBy: { createdAt: "desc" },
       include: { owner: { select: { name: true, email: true } } },
     }),
-    prisma.project.count({ where: { moderationStatus: "PENDING" } }),
-    prisma.project.count({ where: { moderationStatus: "REJECTED" } }),
+    prisma.adSpace.findMany({
+      where: tab === "ALL" ? undefined : { moderationStatus: tab },
+      orderBy: { createdAt: "desc" },
+      include: {
+        owner: { select: { name: true, email: true } },
+        _count: { select: { offers: true } },
+      },
+    }),
+    prisma.project.count({ where: { moderationStatus: "PENDING" } }).then(async (n) =>
+      n + (await prisma.adSpace.count({ where: { moderationStatus: "PENDING" } })),
+    ),
+    prisma.project.count({ where: { moderationStatus: "REJECTED" } }).then(async (n) =>
+      n + (await prisma.adSpace.count({ where: { moderationStatus: "REJECTED" } })),
+    ),
   ]);
 
   const COUNTS: Record<"PENDING" | "REJECTED" | "ALL", number> = {
@@ -75,7 +94,7 @@ export default async function ModerationAdminPage({
       <div>
         <h1 className="text-2xl font-bold text-foreground">Moderation</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Review projects submitted for the public catalog.
+          Review projects and ad spaces submitted for the public catalog.
         </p>
       </div>
 
@@ -100,12 +119,18 @@ export default async function ModerationAdminPage({
         })}
       </div>
 
-      {projects.length === 0 ? (
+      {projects.length === 0 && adSpaces.length === 0 ? (
         <div className="mt-8 rounded-2xl border border-border bg-card py-16 text-center text-muted-foreground">
           Nothing here.
         </div>
-      ) : (
-        <div className="mt-6 overflow-x-auto rounded-2xl border border-border bg-card shadow-sm">
+      ) : null}
+
+      {projects.length > 0 ? (
+        <>
+          <h2 className="mt-8 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            Projects
+          </h2>
+          <div className="mt-3 overflow-x-auto rounded-2xl border border-border bg-card shadow-sm">
           <table className="w-full min-w-[900px] text-sm">
             <thead>
               <tr className="border-b border-border bg-muted text-left text-xs uppercase tracking-wide text-muted-foreground">
@@ -179,8 +204,80 @@ export default async function ModerationAdminPage({
               ))}
             </tbody>
           </table>
-        </div>
-      )}
+          </div>
+        </>
+      ) : null}
+
+      {adSpaces.length > 0 ? (
+        <>
+          <h2 className="mt-8 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+            Ad spaces
+          </h2>
+          <div className="mt-3 overflow-x-auto rounded-2xl border border-border bg-card shadow-sm">
+            <table className="w-full min-w-[900px] text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted text-left text-xs uppercase tracking-wide text-muted-foreground">
+                  <th className="px-4 py-3 font-medium">Photo</th>
+                  <th className="px-4 py-3 font-medium">Title</th>
+                  <th className="px-4 py-3 font-medium">Channel</th>
+                  <th className="px-4 py-3 font-medium">Location</th>
+                  <th className="px-4 py-3 font-medium">Offers</th>
+                  <th className="px-4 py-3 font-medium">Owner</th>
+                  <th className="px-4 py-3 font-medium">Status</th>
+                  <th className="px-4 py-3 font-medium">Submitted</th>
+                  <th className="px-4 py-3 font-medium"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {adSpaces.map((s) => {
+                  // The public card, the same page a visitor lands on — a
+                  // MODERATOR cannot open /admin/ad-spaces/…/edit (that section
+                  // is content-editor-only), so linking there would dead-end
+                  // the very row it belongs to.
+                  const slug = findAdChannelByCode(s.channel)?.slug ?? "";
+                  return (
+                    <tr key={s.id} className="border-b border-border align-top last:border-b-0 hover:bg-muted/50">
+                      <td className="px-4 py-3">
+                        <div className="h-10 w-16 overflow-hidden rounded bg-muted">
+                          {s.image && (
+                            /* eslint-disable-next-line @next/next/no-img-element */
+                            <img src={s.image} alt="" className="h-full w-full object-cover" />
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 font-medium text-foreground">
+                        {s.titleHy || s.titleRu || s.titleEn || s.title}
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">{tEn(`adChannel.${s.channel}`)}</td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {[s.city, s.address].filter(Boolean).join(", ")}
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">{s._count.offers}</td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        <div>{s.owner.name}</div>
+                        <div className="text-xs">{s.owner.email}</div>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`rounded-full border px-2.5 py-1 text-xs font-medium ${STATUS_PILL[s.moderationStatus]}`}
+                        >
+                          {STATUS_LABEL[s.moderationStatus]}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">{formatDate(s.createdAt)}</td>
+                      <td className="px-4 py-3">
+                        {(s.moderationStatus === "PENDING" || s.moderationStatus === "REJECTED") && (
+                          <AdSpaceRowActions adSpaceId={s.id} viewHref={`/ads/${slug}/${s.code}`} />
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
+      ) : null}
     </div>
   );
 }

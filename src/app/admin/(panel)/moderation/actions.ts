@@ -9,6 +9,8 @@ import { createNotification } from "@/lib/data/notifications";
 import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
 import { publishBlockers } from "@/app/admin/(panel)/projects/form-shared";
+import { adSpacePublishBlockers } from "@/app/admin/(panel)/ad-spaces/form-shared";
+import { revalidateAdSpaces } from "@/lib/data/revalidate-ad-spaces";
 
 /** JSON string[] (or null) -> string[]; tolerant of malformed data. Mirrors the
    helper in src/lib/data/projects.ts — used here only to tell an empty
@@ -158,9 +160,96 @@ export async function rejectProject(projectId: number, reason?: string) {
   revalidateModerationPaths(project.id);
 }
 
-/** Count of projects awaiting moderation — drives the admin-nav badge, same
-   pattern as registrations/actions.ts getPendingCount. */
+/* ── Ad spaces (stage 3 of docs/plan-multichannel-ads.md) ──────────────────
+   The same queue, the same two answers, the same statuses. Separate actions
+   only because they write a different table: an AdSpace is not a Project, but
+   nothing about judging one is. */
+
+function revalidateAdSpaceModerationPaths() {
+  // updateTag("ad-spaces") + the /ads route tree — see revalidate-ad-spaces.ts
+  // for why it must not be revalidateTag.
+  revalidateAdSpaces();
+  revalidatePath("/admin/moderation");
+  revalidatePath("/admin/ad-spaces");
+  revalidatePath("/account/ad-spaces");
+}
+
+/** Approve a submitted ad space — publishes it (APPROVED + isActive). Refused
+   while the space is missing anything a public listing needs, same gate the
+   owner's own save runs through (adSpacePublishBlockers). */
+export async function approveAdSpace(adSpaceId: number): Promise<{ ok: true } | { error: string }> {
+  const user = await requireModerator();
+  const before = await prisma.adSpace.findUnique({
+    where: { id: adSpaceId },
+    select: {
+      moderationStatus: true,
+      sizeFormat: true,
+      _count: { select: { offers: true } },
+    },
+  });
+  if (!before) return { error: "Ad space not found." };
+
+  const missing = adSpacePublishBlockers(before, before._count.offers);
+  if (missing.length > 0) {
+    const t = makeUI(await getLocale());
+    return { error: `${t("publish.blockedApprove")} ${missing.map((key) => t(key)).join(", ")}.` };
+  }
+
+  const space = await prisma.adSpace.update({
+    where: { id: adSpaceId },
+    data: { moderationStatus: "APPROVED", isActive: true, updatedById: user.id },
+    select: { id: true, title: true, ownerId: true },
+  });
+  // Only on an actual status change — re-approving must not re-notify.
+  if (before.moderationStatus !== "APPROVED") {
+    await createNotification(space.ownerId, {
+      type: "ADSPACE_APPROVED",
+      data: { adSpaceId: space.id, adSpaceTitle: space.title },
+      link: "/account/ad-spaces",
+    });
+  }
+  revalidateAdSpaceModerationPaths();
+  return { ok: true };
+}
+
+/** Reject a submitted ad space. The moderator's reason is stored on the row and
+   shown in the owner's cabinet — the same loop the project rejection closes. */
+export async function rejectAdSpace(adSpaceId: number, reason?: string) {
+  const user = await requireModerator();
+  const before = await prisma.adSpace.findUnique({
+    where: { id: adSpaceId },
+    select: { moderationStatus: true },
+  });
+  const trimmedReason = (reason || "").trim();
+  const space = await prisma.adSpace.update({
+    where: { id: adSpaceId },
+    data: {
+      moderationStatus: "REJECTED",
+      rejectionReason: trimmedReason || null,
+      isActive: false,
+      updatedById: user.id,
+    },
+    select: { id: true, title: true, ownerId: true },
+  });
+  if (before?.moderationStatus !== "REJECTED") {
+    await createNotification(space.ownerId, {
+      type: "ADSPACE_REJECTED",
+      data: { adSpaceId: space.id, adSpaceTitle: space.title, reason: trimmedReason },
+      link: "/account/ad-spaces",
+    });
+  }
+  revalidateAdSpaceModerationPaths();
+}
+
+/** Count of everything awaiting moderation — drives the admin-nav badge, same
+   pattern as registrations/actions.ts getPendingCount. Ad spaces are counted
+   with projects: they share the queue, so a badge that ignored them would let
+   a submission sit unnoticed behind a zero. */
 export async function getPendingModerationCount(): Promise<number> {
   await requireUser();
-  return prisma.project.count({ where: { moderationStatus: "PENDING" } });
+  const [projects, adSpaces] = await Promise.all([
+    prisma.project.count({ where: { moderationStatus: "PENDING" } }),
+    prisma.adSpace.count({ where: { moderationStatus: "PENDING" } }),
+  ]);
+  return projects + adSpaces;
 }

@@ -148,6 +148,54 @@ export interface MilestoneDTO {
   isActive: boolean; // the current stage — highlighted on the timeline
 }
 
+/** One piece of advertising inventory outside a film — a billboard, a lift
+ *  panel, a radio slot (stage 3, 2026-08-10). The list shape: everything the
+ *  channel showcase card needs, already localized and priced in the visitor's
+ *  currency, same preformatted-on-the-server contract as ProjectListDTO. */
+export interface AdSpaceListDTO {
+  id: number;
+  code: string;
+  /** AD_CHANNELS code — the channel this space belongs to. */
+  channel: string;
+  title: string;
+  /** City + address, joined for display; "" when neither was filled. */
+  location: string;
+  /** "3×6 м", "30 сек" — the unit differs per channel, so it is free text. */
+  sizeFormat: string;
+  /** Audience or traffic per day; null when the owner gave no figure. */
+  reachPerDay: number | null;
+  image: string;
+  /** Cheapest offer on this space, preformatted; "" when everything here is
+   *  "on request". */
+  priceFromDisplay: string;
+  offersCount: number;
+}
+
+export interface AdSpaceDetailDTO extends AdSpaceListDTO {
+  /** Cleared moderation and not hidden — the public card refuses to render
+   *  anything else, while the owner's cabinet and the admin preview pass
+   *  activeOnly=false and see a DRAFT. */
+  publiclyVisible: boolean;
+  description: string[];
+  gallery: string[];
+  sides: number | null;
+  availableFrom: string | null;
+  availableTo: string | null;
+  offers: AdSpaceOfferDTO[];
+}
+
+export interface AdSpaceOfferDTO {
+  id: number;
+  name: string;
+  /** What the price buys — "месяц", "кампания"; "" when unset. */
+  period: string;
+  priceAmd: number | null; // null -> "on request", same contract as PlacementDTO
+  priceDisplay: string | null;
+  priceNative: string | null;
+  availableSlots: number | null;
+  totalSlots: number | null;
+}
+
 export interface PortfolioDTO {
   id: number;
   title: string;

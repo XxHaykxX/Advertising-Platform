@@ -37,6 +37,7 @@ export default async function AccountLayout({ children }: { children: ReactNode 
               labels={{
                 projects: t("account.myProjects"),
                 submit: t("account.submitProject"),
+                adSpaces: t("adSpace.mine"),
                 notifications: t("notif.title"),
                 profile: t("account.profile"),
                 logout: t("account.logout"),

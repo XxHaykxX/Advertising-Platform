@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { FolderKanban, FileUp, Bell, User, LogOut } from "lucide-react";
+import { FolderKanban, FileUp, Megaphone, Bell, User, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutButton } from "@/components/logout-button";
 import type { Locale } from "@/lib/i18n-client";
@@ -30,6 +30,7 @@ export function CreatorSidebar({
   labels: {
     projects: string;
     submit: string;
+    adSpaces: string;
     notifications: string;
     profile: string;
     logout: string;
@@ -45,6 +46,11 @@ export function CreatorSidebar({
     // place. One entry, under the name of what it shows.
     { href: "/account", label: labels.projects, icon: FolderKanban, exact: true },
     { href: "/account/projects/new", label: labels.submit, icon: FileUp },
+    // Inventory outside a film — billboards, lifts, radio slots (stage 3 of
+    // the multichannel plan). Its own entry rather than a tab inside "My
+    // projects": a project and an ad space are different rows, different
+    // forms and different moderation submissions.
+    { href: "/account/ad-spaces", label: labels.adSpaces, icon: Megaphone },
     // No "Brand offers" entry: a brand's application is run by staff, so the
     // creator has nothing to answer here (owner decision 2026-08-07).
     { href: "/account/notifications", label: labels.notifications, icon: Bell },

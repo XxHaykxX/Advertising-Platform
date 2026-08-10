@@ -1,4 +1,24 @@
 import { intlLocale, type Locale } from "@/lib/i18n-base";
+import { formatMoney, type CurrencyCode } from "@/lib/currency";
+import type { getRates } from "@/lib/currency/rates";
+
+/** "From X" across a set of offers, preformatted in the visitor's currency.
+   Unpriced rows (null — "on request") and zeroes drop out; "" means nothing in
+   the set carries a price at all, and the card says so rather than printing a
+   bare currency symbol.
+
+   Lives here rather than in projects.ts because ad spaces price their offers
+   the same way (stage 3, 2026-08-10) and a second copy would drift. */
+export function formatPriceFrom(
+  prices: Array<number | null>,
+  currency: CurrencyCode,
+  rates: Awaited<ReturnType<typeof getRates>>,
+  locale: Locale,
+): string {
+  const priced = prices.filter((p): p is number => p != null && p > 0);
+  if (priced.length === 0) return "";
+  return formatMoney(Math.min(...priced), currency, rates, locale);
+}
 
 export function parseStringArray(json: string | null): string[] {
   if (!json) return [];

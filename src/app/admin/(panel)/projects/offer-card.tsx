@@ -151,6 +151,7 @@ export function OfferCard({
   onDuplicate,
   onDelete,
   t,
+  hideThumb = false,
   header,
   children,
 }: {
@@ -161,6 +162,11 @@ export function OfferCard({
   onDuplicate: () => void;
   onDelete: () => void;
   t: ReturnType<typeof useUI>;
+  /** Drop the thumbnail from the collapsed row. For offer kinds that have no
+   *  image column at all (an ad space's offers) — otherwise every collapsed
+   *  row carries a permanently empty "no image" box. Default false, so the two
+   *  project editors are untouched. */
+  hideThumb?: boolean;
   /** The title input. It rides in the header row — the card's identity belongs
    *  next to its controls, and it keeps the body's full width for the fields
    *  (the action buttons used to eat ~100px off every row below them). */
@@ -209,7 +215,11 @@ export function OfferCard({
               onClick={onToggle}
               className="flex w-full items-center gap-3 text-left"
             >
-              <span className="relative h-[54px] w-24 shrink-0 overflow-hidden rounded-lg bg-muted">
+              <span
+                className={`relative h-[54px] w-24 shrink-0 overflow-hidden rounded-lg bg-muted ${
+                  hideThumb ? "hidden" : ""
+                }`}
+              >
                 {summary.image ? (
                   <Image src={summary.image} alt="" fill className="object-cover" sizes="96px" unoptimized />
                 ) : (

@@ -9,6 +9,7 @@ import {
   Users,
   Users2,
   Images,
+  Megaphone,
   Handshake,
   FolderOpen,
   ShieldCheck,
@@ -75,6 +76,9 @@ const NAV_GROUPS: {
       // brand's message and contact stored but readable by nobody.
       { href: "/admin/interests", label: "Offers", icon: Inbox, show: canHandleInterests },
       { href: "/admin/projects", label: "Projects", icon: Film, show: canEditContent },
+      // Inventory that isn't sold through a film — billboards, lifts, transit,
+      // radio, TV, video, banners (stage 3 of the multichannel plan).
+      { href: "/admin/ad-spaces", label: "Ad spaces", icon: Megaphone, show: canEditContent },
       { href: "/admin/cast", label: "Cast & Crew", icon: Users2, show: canEditContent },
       { href: "/admin/media", label: "Media", icon: FolderOpen, show: canEditContent },
       // Audit: content damage used to be untraceable — no record of who

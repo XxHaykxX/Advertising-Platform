@@ -5,6 +5,7 @@ import { ArrowLeft, Check, Clock } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { Footer } from "@/components/footer";
 import { ProjectCard } from "@/components/project-card";
+import { AdSpaceCard } from "@/components/ad-space-card";
 import { Section } from "@/components/ui/section";
 import { Container } from "@/components/ui/container";
 import { Reveal } from "@/components/ui/reveal";
@@ -13,6 +14,7 @@ import { PageHero } from "@/components/ui/page-hero";
 import { getLocale } from "@/lib/data/locale";
 import { getCurrency } from "@/lib/data/currency";
 import { getProjects } from "@/lib/data/projects";
+import { getAdSpacesByChannel } from "@/lib/data/ad-spaces";
 import { getBrandFavoriteSet } from "@/lib/data/favorites";
 import { loadCurrentUser } from "@/lib/auth/require";
 import { AD_CHANNELS, findAdChannel, type AdChannel } from "@/lib/ad-channels";
@@ -72,13 +74,16 @@ export default async function AdChannelPage({
   const t = makeUI(locale);
   const Icon = AD_CHANNEL_ICONS[channel.code];
 
-  // Only the PROJECT channels hit the DB; the AD_SPACE ones render their empty
-  // state without a query.
+  // Each entity kind queries only its own table: a PROJECT channel never
+  // touches AdSpace and vice versa.
   const currentUser = channel.entity === "PROJECT" ? await loadCurrentUser() : null;
   const projects =
     channel.entity === "PROJECT"
       ? channelProjects(channel, await getProjects(locale, currency))
       : [];
+  // Approved, visible spaces only — the gate lives in getAdSpacesByChannel.
+  const spaces =
+    channel.entity === "AD_SPACE" ? await getAdSpacesByChannel(channel.code, locale, currency) : [];
   // Favorites (#22) are a BRAND-only private shortlist — same rule as /catalog.
   const favorites =
     currentUser?.role === "BRAND" ? await getBrandFavoriteSet(currentUser.id) : new Set<number>();
@@ -181,9 +186,29 @@ export default async function AdChannelPage({
                 </Reveal>
               )}
             </>
+          ) : spaces.length > 0 ? (
+            /* The spaces creators have listed on this channel and moderation
+               has approved (stage 3). */
+            <>
+              <Reveal delay={0.08}>
+                <p className="mt-3 max-w-3xl text-muted-foreground">
+                  {t("adSpacePublic.inventorySubtitle")}
+                </p>
+              </Reveal>
+              <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {spaces.map((space) => (
+                  <AdSpaceCard
+                    key={space.id}
+                    space={space}
+                    channelSlug={channel.slug}
+                    locale={locale}
+                  />
+                ))}
+              </div>
+            </>
           ) : (
-            /* Stage 3 builds the AdSpace table this section will list. Until
-               then it says so plainly instead of showing invented listings. */
+            /* Nobody has listed anything on this channel yet — the honest
+               state, kept from stage 2 rather than showing an empty grid. */
             <Reveal delay={0.08}>
               <div className="mt-8 max-w-3xl rounded-2xl border border-dashed border-border bg-card px-8 py-10">
                 <div className="flex items-center gap-3">

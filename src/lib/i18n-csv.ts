@@ -15,10 +15,10 @@ export const CSV_HEADER = ["key", "Где на сайте", "hy", "ru", "en"] as
    Two rules, both load-bearing:
 
    1. EVERY key must match a prefix here. Until 2026-08-10 only 34 prefixes
-      were covered, so about half the dictionary fell through to the fallback
-      below and Мариам got 95 one-row "sections" named `forCreators.field.
-      castPhoto.`. src/lib/i18n-csv.test.ts now fails when a key has no label,
-      so a new namespace can't ship unnamed again.
+      were covered, so 534 of the 1002 keys fell through to the fallback below
+      and Мариам got 95 one-row "sections" named `forCreators.field.
+      castPhoto.`. src/lib/i18n.guard.test.ts now fails when a key has no
+      label, so a new namespace can't ship unnamed again.
    2. The label IS the sort key — the dropdown and the group list are ordered
       alphabetically by it. Hence the "Раздел — подраздел" shape: every
       "Форма проекта — …" lands together, in one run, without any extra
@@ -57,6 +57,9 @@ const CONTEXT_LABELS: Record<string, string> = {
   "ads.": "Реклама — обзор и общие блоки",
   "adGroup.": "Реклама — названия групп каналов",
   "adChannel.": "Реклама — описания девяти каналов",
+  "adSpacePublic.": "Реклама — карточка рекламного места",
+  "adSpaceForm.": "Реклама — форма рекламного места",
+  "adSpace.": "Реклама — рекламные места (админка и кабинет)",
 
   // ── Каталог и страница проекта ──
   "catalog.": "Каталог — фильтры и сортировка",

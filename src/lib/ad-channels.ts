@@ -70,6 +70,30 @@ export function findAdChannel(slug: string): AdChannel | undefined {
   return AD_CHANNELS.find((c) => c.slug === slug);
 }
 
+export function findAdChannelByCode(code: string): AdChannel | undefined {
+  return AD_CHANNELS.find((c) => c.code === code);
+}
+
+/** The channels an AdSpace can belong to — the seven that are NOT sold through
+ *  a project. Drives the channel picker in the ad-space form. */
+export const AD_SPACE_CHANNELS: readonly AdChannel[] = AD_CHANNELS.filter(
+  (c) => c.entity === "AD_SPACE",
+);
+
+/**
+ * The only gate between a form field and `AdSpace.channel`.
+ *
+ * The column is a plain string (see the note on AdChannel) so the directory
+ * stays the single source of truth, which means nothing at the database level
+ * stops a typo or a hand-crafted POST from writing "BILBOARD". Every save path
+ * runs its value through here — same role `normalizePlacementType` plays for
+ * placements. Returns null for anything that is not a real AD_SPACE channel;
+ * callers treat null as "reject this save", never as "store null".
+ */
+export function normalizeAdSpaceChannel(v: string | null | undefined): string | null {
+  return AD_SPACE_CHANNELS.some((c) => c.code === v) ? (v as string) : null;
+}
+
 /** The overview page's layout: every group in AD_CHANNEL_GROUPS order, its
  *  channels HIGH-first (stable within a priority — the director's own order). */
 export function adChannelsByGroup(): { group: AdChannelGroup; channels: AdChannel[] }[] {

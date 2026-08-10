@@ -455,6 +455,9 @@ export const UI: Record<string, Dict> = {
   // The cheapest offer on the project. A marketplace listing without a price
   // cannot be compared or shortlisted without opening it, which was the single
   // biggest gap on this card.
+  // Also rendered by the ad-space card (2026-08-10), not just the project one:
+  // keep it a bare preposition. Anything project-specific typed here would
+  // show up under a billboard's price too.
   "card.priceFrom": { ru: "от", en: "from", hy: "սկսած" },
   // Under the capacity bar. Says how many are LEFT, not how many are gone —
   // the buyer is deciding whether there is still room for them.
@@ -475,6 +478,7 @@ export const UI: Record<string, Dict> = {
   "card.offerOptions": { ru: "{n} вариантов", en: "{n} options", hy: "{n} տարբերակ" },
   "card.offerOptionsOne": { ru: "1 вариант", en: "1 option", hy: "1 տարբերակ" },
   // Shown instead when every placement and package on the project is unpriced.
+  // Shared with the ad-space card (2026-08-10) — same caveat as card.priceFrom.
   "card.priceOnRequest": { ru: "Цена по запросу", en: "Price on request", hy: "Գինը՝ հարցումով" },
   // Replaces the bare deadline date once the deadline is close: a countdown
   // presses harder than a date the reader has to subtract today from.
@@ -625,9 +629,16 @@ export const UI: Record<string, Dict> = {
   "faq.title": { ru: "Часто задаваемые вопросы", en: "Frequently Asked Questions", hy: "Հաճախ տրվող հարցեր" },
   // Six questions, keys q1..q6 with NO gap. The old set ran q1,q3..q7 — the
   // missing q2 is what made the content writer's numbered rows land on the
-  // wrong keys when her sheet was applied (2026-07-27). The numbering also
-  // left her question text ("1. Ինչպե՞ս…"); it's dropped here, since the
-  // accordion is the numbering.
+  // wrong keys when her sheet was applied (2026-07-27).
+  //
+  // ⚠️ The hy column below is STILL the damaged version of that same mishap and
+  // is live on igovazd.am: it asks a different set of questions from ru/en,
+  // shifted by one (q3 repeats q2 outright), four answers read "Coming Soon…",
+  // and the manual numbering the accordion already provides ("1. Ինչպե՞ս…") was
+  // never stripped. All ten broken rows are flagged RED with a note in
+  // /admin/i18n — the wording is the content writer's to fix there, not ours
+  // (owner decision 2026-08-10), and publishing from that editor needs no
+  // deploy. Only q2 is clean.
   "faq.q1.question": {
     ru: "Как формируется цена?",
     en: "How does pricing work?",
@@ -2042,6 +2053,26 @@ export const UI: Record<string, Dict> = {
   "notif.rejected.title": { ru: "Проект отклонён", en: "Project rejected", hy: "Նախագիծը մերժված է" },
   "notif.rejected.body": { ru: "Проект «{project}» отклонён модератором.", en: "“{project}” was rejected by a moderator.", hy: "«{project}» նախագիծը մերժվեց մոդերատորի կողմից։" },
   "notif.rejected.reasonPrefix": { ru: "Причина:", en: "Reason:", hy: "Պատճառը․" },
+  // Рекламные места проходят ту же очередь модерации, что и проекты — свои
+  // тексты, потому что «проект» в них было бы неправдой (этап 3).
+  "notif.spaceSubmitted.title": { ru: "Новое рекламное место", en: "New ad space", hy: "Նոր գովազդային տարածք" },
+  "notif.spaceSubmitted.body": {
+    ru: "{creator} отправил место «{space}» на проверку.",
+    en: "{creator} submitted the space “{space}” for review.",
+    hy: "{creator}-ը ուղարկել է «{space}» տարածքը ստուգման։",
+  },
+  "notif.spaceApproved.title": { ru: "Место одобрено", en: "Ad space approved", hy: "Տարածքը հաստատվեց" },
+  "notif.spaceApproved.body": {
+    ru: "Место «{space}» опубликовано на сайте.",
+    en: "The space “{space}” is now published.",
+    hy: "«{space}» տարածքը հրապարակվել է կայքում։",
+  },
+  "notif.spaceRejected.title": { ru: "Место отклонено", en: "Ad space rejected", hy: "Տարածքը մերժվեց" },
+  "notif.spaceRejected.body": {
+    ru: "Место «{space}» отправлено на доработку.",
+    en: "The space “{space}” was sent back for changes.",
+    hy: "«{space}» տարածքը վերադարձվել է լրամշակման։",
+  },
   // Favorites / Application feature (2026-07-19)
   "notif.interestApproved.title": { ru: "Заявка одобрена", en: "Application approved", hy: "Հայտը հաստատվեց" },
   "notif.interestApproved.body": { ru: "Ваше предложение по проекту «{project}» принято.", en: "Your offer for “{project}” was accepted.", hy: "«{project}» նախագծի համար ձեր առաջարկն ընդունվեց։" },
@@ -2762,6 +2793,55 @@ export const UI: Record<string, Dict> = {
   },
   "ads.cta.button": { ru: "Написать нам", en: "Get in touch", hy: "Գրել մեզ" },
 
+  // ── The public ad-space card, /ads/<channel>/<code> (stage 3) ──
+  // The showcase grid on a channel page and the card behind it. Prices, "from"
+  // and "on request" reuse the catalog card's own keys — same words, same
+  // widget — so only what is specific to an ad space lives here.
+  "adSpacePublic.inventorySubtitle": {
+    ru: "Рекламные места этого канала, открытые для брендов прямо сейчас.",
+    en: "The spaces on this channel that are open to brands right now.",
+    hy: "Այս ալիքի տարածքները, որոնք հենց հիմա բաց են բրենդների համար։",
+  },
+  "adSpacePublic.offersCount": { ru: "{n} предложений", en: "{n} offers", hy: "{n} առաջարկ" },
+  "adSpacePublic.offersCountOne": { ru: "1 предложение", en: "1 offer", hy: "1 առաջարկ" },
+  "adSpacePublic.cardCta": { ru: "Подробнее о месте", en: "About this space", hy: "Տարածքի մասին" },
+  // Facts. Each label sits above its own value on the card — the figure alone
+  // says nothing ("12 000" of what, per what?).
+  "adSpacePublic.location": { ru: "Локация", en: "Location", hy: "Տեղակայում" },
+  "adSpacePublic.size": { ru: "Размер / формат", en: "Size / format", hy: "Չափը / ձևաչափը" },
+  "adSpacePublic.sides": { ru: "Сторон", en: "Sides", hy: "Կողմեր" },
+  "adSpacePublic.reach": { ru: "Охват в день", en: "Reach per day", hy: "Օրական հասանելիություն" },
+  "adSpacePublic.availability": { ru: "Период доступности", en: "Available", hy: "Հասանելիության ժամկետը" },
+  "adSpacePublic.availableFrom": { ru: "с {date}", en: "from {date}", hy: "{date}-ից" },
+  "adSpacePublic.availableTo": { ru: "до {date}", en: "until {date}", hy: "մինչև {date}" },
+  "adSpacePublic.availableRange": { ru: "{from} — {to}", en: "{from} — {to}", hy: "{from} — {to}" },
+  "adSpacePublic.priceFrom": { ru: "Размещение от {price}", en: "Placements from {price}", hy: "Տեղադրումը՝ {price}-ից" },
+  "adSpacePublic.backToChannel": {
+    ru: "Все места канала",
+    en: "All spaces on this channel",
+    hy: "Ալիքի բոլոր տարածքները",
+  },
+  "adSpacePublic.descriptionTitle": { ru: "Описание", en: "About this space", hy: "Նկարագրություն" },
+  "adSpacePublic.offersTitle": { ru: "Предложения", en: "Offers", hy: "Առաջարկներ" },
+  "adSpacePublic.offersSubtitle": {
+    ru: "Что можно купить на этом месте и на какой срок.",
+    en: "What you can buy on this space, and for how long.",
+    hy: "Ի՞նչ կարելի է գնել այս տարածքում և ինչ ժամկետով։",
+  },
+  "adSpacePublic.noOffers": {
+    ru: "Предложения по этому месту пока не опубликованы. Напишите нам — рассчитаем стоимость под вашу задачу.",
+    en: "No offers have been published for this space yet. Write to us and we will quote it for your brief.",
+    hy: "Այս տարածքի համար առաջարկներ դեռ հրապարակված չեն։ Գրեք մեզ, և մենք արժեքը կհաշվարկենք ձեր խնդրի համար։",
+  },
+  "adSpacePublic.slots": {
+    ru: "{free} из {total} свободно",
+    en: "{free} of {total} available",
+    hy: "{total}-ից {free}-ն ազատ է",
+  },
+  // Applications on ad spaces are stage 4; until then every CTA here is the
+  // contact form, not a button that would go nowhere.
+  "adSpacePublic.contactCta": { ru: "Узнать об этом месте", en: "Ask about this space", hy: "Հարցնել այս տարածքի մասին" },
+
   // Channel groups (the second badge on the Placement card is adGroup.SPONSORSHIP).
   "adGroup.CONTENT": { ru: "Интеграция в контент", en: "Content integration", hy: "Ինտեգրում բովանդակության մեջ" },
   "adGroup.SPONSORSHIP": { ru: "Спонсорство", en: "Sponsorship", hy: "Հովանավորություն" },
@@ -2928,6 +3008,104 @@ export const UI: Record<string, Dict> = {
   "adChannel.TRANSIT.buy1": { ru: "Брендирование бортов автобуса", en: "Branding the exterior of a bus", hy: "Ավտոբուսի կողային մակերեսների բրենդավորում" },
   "adChannel.TRANSIT.buy2": { ru: "Постеры в салоне и на поручнях", en: "Posters inside the cabin and on the handrails", hy: "Պաստառներ սրահում և բռնակների վրա" },
   "adChannel.TRANSIT.buy3": { ru: "Щиты и стикеры на станциях метро", en: "Boards and stickers in metro stations", hy: "Վահանակներ և ստիկերներ մետրոյի կայարաններում" },
+
+  // ── Рекламные места: кабинет создателя ──────
+  "adSpace.mine": { ru: "Мои рекламные места", en: "My ad spaces", hy: "Իմ գովազդային տարածքները" },
+  "adSpace.mineSubtitle": {
+    ru: "Билборды, лифты, транспорт, радио, ТВ и цифровые площадки, которые вы сдаёте брендам.",
+    en: "Billboards, lifts, transit, radio, TV and digital inventory you rent out to brands.",
+    hy: "Բիլբորդներ, վերելակներ, տրանսպորտ, ռադիո, հեռուստատեսություն և թվային տարածքներ, որոնք դուք տրամադրում եք բրենդներին։",
+  },
+  "adSpace.submit": { ru: "Добавить рекламное место", en: "Add an ad space", hy: "Ավելացնել գովազդային տարածք" },
+  "adSpace.submitSubtitle": {
+    ru: "Заполните карточку места — после проверки модератором оно появится на странице своего канала.",
+    en: "Fill in the space — once a moderator has checked it, it appears on its channel page.",
+    hy: "Լրացրեք տարածքի քարտը․ մոդերատորի ստուգումից հետո այն կհայտնվի իր ալիքի էջում։",
+  },
+  "adSpace.submitFirst": { ru: "Добавить первое место", en: "Add the first space", hy: "Ավելացնել առաջին տարածքը" },
+  "adSpace.none": { ru: "У вас пока нет рекламных мест.", en: "You have no ad spaces yet.", hy: "Դուք դեռ գովազդային տարածքներ չունեք։" },
+  "adSpace.edit": { ru: "Редактировать место", en: "Edit the space", hy: "Խմբագրել տարածքը" },
+  "adSpace.offersCount": { ru: "Предложений", en: "Offers", hy: "Առաջարկներ" },
+  // Что мешает месту стать публичным — подставляется в publish.blockedSubmit /
+  // publish.blockedApprove списком, как ключи publish.missing.* у проекта.
+  "adSpace.publish.offers": { ru: "хотя бы одно предложение", en: "at least one offer", hy: "առնվազն մեկ առաջարկ" },
+  "adSpace.publish.sizeFormat": { ru: "размер или формат", en: "size or format", hy: "չափը կամ ձևաչափը" },
+
+  // ── Форма рекламного места (та же в админке и в кабинете) ──
+  "adSpaceForm.section.general": { ru: "Место", en: "The space", hy: "Տարածքը" },
+  "adSpaceForm.section.about": { ru: "Название и описание", en: "Name and description", hy: "Անվանում և նկարագրություն" },
+  "adSpaceForm.section.media": { ru: "Фото", en: "Photos", hy: "Լուսանկարներ" },
+  "adSpaceForm.section.offers": { ru: "Что покупает бренд", en: "What the brand buys", hy: "Ինչ է գնում բրենդը" },
+  "adSpaceForm.section.visibility": { ru: "Видимость", en: "Visibility", hy: "Տեսանելիություն" },
+  "adSpaceForm.channel": { ru: "Канал", en: "Channel", hy: "Ալիք" },
+  "adSpaceForm.channelHint": {
+    ru: "Страница, на которой место будет показано брендам.",
+    en: "The page where the space will be shown to brands.",
+    hy: "Էջը, որտեղ տարածքը ցուցադրվելու է բրենդներին։",
+  },
+  "adSpaceForm.channelNotSet": { ru: "Не выбран", en: "Not selected", hy: "Ընտրված չէ" },
+  "adSpaceForm.city": { ru: "Город", en: "City", hy: "Քաղաք" },
+  "adSpaceForm.address": { ru: "Адрес", en: "Address", hy: "Հասցե" },
+  "adSpaceForm.sizeFormat": { ru: "Размер или формат", en: "Size or format", hy: "Չափ կամ ձևաչափ" },
+  "adSpaceForm.sizeFormatHint": {
+    ru: "Например: 3×6 м, 30 сек, 1080×1920",
+    en: "For example: 3×6 m, 30 sec, 1080×1920",
+    hy: "Օրինակ՝ 3×6 մ, 30 վրկ, 1080×1920",
+  },
+  "adSpaceForm.reachPerDay": { ru: "Охват в день", en: "Reach per day", hy: "Օրական ծածկույթ" },
+  "adSpaceForm.sides": { ru: "Сторон", en: "Sides", hy: "Կողմեր" },
+  "adSpaceForm.availableFrom": { ru: "Доступно с", en: "Available from", hy: "Հասանելի է սկսած" },
+  "adSpaceForm.availableTo": { ru: "Доступно до", en: "Available to", hy: "Հասանելի է մինչև" },
+  "adSpaceForm.availableHint": {
+    ru: "Оставьте пустым, если место доступно всегда.",
+    en: "Leave empty if the space is always available.",
+    hy: "Թողեք դատարկ, եթե տարածքը միշտ հասանելի է։",
+  },
+  "adSpaceForm.title": { ru: "Название", en: "Title", hy: "Անվանում" },
+  "adSpaceForm.description": { ru: "Описание", en: "Description", hy: "Նկարագրություն" },
+  "adSpaceForm.image": { ru: "Главное фото", en: "Main photo", hy: "Հիմնական լուսանկար" },
+  "adSpaceForm.gallery": { ru: "Галерея", en: "Gallery", hy: "Պատկերասրահ" },
+  "adSpaceForm.isActive": { ru: "Показывать на сайте", en: "Show on the site", hy: "Ցուցադրել կայքում" },
+  "adSpaceForm.moderationNote": {
+    ru: "После сохранения место уходит на проверку модератору и появится на сайте после одобрения.",
+    en: "Once saved, the space goes to a moderator and appears on the site after approval.",
+    hy: "Պահպանելուց հետո տարածքն ուղարկվում է մոդերատորի ստուգմանը և կայքում կհայտնվի հաստատումից հետո։",
+  },
+  "adSpaceForm.offers.one": { ru: "предложение", en: "offer", hy: "առաջարկ" },
+  "adSpaceForm.offers.many": { ru: "предложений", en: "offers", hy: "առաջարկ" },
+  "adSpaceForm.offers.add": { ru: "Добавить предложение", en: "Add an offer", hy: "Ավելացնել առաջարկ" },
+  "adSpaceForm.offers.empty": {
+    ru: "Пока ни одного предложения — бренду нечего купить.",
+    en: "No offers yet — there is nothing for a brand to buy.",
+    hy: "Դեռ ոչ մի առաջարկ չկա․ բրենդին գնելու բան չկա։",
+  },
+  "adSpaceForm.offers.namePlaceholder": {
+    ru: "Например: месяц на щите",
+    en: "For example: a month on the board",
+    hy: "Օրինակ՝ մեկ ամիս վահանակին",
+  },
+  "adSpaceForm.offers.period": { ru: "Период", en: "Period", hy: "Ժամկետ" },
+  "adSpaceForm.offers.periodPlaceholder": {
+    ru: "месяц / неделя / кампания",
+    en: "month / week / campaign",
+    hy: "ամիս / շաբաթ / արշավ",
+  },
+  "adSpaceForm.errChannelRequired": { ru: "Выберите канал.", en: "Pick a channel.", hy: "Ընտրեք ալիքը։" },
+  "adSpaceForm.errTitleRequired": {
+    ru: "Введите название хотя бы на одном языке.",
+    en: "Enter a title in at least one language.",
+    hy: "Մուտքագրեք անվանումն առնվազն մեկ լեզվով։",
+  },
+  "adSpaceForm.errDateOrder": {
+    ru: "Дата «доступно до» раньше даты «доступно с».",
+    en: "The “available to” date is earlier than the “available from” date.",
+    hy: "«Հասանելի է մինչև» ամսաթիվն ավելի վաղ է, քան «հասանելի է սկսած» ամսաթիվը։",
+  },
+  "adSpaceForm.errCode": {
+    ru: "Не удалось выдать номер месту — попробуйте сохранить ещё раз.",
+    en: "Could not assign a code to the space — try saving again.",
+    hy: "Չհաջողվեց տարածքին համար տրամադրել․ փորձեք նորից պահպանել։",
+  },
 };
 
 /** Build a UI translator bound to a locale. Supports `{token}` interpolation

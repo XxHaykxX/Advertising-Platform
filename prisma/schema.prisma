@@ -82,6 +82,8 @@ model User {
   passwordResetTokens PasswordResetToken[]
   notifications       Notification[]
   pushSubscriptions   PushSubscription[]
+  adSpaces            AdSpace[] // ad spaces this user (as a CREATOR) owns
+  adSpacesUpdated     AdSpace[]            @relation("AdSpaceUpdatedBy") // ad spaces this user last saved
   uiDrafts            UiDraft[] // dictionary rows this staff user last edited (TRANSLATOR)
   i18nPublishes       I18nPublish[] // publish clicks this staff user made
   contentVersions     ContentVersion[] // content edits this user authored (history)
@@ -395,18 +397,18 @@ model SponsorshipTier {
 /// storefront shows "on request" — the brand asks and the terms are negotiated,
 /// rather than a made-up number being published.
 model Placement {
-  id             Int     @id @default(autoincrement())
+  id             Int            @id @default(autoincrement())
   projectId      Int
   title          String // "Integration into the story", "Hero's car" — legacy single-language value, kept as the fallback
   // Per-locale title and description (IA-44, 2026-08-05), same contract as
   // SponsorshipTier.name* / benefits* above.
-  titleHy        String  @default("")
-  titleRu        String  @default("")
-  titleEn        String  @default("")
-  description    String  @db.Text // what the brand gets, one item per line (JSON string[], same as tier benefits)
-  descriptionHy  String? @db.Text // JSON string[]; nullable — MySQL forbids literal defaults on TEXT
-  descriptionRu  String? @db.Text
-  descriptionEn  String? @db.Text
+  titleHy        String         @default("")
+  titleRu        String         @default("")
+  titleEn        String         @default("")
+  description    String         @db.Text // what the brand gets, one item per line (JSON string[], same as tier benefits)
+  descriptionHy  String?        @db.Text // JSON string[]; nullable — MySQL forbids literal defaults on TEXT
+  descriptionRu  String?        @db.Text
+  descriptionEn  String?        @db.Text
   image          String? // still showing the scene/slot ("/uploads/…")
   // Which of the four integration kinds this offer is (2026-08-10). Nullable:
   // every row written before today has no type, and an unclassified placement
@@ -415,12 +417,115 @@ model Placement {
   priceAmd       Int? // null -> "on request"; the creator prices it only if they want to
   totalSlots     Int? // how many brands this opportunity can take
   availableSlots Int? // still open; null -> unspecified, same contract as SponsorshipTier
-  sortOrder      Int     @default(0)
+  sortOrder      Int            @default(0)
 
   project   Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
   interests Interest[]
 
   @@index([projectId])
+}
+
+/// A piece of advertising inventory that lives OUTSIDE a film or series — a
+/// billboard, a lift panel, a bus, a radio or TV slot, a video pre-roll, a web
+/// banner (stage 3 of docs/plan-multichannel-ads.md, owner decision #1).
+///
+/// Why a separate table and not more columns on Project: a billboard has no
+/// genre, no cast and no episodes, while a film has no address, no traffic
+/// count and no sides. Merging them would mean a migration of the live Project
+/// table plus a permanently half-empty row, and Project already hangs off a
+/// dozen relations and live brand applications.
+///
+/// `channel` is a plain string holding an AD_CHANNELS code from
+/// src/lib/ad-channels.ts, NOT a database enum — the channel directory is the
+/// single source of truth there, and a tenth channel must stay one TypeScript
+/// entry rather than a schema migration. Same convention as
+/// Project.formatCategory; writes go through a normalizer, so a typo can never
+/// reach the column.
+model AdSpace {
+  id      Int    @id @default(autoincrement())
+  code    String @unique // "#AS-2026-0417", same shape as Project.code
+  ownerId Int
+  channel String @db.VarChar(32) // AD_CHANNELS code: BILLBOARD | LIFTS | TRANSIT | RADIO | TV | VIDEO | BANNER
+
+  // Localized copy — same contract as Placement: a legacy base value that
+  // stays the ultimate fallback, plus one column per locale.
+  title         String
+  titleHy       String  @default("")
+  titleRu       String  @default("")
+  titleEn       String  @default("")
+  description   String  @db.Text // JSON string[], one bullet per line — same as Placement.description
+  descriptionHy String? @db.Text // nullable: MySQL forbids literal defaults on TEXT
+  descriptionRu String? @db.Text
+  descriptionEn String? @db.Text
+
+  // ── Where it physically is. Free text: Armenian addresses do not fit a
+  //    structured schema, and the buyer reads this rather than filters on it. ──
+  city    String @default("")
+  address String @default("")
+
+  // ── What the buyer is actually renting ──
+  sizeFormat  String @default("") // "3×6 м", "30 сек", "1080×1920" — the unit differs per channel, so it is text
+  reachPerDay Int? // audience or traffic per day; null when the owner has no figure rather than zero
+  sides       Int? // billboards and transit sell by side; null for channels where the idea makes no sense
+
+  // ── When it can be bought. Both nullable: an always-available panel sets
+  //    neither, a seasonal one sets both, a "from March" one sets only the
+  //    start. The public card renders whichever half exists. ──
+  availableFrom DateTime?
+  availableTo   DateTime?
+
+  image   String? // main photo ("/uploads/…")
+  gallery String? @db.Text // JSON string[]; nullable, same reason as description*
+
+  // Same moderation lifecycle and columns as Project, so the existing queue,
+  // statuses and rejection emails carry over instead of growing a second flow.
+  moderationStatus ModerationStatus @default(DRAFT)
+  rejectionReason  String?          @db.Text
+
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  viewCount   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
+  updatedById Int?
+
+  owner     User           @relation(fields: [ownerId], references: [id])
+  updatedBy User?          @relation("AdSpaceUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  offers    AdSpaceOffer[]
+
+  @@index([ownerId])
+  @@index([channel])
+  @@index([moderationStatus])
+}
+
+/// What a brand actually buys on an ad space — the AdSpace counterpart of
+/// Placement. A separate table rather than a reused Placement because the
+/// owner, the parent row and the "period" field differ; the form and the offer
+/// card are the same ones the project side already uses.
+model AdSpaceOffer {
+  id        Int @id @default(autoincrement())
+  adSpaceId Int
+
+  name   String // legacy base value, kept as the fallback (see pickLocale)
+  nameHy String @default("")
+  nameRu String @default("")
+  nameEn String @default("")
+
+  priceAmd       Int? // null -> "on request", same contract as Placement.priceAmd
+  totalSlots     Int?
+  availableSlots Int? // null -> unspecified
+
+  // What period this price buys ("месяц", "неделя", "кампания"). Free text for
+  // the same reason as sizeFormat: the unit is different in every channel.
+  periodHy String @default("")
+  periodRu String @default("")
+  periodEn String @default("")
+
+  sortOrder Int @default(0)
+
+  adSpace AdSpace @relation(fields: [adSpaceId], references: [id], onDelete: Cascade)
+
+  @@index([adSpaceId])
 }
 
 /// A past placement case study shown in the portfolio/case-studies section

@@ -13,6 +13,13 @@ export const NOTIFICATION_TYPES = [
   "PROJECT_SUBMITTED", // a CREATOR submitted a project for moderation → moderators
   "PROJECT_APPROVED", // moderator approved the project → creator owner
   "PROJECT_REJECTED", // moderator rejected the project → creator owner
+  // Ad spaces run through the same moderation queue as projects (stage 3 of
+  // docs/plan-multichannel-ads.md), so they need the same three moments — as
+  // their own types rather than reusing the PROJECT_* ones, whose wording says
+  // "project" in all three languages.
+  "ADSPACE_SUBMITTED", // a CREATOR submitted an ad space for moderation → moderators
+  "ADSPACE_APPROVED", // moderator approved the ad space → its owner
+  "ADSPACE_REJECTED", // moderator rejected the ad space → its owner
   "INTEREST_APPROVED", // admin approved a brand's Interest (SENT → MUTUAL) → the brand
   "INTEREST_DECLINED", // admin declined a brand's Interest (SENT → DECLINED) → the brand
   "BROADCAST", // admin push broadcast — free-text title/message to filtered members
@@ -26,6 +33,10 @@ export type NotificationType = (typeof NOTIFICATION_TYPES)[number];
 export type NotificationData = {
   projectId?: number;
   projectTitle?: string;
+  // ADSPACE_* only — the ad space's own id/name, kept apart from the project
+  // pair so a reader never has to guess which entity a row is about.
+  adSpaceId?: number;
+  adSpaceTitle?: string;
   brandName?: string;
   creatorName?: string;
   // BROADCAST only — admin-authored free text, shown verbatim (not localized).
@@ -59,6 +70,7 @@ export function renderNotification(
     brand: data.brandName ?? "",
     project: data.projectTitle ?? "",
     creator: data.creatorName ?? "",
+    space: data.adSpaceTitle ?? "",
   };
   switch (type) {
     case "INTEREST":
@@ -73,6 +85,19 @@ export function renderNotification(
       const body = t("notif.rejected.body", vars);
       return {
         title: t("notif.rejected.title"),
+        body: data.reason ? `${body} ${t("notif.rejected.reasonPrefix")} ${data.reason}` : body,
+      };
+    }
+    case "ADSPACE_SUBMITTED":
+      return { title: t("notif.spaceSubmitted.title"), body: t("notif.spaceSubmitted.body", vars) };
+    case "ADSPACE_APPROVED":
+      return { title: t("notif.spaceApproved.title"), body: t("notif.spaceApproved.body", vars) };
+    case "ADSPACE_REJECTED": {
+      // Same "append the moderator's own words" rule as PROJECT_REJECTED —
+      // without it the owner only learns THAT the space was refused.
+      const body = t("notif.spaceRejected.body", vars);
+      return {
+        title: t("notif.spaceRejected.title"),
         body: data.reason ? `${body} ${t("notif.rejected.reasonPrefix")} ${data.reason}` : body,
       };
     }

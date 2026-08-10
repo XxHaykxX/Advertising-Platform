@@ -7,7 +7,7 @@ import { formatMoney } from "@/lib/currency";
 import { localizeCountryList } from "@/lib/countries";
 import { pickPersonName } from "@/lib/person-name";
 import { getRates } from "@/lib/currency/rates";
-import { isArchived, formatDuration } from "@/lib/data/format";
+import { isArchived, formatDuration, formatPriceFrom } from "@/lib/data/format";
 import type { CurrencyCode } from "@/lib/currency";
 import {
   PLACEMENT_TYPE_VALUES,
@@ -111,17 +111,6 @@ function localizeCountries(locale: Locale, countries: string): string {
  *  a project with one unpriced package look free and sort first in the
  *  favourites comparison and the "recommended" block. "" when nothing here
  *  carries a price; the card then says "on request" instead. */
-function formatPriceFrom(
-  prices: Array<number | null>,
-  currency: CurrencyCode,
-  rates: Awaited<ReturnType<typeof getRates>>,
-  locale: Locale,
-): string {
-  const priced = prices.filter((p): p is number => p != null && p > 0);
-  if (priced.length === 0) return "";
-  return formatMoney(Math.min(...priced), currency, rates, locale);
-}
-
 /** The distinct integration kinds a project's placements carry (2026-08-10),
    kept in PLACEMENT_TYPE_VALUES order rather than the rows' own order: the
    card's chip row and the catalog facet both want one stable, editorial
