@@ -12,7 +12,8 @@ import { LocaleSwitcher } from "@/components/locale-switcher";
 import { LogoutButton } from "@/components/logout-button";
 import { DEFAULT_LOCALE, useUI, type Locale } from "@/lib/i18n-client";
 import { DEFAULT_CURRENCY, type CurrencyCode } from "@/lib/currency";
-import { PORTFOLIO_ENABLED } from "@/lib/feature-flags";
+import { ADS_ENABLED, PORTFOLIO_ENABLED } from "@/lib/feature-flags";
+import { AD_CHANNELS } from "@/lib/ad-channels";
 import { cn } from "@/lib/utils";
 import { logout as staffLogout } from "@/app/admin/actions";
 import { logout as memberLogout } from "@/app/account/actions";
@@ -59,11 +60,17 @@ const DARK_HERO_PATHS = new Set([
   "/for-creators",
   "/privacy",
   "/terms",
+  // /ads and its nine per-channel pages (src/lib/ad-channels.ts) — spread from
+  // the directory so a tenth channel doesn't need remembering here.
+  "/ads",
+  ...AD_CHANNELS.map((c) => `/ads/${c.slug}`),
 ]);
 
 function useNav(t: ReturnType<typeof useUI>) {
   return [
     { label: t("nav.catalog"), href: "/catalog" },
+    // Hidden behind ADS_ENABLED (src/lib/feature-flags.ts) — the routes 404 too.
+    ...(ADS_ENABLED ? [{ label: t("nav.ads"), href: "/ads" }] : []),
     // Hidden behind PORTFOLIO_ENABLED while the owner keeps preparing cases
     // (see src/lib/feature-flags.ts) — the route itself 404s too.
     ...(PORTFOLIO_ENABLED ? [{ label: t("nav.portfolio"), href: "/portfolio" }] : []),

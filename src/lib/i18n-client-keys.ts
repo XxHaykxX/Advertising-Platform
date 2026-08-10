@@ -198,6 +198,7 @@ export const CLIENT_KEYS: readonly string[] = [
   "media.loadError",
   "media.replace",
   "nav.about",
+  "nav.ads",
   "nav.browseProjects",
   "nav.cabinet",
   "nav.catalog",

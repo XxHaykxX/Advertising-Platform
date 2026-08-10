@@ -31,6 +31,12 @@ export const MEMBER_ALLOWED_PUBLIC_PREFIXES = [
   // likely to click both bounced them straight back to /account — the reader it
   // is written for was the one reader who could not open it.
   "/for-creators",
+  // /ads (2026-08-10): the advertising-channel section — the overview plus the
+  // nine per-channel pages, all of which the footer links to. Its whole point
+  // is showing a brand what else it can buy, and a BRAND member is exactly the
+  // reader for that; without this prefix the footer link would bounce them
+  // back to their cabinet. The prefix covers /ads/<channel> too (hasPrefix).
+  "/ads",
 ];
 
 function hasPrefix(pathname: string, prefix: string): boolean {

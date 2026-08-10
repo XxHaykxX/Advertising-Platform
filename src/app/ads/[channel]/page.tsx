@@ -1,0 +1,222 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { ArrowLeft, Check, Clock } from "lucide-react";
+import { SiteHeader } from "@/components/site-header";
+import { Footer } from "@/components/footer";
+import { ProjectCard } from "@/components/project-card";
+import { Section } from "@/components/ui/section";
+import { Container } from "@/components/ui/container";
+import { Reveal } from "@/components/ui/reveal";
+import { Button } from "@/components/ui/button";
+import { PageHero } from "@/components/ui/page-hero";
+import { getLocale } from "@/lib/data/locale";
+import { getCurrency } from "@/lib/data/currency";
+import { getProjects } from "@/lib/data/projects";
+import { getBrandFavoriteSet } from "@/lib/data/favorites";
+import { loadCurrentUser } from "@/lib/auth/require";
+import { AD_CHANNELS, findAdChannel, type AdChannel } from "@/lib/ad-channels";
+import { ADS_ENABLED } from "@/lib/feature-flags";
+import { makeUI } from "@/lib/i18n";
+import type { ProjectListDTO } from "@/lib/types";
+import { AD_CHANNEL_ICONS } from "../channel-icons";
+
+/** English metadata, like every other public page here (the site is noindex
+ *  anyway — this is what a shared link unfurls as). Canonical is dropped for
+ *  an unknown slug and while the section is off, same rule as /portfolio. */
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ channel: string }>;
+}): Promise<Metadata> {
+  const { channel: slug } = await params;
+  const channel = findAdChannel(slug);
+  if (!channel || !ADS_ENABLED) return {};
+  const en = makeUI("en");
+  return {
+    title: `${en(`adChannel.${channel.code}`)} — iGovazd`,
+    description: en(`adChannel.${channel.code}.desc`),
+    alternates: { canonical: `/ads/${channel.slug}` },
+  };
+}
+
+export async function generateStaticParams() {
+  return AD_CHANNELS.map((c) => ({ channel: c.slug }));
+}
+
+const BUY_KEYS = ["buy1", "buy2", "buy3"] as const;
+
+/** Which existing projects count as this channel's inventory. Only the two
+ *  PROJECT channels get here; the seven AD_SPACE ones have no table yet
+ *  (stage 3). Placement sells `Placement` rows, event sponsorship sells
+ *  `SponsorshipTier` rows — the two counters the list DTO already carries, so
+ *  no new query and no new data layer. */
+function channelProjects(channel: AdChannel, projects: ProjectListDTO[]): ProjectListDTO[] {
+  if (channel.code === "PLACEMENT") return projects.filter((p) => p.placementsCount > 0);
+  return projects.filter((p) => p.tiersCount > 0);
+}
+
+export default async function AdChannelPage({
+  params,
+}: {
+  params: Promise<{ channel: string }>;
+}) {
+  if (!ADS_ENABLED) notFound();
+
+  const { channel: slug } = await params;
+  const channel = findAdChannel(slug);
+  if (!channel) notFound();
+
+  const locale = await getLocale();
+  const currency = await getCurrency();
+  const t = makeUI(locale);
+  const Icon = AD_CHANNEL_ICONS[channel.code];
+
+  // Only the PROJECT channels hit the DB; the AD_SPACE ones render their empty
+  // state without a query.
+  const currentUser = channel.entity === "PROJECT" ? await loadCurrentUser() : null;
+  const projects =
+    channel.entity === "PROJECT"
+      ? channelProjects(channel, await getProjects(locale, currency))
+      : [];
+  // Favorites (#22) are a BRAND-only private shortlist — same rule as /catalog.
+  const favorites =
+    currentUser?.role === "BRAND" ? await getBrandFavoriteSet(currentUser.id) : new Set<number>();
+
+  return (
+    <>
+      <SiteHeader />
+
+      <PageHero
+        eyebrow={t(`adGroup.${channel.group}`)}
+        title={t(`adChannel.${channel.code}`)}
+        subtitle={t(`adChannel.${channel.code}.desc`)}
+        locale={locale}
+        primaryCta={
+          channel.entity === "PROJECT"
+            ? { label: t("ads.hero.ctaBrowse"), href: "#inventory" }
+            : { label: t("ads.hero.ctaContact"), href: "/contact" }
+        }
+        secondaryCta={{ label: t("ads.backToAll"), href: "/ads" }}
+      />
+
+      {/* What this is */}
+      <Section>
+        <Container>
+          <Reveal>
+            <div className="flex items-center gap-3">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+                <Icon className="h-5 w-5" />
+              </span>
+              <h2 className="text-3xl font-bold tracking-tight text-foreground md:text-4xl">
+                {t("ads.about.title")}
+              </h2>
+            </div>
+          </Reveal>
+          <Reveal delay={0.08}>
+            <p className="mt-6 max-w-3xl leading-relaxed text-muted-foreground">
+              {t(`adChannel.${channel.code}.about`)}
+            </p>
+          </Reveal>
+        </Container>
+      </Section>
+
+      {/* What you can buy */}
+      <Section muted>
+        <Container>
+          <Reveal>
+            <h2 className="text-3xl font-bold tracking-tight text-foreground md:text-4xl">
+              {t("ads.buy.title")}
+            </h2>
+          </Reveal>
+          <div className="mt-10 grid gap-6 md:grid-cols-3">
+            {BUY_KEYS.map((suffix, idx) => (
+              <Reveal key={suffix} delay={0.1 + idx * 0.08}>
+                <div className="flex h-full gap-3 rounded-2xl border border-border bg-card p-8">
+                  <Check className="mt-0.5 h-5 w-5 shrink-0 text-primary" />
+                  <p className="text-sm leading-relaxed text-foreground">
+                    {t(`adChannel.${channel.code}.${suffix}`)}
+                  </p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </Container>
+      </Section>
+
+      {/* Inventory */}
+      <Section id="inventory">
+        <Container>
+          <Reveal>
+            <h2 className="text-3xl font-bold tracking-tight text-foreground md:text-4xl">
+              {t("ads.inventory.title")}
+            </h2>
+          </Reveal>
+
+          {channel.entity === "PROJECT" ? (
+            <>
+              <Reveal delay={0.08}>
+                <p className="mt-3 max-w-3xl text-muted-foreground">
+                  {t("ads.inventory.projectsSubtitle")}
+                </p>
+              </Reveal>
+              {projects.length > 0 ? (
+                <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                  {projects.map((project) => (
+                    <ProjectCard
+                      key={project.id}
+                      project={project}
+                      locale={locale}
+                      favorited={favorites.has(project.id)}
+                      canFavorite={currentUser?.role === "BRAND"}
+                      signedIn={currentUser !== null}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <Reveal delay={0.16}>
+                  <p className="mt-8 max-w-3xl rounded-2xl border border-border bg-card px-6 py-5 text-sm text-muted-foreground">
+                    {t("ads.inventory.noProjects")}
+                  </p>
+                </Reveal>
+              )}
+            </>
+          ) : (
+            /* Stage 3 builds the AdSpace table this section will list. Until
+               then it says so plainly instead of showing invented listings. */
+            <Reveal delay={0.08}>
+              <div className="mt-8 max-w-3xl rounded-2xl border border-dashed border-border bg-card px-8 py-10">
+                <div className="flex items-center gap-3">
+                  <Clock className="h-5 w-5 shrink-0 text-muted-foreground" />
+                  <h3 className="font-semibold text-foreground">{t("ads.inventory.soonTitle")}</h3>
+                </div>
+                <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+                  {t("ads.inventory.soonBody")}
+                </p>
+                <div className="mt-8">
+                  <Button asChild variant="primary" size="md">
+                    <Link href="/contact">{t("ads.cta.button")}</Link>
+                  </Button>
+                </div>
+              </div>
+            </Reveal>
+          )}
+
+          <Reveal delay={0.24}>
+            <div className="mt-12">
+              <Link
+                href="/ads"
+                className="inline-flex items-center gap-2 text-sm font-medium text-primary transition-opacity hover:opacity-80"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                {t("ads.backToAll")}
+              </Link>
+            </div>
+          </Reveal>
+        </Container>
+      </Section>
+
+      <Footer locale={locale} currency={currency} />
+    </>
+  );
+}

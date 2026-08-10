@@ -6,7 +6,7 @@ import { LocaleSwitcher } from "@/components/locale-switcher";
 import { CurrencySwitcher } from "@/components/currency-switcher";
 import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
 import { DEFAULT_CURRENCY, type CurrencyCode } from "@/lib/currency";
-import { PORTFOLIO_ENABLED } from "@/lib/feature-flags";
+import { ADS_ENABLED, PORTFOLIO_ENABLED } from "@/lib/feature-flags";
 
 const CONTACTS = [
   { icon: Mail, label: "hello@igovazd.am", href: "mailto:hello@igovazd.am" },
@@ -88,6 +88,18 @@ export function Footer({
                     {t("footer.browseProjects")}
                   </Link>
                 </li>
+                {/* Hidden behind ADS_ENABLED (src/lib/feature-flags.ts) — the
+                    routes 404 too. */}
+                {ADS_ENABLED ? (
+                  <li>
+                    <Link
+                      href="/ads"
+                      className="text-sm text-muted-foreground transition-colors hover:text-primary"
+                    >
+                      {t("footer.ads")}
+                    </Link>
+                  </li>
+                ) : null}
                 <li>
                   <Link
                     href="/how-it-works"

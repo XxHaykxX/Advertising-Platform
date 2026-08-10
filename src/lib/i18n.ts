@@ -30,6 +30,7 @@ type Dict = Record<Locale, string>;
 export const UI: Record<string, Dict> = {
   // ── header nav ──────────────────────────────
   "nav.catalog": { ru: "Каталог", en: "Catalog", hy: "Նախագծեր" },
+  "nav.ads": { ru: "Реклама", en: "Advertising", hy: "Գովազդ" },
   "nav.portfolio": { ru: "Портфолио", en: "Portfolio", hy: "Պորտֆոլիո" },
   "nav.about": { ru: "О нас", en: "About", hy: "Մեր մասին" },
   "nav.contact": { ru: "Контакты", en: "Contact", hy: "Կոնտակտներ" },
@@ -214,6 +215,7 @@ export const UI: Record<string, Dict> = {
   "footer.contacts": { ru: "Контакты", en: "Contacts", hy: "Կապ մեզ հետ" },
   "footer.browseProjects": { ru: "Смотреть проекты", en: "Browse Projects", hy: "Դիտել նախագծերը" },
   "footer.howItWorks": { ru: "Как это работает", en: "How It Works", hy: "Ինչպես է աշխատում" },
+  "footer.ads": { ru: "Рекламные каналы", en: "Advertising channels", hy: "Գովազդային ալիքներ" },
   "footer.portfolio": { ru: "Портфолио", en: "Portfolio", hy: "Պորտֆոլիո" },
   "footer.faq": { ru: "Вопросы и ответы", en: "FAQ", hy: "Հաճախ տրվող հարցեր" },
   "footer.about": { ru: "О нас", en: "About", hy: "Մեր մասին" },
@@ -2709,6 +2711,223 @@ export const UI: Record<string, Dict> = {
     hy: "Հավաքեք վերևի ստուգաթերթի նյութերը և ներկայացրեք ձեր նախագիծը։",
   },
   "forCreators.finalCta.button": { ru: "Подать проект", en: "Submit a project", hy: "Ներկայացնել նախագիծ" },
+
+  // ── /ads — advertising channels (stage 2, docs/plan-multichannel-ads.md) ──
+  // Chrome shared by the overview and all nine channel pages.
+  "ads.hero.eyebrow": { ru: "Рекламные каналы", en: "Advertising channels", hy: "Գովազդային ալիքներ" },
+  "ads.hero.title": {
+    ru: "Вся реклама Армении — на одной площадке",
+    en: "Every advertising channel in one place",
+    hy: "Բոլոր գովազդային ալիքները՝ մեկ հարթակում",
+  },
+  "ads.hero.subtitle": {
+    ru: "Продакт-плейсмент в кино, спонсорство событий, ТВ и радио, наружная и цифровая реклама. Выберите канал и посмотрите, что доступно к покупке.",
+    en: "Product placement in film, event sponsorship, TV and radio, outdoor and digital. Pick a channel and see what is available to buy.",
+    hy: "Փրոդաքթ փլեյսմենթ կինոյում, միջոցառումների հովանավորություն, հեռուստատեսություն և ռադիո, բացօթյա և թվային գովազդ։ Ընտրեք ալիքը և տեսեք, թե ինչ է հասանելի գնման համար։",
+  },
+  "ads.hero.ctaBrowse": { ru: "Смотреть проекты", en: "Browse projects", hy: "Տեսնել նախագծերը" },
+  "ads.hero.ctaContact": { ru: "Связаться с нами", en: "Contact us", hy: "Կապվել մեզ հետ" },
+  "ads.groupsTitle": { ru: "Каналы по группам", en: "Channels by group", hy: "Ալիքները՝ ըստ խմբերի" },
+  "ads.groupsSubtitle": {
+    ru: "Девять каналов в пяти группах. У каждого — своя страница с описанием и доступным инвентарём.",
+    en: "Nine channels in five groups. Each has its own page with a description and the inventory on offer.",
+    hy: "Ինը ալիք՝ հինգ խմբում։ Յուրաքանչյուրն ունի իր էջը՝ նկարագրությամբ և հասանելի գույքագրմամբ։",
+  },
+  "ads.channelCta": { ru: "Подробнее о канале", en: "About this channel", hy: "Ալիքի մասին" },
+  "ads.backToAll": { ru: "Все каналы", en: "All channels", hy: "Բոլոր ալիքները" },
+  "ads.about.title": { ru: "Что это", en: "What this is", hy: "Ի՞նչ է սա" },
+  "ads.buy.title": { ru: "Что можно купить", en: "What you can buy", hy: "Ի՞նչ կարելի է գնել" },
+  "ads.inventory.title": { ru: "Доступный инвентарь", en: "Available inventory", hy: "Հասանելի գույքագրում" },
+  "ads.inventory.projectsSubtitle": {
+    ru: "Проекты, в которых этот канал открыт для брендов прямо сейчас.",
+    en: "Projects where this channel is open to brands right now.",
+    hy: "Նախագծեր, որտեղ այս ալիքը հենց հիմա բաց է բրենդների համար։",
+  },
+  "ads.inventory.noProjects": {
+    ru: "Сейчас по этому каналу нет открытых предложений. Напишите нам — подберём проект под задачу.",
+    en: "No open offers on this channel right now. Write to us and we will find a fit for your brief.",
+    hy: "Այս ալիքով այս պահին բաց առաջարկներ չկան։ Գրեք մեզ, և մենք կգտնենք ձեր խնդրին համապատասխան տարբերակը։",
+  },
+  "ads.inventory.soonTitle": { ru: "Инвентарь появится позже", en: "Inventory is coming later", hy: "Գույքագրումը կհայտնվի ավելի ուշ" },
+  "ads.inventory.soonBody": {
+    ru: "Мы собираем площадки этого канала. Оставьте заявку — свяжемся, как только они появятся, или подберём вариант вручную.",
+    en: "We are still gathering the spaces for this channel. Get in touch and we will reach out as soon as they go live, or put together an offer by hand.",
+    hy: "Մենք դեռ հավաքում ենք այս ալիքի տարածքները։ Կապվեք մեզ հետ, և մենք կտեղեկացնենք, հենց դրանք հայտնվեն, կամ առաջարկը կկազմենք ձեռքով։",
+  },
+  "ads.cta.title": { ru: "Не нашли нужный канал?", en: "Didn't find the channel you need?", hy: "Չգտա՞ք ձեզ անհրաժեշտ ալիքը" },
+  "ads.cta.subtitle": {
+    ru: "Расскажите о задаче — соберём медиаплан из нескольких каналов.",
+    en: "Tell us about your brief and we will put together a media plan across several channels.",
+    hy: "Պատմեք ձեր խնդրի մասին, և մենք կկազմենք մեդիապլան մի քանի ալիքից։",
+  },
+  "ads.cta.button": { ru: "Написать нам", en: "Get in touch", hy: "Գրել մեզ" },
+
+  // Channel groups (the second badge on the Placement card is adGroup.SPONSORSHIP).
+  "adGroup.CONTENT": { ru: "Интеграция в контент", en: "Content integration", hy: "Ինտեգրում բովանդակության մեջ" },
+  "adGroup.SPONSORSHIP": { ru: "Спонсорство", en: "Sponsorship", hy: "Հովանավորություն" },
+  "adGroup.MEDIA": { ru: "Медиа", en: "Media", hy: "Մեդիա" },
+  "adGroup.DIGITAL": { ru: "Диджитал", en: "Digital", hy: "Թվային" },
+  "adGroup.OUTDOOR": { ru: "Наружная реклама", en: "Outdoor", hy: "Բացօթյա գովազդ" },
+
+  // ── the nine channels (see src/lib/ad-channels.ts for the key contract) ──
+  "adChannel.PLACEMENT": { ru: "Продакт-плейсмент", en: "Product placement", hy: "Փրոդաքթ փլեյսմենթ" },
+  "adChannel.PLACEMENT.desc": {
+    ru: "Бренд внутри истории: в кадре, в титрах или в реплике героя.",
+    en: "The brand inside the story — in frame, in the credits or in a character's line.",
+    hy: "Բրենդը՝ պատմության ներսում՝ կադրում, տիտրերում կամ հերոսի խոսքում։",
+  },
+  "adChannel.PLACEMENT.about": {
+    ru: "Продукт живёт в сюжете, а не в рекламной паузе: зритель видит его в руках любимого героя и не может перемотать. Формат работает и на узнаваемость, и на доверие — бренд получает контекст, который невозможно купить баннером.",
+    en: "The product lives in the plot rather than in an ad break: the audience sees it in the hands of a character they already trust, and cannot skip it. The format builds both awareness and credibility — a context no banner can buy.",
+    hy: "Ապրանքն ապրում է սյուժեի ներսում, ոչ թե գովազդային ընդմիջմանը․ հանդիսատեսը տեսնում է այն սիրելի հերոսի ձեռքում և չի կարող բաց թողնել։ Ձևաչափն աշխատում է և՛ ճանաչելիության, և՛ վստահության վրա՝ բրենդը ստանում է համատեքստ, որը բաններով հնարավոր չէ գնել։",
+  },
+  "adChannel.PLACEMENT.buy1": {
+    ru: "Появление продукта в кадре — герой пользуется им или носит его",
+    en: "The product on screen — a character uses it or wears it",
+    hy: "Ապրանքի հայտնվելը կադրում՝ հերոսն օգտագործում կամ կրում է այն",
+  },
+  "adChannel.PLACEMENT.buy2": {
+    ru: "Логотип в титрах или на конечной карточке",
+    en: "The logo in the credits or on the end card",
+    hy: "Լոգոն տիտրերում կամ ավարտական քարտում",
+  },
+  "adChannel.PLACEMENT.buy3": {
+    ru: "Упоминание бренда в диалоге и нейминг сезона целиком",
+    en: "A verbal mention in dialogue, or naming rights to a whole season",
+    hy: "Բրենդի հիշատակումը երկխոսության մեջ և ամբողջ սեզոնի անվանակոչում",
+  },
+
+  "adChannel.EVENTS": { ru: "Спонсорство событий", en: "Event sponsorship", hy: "Միջոցառումների հովանավորություն" },
+  "adChannel.EVENTS.desc": {
+    ru: "Бренд рядом с премьерой, съёмками или живым событием проекта.",
+    en: "The brand alongside a premiere, a shoot or a live project event.",
+    hy: "Բրենդը՝ պրեմիերայի, նկարահանումների կամ նախագծի կենդանի միջոցառման կողքին։",
+  },
+  "adChannel.EVENTS.about": {
+    ru: "Спонсорский пакет — это присутствие бренда вокруг проекта: премьера, пресс-показ, съёмочная площадка, публикации команды. Бренд получает не один кадр, а весь шлейф внимания к проекту.",
+    en: "A sponsorship package is the brand's presence around the project: the premiere, the press screening, the set, the team's own publications. The brand gets the whole trail of attention, not a single frame.",
+    hy: "Հովանավորական փաթեթը բրենդի ներկայությունն է նախագծի շուրջ՝ պրեմիերա, մամուլի ցուցադրություն, նկարահանման հրապարակ, թիմի հրապարակումներ։ Բրենդը ստանում է ոչ թե մեկ կադր, այլ նախագծի ողջ ուշադրության հետքը։",
+  },
+  "adChannel.EVENTS.buy1": {
+    ru: "Титульное спонсорство проекта или отдельного события",
+    en: "Title sponsorship of a project or of a single event",
+    hy: "Նախագծի կամ առանձին միջոցառման տիտղոսային հովանավորություն",
+  },
+  "adChannel.EVENTS.buy2": {
+    ru: "Логотип на площадке, в пресс-материалах и на пресс-волле",
+    en: "The logo on site, in press materials and on the press wall",
+    hy: "Լոգոն վայրում, մամուլի նյութերում և մամուլի պատին",
+  },
+  "adChannel.EVENTS.buy3": {
+    ru: "Совместные публикации команды проекта и доступ к премьере",
+    en: "Joint publications from the project team and access to the premiere",
+    hy: "Նախագծի թիմի համատեղ հրապարակումներ և մուտք պրեմիերա",
+  },
+
+  "adChannel.VIDEO": { ru: "Видеореклама", en: "Video ads", hy: "Վիդեոգովազդ" },
+  "adChannel.VIDEO.desc": {
+    ru: "Ролик перед контентом, внутри него или после — на видеоплощадках.",
+    en: "A spot before, inside or after the content on video platforms.",
+    hy: "Հոլովակ բովանդակությունից առաջ, ներսում կամ հետո՝ վիդեոհարթակներում։",
+  },
+  "adChannel.VIDEO.about": {
+    ru: "Классический видеоформат: pre-roll, mid-roll и post-roll на YouTube и других видеоплощадках, где смотрят армянский контент. Точный охват, понятная стоимость контакта и полная статистика показов.",
+    en: "The classic video format: pre-roll, mid-roll and post-roll on YouTube and the other platforms where Armenian content is watched. Precise reach, a clear cost per contact and full impression stats.",
+    hy: "Դասական վիդեոձևաչափ՝ pre-roll, mid-roll և post-roll YouTube-ում և այլ հարթակներում, որտեղ դիտում են հայկական բովանդակությունը։ Ճշգրիտ հասանելիություն, հասկանալի կոնտակտի արժեք և ցուցադրումների ամբողջական վիճակագրություն։",
+  },
+  "adChannel.VIDEO.buy1": { ru: "Pre-roll и mid-roll в популярных проектах", en: "Pre-roll and mid-roll in popular projects", hy: "Pre-roll և mid-roll հայտնի նախագծերում" },
+  "adChannel.VIDEO.buy2": { ru: "Брендированные заставки и конечные карточки", en: "Branded bumpers and end cards", hy: "Բրենդավորված պաստառներ և ավարտական քարտեր" },
+  "adChannel.VIDEO.buy3": { ru: "Пакеты показов с гарантированным охватом", en: "Impression packages with guaranteed reach", hy: "Ցուցադրումների փաթեթներ՝ երաշխավորված հասանելիությամբ" },
+
+  "adChannel.RADIO": { ru: "Радиореклама", en: "Radio ads", hy: "Ռադիոգովազդ" },
+  "adChannel.RADIO.desc": {
+    ru: "Аудиоролики и упоминания в эфире армянских радиостанций.",
+    en: "Audio spots and on-air mentions on Armenian radio stations.",
+    hy: "Աուդիոհոլովակներ և հիշատակումներ հայկական ռադիոկայանների եթերում։",
+  },
+  "adChannel.RADIO.about": {
+    ru: "Радио остаётся каналом ежедневного контакта: дорога на работу, такси, магазин. Короткий ролик в правильном временном слоте даёт частоту, которой трудно добиться в digital за те же деньги.",
+    en: "Radio is still a daily-contact channel: the commute, the taxi, the shop. A short spot in the right time slot buys a frequency that is hard to match in digital for the same money.",
+    hy: "Ռադիոն մնում է ամենօրյա շփման ալիք՝ ճանապարհ դեպի աշխատանք, տաքսի, խանութ։ Կարճ հոլովակը ճիշտ ժամային հատվածում տալիս է հաճախականություն, որին դժվար է հասնել թվային ալիքներում նույն գումարով։",
+  },
+  "adChannel.RADIO.buy1": { ru: "Аудиоролик 15–30 секунд в выбранных слотах", en: "A 15–30 second audio spot in the slots you pick", hy: "15–30 վայրկյան աուդիոհոլովակ ընտրված հատվածներում" },
+  "adChannel.RADIO.buy2": { ru: "Спонсорство рубрики или программы", en: "Sponsorship of a segment or a show", hy: "Խորագրի կամ հաղորդման հովանավորություն" },
+  "adChannel.RADIO.buy3": { ru: "Живое упоминание ведущим", en: "A live mention by the host", hy: "Հաղորդավարի կենդանի հիշատակում" },
+
+  "adChannel.TV": { ru: "Телереклама", en: "TV ads", hy: "Հեռուստագովազդ" },
+  "adChannel.TV.desc": {
+    ru: "Рекламные блоки, спонсорство программ и бегущая строка на ТВ.",
+    en: "Ad breaks, programme sponsorship and on-screen tickers on TV.",
+    hy: "Գովազդային բլոկներ, հաղորդումների հովանավորություն և վազող տող հեռուստաեթերում։",
+  },
+  "adChannel.TV.about": {
+    ru: "Телевидение по-прежнему даёт самый широкий разовый охват в Армении. Формат подходит бренду, которому нужно быстро стать известным всей стране, а не только городской аудитории.",
+    en: "Television still delivers the widest single-shot reach in Armenia. It suits a brand that needs to become known nationwide fast, not just to a city audience.",
+    hy: "Հեռուստատեսությունը դեռ ապահովում է ամենալայն միանվագ հասանելիությունը Հայաստանում։ Ձևաչափը հարմար է բրենդին, որին պետք է արագ ճանաչելի դառնալ ողջ երկրում, ոչ միայն քաղաքային լսարանում։",
+  },
+  "adChannel.TV.buy1": { ru: "Ролик в рекламном блоке выбранного канала", en: "A spot in the ad break of the channel you pick", hy: "Հոլովակ ընտրված հեռուստաալիքի գովազդային բլոկում" },
+  "adChannel.TV.buy2": { ru: "Спонсорство передачи с заставкой и упоминанием", en: "Programme sponsorship with a bumper and a mention", hy: "Հաղորդման հովանավորություն՝ պաստառով և հիշատակումով" },
+  "adChannel.TV.buy3": { ru: "Бегущая строка и логотип в углу экрана", en: "A ticker line and a corner logo", hy: "Վազող տող և լոգո էկրանի անկյունում" },
+
+  "adChannel.BANNER": { ru: "Баннерная реклама", en: "Banner ads", hy: "Բանների գովազդ" },
+  "adChannel.BANNER.desc": {
+    ru: "Медийные баннеры на сайтах и в приложениях с армянской аудиторией.",
+    en: "Display banners on sites and apps with an Armenian audience.",
+    hy: "Մեդիա բաններներ հայկական լսարան ունեցող կայքերում և հավելվածներում։",
+  },
+  "adChannel.BANNER.about": {
+    ru: "Самый управляемый канал: показ можно ограничить городом, устройством и временем суток, а результат виден в тот же день. Хорошо работает как поддержка кампании в других каналах.",
+    en: "The most controllable channel: you can limit delivery by city, device and time of day, and see the result the same day. It works well as support for a campaign running in other channels.",
+    hy: "Ամենակառավարելի ալիքը՝ ցուցադրումը կարելի է սահմանափակել ըստ քաղաքի, սարքի և օրվա ժամի, իսկ արդյունքը երևում է նույն օրը։ Լավ աշխատում է որպես այլ ալիքներում ընթացող արշավի աջակցություն։",
+  },
+  "adChannel.BANNER.buy1": { ru: "Баннеры на главных и внутренних страницах", en: "Banners on home and inner pages", hy: "Բաններներ գլխավոր և ներքին էջերում" },
+  "adChannel.BANNER.buy2": { ru: "Таргетинг по городу, устройству и времени", en: "Targeting by city, device and time", hy: "Թիրախավորում ըստ քաղաքի, սարքի և ժամանակի" },
+  "adChannel.BANNER.buy3": { ru: "Отчёт по показам и переходам", en: "A report on impressions and clicks", hy: "Հաշվետվություն ցուցադրումների և անցումների վերաբերյալ" },
+
+  "adChannel.BILLBOARD": { ru: "Билборды", en: "Billboards", hy: "Բիլբորդներ" },
+  "adChannel.BILLBOARD.desc": {
+    ru: "Крупные щиты на трассах и городских магистралях.",
+    en: "Large boards on highways and city arteries.",
+    hy: "Խոշոր վահանակներ մայրուղիներում և քաղաքային պողոտաներում։",
+  },
+  "adChannel.BILLBOARD.about": {
+    ru: "Щит нельзя закрыть, пропустить или заблокировать — он работает на всех, кто проехал мимо. Канал для запусков, распродаж и брендов, которым важна масштабность сообщения.",
+    en: "A board cannot be closed, skipped or blocked — it works on everyone who drives past. The channel for launches, sales and brands that need scale in the message itself.",
+    hy: "Վահանակը հնարավոր չէ փակել, բաց թողնել կամ արգելափակել․ այն աշխատում է բոլորի վրա, ովքեր անցել են կողքով։ Ալիք՝ գործարկումների, զեղչերի և այն բրենդների համար, որոնց կարևոր է հաղորդագրության մասշտաբը։",
+  },
+  "adChannel.BILLBOARD.buy1": { ru: "Аренда щита на месяц или на кампанию", en: "Renting a board for a month or for the campaign", hy: "Վահանակի վարձակալություն ամսով կամ արշավի տևողությամբ" },
+  "adChannel.BILLBOARD.buy2": { ru: "Выбор конкретной локации и стороны движения", en: "Choosing the exact location and the traffic side", hy: "Կոնկրետ վայրի և երթևեկության կողմի ընտրություն" },
+  "adChannel.BILLBOARD.buy3": { ru: "Печать и монтаж макета", en: "Printing and mounting the artwork", hy: "Մակետի տպագրություն և տեղադրում" },
+
+  "adChannel.LIFTS": { ru: "Реклама в лифтах", en: "Lift advertising", hy: "Գովազդ վերելակներում" },
+  "adChannel.LIFTS.desc": {
+    ru: "Постеры и экраны в лифтах жилых домов и бизнес-центров.",
+    en: "Posters and screens in the lifts of residential buildings and offices.",
+    hy: "Պաստառներ և էկրաններ բնակելի շենքերի ու բիզնես կենտրոնների վերելակներում։",
+  },
+  "adChannel.LIFTS.about": {
+    ru: "Несколько секунд, когда человеку буквально некуда смотреть, и он видит одно и то же сообщение дважды в день. Точная привязка к району делает канал удобным для локального бизнеса.",
+    en: "A few seconds where there is literally nowhere else to look, and the same message is seen twice a day. The precise tie to a neighbourhood makes it a convenient channel for local business.",
+    hy: "Մի քանի վայրկյան, երբ մարդուն բառացիորեն նայելու տեղ չկա, և նա նույն հաղորդագրությունը տեսնում է օրական երկու անգամ։ Թաղամասին ճշգրիտ կապվածությունը ալիքը հարմար է դարձնում տեղական բիզնեսի համար։",
+  },
+  "adChannel.LIFTS.buy1": { ru: "Постеры в лифтах выбранных домов", en: "Posters in the lifts of the buildings you pick", hy: "Պաստառներ ընտրված շենքերի վերելակներում" },
+  "adChannel.LIFTS.buy2": { ru: "Экраны с видеороликом в бизнес-центрах", en: "Video screens in business centres", hy: "Վիդեոհոլովակով էկրաններ բիզնես կենտրոններում" },
+  "adChannel.LIFTS.buy3": { ru: "Охват по конкретным районам города", en: "Coverage of specific city districts", hy: "Ծածկույթ քաղաքի կոնկրետ թաղամասերում" },
+
+  "adChannel.TRANSIT": { ru: "Реклама на транспорте", en: "Transit ads", hy: "Գովազդ տրանսպորտում" },
+  "adChannel.TRANSIT.desc": {
+    ru: "Автобусы и метро: борта, салоны и станции.",
+    en: "Buses and the metro — exteriors, interiors and stations.",
+    hy: "Ավտոբուսներ և մետրո՝ կողային մակերեսներ, սրահներ և կայարաններ։",
+  },
+  "adChannel.TRANSIT.about": {
+    ru: "Транспорт весь день ездит по самым людным маршрутам, а пассажир в салоне проводит с рекламой десятки минут. Канал сочетает уличный охват с длинным контактом внутри.",
+    en: "Transport spends the whole day on the busiest routes, and a passenger inside spends tens of minutes with the ad. The channel combines street-level reach with a long contact inside.",
+    hy: "Տրանսպորտն ամբողջ օրը շարժվում է ամենամարդաշատ երթուղիներով, իսկ սրահի ուղևորը գովազդի հետ անցկացնում է տասնյակ րոպեներ։ Ալիքը միավորում է փողոցային հասանելիությունը ներսի երկար շփման հետ։",
+  },
+  "adChannel.TRANSIT.buy1": { ru: "Брендирование бортов автобуса", en: "Branding the exterior of a bus", hy: "Ավտոբուսի կողային մակերեսների բրենդավորում" },
+  "adChannel.TRANSIT.buy2": { ru: "Постеры в салоне и на поручнях", en: "Posters inside the cabin and on the handrails", hy: "Պաստառներ սրահում և բռնակների վրա" },
+  "adChannel.TRANSIT.buy3": { ru: "Щиты и стикеры на станциях метро", en: "Boards and stickers in metro stations", hy: "Վահանակներ և ստիկերներ մետրոյի կայարաններում" },
 };
 
 /** Build a UI translator bound to a locale. Supports `{token}` interpolation
