@@ -94,6 +94,23 @@ export async function getNotifications(userId: number, limit = 30) {
   });
 }
 
+/** The feed pages (creator cabinet, brand cabinet, admin panel) all fetch
+ *  getNotifications() and map it to NotificationList's item shape the same
+ *  way — factored out here so the three copies can't drift (QA-5,
+ *  2026-08-11). The rows themselves are never filtered by which cabinet is
+ *  asking: a member's notifications are one inbox regardless of side. */
+export async function getNotificationItems(userId: number, limit = 30) {
+  const rows = await getNotifications(userId, limit);
+  return rows.map((n) => ({
+    id: n.id,
+    type: n.type,
+    data: n.data,
+    link: n.link,
+    read: n.read,
+    createdAt: n.createdAt.toISOString(),
+  }));
+}
+
 export async function getUnreadCount(userId: number): Promise<number> {
   return prisma.notification.count({ where: { userId, read: false } });
 }

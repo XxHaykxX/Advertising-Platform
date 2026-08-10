@@ -11,6 +11,7 @@ import {
 import {
   markNotificationRead,
   markAllNotificationsRead,
+  type NotificationScope,
 } from "@/lib/actions/notifications";
 import { cn } from "@/lib/utils";
 
@@ -39,9 +40,15 @@ const ICONS: Record<string, typeof Bell> = {
 export function NotificationList({
   items: initial,
   locale,
+  scope,
 }: {
   items: NotificationItem[];
   locale: Locale;
+  /** Which cabinet rendered this list — member or staff (#63/QA-10). This
+   *  one component backs all three notification pages, so it can't assume;
+   *  the page that rendered it already knows (it's behind requireMember() or
+   *  a staff guard) and passes it down. */
+  scope: NotificationScope;
 }) {
   const t = useUI(locale);
   const router = useRouter();
@@ -60,7 +67,7 @@ export function NotificationList({
     if (!n.read) {
       setItems((prev) => prev.map((x) => (x.id === n.id ? { ...x, read: true } : x)));
       startTransition(async () => {
-        await markNotificationRead(n.id);
+        await markNotificationRead(n.id, scope);
         router.refresh();
       });
     }
@@ -70,7 +77,7 @@ export function NotificationList({
   function markAll() {
     setItems((prev) => prev.map((x) => ({ ...x, read: true })));
     startTransition(async () => {
-      await markAllNotificationsRead();
+      await markAllNotificationsRead(scope);
       router.refresh();
     });
   }

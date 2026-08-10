@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Bell, BellRing, Loader2, X } from "lucide-react";
 import { useUI, type Locale } from "@/lib/i18n-client";
 import { savePushSubscription } from "@/lib/actions/push";
+import type { NotificationScope } from "@/lib/actions/notifications";
 
 type Status = "loading" | "unsupported" | "prompt" | "enabled" | "denied";
 
@@ -25,8 +26,20 @@ function urlBase64ToUint8Array(base64: string): Uint8Array {
  *  already enabled, or dismissed. Shown only to signed-in users (mounted in the
  *  cabinet layout). The VAPID public key comes in as a prop read at runtime from
  *  the server (process.env.VAPID_PUBLIC_KEY) so enabling push in prod needs only
- *  an env var + restart — no rebuild (unlike a NEXT_PUBLIC build-time inline). */
-export function PushSubscribe({ locale, vapidPublicKey }: { locale: Locale; vapidPublicKey: string }) {
+ *  an env var + restart — no rebuild (unlike a NEXT_PUBLIC build-time inline).
+ *  `scope` picks which session the subscription is saved under (#63/QA-10) —
+ *  this component is mounted in both the member cabinet and the staff panel
+ *  layouts, and the two hold independent cookies that can both be present at
+ *  once. */
+export function PushSubscribe({
+  locale,
+  vapidPublicKey,
+  scope,
+}: {
+  locale: Locale;
+  vapidPublicKey: string;
+  scope: NotificationScope;
+}) {
   const t = useUI(locale);
   const [status, setStatus] = useState<Status>("loading");
   const [busy, setBusy] = useState(false);
@@ -57,10 +70,10 @@ export function PushSubscribe({ locale, vapidPublicKey }: { locale: Locale; vapi
           // Re-persist quietly in case the row was pruned server-side.
           const json = existing.toJSON();
           if (json.endpoint && json.keys) {
-            void savePushSubscription({
-              endpoint: json.endpoint,
-              keys: { p256dh: json.keys.p256dh, auth: json.keys.auth },
-            });
+            void savePushSubscription(
+              { endpoint: json.endpoint, keys: { p256dh: json.keys.p256dh, auth: json.keys.auth } },
+              scope,
+            );
           }
           if (alive) setStatus("enabled");
           return;
@@ -91,10 +104,10 @@ export function PushSubscribe({ locale, vapidPublicKey }: { locale: Locale; vapi
       });
       const json = sub.toJSON();
       if (json.endpoint && json.keys) {
-        const res = await savePushSubscription({
-          endpoint: json.endpoint,
-          keys: { p256dh: json.keys.p256dh, auth: json.keys.auth },
-        });
+        const res = await savePushSubscription(
+          { endpoint: json.endpoint, keys: { p256dh: json.keys.p256dh, auth: json.keys.auth } },
+          scope,
+        );
         setStatus(res.ok ? "enabled" : "prompt");
       }
     } catch {

@@ -65,7 +65,10 @@ export function NotificationToaster({ locale }: { locale: Locale }) {
     async function poll() {
       let rows;
       try {
-        rows = await getUnreadNotificationsPreview();
+        // Member-only: this toaster is mounted exclusively in the member
+        // cabinet layout (see the doc comment below) — a hardcoded scope
+        // instead of a prop since there's no other cabinet that reuses it.
+        rows = await getUnreadNotificationsPreview("member");
       } catch {
         return;
       }
@@ -102,7 +105,7 @@ export function NotificationToaster({ locale }: { locale: Locale }) {
   }, [locale]);
 
   function open(toast: Toast) {
-    void markNotificationRead(toast.id);
+    void markNotificationRead(toast.id, "member");
     remove(toast.id);
     if (toast.url) router.push(toast.url);
   }

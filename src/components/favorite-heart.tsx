@@ -12,21 +12,32 @@ import { addFavorite, removeFavorite } from "@/app/account/brand/favorite-action
  *  local pending flag is enough" pattern as ExpressInterestButton
  *  (browse-view.tsx), except here the flip on `ok` is immediate since the
  *  revalidatePath in the action refreshes the page's own data anyway.
- *  Creator/staff → rendered but inert (disabled, greyed). */
+ *  Creator/staff → rendered but inert (disabled, greyed). Own listing (dual
+ *  member) → also inert, but with `ownAria` instead of `addAria` (QA-4): the
+ *  disabled heart otherwise still announced "Add to favorites", an action
+ *  that was never going to work on a project the visitor owns. */
 export function FavoriteHeart({
   projectId,
   initialFavorite,
   canFavorite,
+  isOwn = false,
   signedIn,
   addAria,
   removeAria,
+  ownAria,
 }: {
   projectId: number;
   initialFavorite: boolean;
   canFavorite: boolean;
+  /** True when the signed-in visitor is this project's own creator/brand
+   *  side — the reason `canFavorite` is false, distinct from "not a brand at
+   *  all" (which keeps `addAria`, since favoriting is merely off-limits, not
+   *  nonsensical, for that visitor). */
+  isOwn?: boolean;
   signedIn: boolean;
   addAria: string;
   removeAria: string;
+  ownAria: string;
 }) {
   const [favorite, setFavorite] = useState(initialFavorite);
   const [pending, startTransition] = useTransition();
@@ -51,7 +62,7 @@ export function FavoriteHeart({
       <button
         type="button"
         disabled
-        aria-label={addAria}
+        aria-label={isOwn ? ownAria : addAria}
         className={cn(shellClass, "cursor-not-allowed opacity-50")}
       >
         <Heart className="h-4 w-4 text-white" />

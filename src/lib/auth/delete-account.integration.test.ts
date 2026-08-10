@@ -12,6 +12,7 @@ import { deleteAccount } from "./delete-account";
 const PREFIX = "qa-int-del-";
 const cleanup = async () => {
   await prisma.project.deleteMany({ where: { code: { startsWith: PREFIX } } });
+  await prisma.adSpace.deleteMany({ where: { code: { startsWith: PREFIX } } });
   await prisma.user.deleteMany({ where: { email: { startsWith: PREFIX } } });
 };
 
@@ -108,8 +109,34 @@ describe("deleteAccount", () => {
 
     expect(await deleteAccount(actor, target)).toEqual({
       ok: false,
-      reason: "has_projects",
+      reason: "has_content",
       projectCount: 1,
+      adSpaceCount: 0,
+    });
+    expect(await prisma.user.findUnique({ where: { id: target } })).not.toBeNull();
+  });
+
+  // #60, found during QA-5: the guard used to count only Project, so an
+  // account whose only content was an ad space passed it and crashed on the
+  // AdSpace FK instead of getting this refusal.
+  it("refuses to delete an account that owns an ad space but no projects", async () => {
+    const actor = await makeUser("SUPERADMIN", `${PREFIX}actor-space@test.local`);
+    const target = await makeUser("CREATOR", `${PREFIX}creator-space@test.local`);
+    await prisma.adSpace.create({
+      data: {
+        code: `${PREFIX}space-1`,
+        channel: "BILLBOARD",
+        title: "QA ad space",
+        description: "[]",
+        ownerId: target,
+      },
+    });
+
+    expect(await deleteAccount(actor, target)).toEqual({
+      ok: false,
+      reason: "has_content",
+      projectCount: 0,
+      adSpaceCount: 1,
     });
     expect(await prisma.user.findUnique({ where: { id: target } })).not.toBeNull();
   });

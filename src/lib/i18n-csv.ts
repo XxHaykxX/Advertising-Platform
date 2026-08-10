@@ -142,6 +142,7 @@ const CONTEXT_LABELS: Record<string, string> = {
   "metric.": "Значения — метрики портфолио",
   "placementType.": "Значения — типы интеграции",
   "placementTypeHint.": "Значения — типы интеграции, пояснения",
+  "platformCategory.": "Значения — категории платформ показа",
 };
 
 /** The prefixes above, longest first — so `account.brand.` wins over

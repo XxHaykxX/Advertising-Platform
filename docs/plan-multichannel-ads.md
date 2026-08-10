@@ -127,6 +127,16 @@
   они уже работают через `offerKey`.
 - Миграция: новые колонки и индекс катятся до push, старый уникальный индекс дропается
   после.
+- 🔴 Требование из этапа A (2026-08-11, dual-side accounts): нельзя покупать у
+  самого себя. `Project`/`Placement`/`SponsorshipTier` уже получили этот гейт
+  (`submitApplication`/`addFavorite` в `account/brand/actions.ts` и
+  `favorite-actions.ts` проверяют `ownerId === user.id`; `ownIds: Set<number>`
+  скрывает сердечко/кнопку в UI). `AdSpace` пока не продаётся и не
+  избранное — как только этот этап заведёт заявку и избранное на места, тот же
+  гейт обязателен и там: `submitAdSpaceApplication`/будущий `addSpaceFavorite`
+  должны сравнивать `adSpace.ownerId` с `user.id`, а витрина мест — получить
+  свой `ownSpaceIds: Set<number>` тем же способом, что и `ownIds` для проектов
+  (`src/lib/data/favorites.ts:getOwnedProjectIdSet` — двойник для `AdSpace`).
 
 ## Проверка
 

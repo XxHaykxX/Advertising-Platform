@@ -1,6 +1,16 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Dev-only route indicator, default `bottom-left` — sat over the catalog's
+  // "Показано N проектов" counter on mobile (QA-4). Moved rather than padded:
+  // the indicator is fixed on every route, so a page-local fix would only
+  // patch /catalog and leave the same overlap on the next page that happens
+  // to put content in that corner. `top-left` is clear of the two other fixed
+  // widgets in the app (push-subscribe: bottom-right, notification-toaster:
+  // top-right).
+  devIndicators: {
+    position: "top-left",
+  },
   // No `output: standalone` — Hostinger's managed Next runner serves the app with
   // `next start` (which errors out against a standalone build). It keeps
   // node_modules + .next around at runtime, so plain `next start` is what works.
