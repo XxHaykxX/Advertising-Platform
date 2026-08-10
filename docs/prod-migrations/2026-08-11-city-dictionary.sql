@@ -11,13 +11,16 @@
 -- Apply BEFORE pushing the code (docs/DEPLOY-PLAYBOOK.md), same as every
 -- other dictionary migration.
 --
--- 🔴 PROD: DO NOT RUN THIS YET. Checked prod (u998961932_advertising)
--- read-only on 2026-08-11 — the `AdSpace` table does not exist there at all;
--- stage 3 of the multichannel-ads plan (docs/plan-multichannel-ads.md) is
--- still undeployed (see task #33 / #65). There is no `city` column anywhere
--- on prod for the UPDATE below to touch. Re-check with
--- `SHOW TABLES LIKE 'AdSpace';` before ever running this file there — if it
--- still returns empty, this migration is not applicable yet.
+-- ✅ PROD: APPLIED 2026-08-11, ahead of the stage-3 push (c6dfac0).
+-- `SELECT COUNT(*) FROM City` → 20. The UPDATE below matched nothing there and
+-- was never going to: prod had no `AdSpace` rows yet, which is exactly why the
+-- migration was free to run at that moment.
+--
+-- The paragraph this replaces said "DO NOT RUN THIS YET — prod has no AdSpace
+-- table". That was true when the file was written, hours before stage 3 went
+-- out; it stopped being true the moment the table was created. Left as a note
+-- rather than deleted, because a stale 🔴 in a migration file is the kind of
+-- thing that gets believed on a later read.
 --
 -- Applied to LOCAL dev only (2026-08-11) — before/after:
 --   SELECT id, code, city FROM AdSpace;
