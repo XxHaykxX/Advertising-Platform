@@ -8,6 +8,7 @@ import { makeUI } from "@/lib/i18n";
 import { AdSpaceForm } from "@/app/admin/(panel)/ad-spaces/ad-space-form";
 import { adSpaceChannelOptions } from "@/app/admin/(panel)/ad-spaces/write";
 import { createCreatorAdSpace } from "../actions";
+import { translateCreatorAdSpaceAction } from "../translate-action";
 
 /** "Подать рекламное место" — reuses the staff AdSpaceForm (mode="creator")
  *  rather than growing a second form, same reasoning as
@@ -35,6 +36,7 @@ export default async function NewAdSpacePage() {
 
       <AdSpaceForm
         action={createCreatorAdSpace}
+        translateAction={translateCreatorAdSpaceAction}
         channels={adSpaceChannelOptions(locale)}
         mode="creator"
         locale={locale}

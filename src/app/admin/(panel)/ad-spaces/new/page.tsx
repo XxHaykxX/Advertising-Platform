@@ -3,6 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { requireContentEditor } from "@/lib/auth/require";
 import { createAdSpace } from "../actions";
 import { AdSpaceForm } from "../ad-space-form";
+import { translateAdSpaceAction } from "../translate-action";
 import { adSpaceChannelOptions } from "../write";
 
 export default async function NewAdSpacePage() {
@@ -20,6 +21,7 @@ export default async function NewAdSpacePage() {
       <h1 className="mb-6 mt-4 text-2xl font-bold text-foreground">New ad space</h1>
       <AdSpaceForm
         action={createAdSpace}
+        translateAction={translateAdSpaceAction}
         channels={adSpaceChannelOptions("en")}
         mode="staff"
         submitLabel="Create ad space"

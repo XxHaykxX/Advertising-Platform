@@ -13,6 +13,7 @@ import {
   toAdSpaceOfferRows,
 } from "@/app/admin/(panel)/ad-spaces/write";
 import { updateCreatorAdSpace } from "../../actions";
+import { translateCreatorAdSpaceAction } from "../../translate-action";
 
 /** A creator editing their OWN ad space. Twin of the staff edit page, scoped
  *  to the owner and wired to the creator action (which sends the save back
@@ -76,6 +77,7 @@ export default async function EditCreatorAdSpacePage({
 
       <AdSpaceForm
         action={updateCreatorAdSpace.bind(null, spaceId)}
+        translateAction={translateCreatorAdSpaceAction}
         channels={adSpaceChannelOptions(locale)}
         initial={toAdSpaceFormInitial(space)}
         initialOffers={toAdSpaceOfferRows(space.offers)}

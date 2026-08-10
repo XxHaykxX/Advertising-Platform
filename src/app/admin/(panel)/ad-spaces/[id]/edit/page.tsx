@@ -8,6 +8,7 @@ import { EntityEditTabs } from "@/app/admin/(panel)/history/entity-edit-tabs";
 import { EntityHistoryPanel } from "@/app/admin/(panel)/history/entity-history-panel";
 import { updateAdSpace } from "../../actions";
 import { AdSpaceForm } from "../../ad-space-form";
+import { translateAdSpaceAction } from "../../translate-action";
 import { adSpaceChannelOptions, toAdSpaceFormInitial, toAdSpaceOfferRows } from "../../write";
 
 export default async function EditAdSpacePage({ params }: { params: Promise<{ id: string }> }) {
@@ -54,6 +55,7 @@ export default async function EditAdSpacePage({ params }: { params: Promise<{ id
       >
         <AdSpaceForm
           action={updateAdSpace.bind(null, spaceId)}
+          translateAction={translateAdSpaceAction}
           channels={adSpaceChannelOptions("en")}
           initial={toAdSpaceFormInitial(space)}
           initialOffers={toAdSpaceOfferRows(space.offers)}

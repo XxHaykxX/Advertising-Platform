@@ -3064,7 +3064,33 @@ export const UI: Record<string, Dict> = {
   "adSpaceForm.title": { ru: "Название", en: "Title", hy: "Անվանում" },
   "adSpaceForm.description": { ru: "Описание", en: "Description", hy: "Նկարագրություն" },
   "adSpaceForm.image": { ru: "Главное фото", en: "Main photo", hy: "Հիմնական լուսանկար" },
+  // The two hints say WHERE each picture is seen, not what it is — that is the
+  // thing an owner cannot guess from a drop zone (same reason the project
+  // form's poster/gallery cards carry one).
+  "adSpaceForm.imageHint": {
+    ru: "Показывается на карточке места в витрине канала и первым на его странице.",
+    en: "Shown on the space's card in the channel showcase, and first on its own page.",
+    hy: "Ցուցադրվում է տարածքի քարտում՝ ալիքի ցուցափեղկում, և առաջինը՝ իր էջում։",
+  },
   "adSpaceForm.gallery": { ru: "Галерея", en: "Gallery", hy: "Պատկերասրահ" },
+  // The ad-space twin of publish.gapNote / projectForm.offer.bulletEmpty. Both
+  // of those name a *project* and a *tier offer*, which is what the first
+  // version of this form showed a billboard's owner. Same sentence, right noun.
+  "adSpaceForm.gapNote": {
+    ru: "Без этого место не отправится на модерацию.",
+    en: "The space can't be submitted for review without this.",
+    hy: "Առանց սրա տարածքը չի ուղարկվի մոդերացիայի։",
+  },
+  "adSpaceForm.descriptionEmpty": {
+    ru: "Ни одного пункта — бренд не увидит, что это за место.",
+    en: "No items yet — the brand can't see what this space is.",
+    hy: "Դեռ կետեր չկան․ բրենդը չի տեսնի, թե ինչ տարածք է սա։",
+  },
+  "adSpaceForm.galleryHint": {
+    ru: "Дополнительные снимки на странице места — ракурсы, окружение, пример размещения.",
+    en: "Extra shots on the space's page — angles, surroundings, an example of a placement.",
+    hy: "Լրացուցիչ լուսանկարներ տարածքի էջում՝ տեսանկյուններ, շրջապատ, տեղադրման օրինակ։",
+  },
   "adSpaceForm.isActive": { ru: "Показывать на сайте", en: "Show on the site", hy: "Ցուցադրել կայքում" },
   "adSpaceForm.moderationNote": {
     ru: "После сохранения место уходит на проверку модератору и появится на сайте после одобрения.",
