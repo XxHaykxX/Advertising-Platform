@@ -108,6 +108,23 @@ export function Footer({
                     {t("footer.howItWorks")}
                   </Link>
                 </li>
+                {/* The guide shipped 2026-08-04 with no public entry point: it
+                    was reachable only from deep inside /how-it-works and from
+                    two places behind the login, so the one visitor it is
+                    written for — someone still deciding whether to register —
+                    could not find it. Same "page ships, link doesn't" pattern
+                    member-paths.test.ts already notes. Reuses
+                    forCreators.entryLink rather than adding footer.* : that
+                    key exists precisely so every link pointing AT the guide
+                    carries the same words. */}
+                <li>
+                  <Link
+                    href="/for-creators"
+                    className="text-sm text-muted-foreground transition-colors hover:text-primary"
+                  >
+                    {t("forCreators.entryLink")}
+                  </Link>
+                </li>
                 {/* Hidden behind PORTFOLIO_ENABLED while the owner keeps
                     preparing cases (see src/lib/feature-flags.ts) — the route
                     itself 404s too. */}
