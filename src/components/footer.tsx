@@ -33,70 +33,28 @@ export function Footer({
 }: {
   locale?: Locale;
   currency?: CurrencyCode;
-  /** Compact footer for the signed-in member cabinet (brand/creator): drops the
-   *  public-site nav columns (Product/Company/Legal) — they'd only bounce a
-   *  cabinet-confined member back — keeping just wordmark, support contacts and
-   *  the locale/currency switchers. */
+  /** Cabinet footer for the signed-in member (brand/creator, IA-52): same
+   *  Company/Legal/Contacts columns and socials as the public footer, minus
+   *  the Product column — a cabinet-confined member already has that info on
+   *  their own pages (catalog nav, etc). FAQ moves into Company under About,
+   *  its former slot in Product. */
   minimal?: boolean;
 }) {
   const t = makeUI(locale);
 
-  if (minimal) {
-    return (
-      <footer className="bg-section border-t border-border">
-        <Container className="py-8">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <span className="text-lg font-bold text-foreground">
-                <span className="text-primary">i</span>Govazd
-              </span>
-              <p className="mt-1 text-[13px] text-muted-foreground">
-                © 2026 iGovazd. {t("footer.rights")}
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-4">
-              <a
-                href="mailto:hello@igovazd.am"
-                className="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-primary"
-              >
-                <Mail className="h-4 w-4 shrink-0" />
-                hello@igovazd.am
-              </a>
-              <a
-                href="tel:+37400000000"
-                className="flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-primary"
-              >
-                <Phone className="h-4 w-4 shrink-0" />
-                +374 00 000 000
-              </a>
-              <a
-                href="https://t.me/igovazd"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Telegram"
-                className="text-muted-foreground transition-colors hover:text-primary"
-              >
-                <TelegramIcon className="h-5 w-5" />
-              </a>
-              <a
-                href="https://wa.me/37400000000"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="WhatsApp"
-                className="text-muted-foreground transition-colors hover:text-primary"
-              >
-                <WhatsAppIcon className="h-5 w-5" />
-              </a>
-              <div className="flex items-center gap-2">
-                <LocaleSwitcher current={locale} openUp menuLeft />
-                <CurrencySwitcher current={currency} openUp menuLeft />
-              </div>
-            </div>
-          </div>
-        </Container>
-      </footer>
-    );
-  }
+  const faqLink = (
+    <li>
+      {/* Was "/#faq", an anchor on the landing page — off-limits to a
+          signed-in member (IA-37/38/39). /faq is a standalone route
+          reusing the same accordion so this link works everywhere. */}
+      <Link
+        href="/faq"
+        className="text-sm text-muted-foreground transition-colors hover:text-primary"
+      >
+        {t("footer.faq")}
+      </Link>
+    </li>
+  );
 
   return (
     <footer className="bg-section border-t border-border">
@@ -114,55 +72,47 @@ export function Footer({
         </div>
 
         {/* Link columns */}
-        <div className="mb-12 grid grid-cols-2 gap-8 sm:grid-cols-4">
+        <div className={`mb-12 grid grid-cols-2 gap-8 ${minimal ? "sm:grid-cols-3" : "sm:grid-cols-4"}`}>
           {/* Product */}
-          <div>
-            <h3 className="mb-4 text-sm font-semibold text-foreground">
-              {t("footer.product")}
-            </h3>
-            <ul className="space-y-3">
-              <li>
-                <Link
-                  href="/catalog"
-                  className="text-sm text-muted-foreground transition-colors hover:text-primary"
-                >
-                  {t("footer.browseProjects")}
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/how-it-works"
-                  className="text-sm text-muted-foreground transition-colors hover:text-primary"
-                >
-                  {t("footer.howItWorks")}
-                </Link>
-              </li>
-              {/* Hidden behind PORTFOLIO_ENABLED while the owner keeps
-                  preparing cases (see src/lib/feature-flags.ts) — the route
-                  itself 404s too. */}
-              {PORTFOLIO_ENABLED ? (
+          {minimal ? null : (
+            <div>
+              <h3 className="mb-4 text-sm font-semibold text-foreground">
+                {t("footer.product")}
+              </h3>
+              <ul className="space-y-3">
                 <li>
                   <Link
-                    href="/portfolio"
+                    href="/catalog"
                     className="text-sm text-muted-foreground transition-colors hover:text-primary"
                   >
-                    {t("footer.portfolio")}
+                    {t("footer.browseProjects")}
                   </Link>
                 </li>
-              ) : null}
-              <li>
-                {/* Was "/#faq", an anchor on the landing page — off-limits to a
-                    signed-in member (IA-37/38/39). /faq is a standalone route
-                    reusing the same accordion so this link works everywhere. */}
-                <Link
-                  href="/faq"
-                  className="text-sm text-muted-foreground transition-colors hover:text-primary"
-                >
-                  {t("footer.faq")}
-                </Link>
-              </li>
-            </ul>
-          </div>
+                <li>
+                  <Link
+                    href="/how-it-works"
+                    className="text-sm text-muted-foreground transition-colors hover:text-primary"
+                  >
+                    {t("footer.howItWorks")}
+                  </Link>
+                </li>
+                {/* Hidden behind PORTFOLIO_ENABLED while the owner keeps
+                    preparing cases (see src/lib/feature-flags.ts) — the route
+                    itself 404s too. */}
+                {PORTFOLIO_ENABLED ? (
+                  <li>
+                    <Link
+                      href="/portfolio"
+                      className="text-sm text-muted-foreground transition-colors hover:text-primary"
+                    >
+                      {t("footer.portfolio")}
+                    </Link>
+                  </li>
+                ) : null}
+                {faqLink}
+              </ul>
+            </div>
+          )}
 
           {/* Company */}
           <div>
@@ -178,6 +128,7 @@ export function Footer({
                   {t("footer.about")}
                 </Link>
               </li>
+              {minimal ? faqLink : null}
               <li>
                 <Link
                   href="/contact"
