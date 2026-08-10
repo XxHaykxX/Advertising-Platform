@@ -405,6 +405,10 @@ export const UI: Record<string, Dict> = {
    *  to add ": " in JSX, which doubled up on the Armenian but. */
   "card.release": { ru: "Выход:", en: "Release:", hy: "Ցուցադրությունը՝" },
   "card.applicationsUntil": { ru: "Заявки до", en: "Applications until", hy: "Հայտեր՝ մինչև" },
+  /* IA-50 §4: the same label without the "until", for a project that takes
+     applications with no closing date — "Ongoing" printed bare said nothing
+     about what was ongoing. Punctuation lives here, as in card.release. */
+  "card.applicationsLabel": { ru: "Заявки:", en: "Applications:", hy: "Հայտեր՝" },
   // Owner request 2026-07-28: say on the card how many placement opportunities
   // a project carries, the way the competing marketplaces do.
   // IA-41: the platform chip row (Netflix, cinema, …) had no label — a bare
@@ -1038,6 +1042,12 @@ export const UI: Record<string, Dict> = {
   // already renders for free-text formats ("ep" -> "эп"), so a serial with
   // episode data and one without read the same.
   "format.serialEpisodes": { ru: "{n} эп. × {m} мин", en: "{n} ep × {m} min", hy: "{n} սերիա × {m} րոպե" },
+  // IA-50 §7: an episode runtime is now clock time ("1 ժամ 43 րոպե"), built
+  // by formatDuration, so the row takes it pre-rendered instead of raw
+  // minutes. format.serialEpisodes above is no longer referenced from code —
+  // left in place until a dictionary sweep, so an unpublished draft of it
+  // isn't destroyed by the deletion.
+  "format.serialEpisodesDuration": { ru: "{n} эп. × {duration}", en: "{n} ep × {duration}", hy: "{n} սերիա × {duration}" },
   "format.filmMinutes": { ru: "{m} мин", en: "{m} min", hy: "{m} րոպե" },
 
   "cast.title": { ru: "Актёры и создатели", en: "Cast & Creators", hy: "Դերասաններ և հեղինակներ" },

@@ -11,7 +11,7 @@ import {
   Megaphone,
   Award,
 } from "lucide-react";
-import { GenreBadge } from "@/components/ui/badge";
+import { GenreBadge, AccentBadge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FavoriteHeart } from "@/components/favorite-heart";
 import { daysUntil, formatFullDate, formatReleaseDate, parseStringArray, splitCountries } from "@/lib/data/format";
@@ -109,10 +109,11 @@ export function ProjectCard({
   const shownCountries = countries.slice(0, 3);
   const extraCountries = countries.length - shownCountries.length;
   const platforms = parseStringArray(project.platforms);
-  // Compact card: month + year at DAY precision (unchanged from before
-  // precision existed), month + year at MONTH, bare year at YEAR — never
-  // inventing a day/month the editor didn't actually give (IA-42).
-  const releaseLabel = formatReleaseDate(project.releaseDate, project.releasePrecision, intlLocale(locale), true);
+  // Full date at DAY precision (IA-50 §6 — a day the editor actually entered
+  // was being dropped down to month+year on the card), month + year at
+  // MONTH, bare year at YEAR — never inventing a day/month that wasn't saved
+  // (IA-42).
+  const releaseLabel = formatReleaseDate(project.releaseDate, project.releasePrecision, intlLocale(locale), false);
   const deadlineDays = daysUntil(project.applicationDeadline);
   const deadlineUrgent = deadlineDays !== null && deadlineDays <= 45;
   // IA-41: the poster overlay used to show genres[0] only and the row under
@@ -216,11 +217,15 @@ export function ProjectCard({
             not categories and no longer sit here; they moved down to the
             decision block above the button. */}
         <div className="mt-2 flex flex-wrap items-center gap-2">
+          {/* Format leads, and reads differently from the genres after it
+              (IA-50 §2) — on a chip row the two used to be indistinguishable
+              ("Sci-Fi · Drama · +2 · Mini-series" reads as four genres),
+              even though only the last one is what the project actually IS. */}
+          {formatCategoryLabel ? <AccentBadge>{formatCategoryLabel}</AccentBadge> : null}
           {shownGenres.map((g, i) => (
             <GenreBadge key={g}>{shownGenreLabels[i]}</GenreBadge>
           ))}
           {moreGenres > 0 ? <GenreBadge>+{moreGenres}</GenreBadge> : null}
-          {formatCategoryLabel ? <GenreBadge>{formatCategoryLabel}</GenreBadge> : null}
         </div>
         <div className="mt-4 flex flex-col gap-2 text-sm text-muted-foreground">
           {/* IA-41: format and countries used to render unconditionally, so a
@@ -261,8 +266,11 @@ export function ProjectCard({
                   archived and never reaches the catalog, so a negative count
                   cannot appear here. */}
               <span>
+                {/* IA-50 §4: Ongoing used to print bare, with no label saying
+                    what it's ongoing FOR — every other branch here names
+                    itself ("Applications until <date>"). */}
                 {project.applicationDeadlineOngoing
-                  ? t("deadline.ongoing")
+                  ? `${t("card.applicationsLabel")} ${t("deadline.ongoing")}`
                   : deadlineUrgent && deadlineDays !== null
                     ? deadlineDays <= 0
                       ? t("card.deadlineLastDay")
@@ -274,20 +282,20 @@ export function ProjectCard({
         </div>
 
         {platforms.length > 0 ? (
-          <div className="mt-3">
+          <div className="mt-3 flex flex-wrap items-center gap-1.5">
             {/* IA-41: the chip row had no label — say what these values ARE
-                before listing them, same as the report page's platform row. */}
+                before listing them, same as the report page's platform row.
+                IA-50 §3: label and chips share one line now — the label used
+                to sit on its own row above them. */}
             <span className="text-[11px] font-medium text-muted-foreground">{t("card.availableOn")}</span>
-            <div className="mt-1 flex flex-wrap gap-1.5">
-              {platforms.map((p) => (
-                <span
-                  key={p}
-                  className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
-                >
-                  {p}
-                </span>
-              ))}
-            </div>
+            {platforms.map((p) => (
+              <span
+                key={p}
+                className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
+              >
+                {p}
+              </span>
+            ))}
           </div>
         ) : null}
 

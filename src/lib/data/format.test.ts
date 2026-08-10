@@ -5,6 +5,7 @@ import {
   formatMonthYear,
   formatFullDate,
   formatReleaseDate,
+  formatDuration,
   daysUntil,
   isArchived,
   compareDeadline,
@@ -134,6 +135,33 @@ describe("formatReleaseDate", () => {
 
   it("falls back to DAY for an unrecognized precision value", () => {
     expect(formatReleaseDate(iso, "", "en-US", true)).toBe("July 2027");
+  });
+});
+
+// ── formatDuration (IA-50 §7) — clock time instead of raw minutes ─────────
+describe("formatDuration", () => {
+  it("under an hour: minutes only", () => {
+    expect(formatDuration(43, "en")).toBe("43 min");
+    expect(formatDuration(43, "ru")).toBe("43 мин");
+    expect(formatDuration(43, "hy")).toBe("43 րոպե");
+  });
+
+  it("exact hours: no trailing '0 min'", () => {
+    expect(formatDuration(120, "en")).toBe("2 hr");
+    expect(formatDuration(120, "ru")).toBe("2 ч");
+    expect(formatDuration(120, "hy")).toBe("2 ժամ");
+  });
+
+  it("hours + minutes", () => {
+    expect(formatDuration(103, "en")).toBe("1 hr 43 min");
+    expect(formatDuration(103, "ru")).toBe("1 ч 43 мин");
+    expect(formatDuration(103, "hy")).toBe("1 ժամ 43 րոպե");
+  });
+
+  it("returns '' for zero/negative/non-finite input", () => {
+    expect(formatDuration(0, "en")).toBe("");
+    expect(formatDuration(-5, "en")).toBe("");
+    expect(formatDuration(NaN, "en")).toBe("");
   });
 });
 

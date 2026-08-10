@@ -77,6 +77,27 @@ export function formatFullDate(iso: string | null, locale = "en-US"): string {
   return `${day} ${month} ${year}`;
 }
 
+/** Runtime words, same rationale as MONTHS_NOMINATIVE above: plain grammar,
+   not translator-owned copy, so a literal table beats a dictionary round-trip.
+   Matches the wording format.filmMinutes/serialEpisodes used to hardcode
+   ("min"/"мин"/"րոպե"), so a sub-hour runtime reads identically to before. */
+const HOUR_WORD: Record<string, string> = { en: "hr", ru: "ч", hy: "ժամ" };
+const MINUTE_WORD: Record<string, string> = { en: "min", ru: "мин", hy: "րոպե" };
+
+/** Runtime as hours+minutes (IA-50 §7) — "100 min" reads like a spec sheet;
+   clock time reads faster. Under an hour: minutes only. Exact hours: no
+   trailing "0 min". `locale` is the 2-letter app language, not an Intl tag
+   (formatCompactNumber's convention — this has no Date/Intl dependency). */
+export function formatDuration(minutes: number, locale: Locale): string {
+  if (!Number.isFinite(minutes) || minutes <= 0) return "";
+  const lang = langKey(locale);
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (h === 0) return `${m} ${MINUTE_WORD[lang]}`;
+  if (m === 0) return `${h} ${HOUR_WORD[lang]}`;
+  return `${h} ${HOUR_WORD[lang]} ${m} ${MINUTE_WORD[lang]}`;
+}
+
 /** Year-only rendering ("2027 թ." in hy, matching the year-first pattern
    formatMonthYear already uses; a bare number elsewhere). Not exported — only
    formatReleaseDate needs it. */

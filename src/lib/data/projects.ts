@@ -7,7 +7,7 @@ import { formatMoney } from "@/lib/currency";
 import { localizeCountryList } from "@/lib/countries";
 import { pickPersonName } from "@/lib/person-name";
 import { getRates } from "@/lib/currency/rates";
-import { isArchived } from "@/lib/data/format";
+import { isArchived, formatDuration } from "@/lib/data/format";
 import type { CurrencyCode } from "@/lib/currency";
 import {
   deriveFormatCategory,
@@ -65,13 +65,18 @@ function effectiveFormat(
   if (p.kind === "SERIAL" && p.episodes && p.episodeMinutes) {
     // Was a hardcoded English "11m/12episodes" — no space, no translation —
     // printed verbatim on the Armenian and Russian pages (audit A4).
-    return t("format.serialEpisodes", { n: p.episodes, m: p.episodeMinutes });
+    // Per-episode runtime as clock time (IA-50 §7) — see formatDuration.
+    return t("format.serialEpisodesDuration", {
+      n: p.episodes,
+      duration: formatDuration(p.episodeMinutes, locale),
+    });
   }
   // Single with a runtime: same treatment as the SERIAL branch. The admin form
   // has no free-text `format` field any more (2026-07-26), so Duration is the
   // only thing a new Single carries — without this its chip would be blank.
+  // IA-50 §7: hours+minutes ("1 ժամ 43 րոպե") instead of raw minutes.
   if (p.kind === "FILM" && p.durationMinutes) {
-    return t("format.filmMinutes", { m: p.durationMinutes });
+    return formatDuration(p.durationMinutes, locale);
   }
   return localizeFormat(locale, p.format);
 }

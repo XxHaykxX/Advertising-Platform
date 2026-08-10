@@ -91,6 +91,7 @@ export const CLIENT_KEYS: readonly string[] = [
   "btn.sending",
   "btn.translate",
   "btn.viewReport",
+  "card.applicationsLabel",
   "card.applicationsUntil",
   "card.applyCta",
   "card.availableOn",
