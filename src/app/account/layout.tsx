@@ -29,7 +29,7 @@ export default async function AccountLayout({ children }: { children: ReactNode 
 
   return (
     <div className="flex min-h-screen flex-col">
-      <SiteHeader />
+      <SiteHeader knownUser={user} />
       {isCreator ? (
         <CreatorShell
           sidebar={
