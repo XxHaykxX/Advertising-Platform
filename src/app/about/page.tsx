@@ -179,9 +179,6 @@ export default async function AboutPage() {
               <p className="relative mt-4 text-muted-foreground">{t("about.ctaBody")}</p>
               <div className="relative mt-8 flex flex-wrap justify-center gap-3">
                 <Button asChild variant="primary" size="md">
-                  <Link href="/catalog">{t("btn.browseProjects")}</Link>
-                </Button>
-                <Button asChild variant="secondary" size="md">
                   <Link href="/register">{t("about.registerCta")}</Link>
                 </Button>
               </div>

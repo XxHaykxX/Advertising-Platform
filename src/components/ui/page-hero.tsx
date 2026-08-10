@@ -87,13 +87,14 @@ export function PageHero({
           className={cn(
             eyebrow && "mt-7",
             "text-balance font-extrabold tracking-tight text-white",
-            // Same scale on every page that isn't the /about hero. It used to
-            // be one size for both, so a section header ran at the full 72px
-            // of the landing treatment — enough for a long Armenian line to
-            // fill the screen. Leading is 1.15, not 1.04: Armenian letters
-            // descend below the baseline and were being clipped.
+            // IA-51 §2: the /about hero used to run at the full 72px landing
+            // scale, well above every section heading on the site, so it now
+            // borrows Featured's exact scale ("text-4xl md:text-5xl"). The
+            // compact pages keep the breakpoint they already had — they were
+            // never part of the complaint. Leading is 1.15, not 1.04:
+            // Armenian letters descend below the baseline and were clipped.
             isHero
-              ? "text-5xl leading-[1.08] sm:text-6xl md:text-7xl"
+              ? "text-4xl leading-[1.15] md:text-5xl"
               : "text-4xl leading-[1.15] sm:text-5xl",
           )}
         >
