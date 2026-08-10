@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { UI, LOCALES } from "./i18n";
+import { contextLabelOrNone } from "./i18n-csv";
 
 describe("i18n dictionary — completeness", () => {
   it("every key has a non-empty string for ru / en / hy", () => {
@@ -30,6 +31,22 @@ describe("i18n dictionary — no Cyrillic homoglyphs in Armenian (F21 guard)", (
       if (hit) offenders.push(`${key}: "${hy}" (found «${hit[0]}» U+${hit[0].charCodeAt(0).toString(16).toUpperCase()})`);
     }
     expect(offenders, `Cyrillic homoglyphs in hy:\n${offenders.join("\n")}`).toEqual([]);
+  });
+});
+
+describe("i18n dictionary — every key names its place on the site", () => {
+  // The translator picks a section in /admin/i18n and edits its rows; the same
+  // label is the "Где на сайте" column of the CSV export. A key with no label
+  // in CONTEXT_LABELS falls back to its raw prefix and becomes a one-row
+  // section called `forCreators.field.castPhoto.` — which is what half the
+  // dictionary looked like before 2026-08-10. Add the new namespace to
+  // CONTEXT_LABELS in src/lib/i18n-csv.ts rather than deleting this test.
+  it("no key falls back to a raw dot-notation prefix", () => {
+    const unnamed = Object.keys(UI).filter((key) => contextLabelOrNone(key) === "");
+    expect(
+      unnamed,
+      `нет человеческого названия раздела (добавьте префикс в CONTEXT_LABELS):\n${unnamed.join("\n")}`,
+    ).toEqual([]);
   });
 });
 

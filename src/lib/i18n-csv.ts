@@ -7,51 +7,153 @@
 export const CSV_HEADER = ["key", "Где на сайте", "hy", "ru", "en"] as const;
 
 /* Human-readable "where does this text live" labels, derived from the key
-   prefix. Longest prefix wins (account.brand. before account.). Unknown
-   prefixes fall back to the prefix itself so new namespaces still export. */
+   prefix. Longest prefix wins (account.brand. before account.). This is the
+   only thing standing between the translator and 1000 rows of dot-notation:
+   it names the group headers in /admin/i18n, fills the section dropdown, and
+   is the "Где на сайте" column of the CSV export.
+
+   Two rules, both load-bearing:
+
+   1. EVERY key must match a prefix here. Until 2026-08-10 only 34 prefixes
+      were covered, so about half the dictionary fell through to the fallback
+      below and Мариам got 95 one-row "sections" named `forCreators.field.
+      castPhoto.`. src/lib/i18n-csv.test.ts now fails when a key has no label,
+      so a new namespace can't ship unnamed again.
+   2. The label IS the sort key — the dropdown and the group list are ordered
+      alphabetically by it. Hence the "Раздел — подраздел" shape: every
+      "Форма проекта — …" lands together, in one run, without any extra
+      grouping machinery. Keep the prefix wording identical across siblings. */
 const CONTEXT_LABELS: Record<string, string> = {
+  // ── Общие элементы, видны на каждой странице ──
   "nav.": "Шапка (меню)",
   "footer.": "Подвал",
+  "btn.": "Кнопки",
+  "ui.": "Мелкие элементы интерфейса",
+  "translate.": "Кнопка перевода",
+  "form.": "Формы (общие поля)",
+  "formErr.": "Формы (ошибки)",
+
+  // ── Главная ──
   "hero.": "Главная — верхний блок",
-  "how.": "Главная — как это работает",
   "why.": "Главная — почему мы",
   "trust.": "Главная — блок доверия",
   "featured.": "Главная — избранные проекты",
+  "landingHow.": "Главная — как это работает",
+  "investment.": "Главная — спонсоры и инвестиции",
   "getStarted.": "Главная — призыв к действию",
-  "faq.": "Вопросы и ответы",
+  "faq.": "Главная — вопросы и ответы",
+
+  // ── Остальные публичные страницы ──
+  "hiw.flow.": "«Как это работает» — схема шагов",
+  "hiw.": "Страница «Как это работает»",
   "about.": "Страница «О нас»",
   "contact.": "Страница «Контакты»",
+  "contactPage.": "Страница «Контакты»",
   "portfolio.": "Портфолио",
   "partners.": "Партнёры",
-  "catalog.": "Каталог (фильтры, карточки)",
-  "report.": "Страница медиа-отчёта",
-  "form.": "Формы (общие поля)",
-  "formErr.": "Формы (ошибки)",
-  "btn.": "Кнопки",
-  "ui.": "Мелкие элементы интерфейса",
+  "legal.": "Юридические страницы",
+
+  // ── Рекламные каналы (/ads) ──
+  "ads.": "Реклама — обзор и общие блоки",
+  "adGroup.": "Реклама — названия групп каналов",
+  "adChannel.": "Реклама — описания девяти каналов",
+
+  // ── Каталог и страница проекта ──
+  "catalog.": "Каталог — фильтры и сортировка",
+  "card.": "Каталог — карточка проекта",
+  "favorite.": "Каталог — избранное",
+  "report.": "Страница проекта",
+  "keyFacts.": "Страница проекта — ключевые факты",
+  "cast.": "Страница проекта — каст и команда",
+  "format.": "Страница проекта — формат и хронометраж",
+  "deadline.": "Страница проекта — срок приёма заявок",
+
+  // ── Заявки бренда ──
+  "apply.": "Заявка бренда — форма отклика",
+  "interests.status.": "Заявки — статусы (значения)",
+  "interests.": "Заявки — список и переписка",
+
+  // ── Вход, регистрация, уведомления ──
   "login.": "Вход",
   "register.": "Регистрация",
   "auth.": "Авторизация (общее)",
+  "adminLogin.": "Вход в админку",
+  "logout.": "Выход",
+  "notif.": "Уведомления",
+  // Не "Push-…": список сортируется по подписи, и латиница уехала бы в конец.
+  "push.": "Уведомления в браузере (push)",
+
+  // ── Личные кабинеты ──
   "account.brand.": "Кабинет бренда",
   "account.": "Кабинет создателя",
-  "notif.": "Уведомления",
-  "legal.": "Юридические страницы",
-  "translate.": "Кнопка перевода",
-  "genre.": "Жанры (значения фильтра)",
-  "role.": "Каст и съёмочная группа — роли (значения)",
-  "placement.": "Типы размещения (значения)",
-  "formatCategory.": "Категории формата (значения)",
-  "category.": "Категории бренда (значения)",
-  "gender.": "Пол (значения)",
-  "metric.": "Метрики портфолио (значения)",
+
+  // ── Форма проекта (её же видит создатель в кабинете) ──
+  "projectForm.section.": "Форма проекта — названия разделов",
+  "projectForm.field.": "Форма проекта — названия полей",
+  "projectForm.help.": "Форма проекта — подсказки к полям",
+  "projectForm.about.": "Форма проекта — описание и синопсис",
+  "projectForm.media.": "Форма проекта — постер, галерея, медиа",
+  "projectForm.video.": "Форма проекта — видео",
+  "projectForm.cast.": "Форма проекта — каст и команда",
+  "projectForm.placements.": "Форма проекта — плейсменты",
+  "projectForm.tiers.": "Форма проекта — пакеты спонсорства",
+  "projectForm.offers.": "Форма проекта — предложения (общее)",
+  "projectForm.offer.crop.": "Форма проекта — обрезка картинки предложения",
+  "projectForm.offer.": "Форма проекта — карточка предложения",
+  "projectForm.milestones.": "Форма проекта — этапы производства",
+  "projectForm.releasePrecision.": "Форма проекта — точность даты выхода (значения)",
+  "projectForm.": "Форма проекта — общее",
+  "completeness.item.": "Форма проекта — чеклист, названия пунктов",
+  "completeness.": "Форма проекта — чеклист заполнения",
+  "publish.missing.": "Форма проекта — что мешает публикации",
+  "publish.": "Форма проекта — проверка перед публикацией",
+  "poster.": "Форма проекта — генератор постера",
+
+  // ── Медиатека ──
+  "media.crop.": "Медиатека — обрезка изображения",
+  "media.": "Медиатека — выбор и загрузка файлов",
+
+  // ── Гид «Создателям» ──
+  "forCreators.hero.": "Гид создателям — верхний блок",
+  "forCreators.steps.": "Гид создателям — шаги",
+  "forCreators.step.": "Гид создателям — шаги",
+  "forCreators.field.": "Гид создателям — пояснения к полям",
+  "forCreators.fileReq.": "Гид создателям — требования к файлам",
+  "forCreators.tier.": "Гид создателям — пакеты спонсорства",
+  "forCreators.moderation.": "Гид создателям — модерация",
+  "forCreators.legend.": "Гид создателям — легенда обозначений",
+  "forCreators.example.": "Гид создателям — пример проекта",
+  "forCreators.finalCta.": "Гид создателям — призыв к действию",
+  "forCreators.": "Гид создателям — общее",
+
+  // ── Админка ──
+  "admin.registrations.": "Админка — регистрации",
+  "admin.dashboard.": "Админка — сводка",
+  "admin.": "Админка — общее",
+
+  // ── Закрытые списки: то, что подставляется в текст как значение ──
+  "genre.": "Значения — жанры",
+  "role.": "Значения — роли каста и команды",
+  "formatCategory.": "Значения — категории формата",
+  "category.": "Значения — категории бренда",
+  "metric.": "Значения — метрики портфолио",
+  "placementType.": "Значения — типы интеграции",
+  "placementTypeHint.": "Значения — типы интеграции, пояснения",
 };
 
+/** The prefixes above, longest first — so `account.brand.` wins over
+ *  `account.` without re-scanning the whole map for every key. */
+const CONTEXT_PREFIXES = Object.keys(CONTEXT_LABELS).sort((a, b) => b.length - a.length);
+
+/** The label a key would carry, or "" when nothing covers it (which the guard
+ *  test treats as a failure — see the note on CONTEXT_LABELS). */
+export function contextLabelOrNone(key: string): string {
+  const hit = CONTEXT_PREFIXES.find((p) => key.startsWith(p));
+  return hit ? CONTEXT_LABELS[hit] : "";
+}
+
 export function contextLabel(key: string): string {
-  let best = "";
-  for (const prefix of Object.keys(CONTEXT_LABELS)) {
-    if (key.startsWith(prefix) && prefix.length > best.length) best = prefix;
-  }
-  return best ? CONTEXT_LABELS[best] : key.slice(0, key.lastIndexOf(".") + 1) || key;
+  return contextLabelOrNone(key) || key.slice(0, key.lastIndexOf(".") + 1) || key;
 }
 
 /* ── RFC-4180 CSV ─────────────────────────────────────────────────────── */
