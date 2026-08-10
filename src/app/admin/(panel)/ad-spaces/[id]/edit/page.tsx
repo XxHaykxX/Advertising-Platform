@@ -3,6 +3,9 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireContentEditor } from "@/lib/auth/require";
+import { buildEntityHistoryGroups, getEntityHistory } from "@/app/admin/(panel)/history/lib";
+import { EntityEditTabs } from "@/app/admin/(panel)/history/entity-edit-tabs";
+import { EntityHistoryPanel } from "@/app/admin/(panel)/history/entity-history-panel";
 import { updateAdSpace } from "../../actions";
 import { AdSpaceForm } from "../../ad-space-form";
 import { adSpaceChannelOptions, toAdSpaceFormInitial, toAdSpaceOfferRows } from "../../write";
@@ -23,6 +26,10 @@ export default async function EditAdSpacePage({ params }: { params: Promise<{ id
   // their own rows, and "not yours" must not be distinguishable from "gone".
   if (user.role !== "SUPERADMIN" && space.ownerId !== user.id) notFound();
 
+  // "History" tab — every save of this space next to the form that makes them.
+  // Restoring stays SUPERADMIN-only, same as the projects page.
+  const historyGroups = buildEntityHistoryGroups(await getEntityHistory("AdSpace", spaceId));
+
   return (
     <div>
       <Link
@@ -35,15 +42,26 @@ export default async function EditAdSpacePage({ params }: { params: Promise<{ id
       <h1 className="mb-6 mt-4 text-2xl font-bold text-foreground">
         Edit: {space.titleEn || space.titleRu || space.titleHy || space.title}
       </h1>
-      <AdSpaceForm
-        action={updateAdSpace.bind(null, spaceId)}
-        channels={adSpaceChannelOptions("en")}
-        initial={toAdSpaceFormInitial(space)}
-        initialOffers={toAdSpaceOfferRows(space.offers)}
-        mode="staff"
-        submitLabel="Save"
-        cancelHref="/admin/ad-spaces"
-      />
+      <EntityEditTabs
+        history={
+          <EntityHistoryPanel
+            entity="AdSpace"
+            entityId={spaceId}
+            groups={historyGroups}
+            canRestore={user.role === "SUPERADMIN"}
+          />
+        }
+      >
+        <AdSpaceForm
+          action={updateAdSpace.bind(null, spaceId)}
+          channels={adSpaceChannelOptions("en")}
+          initial={toAdSpaceFormInitial(space)}
+          initialOffers={toAdSpaceOfferRows(space.offers)}
+          mode="staff"
+          submitLabel="Save"
+          cancelHref="/admin/ad-spaces"
+        />
+      </EntityEditTabs>
     </div>
   );
 }

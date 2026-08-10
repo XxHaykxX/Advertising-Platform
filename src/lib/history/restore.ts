@@ -33,7 +33,14 @@ function scalarFields(snapshot: Snapshot): Snapshot {
 }
 
 /** Dates come back from JSON as strings; Prisma wants Date objects. */
-const DATE_FIELDS = new Set(["applicationDeadline", "releaseDate", "updatedAt"]);
+const DATE_FIELDS = new Set([
+  "applicationDeadline",
+  "releaseDate",
+  "updatedAt",
+  // AdSpace availability window
+  "availableFrom",
+  "availableTo",
+]);
 function coerce(data: Snapshot): Snapshot {
   const out: Snapshot = {};
   for (const [k, v] of Object.entries(data)) {
@@ -109,6 +116,21 @@ async function restoreProjectChildren(tx: Db, projectId: number, snapshot: Snaps
   }
 }
 
+/** Re-create the offers an ad-space snapshot carries.
+ *
+ *  Wipe-and-recreate, like the project's tiers above: a restore replaces the
+ *  whole aggregate, and the offers have no rows pointing at them today.
+ *  ponytail: fresh ids. When stage 4 attaches brand applications to an offer,
+ *  this has to keep the snapshot's ids (or diff row by row the way
+ *  saveAdSpaceOfferRows does on a normal save) or a rollback would detach them. */
+async function restoreAdSpaceOffers(tx: Db, adSpaceId: number, snapshot: Snapshot) {
+  await tx.adSpaceOffer.deleteMany({ where: { adSpaceId } });
+  const rows = (snapshot.offers as Snapshot[] | undefined) ?? [];
+  for (const row of rows) {
+    await tx.adSpaceOffer.create({ data: { ...scalarFields(row), adSpaceId } as never });
+  }
+}
+
 export type RestoreResult = { ok: true; entityId: number } | { ok: false; error: string };
 
 /** Roll an existing record back to the state stored in one of its versions. */
@@ -138,6 +160,9 @@ export async function restoreToVersion(
         if (entity === "Project") {
           await tx.project.update({ where: { id: entityId }, data: normalizeProjectRestore(data) as never });
           await restoreProjectChildren(tx, entityId, snapshot);
+        } else if (entity === "AdSpace") {
+          await tx.adSpace.update({ where: { id: entityId }, data: data as never });
+          await restoreAdSpaceOffers(tx, entityId, snapshot);
         } else if (entity === "Person") {
           await tx.person.update({ where: { id: entityId }, data: data as never });
         } else if (entity === "Portfolio") {
@@ -187,6 +212,9 @@ export async function restoreDeletedRecord(
           const created = await tx.project.create({ data: normalizeProjectRestore(data) as never });
           newId = created.id;
           await restoreProjectChildren(tx, newId, snapshot);
+        } else if (entity === "AdSpace") {
+          newId = (await tx.adSpace.create({ data: data as never })).id;
+          await restoreAdSpaceOffers(tx, newId, snapshot);
         } else if (entity === "Person") {
           newId = (await tx.person.create({ data: data as never })).id;
         } else if (entity === "Portfolio") {

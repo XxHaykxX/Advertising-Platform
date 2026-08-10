@@ -4,7 +4,12 @@ import { revalidatePath, updateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireModerator, requireUser } from "@/lib/auth/require";
 import { recordVersion } from "@/lib/history/record";
-import { notifyProjectApproved, notifyProjectRejected } from "@/lib/mail";
+import {
+  notifyAdSpaceApproved,
+  notifyAdSpaceRejected,
+  notifyProjectApproved,
+  notifyProjectRejected,
+} from "@/lib/mail";
 import { createNotification } from "@/lib/data/notifications";
 import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
@@ -198,10 +203,24 @@ export async function approveAdSpace(adSpaceId: number): Promise<{ ok: true } | 
   const space = await prisma.adSpace.update({
     where: { id: adSpaceId },
     data: { moderationStatus: "APPROVED", isActive: true, updatedById: user.id },
-    select: { id: true, title: true, ownerId: true },
+    // channel + code build the public card link in the email (adSpacePath).
+    select: {
+      id: true,
+      title: true,
+      channel: true,
+      code: true,
+      ownerId: true,
+      owner: { select: { email: true } },
+    },
   });
+  await recordVersion(prisma, "AdSpace", space.id, "UPDATE", { id: user.id, name: user.name });
   // Only on an actual status change — re-approving must not re-notify.
   if (before.moderationStatus !== "APPROVED") {
+    try {
+      await notifyAdSpaceApproved(space, space.owner.email);
+    } catch (err) {
+      console.error("[moderation] failed to send ad-space approval email:", err);
+    }
     await createNotification(space.ownerId, {
       type: "ADSPACE_APPROVED",
       data: { adSpaceId: space.id, adSpaceTitle: space.title },
@@ -229,9 +248,22 @@ export async function rejectAdSpace(adSpaceId: number, reason?: string) {
       isActive: false,
       updatedById: user.id,
     },
-    select: { id: true, title: true, ownerId: true },
+    select: {
+      id: true,
+      title: true,
+      channel: true,
+      code: true,
+      ownerId: true,
+      owner: { select: { email: true } },
+    },
   });
+  await recordVersion(prisma, "AdSpace", space.id, "UPDATE", { id: user.id, name: user.name });
   if (before?.moderationStatus !== "REJECTED") {
+    try {
+      await notifyAdSpaceRejected(space, space.owner.email, trimmedReason);
+    } catch (err) {
+      console.error("[moderation] failed to send ad-space rejection email:", err);
+    }
     await createNotification(space.ownerId, {
       type: "ADSPACE_REJECTED",
       data: { adSpaceId: space.id, adSpaceTitle: space.title, reason: trimmedReason },

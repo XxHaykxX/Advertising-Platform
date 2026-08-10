@@ -3,6 +3,7 @@
 import { revalidatePath, updateTag } from "next/cache";
 import { requireSuperadmin } from "@/lib/auth/require";
 import { restoreDeletedRecord, restoreToVersion } from "@/lib/history/restore";
+import { revalidateAdSpaces } from "@/lib/data/revalidate-ad-spaces";
 import { isHistoryEntity } from "./lib";
 
 // The rollback/restore core (snapshot -> live rows, nested cast/tiers/
@@ -16,9 +17,9 @@ export type HistoryActionResult = { ok: true; redirect?: string } | { ok: false;
 
 /** Cache/page invalidation after a restore. Mirrors revalidateProjectPaths in
  *  admin/projects/actions.ts (that helper is private to that file, hence this
- *  copy) — only Project reads go through unstable_cache (the "projects" tag
- *  in lib/data/projects.ts); Person, Portfolio and Partner are plain
- *  per-request reads, so revalidating their pages is enough. */
+ *  copy) — only Project and AdSpace reads go through unstable_cache (the
+ *  "projects" and "ad-spaces" tags in lib/data/); Person, Portfolio and Partner
+ *  are plain per-request reads, so revalidating their pages is enough. */
 function revalidateAfterRestore(entity: string, entityId: number) {
   switch (entity) {
     case "Project":
@@ -28,6 +29,13 @@ function revalidateAfterRestore(entity: string, entityId: number) {
       // The catalog renders its own cached list; without this a restored title
       // keeps showing the damaged one to visitors for up to five minutes.
       revalidatePath("/catalog");
+      break;
+    case "AdSpace":
+      // updateTag("ad-spaces") + the whole /ads route tree — the same helper
+      // every ad-space save/approval calls, for the same reason.
+      revalidateAdSpaces();
+      revalidatePath("/admin/ad-spaces");
+      revalidatePath("/account/ad-spaces");
       break;
     case "Person":
       revalidatePath("/admin/cast");

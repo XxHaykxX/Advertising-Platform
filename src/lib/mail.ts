@@ -1,5 +1,7 @@
 import "server-only";
 import nodemailer from "nodemailer";
+import { findAdChannelByCode } from "@/lib/ad-channels";
+import { adSpacePath } from "@/lib/ad-space-url";
 
 /* Hostinger SMTP email notifications (#22). Reads SMTP_HOST / SMTP_PORT /
    SMTP_SECURE / SMTP_USER / SMTP_PASS / MAIL_FROM from the environment; when
@@ -238,6 +240,127 @@ export async function notifyNewProjectForModeration(project: ProjectMailInput) {
     return { ok: false };
   }
   const { subject, html, text } = newProjectForModerationTemplate(project);
+  return sendMail({ to: adminEmail, subject, html, text });
+}
+
+/* ── Ad spaces (stage 3 of docs/plan-multichannel-ads.md) ─────────────
+   The same three moments as a project — submitted, approved, rejected —
+   because a space runs through the same moderation queue. Separate copy only
+   because the wording says "project" in all three languages above. */
+
+type AdSpaceMailInput = { title: string; channel: string; code: string };
+
+/** Absolute URL of a space's public card. The path comes from adSpacePath —
+   the code carries a leading "#", which cannot go into a path segment as-is
+   (see src/lib/ad-space-url.ts). A channel token that isn't in the directory
+   falls back to the /ads overview rather than to a broken link. */
+function adSpaceUrl(space: AdSpaceMailInput, base: string): string {
+  const channel = findAdChannelByCode(space.channel);
+  return channel ? `${base}${adSpacePath(channel.slug, space.code)}` : `${base}/ads`;
+}
+
+export function adSpaceApprovedTemplate(space: AdSpaceMailInput, base: string = siteUrl()) {
+  const url = adSpaceUrl(space, base);
+  const subject = `«${space.title}» одобрено и опубликовано / Հրապարակված է / Published`;
+  const html = layout(
+    `
+    <p><strong>Ձեր գովազդային տարածքը հաստատվել է</strong><br/>
+    «${space.title}» գովազդային տարածքը հաստատվել է մոդերացիայի կողմից և այժմ հասանելի է հանրային կատալոգում։</p>
+    <p><strong>Ваше рекламное место одобрено</strong><br/>
+    Рекламное место «${space.title}» прошло модерацию и теперь доступно в публичном каталоге.</p>
+    <p><strong>Your ad space has been approved</strong><br/>
+    «${space.title}» has passed moderation and is now live in the public catalog.</p>
+    `,
+    "Դիտել / Смотреть / View",
+    url,
+  );
+  const text = [
+    `«${space.title}» գովազդային տարածքը հաստատվել է և հասանելի է․ ${url}`,
+    `Рекламное место «${space.title}» одобрено и доступно: ${url}`,
+    `«${space.title}» has been approved and is live: ${url}`,
+  ].join("\n\n");
+  return { subject, html, text };
+}
+
+export function adSpaceRejectedTemplate(
+  space: AdSpaceMailInput,
+  base: string = siteUrl(),
+  reason = "",
+) {
+  const url = `${base}/account/ad-spaces`;
+  const subject = `«${space.title}» — рекламное место отклонено / Մերժված է / Rejected`;
+  const reasonHtml = reason
+    ? `<p style="margin:16px 0;padding:12px 16px;border-left:3px solid ${ACCENT};background:#1f1f1f;color:#e5e5e5;">
+    <strong>Պատճառը / Причина / Reason</strong><br/>${escapeHtml(reason)}</p>`
+    : "";
+  const html = layout(
+    `
+    <p><strong>Ձեր գովազդային տարածքը մերժվել է</strong><br/>
+    «${space.title}» տարածքը այս պահին չի հրապարակվել։ Խմբագրեք և կրկին ուղարկեք կամ կապ հաստատեք մեզ հետ։</p>
+    <p><strong>Рекламное место отклонено</strong><br/>
+    «${space.title}» пока не опубликовано. Отредактируйте и отправьте повторно или свяжитесь с нами.</p>
+    <p><strong>Ad space rejected</strong><br/>
+    «${space.title}» wasn't published at this time. Edit and resubmit, or reach out for details.</p>
+    ${reasonHtml}
+    `,
+    "Իմ գովազդային տարածքները / Мои рекламные места / My ad spaces",
+    url,
+  );
+  const reasonText = reason ? `\nՊատճառը / Причина / Reason: ${reason}` : "";
+  const text = [
+    `«${space.title}» գովազդային տարածքը մերժվել է։ Կաբինետ․ ${url}${reasonText}`,
+    `Рекламное место «${space.title}» отклонено. Кабинет: ${url}${reasonText}`,
+    `«${space.title}» was rejected. Account: ${url}${reasonText}`,
+  ].join("\n\n");
+  return { subject, html, text };
+}
+
+export function newAdSpaceForModerationTemplate(space: AdSpaceMailInput, base: string = siteUrl()) {
+  const url = `${base}/admin/moderation`;
+  const subject = `Նոր գովազդային տարածք մոդերացիայի համար / Новое рекламное место на модерацию: «${space.title}»`;
+  const html = layout(
+    `
+    <p><strong>Նոր գովազդային տարածք մոդերացիայի համար</strong><br/>
+    «${space.title}» ուղարկվել է և սպասում է հաստատման։</p>
+    <p><strong>Новое рекламное место на модерацию</strong><br/>
+    «${space.title}» отправлено владельцем и ожидает проверки.</p>
+    <p><strong>New ad space awaiting moderation</strong><br/>
+    «${space.title}» has been submitted and is pending review.</p>
+    `,
+    "Բացել մոդերացիան / Открыть модерацию / Open moderation",
+    url,
+  );
+  const text = [
+    `«${space.title}» նոր գովազդային տարածք է և սպասում է հաստատման․ ${url}`,
+    `«${space.title}» — новое рекламное место, ожидает модерации: ${url}`,
+    `«${space.title}» is a new ad space awaiting moderation: ${url}`,
+  ].join("\n\n");
+  return { subject, html, text };
+}
+
+export async function notifyAdSpaceApproved(space: AdSpaceMailInput, ownerEmail: string) {
+  const { subject, html, text } = adSpaceApprovedTemplate(space);
+  return sendMail({ to: ownerEmail, subject, html, text });
+}
+
+export async function notifyAdSpaceRejected(
+  space: AdSpaceMailInput,
+  ownerEmail: string,
+  reason = "",
+) {
+  const { subject, html, text } = adSpaceRejectedTemplate(space, siteUrl(), reason);
+  return sendMail({ to: ownerEmail, subject, html, text });
+}
+
+/** Called when an owner submits a space into moderation — notifies the admin,
+   same recipient resolution as the project version. */
+export async function notifyNewAdSpaceForModeration(space: AdSpaceMailInput) {
+  const adminEmail = await resolveAdminEmail();
+  if (!adminEmail) {
+    console.warn("[mail] no admin email available — skipping new-ad-space-for-moderation notice");
+    return { ok: false };
+  }
+  const { subject, html, text } = newAdSpaceForModerationTemplate(space);
   return sendMail({ to: adminEmail, subject, html, text });
 }
 

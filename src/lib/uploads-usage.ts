@@ -33,6 +33,7 @@ export type UploadUsage = {
 
 const HISTORY_LABEL: Record<HistoryEntity, string> = {
   Project: "Project",
+  AdSpace: "Ad space",
   Person: "Cast & Crew directory",
   Portfolio: "Portfolio",
   Partner: "Partner",
@@ -42,6 +43,8 @@ function historyHref(entity: HistoryEntity, id: number): string {
   switch (entity) {
     case "Project":
       return `/admin/projects/${id}/edit`;
+    case "AdSpace":
+      return `/admin/ad-spaces/${id}/edit`;
     case "Portfolio":
       return `/admin/portfolio/${id}/edit`;
     case "Partner":
@@ -55,6 +58,7 @@ function historyHref(entity: HistoryEntity, id: number): string {
 /** The live title/name for an entity+id, or null if the record is gone. */
 async function liveTitle(entity: HistoryEntity, id: number): Promise<string | null> {
   if (entity === "Project") return (await prisma.project.findUnique({ where: { id }, select: { title: true } }))?.title ?? null;
+  if (entity === "AdSpace") return (await prisma.adSpace.findUnique({ where: { id }, select: { title: true } }))?.title ?? null;
   if (entity === "Person") return (await prisma.person.findUnique({ where: { id }, select: { name: true } }))?.name ?? null;
   if (entity === "Portfolio") return (await prisma.portfolio.findUnique({ where: { id }, select: { title: true } }))?.title ?? null;
   return (await prisma.partner.findUnique({ where: { id }, select: { name: true } }))?.name ?? null;
@@ -146,6 +150,19 @@ export async function findUploadUsage(publicPath: string): Promise<UploadUsage> 
   for (const p of portfolios) {
     current.push({ label: `Portfolio: ${p.title}`, href: `/admin/portfolio/${p.id}/edit` });
     liveKeys.add(`Portfolio:${p.id}`);
+  }
+
+  // Ad spaces carry a main photo plus a JSON gallery, same shape as a project's
+  // — without this a file two spaces share would be deleted with the first of
+  // them, and the media library would offer to remove a live listing's photo.
+  const adSpaces = await prisma.adSpace.findMany({
+    where: { OR: [{ image: publicPath }, { gallery: { contains: publicPath } }] },
+    select: { id: true, title: true },
+    take: 25,
+  });
+  for (const s of adSpaces) {
+    current.push({ label: `Ad space: ${s.title}`, href: `/admin/ad-spaces/${s.id}/edit` });
+    liveKeys.add(`AdSpace:${s.id}`);
   }
 
   const partners = await prisma.partner.findMany({ where: { logo: publicPath }, select: { id: true, name: true }, take: 25 });

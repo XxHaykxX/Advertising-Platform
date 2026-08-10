@@ -5,9 +5,11 @@ import { notFound } from "next/navigation";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireMember } from "@/lib/auth/require";
+import { recordVersion } from "@/lib/history/record";
 import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
 import { notifyRoles } from "@/lib/data/notifications";
+import { notifyNewAdSpaceForModeration } from "@/lib/mail";
 import { revalidateAdSpaces } from "@/lib/data/revalidate-ad-spaces";
 import {
   adSpaceLegacyTitle,
@@ -54,10 +56,17 @@ function submitGate(
   return `${t("publish.blockedSubmit")} ${missing.map((k) => t(k)).join(", ")}.`;
 }
 
-async function notifyModerators(adSpaceId: number, title: string, creatorName: string) {
+/** Both halves of "a moderator has something to look at": the in-app/push
+ *  notification and the email, exactly as a submitted project sends both. The
+ *  email is fire-and-forget — a mail outage must not break a submission. */
+async function notifyModerators(
+  space: { id: number; title: string; channel: string; code: string },
+  creatorName: string,
+) {
+  notifyNewAdSpaceForModeration(space).catch(() => {});
   await notifyRoles(["SUPERADMIN", "MODERATOR"], {
     type: "ADSPACE_SUBMITTED",
-    data: { adSpaceId, adSpaceTitle: title, creatorName },
+    data: { adSpaceId: space.id, adSpaceTitle: space.title, creatorName },
     link: "/admin/moderation",
   });
 }
@@ -96,9 +105,10 @@ export async function createCreatorAdSpace(
           },
         });
         await saveAdSpaceOfferRows(tx, space.id, offers);
+        await recordVersion(tx, "AdSpace", space.id, "CREATE", { id: user.id, name: user.name });
         return space;
       });
-      await notifyModerators(created.id, created.title, user.name);
+      await notifyModerators(created, user.name);
       revalidateAdSpaces();
       revalidatePath("/account/ad-spaces");
       revalidatePath("/admin/moderation");
@@ -161,9 +171,13 @@ export async function updateCreatorAdSpace(
       },
     });
     await saveAdSpaceOfferRows(tx, id, offers);
+    await recordVersion(tx, "AdSpace", id, "UPDATE", { id: user.id, name: user.name });
   });
 
-  await notifyModerators(id, adSpaceLegacyTitle(data), user.name);
+  await notifyModerators(
+    { id, title: adSpaceLegacyTitle(data), channel: data.channel, code: existing.code },
+    user.name,
+  );
   revalidateAdSpaces();
   revalidatePath("/account/ad-spaces");
   revalidatePath("/admin/moderation");

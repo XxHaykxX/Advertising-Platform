@@ -4,7 +4,10 @@ import { revalidatePath } from "next/cache";
 import { notFound } from "next/navigation";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { requireContentEditor } from "@/lib/auth/require";
+import { requireContentEditor, requireSuperadmin } from "@/lib/auth/require";
+import { recordVersion } from "@/lib/history/record";
+import { deleteUpload } from "@/lib/actions/uploads";
+import { findUploadUsage } from "@/lib/uploads-usage";
 import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
 import { revalidateAdSpaces } from "@/lib/data/revalidate-ad-spaces";
@@ -73,6 +76,7 @@ export async function createAdSpace(
           },
         });
         await saveAdSpaceOfferRows(tx, created.id, offers);
+        await recordVersion(tx, "AdSpace", created.id, "CREATE", { id: user.id, name: user.name });
       });
     } catch (e) {
       // Another save took the code between the read and the insert — generate
@@ -131,6 +135,7 @@ export async function updateAdSpace(
       },
     });
     await saveAdSpaceOfferRows(tx, id, offers);
+    await recordVersion(tx, "AdSpace", id, "UPDATE", { id: user.id, name: user.name });
   });
 
   revalidateAdSpacePaths();
@@ -139,10 +144,71 @@ export async function updateAdSpace(
 
 export async function deleteAdSpace(id: number) {
   const user = await requireContentEditor();
-  const existing = await prisma.adSpace.findUnique({ where: { id }, select: { ownerId: true } });
+  const existing = await prisma.adSpace.findUnique({
+    where: { id },
+    // Pull the images too, so the files go with the row instead of being
+    // orphaned on disk — same contract as deleteProject.
+    select: { ownerId: true, image: true, gallery: true },
+  });
   if (!existing) return;
   if (user.role !== "SUPERADMIN" && existing.ownerId !== user.id) return;
+
+  const imagePaths = collectAdSpaceImagePaths(existing);
+  // BEFORE the delete — a DELETE version is a snapshot of what is about to
+  // stop existing, and it is what /admin/history/deleted restores from.
+  await recordVersion(prisma, "AdSpace", id, "DELETE", { id: user.id, name: user.name });
   // Offers cascade with the row (schema onDelete: Cascade).
   await prisma.adSpace.delete({ where: { id } }).catch(() => null);
+
+  for (const p of imagePaths) {
+    try {
+      // A DELETE version (if history recorded one) always mentions these paths,
+      // so a plain deleteUpload(p) would see *history* usage for a space that
+      // no longer exists and refuse to touch the file. Check `current` — after
+      // the delete only some OTHER live record can still show up there, an ad
+      // space or anything else — and force past the irrelevant history hit.
+      const usage = await findUploadUsage(p);
+      if (usage.current.length === 0) {
+        await deleteUpload(p, { force: true });
+      }
+    } catch {
+      // best-effort file cleanup — never let a stray unlink error block delete
+    }
+  }
+
+  revalidateAdSpacePaths();
+}
+
+/** Every /uploads/… image a space owns: the main photo and the gallery.
+ *  External URLs (not /uploads/…) are left untouched. */
+function collectAdSpaceImagePaths(s: { image: string | null; gallery: string | null }): string[] {
+  const out: string[] = [];
+  if (s.image) out.push(s.image);
+  if (s.gallery) {
+    try {
+      const arr = JSON.parse(s.gallery);
+      if (Array.isArray(arr)) out.push(...arr.filter((x): x is string => typeof x === "string"));
+    } catch {
+      // malformed gallery JSON — nothing to clean up
+    }
+  }
+  return [...new Set(out)].filter((x) => x.startsWith("/uploads/"));
+}
+
+/** Persist the whole list order in one go — the same shape (and the same
+ *  by-id update, never delete+create) as reorderPortfolio.
+ *
+ *  SUPERADMIN only, unlike the rest of this file: a Publisher's list is
+ *  filtered to its own rows, so writing 0…n-1 over that subset would renumber
+ *  it on top of everybody else's positions. The list disables its drag handles
+ *  for that case — this is the same rule restated where it is enforced. */
+export async function reorderAdSpaces(orderedIds: number[]) {
+  await requireSuperadmin();
+  if (orderedIds.length === 0) return;
+  await prisma.$transaction(
+    orderedIds.map((id, index) =>
+      prisma.adSpace.update({ where: { id }, data: { sortOrder: index } }),
+    ),
+  );
   revalidateAdSpacePaths();
 }

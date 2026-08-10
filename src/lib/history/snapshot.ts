@@ -6,11 +6,12 @@ import type { Prisma } from "@prisma/client";
 // A Project snapshot carries its whole aggregate — cast, tiers, placements,
 // milestones — because that is the unit a person edits and therefore the unit
 // they expect "restore" to put back. Restoring a project without its cast would
-// be a half-restore nobody asked for.
+// be a half-restore nobody asked for. An AdSpace is the same case: the form
+// edits the space and its offers together, so the snapshot carries the offers.
 //
 // The other three entities are single rows and snapshot as-is.
 
-export const HISTORY_ENTITIES = ["Project", "Person", "Portfolio", "Partner"] as const;
+export const HISTORY_ENTITIES = ["Project", "AdSpace", "Person", "Portfolio", "Partner"] as const;
 export type HistoryEntity = (typeof HISTORY_ENTITIES)[number];
 
 export const HISTORY_ACTIONS = [
@@ -52,6 +53,14 @@ export async function buildSnapshot(
       },
     });
     return project ? strip(project) : null;
+  }
+
+  if (entity === "AdSpace") {
+    const space = await db.adSpace.findUnique({
+      where: { id },
+      include: { offers: { orderBy: { id: "asc" } } },
+    });
+    return space ? strip(space) : null;
   }
 
   if (entity === "Person") {

@@ -20,6 +20,16 @@ async function cleanup() {
     await prisma.contentVersion.deleteMany({ where: { entity: "Project", entityId: { in: ids } } });
     await prisma.project.deleteMany({ where: { id: { in: ids } } });
   }
+  // Before the users below: ownerId is a hard FK and would block their delete.
+  const spaces = await prisma.adSpace.findMany({
+    where: { code: { startsWith: PREFIX } },
+    select: { id: true },
+  });
+  const spaceIds = spaces.map((s) => s.id);
+  if (spaceIds.length) {
+    await prisma.contentVersion.deleteMany({ where: { entity: "AdSpace", entityId: { in: spaceIds } } });
+    await prisma.adSpace.deleteMany({ where: { id: { in: spaceIds } } }); // offers cascade
+  }
   await prisma.person.deleteMany({ where: { name: { startsWith: PREFIX } } });
   await prisma.user.deleteMany({ where: { email: { startsWith: PREFIX } } });
 }
@@ -46,6 +56,24 @@ async function makeProject(ownerId: number, title = "QA Title") {
       synopsisHy: "before",
       poster: "/uploads/projects/qa-poster.webp",
       ownerId,
+    },
+  });
+}
+
+async function makeAdSpace(ownerId: number, title = "QA Space") {
+  return prisma.adSpace.create({
+    data: {
+      code: `${PREFIX}${Math.random().toString(36).slice(2, 8)}`,
+      ownerId,
+      channel: "BILLBOARD",
+      title,
+      titleHy: title,
+      description: '["before"]',
+      city: "Երևան",
+      sizeFormat: "3×6 м",
+      availableFrom: new Date("2026-09-01T00:00:00.000Z"),
+      image: "/uploads/ad-spaces/qa-space.webp",
+      offers: { create: [{ name: "QA Offer", nameHy: "QA Offer", priceAmd: 100000, sortOrder: 0 }] },
     },
   });
 }
@@ -242,5 +270,68 @@ describe("restoreDeletedRecord", () => {
 
     const res = await restoreDeletedRecord("Project", project.id, AUTHOR);
     expect(res.ok).toBe(false);
+  });
+});
+
+// ── Ad spaces (stage 3 of docs/plan-multichannel-ads.md) ───────────────────
+// Same aggregate contract as a project: the offers are part of what the owner
+// edits, so they must be part of what a restore puts back.
+
+describe("AdSpace history", () => {
+  it("snapshots the space together with its offers", async () => {
+    const space = await makeAdSpace(ownerId);
+
+    const snap = await buildSnapshot(prisma, "AdSpace", space.id);
+    expect(snap).not.toBeNull();
+    expect((snap!.offers as unknown[]).length).toBe(1);
+    expect(snap).not.toHaveProperty("viewCount");
+    expect(collectMediaPaths(snap!)).toContain("/uploads/ad-spaces/qa-space.webp");
+  });
+
+  it("rolls the space back to an earlier version, offers included", async () => {
+    const space = await makeAdSpace(ownerId);
+    await recordVersion(prisma, "AdSpace", space.id, "CREATE", AUTHOR);
+
+    await prisma.adSpaceOffer.deleteMany({ where: { adSpaceId: space.id } });
+    await prisma.adSpace.update({ where: { id: space.id }, data: { titleHy: "damaged" } });
+    await recordVersion(prisma, "AdSpace", space.id, "UPDATE", AUTHOR);
+
+    const res = await restoreToVersion("AdSpace", space.id, 1, AUTHOR);
+    expect(res.ok).toBe(true);
+
+    const row = await prisma.adSpace.findUnique({
+      where: { id: space.id },
+      include: { offers: true },
+    });
+    expect(row?.titleHy).toBe("QA Space");
+    expect(row?.offers.length).toBe(1);
+    expect(row?.offers[0].name).toBe("QA Offer");
+    // Dates leave the snapshot as strings — the restore has to hand Prisma a Date.
+    expect(row?.availableFrom?.toISOString()).toBe("2026-09-01T00:00:00.000Z");
+
+    const latest = await prisma.contentVersion.findFirst({
+      where: { entity: "AdSpace", entityId: space.id },
+      orderBy: { version: "desc" },
+    });
+    expect(latest?.action).toBe("RESTORE");
+  });
+
+  it("brings a deleted space back with its offers and its original id", async () => {
+    const space = await makeAdSpace(ownerId, "QA Deleted Space");
+    await recordVersion(prisma, "AdSpace", space.id, "DELETE", AUTHOR);
+    await prisma.adSpace.delete({ where: { id: space.id } });
+
+    const res = await restoreDeletedRecord("AdSpace", space.id, AUTHOR);
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(res.entityId).toBe(space.id);
+
+    const row = await prisma.adSpace.findUnique({
+      where: { id: space.id },
+      include: { offers: true },
+    });
+    expect(row?.titleHy).toBe("QA Deleted Space");
+    expect(row?.code).toBe(space.code);
+    expect(row?.offers.length).toBe(1);
   });
 });

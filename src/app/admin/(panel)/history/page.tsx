@@ -98,7 +98,8 @@ export default async function HistoryPage({
         <div>
           <h1 className="text-2xl font-bold text-foreground">History</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Every save across projects, cast &amp; crew, portfolio and partners — who changed what, and when.
+            Every save across projects, ad spaces, cast &amp; crew, portfolio and partners — who changed what, and
+            when.
           </p>
         </div>
         <Link
