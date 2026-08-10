@@ -3,12 +3,19 @@
 import { useState } from "react";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { Eye, Plus } from "lucide-react";
-import { DEFAULT_PLACEMENT_SET, firstFilledLocale, groupDigits, type OfferLang } from "./form-shared";
+import {
+  DEFAULT_PLACEMENT_SET,
+  PLACEMENT_TYPE_VALUES,
+  firstFilledLocale,
+  groupDigits,
+  type OfferLang,
+} from "./form-shared";
 import {
   OfferBullets,
   OfferCard,
   OfferCardBody,
   OfferDndContext,
+  OfferField,
   OfferLangTabs,
   OfferNumbersRow,
   OfferPreviewDialog,
@@ -16,6 +23,7 @@ import {
   OfferSlotsField,
   OfferStill,
   OfferTitleInput,
+  fieldCls,
   offerLocaleFilled,
   useCollapsed,
   useOfferLangTabs,
@@ -56,6 +64,11 @@ export type PlacementRow = {
   descriptionRu: string;
   descriptionEn: string;
   image: string; // "/uploads/…" or "" — unset
+  /** One of PLACEMENT_TYPE_VALUES, or "" for "not set" (2026-08-10). The
+   *  column is nullable — an unclassified placement is a normal row — and ""
+   *  is what the select's first option submits; the server maps it back to
+   *  null (form-shared normalizePlacementType). */
+  placementType: string;
   priceAmd: number | null; // null -> "on request"
   availableSlots: number | null;
   totalSlots: number | null;
@@ -71,6 +84,7 @@ export const EMPTY_PLACEMENT: PlacementRow = {
   descriptionRu: "",
   descriptionEn: "",
   image: "",
+  placementType: "",
   priceAmd: null,
   availableSlots: null,
   totalSlots: null,
@@ -92,6 +106,45 @@ function titlePatch(l: OfferLang, v: string): Partial<PlacementRow> {
 }
 function descriptionPatch(l: OfferLang, v: string): Partial<PlacementRow> {
   return l === "hy" ? { descriptionHy: v } : l === "ru" ? { descriptionRu: v } : { descriptionEn: v };
+}
+
+/** Which of the four integration kinds this offer is (owner brief 2026-08-10).
+ *  Optional, and stays optional: the four names are industry terms, so the
+ *  picked one's meaning is spelled out right under the select rather than
+ *  left for the creator to guess — "Naming rights" and "Verbal mention" are
+ *  not self-explanatory to someone filling this form for the first time. */
+function PlacementTypeField({
+  value,
+  onChange,
+  t,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  t: ReturnType<typeof useUI>;
+}) {
+  const label = t("projectForm.placements.type");
+  return (
+    <OfferField label={label}>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        aria-label={label}
+        className={fieldCls}
+      >
+        <option value="">{t("projectForm.placements.typeNotSet")}</option>
+        {PLACEMENT_TYPE_VALUES.map((v) => (
+          <option key={v} value={v}>
+            {t(`placementType.${v}`)}
+          </option>
+        ))}
+      </select>
+      {value ? (
+        <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
+          {t(`placementTypeHint.${value}`)}
+        </p>
+      ) : null}
+    </OfferField>
+  );
 }
 
 export function PlacementsSection({
@@ -283,6 +336,11 @@ export function PlacementsSection({
                         />
                       }
                     >
+                      <PlacementTypeField
+                        value={r.placementType}
+                        onChange={(placementType) => rows.patchAt(i, { placementType })}
+                        t={t}
+                      />
                       <OfferNumbersRow>
                         <OfferPriceField
                           value={r.priceAmd}
@@ -322,6 +380,10 @@ export function PlacementsSection({
         items={value.map((r) => ({
           image: r.image,
           title: displayTitle(r),
+          // The public card shows the kind as a chip next to the name, so the
+          // preview does too — a preview that omits a field the site renders
+          // is worse than no preview.
+          badge: r.placementType ? t(`placementType.${r.placementType}`) : undefined,
           price: priceLabel(r),
           slots: slotsLabel(r) ? `${slotsLabel(r)} ${t("report.slotsAvailable")}` : "",
           bullets: displayDescription(r).split("\n").map((s) => s.trim()).filter(Boolean),

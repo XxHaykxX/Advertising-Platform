@@ -10,6 +10,7 @@ import { getRates } from "@/lib/currency/rates";
 import { isArchived, formatDuration } from "@/lib/data/format";
 import type { CurrencyCode } from "@/lib/currency";
 import {
+  PLACEMENT_TYPE_VALUES,
   deriveFormatCategory,
   parseRolesInput,
   parseReferencesInput,
@@ -121,6 +122,16 @@ function formatPriceFrom(
   return formatMoney(Math.min(...priced), currency, rates, locale);
 }
 
+/** The distinct integration kinds a project's placements carry (2026-08-10),
+   kept in PLACEMENT_TYPE_VALUES order rather than the rows' own order: the
+   card's chip row and the catalog facet both want one stable, editorial
+   sequence, so two projects offering the same two kinds never list them
+   differently. Unclassified rows (placementType null) drop out. */
+function distinctPlacementTypes(placements: { placementType: string | null }[]): string[] {
+  const present = new Set(placements.map((p) => p.placementType));
+  return PLACEMENT_TYPE_VALUES.filter((v) => present.has(v));
+}
+
 // Cache DB-backed reads. On the shared host every uncached request opens a
 // Prisma connection + spins engine threads; caching keeps the DB pool (capped
 // at 2) idle between revalidations and makes pages fast, which is what keeps us
@@ -150,7 +161,10 @@ const getProjectsCached = unstable_cache(
       // thing on sale. Both tables are already joined here, so this is one
       // more column, not one more query.
       tiers: { select: { availableSlots: true, totalSlots: true, priceAmd: true } },
-      placements: { select: { priceAmd: true } },
+      // placementType rides along (2026-08-10) for the card's subtype chips and
+      // the catalog's subtype facet — same "the join is already here" reasoning
+      // as priceAmd above.
+      placements: { select: { priceAmd: true, placementType: true } },
     },
   });
   const rates = await getRates();
@@ -175,6 +189,7 @@ const getProjectsCached = unstable_cache(
     slotsAvailable: p.tiers.reduce((sum, tier) => sum + (tier.availableSlots ?? 0), 0),
     slotsTotal: p.tiers.reduce((sum, tier) => sum + (tier.totalSlots ?? 0), 0),
     placementsCount: p.placements.length,
+    placementTypes: distinctPlacementTypes(p.placements),
     tiersCount: p.tiers.length,
     priceFromDisplay: formatPriceFrom(
       [...p.placements, ...p.tiers].map((o) => o.priceAmd),
@@ -311,6 +326,9 @@ const getProjectCached = unstable_cache(
         pl.description,
       ),
       image: pl.image ?? null,
+      // "" when the creator never classified this integration — the card then
+      // shows no kind chip rather than an empty one.
+      placementType: pl.placementType ?? "",
       priceAmd: pl.priceAmd,
       priceDisplay: pl.priceAmd != null ? formatMoney(pl.priceAmd, currency, rates, locale) : null,
       priceNative: pl.priceAmd != null ? formatMoney(pl.priceAmd, "AMD", rates, locale) : null,
@@ -318,6 +336,7 @@ const getProjectCached = unstable_cache(
       totalSlots: pl.totalSlots,
     })),
     placementsCount: p.placements.length,
+    placementTypes: distinctPlacementTypes(p.placements),
     tiersCount: p.tiers.length,
     priceFromDisplay: formatPriceFrom(
       [...p.placements, ...p.tiers].map((o) => o.priceAmd),

@@ -325,6 +325,23 @@ export function ProjectCard({
               onRequestLabel={t("card.priceOnRequest")}
             />
           ) : null}
+          {/* Which KINDS of integration are on offer (2026-08-10) — a chip row
+              under the placements line, not part of it: "N options · from X"
+              is the size and the price of the offer, and folding "Verbal
+              mention" into that sentence would read as another number. Absent
+              for a project whose placements nobody has classified yet. */}
+          {project.placementTypes.length > 0 ? (
+            <div className="mt-1.5 flex flex-wrap items-center gap-1">
+              {project.placementTypes.map((v) => (
+                <span
+                  key={v}
+                  className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
+                >
+                  {localize("placementType", v)}
+                </span>
+              ))}
+            </div>
+          ) : null}
           {project.tiersCount > 0 ? (
             <>
               <OfferLine

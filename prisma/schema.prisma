@@ -30,6 +30,21 @@ enum ProjectKind {
   SERIAL
 }
 
+/// What KIND of in-story integration a placement is (owner brief 2026-08-10,
+/// stage 1 of docs/plan-multichannel-ads.md). Deliberately a property of the
+/// placement, not a separate ad channel: all four are sold on the same offer
+/// card, by the same creator, inside the same project.
+///   PRODUCT — the product/brand is visibly on screen (the hero uses/wears it)
+///   LOGO    — the logo appears in the credits / on the end card
+///   VERBAL  — a character says the brand name in dialogue
+///   NAMING  — the whole series/season is named after the brand
+enum PlacementType {
+  PRODUCT
+  LOGO
+  VERBAL
+  NAMING
+}
+
 /// Self-serve member (BRAND / CREATOR) approval lifecycle. Staff users
 /// (SUPERADMIN / PUBLISHER) are seeded as APPROVED and ignore this gate.
 enum AccountStatus {
@@ -393,6 +408,10 @@ model Placement {
   descriptionRu  String? @db.Text
   descriptionEn  String? @db.Text
   image          String? // still showing the scene/slot ("/uploads/…")
+  // Which of the four integration kinds this offer is (2026-08-10). Nullable:
+  // every row written before today has no type, and an unclassified placement
+  // is a normal state, not a broken one — the storefront just shows no chip.
+  placementType  PlacementType?
   priceAmd       Int? // null -> "on request"; the creator prices it only if they want to
   totalSlots     Int? // how many brands this opportunity can take
   availableSlots Int? // still open; null -> unspecified, same contract as SponsorshipTier

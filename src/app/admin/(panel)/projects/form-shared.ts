@@ -117,6 +117,25 @@ export function deriveFormatCategory(
   return "";
 }
 
+// Which of the four in-story integration kinds a placement is (owner brief
+// 2026-08-10). Mirrors the Prisma enum PlacementType one-for-one — the DB
+// column IS an enum here (unlike releasePrecision above), so an unknown token
+// can never reach it; normalizePlacementType is the gate that turns anything
+// else, including the "not set" empty string, back into null.
+// Labelled via t(`placementType.${v}`) / localizeValue(locale, "placementType", v),
+// explained in the form via t(`placementTypeHint.${v}`).
+export const PLACEMENT_TYPE_VALUES = ["PRODUCT", "LOGO", "VERBAL", "NAMING"] as const;
+export type PlacementTypeValue = (typeof PLACEMENT_TYPE_VALUES)[number];
+
+/** "" (the form's "not set" option) and any junk from a crafted payload both
+   become null — the column is nullable on purpose, an unclassified placement
+   is a normal row. */
+export function normalizePlacementType(v: string | null | undefined): PlacementTypeValue | null {
+  return (PLACEMENT_TYPE_VALUES as readonly string[]).includes(v ?? "")
+    ? (v as PlacementTypeValue)
+    : null;
+}
+
 export const AGE_RATING_VALUES = ["", "0+", "6+", "12+", "16+", "18+"] as const;
 
 // Cast & crew ROLES (Ф3) — a fixed, searchable multi-select replacing the old

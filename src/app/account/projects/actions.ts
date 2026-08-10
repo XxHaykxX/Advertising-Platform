@@ -20,6 +20,7 @@ import {
   deriveFormatCategory,
   firstFilledLocale,
   kindForRole,
+  normalizePlacementType,
   publishBlockers,
   validateReleaseDateValue,
 } from "@/app/admin/(panel)/projects/form-shared";
@@ -256,6 +257,7 @@ type PlacementInput = {
   descriptionRu?: string;
   descriptionEn?: string;
   image?: string;
+  placementType?: string; // one of PLACEMENT_TYPE_VALUES, or "" — see normalizePlacementType
   priceAmd?: number | null;
   availableSlots?: number | null;
   totalSlots?: number | null;
@@ -533,6 +535,9 @@ function parsePlacementRows(fd: FormData) {
         descriptionRu: descriptionRuRaw.trim() ? benefitsToJson(descriptionRuRaw) : null,
         descriptionEn: descriptionEnRaw.trim() ? benefitsToJson(descriptionEnRaw) : null,
         image: safeUploadPath(r.image) || null,
+        // Same gate as the admin action: "" and junk both become null, so a
+        // crafted payload can't reach the DB enum column.
+        placementType: normalizePlacementType(r.placementType),
         priceAmd: r.priceAmd == null ? null : Math.max(0, Number(r.priceAmd) || 0),
         availableSlots: r.availableSlots == null ? null : Math.max(0, Number(r.availableSlots) || 0),
         totalSlots: r.totalSlots == null ? null : Math.max(0, Number(r.totalSlots) || 0),

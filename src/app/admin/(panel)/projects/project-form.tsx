@@ -199,6 +199,7 @@ function defaultPlacementRow(set: { hy: string; ru: string; en: string }): Place
     descriptionRu: "",
     descriptionEn: "",
     image: "",
+    placementType: "",
     priceAmd: null,
     availableSlots: null,
     totalSlots: null,

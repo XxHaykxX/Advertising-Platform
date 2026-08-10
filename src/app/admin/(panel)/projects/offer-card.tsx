@@ -358,7 +358,10 @@ export function OfferStill({
   );
 }
 
-const fieldCls =
+// Exported since 2026-08-10 so a section-specific field (the placement-type
+// select in placements-editor.tsx) looks like the fields around it without a
+// second copy of this string.
+export const fieldCls =
   "w-full rounded-lg border border-border bg-background px-2 py-1.5 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-primary focus:bg-card disabled:cursor-not-allowed disabled:opacity-60";
 
 /** A labelled field — the table header used to carry these labels, and it

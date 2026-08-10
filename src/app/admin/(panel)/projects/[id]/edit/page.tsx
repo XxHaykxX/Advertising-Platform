@@ -218,6 +218,7 @@ export default async function EditProjectPage({
             descriptionRu: parseBenefitsInput(pl.descriptionRu),
             descriptionEn: parseBenefitsInput(pl.descriptionEn),
             image: pl.image ?? "",
+            placementType: pl.placementType ?? "", // null (never classified) -> the select's "not set" option
             priceAmd: pl.priceAmd,
             availableSlots: pl.availableSlots,
             totalSlots: pl.totalSlots,

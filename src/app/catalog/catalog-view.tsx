@@ -22,7 +22,10 @@ import { ProjectCard } from "@/components/project-card";
 import { FavoriteHeart } from "@/components/favorite-heart";
 import { Header, type SiteHeaderUser } from "@/components/header";
 import { compareDeadline, daysUntil, formatFullDate, parseStringArray, splitCountries } from "@/lib/data/format";
-import { FORMAT_CATEGORY_VALUES } from "@/app/admin/(panel)/projects/form-shared";
+import {
+  FORMAT_CATEGORY_VALUES,
+  PLACEMENT_TYPE_VALUES,
+} from "@/app/admin/(panel)/projects/form-shared";
 import { cn } from "@/lib/utils";
 import { DEFAULT_LOCALE, intlLocale, useUI, useLocalizer, type Locale } from "@/lib/i18n-client";
 import { DEFAULT_CURRENCY, type CurrencyCode } from "@/lib/currency";
@@ -275,11 +278,20 @@ export function CatalogView({
     () => Array.from(new Set(projects.flatMap((p) => splitCountries(p.countries)))).sort(),
     [projects],
   );
+  // Integration kinds actually on offer across the catalog (2026-08-10), in
+  // PLACEMENT_TYPE_VALUES order for the same editorial reason as formatOptions
+  // above. Nothing classified yet -> no facet at all, rather than four
+  // checkboxes that each filter to zero.
+  const placementTypeOptions = useMemo(() => {
+    const present = new Set(projects.flatMap((p) => p.placementTypes));
+    return PLACEMENT_TYPE_VALUES.filter((v) => present.has(v));
+  }, [projects]);
 
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [selectedFormats, setSelectedFormats] = useState<string[]>([]);
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [selectedCountries, setSelectedCountries] = useState<string[]>([]);
+  const [selectedPlacementTypes, setSelectedPlacementTypes] = useState<string[]>([]);
   const [search, setSearch] = useState("");
   const [view, setView] = useState<ViewMode>("grid");
   const [sortBy, setSortBy] = useState<SortOption>("default");
@@ -308,6 +320,7 @@ export function CatalogView({
       if (Array.isArray(f.formats)) setSelectedFormats(f.formats);
       if (Array.isArray(f.platforms)) setSelectedPlatforms(f.platforms);
       if (Array.isArray(f.countries)) setSelectedCountries(f.countries);
+      if (Array.isArray(f.placementTypes)) setSelectedPlacementTypes(f.placementTypes);
       if (typeof f.search === "string") setSearch(f.search);
       if (f.view === "grid" || f.view === "list") setView(f.view);
       if (["default", "newest", "deadline", "title"].includes(f.sortBy)) setSortBy(f.sortBy);
@@ -328,6 +341,7 @@ export function CatalogView({
           formats: selectedFormats,
           platforms: selectedPlatforms,
           countries: selectedCountries,
+          placementTypes: selectedPlacementTypes,
           search,
           view,
           sortBy,
@@ -341,6 +355,7 @@ export function CatalogView({
     selectedFormats,
     selectedPlatforms,
     selectedCountries,
+    selectedPlacementTypes,
     search,
     view,
     sortBy,
@@ -358,6 +373,7 @@ export function CatalogView({
     selectedFormats,
     selectedPlatforms,
     selectedCountries,
+    selectedPlacementTypes,
     search,
     sortBy,
   ]);
@@ -368,7 +384,8 @@ export function CatalogView({
     selectedGenres.length +
     selectedFormats.length +
     selectedPlatforms.length +
-    selectedCountries.length;
+    selectedCountries.length +
+    selectedPlacementTypes.length;
 
   // Lock the page scroll behind the open filter sheet.
   useEffect(() => {
@@ -385,6 +402,7 @@ export function CatalogView({
     selectedFormats.length > 0 ||
     selectedPlatforms.length > 0 ||
     selectedCountries.length > 0 ||
+    selectedPlacementTypes.length > 0 ||
     search !== "";
 
   const clearAll = () => {
@@ -392,6 +410,7 @@ export function CatalogView({
     setSelectedFormats([]);
     setSelectedPlatforms([]);
     setSelectedCountries([]);
+    setSelectedPlacementTypes([]);
     setSearch("");
   };
 
@@ -405,6 +424,7 @@ export function CatalogView({
   const toggleFormat = makeToggle(setSelectedFormats);
   const togglePlatform = makeToggle(setSelectedPlatforms);
   const toggleCountry = makeToggle(setSelectedCountries);
+  const togglePlacementType = makeToggle(setSelectedPlacementTypes);
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -431,6 +451,15 @@ export function CatalogView({
         if (!selectedCountries.some((s) => cs.includes(s))) return false;
       }
 
+      // Integration kind (2026-08-10): a project matches if ANY of its
+      // placements is one of the ticked kinds — same "some" semantics as the
+      // genre and platform facets above. A project whose placements carry no
+      // kind has an empty list and drops out once the facet is used, which is
+      // the point: the visitor asked for a specific kind.
+      if (selectedPlacementTypes.length > 0) {
+        if (!selectedPlacementTypes.some((s) => p.placementTypes.includes(s))) return false;
+      }
+
       if (term) {
         const haystack = `${p.title} ${p.genre} ${p.countries} ${p.synopsis}`.toLowerCase();
         if (!haystack.includes(term)) return false;
@@ -446,6 +475,7 @@ export function CatalogView({
     selectedFormats,
     selectedPlatforms,
     selectedCountries,
+    selectedPlacementTypes,
     search,
   ]);
 
@@ -517,6 +547,21 @@ export function CatalogView({
           options={platformOptions.map((p) => ({ value: p, label: p }))}
           selected={selectedPlatforms}
           onToggle={togglePlatform}
+        />
+      ) : null}
+
+      {/* Same "only when the data has it" rule as Platform above — until
+          creators start classifying their placements this facet doesn't
+          render at all. */}
+      {placementTypeOptions.length > 0 ? (
+        <CheckboxFilter
+          label={t("catalog.placementType")}
+          options={placementTypeOptions.map((v) => ({
+            value: v,
+            label: localize("placementType", v),
+          }))}
+          selected={selectedPlacementTypes}
+          onToggle={togglePlacementType}
         />
       ) : null}
 

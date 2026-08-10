@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { Reveal } from "@/components/ui/reveal";
-import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
+import { DEFAULT_LOCALE, localizeValue, makeUI, type Locale } from "@/lib/i18n";
 import { OfferApplyButton } from "@/components/report/offer-apply-button";
 import { offerValue } from "@/lib/offer-value";
 import type { ProjectDetailDTO } from "@/lib/types";
@@ -61,6 +61,16 @@ export function ProductPlacements({
                   {/* Calm regular weight at display size, price as the dominant
                       figure under it — the same scale as sponsors.tsx. */}
                   <h3 className="text-2xl font-normal tracking-tight text-foreground">{p.title}</h3>
+                  {/* What KIND of integration this is (2026-08-10) — its own
+                      chip under the name, deliberately clear of the price
+                      below: the two answer different questions, and a kind set
+                      in the same line as a figure reads as part of the offer's
+                      price. Empty for a placement nobody classified. */}
+                  {p.placementType ? (
+                    <span className="mt-2 inline-flex w-fit rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-foreground/70">
+                      {localizeValue(locale, "placementType", p.placementType)}
+                    </span>
+                  ) : null}
                   {/* No price is a deliberate state, not a missing one. */}
                   <p className="mt-2 text-3xl font-extrabold tracking-tight text-foreground">
                     {p.priceDisplay ?? (

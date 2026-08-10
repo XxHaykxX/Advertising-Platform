@@ -32,6 +32,11 @@ export interface ProjectListDTO {
   // 2026-07-28) — powers the "N placements" badge on the catalog card.
   // Counted from real rows, so a project with none renders nothing.
   placementsCount: number;
+  /** The distinct integration kinds this project's placements carry
+   *  (2026-08-10), in PLACEMENT_TYPE_VALUES order — the card's chip row and
+   *  the catalog's subtype facet both read this. Empty when nothing on the
+   *  project is classified, which is the state of every pre-2026-08-10 row. */
+  placementTypes: string[];
   /** The cheapest thing this project sells, already formatted in the visitor's
    *  currency (2026-08-05) — same preformatted-on-the-server contract as
    *  productionBudgetDisplay below, so the three components that render a card
@@ -122,6 +127,10 @@ export interface TierDTO {
 export type PlacementDTO = {
   id: number;
   title: string;
+  /** Which of the four integration kinds this offer is — one of
+   *  PLACEMENT_TYPE_VALUES, or "" when the creator never classified it (every
+   *  row written before 2026-08-10). "" renders no chip; it is not an error. */
+  placementType: string;
   description: string[]; // parsed from the JSON description column, one item per line — same convention as TierDTO.benefits
   image: string | null; // uploaded still path ("/uploads/…"), null when none
   priceAmd: number | null; // raw AMD; null when the creator left it empty ("on request")

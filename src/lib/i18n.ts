@@ -337,6 +337,35 @@ export const UI: Record<string, Dict> = {
   "formatCategory.REALITY": { ru: "Реалити-шоу", en: "Reality show", hy: "Ռեալիթի շոու" },
   "formatCategory.PROGRAM": { ru: "Передача", en: "Program", hy: "Հաղորդում" },
   "formatCategory.SHORT": { ru: "Короткометражка", en: "Short film", hy: "Կարճամետրաժ ֆիլմ" },
+  // Placement subtypes (owner brief 2026-08-10) — the four ways a brand can
+  // sit inside a story. Keys match enum PlacementType / PLACEMENT_TYPE_VALUES;
+  // the label names the kind, the *Hint line says what the brand actually gets
+  // and is shown under the picker in the project form (the names are industry
+  // terms a first-time creator has no reason to know).
+  "placementType.PRODUCT": { ru: "Продукт в кадре", en: "Product placement", hy: "Ապրանքի տեղաբաշխում" },
+  "placementType.LOGO": { ru: "Логотип в титрах", en: "Logo placement", hy: "Լոգոյի տեղաբաշխում" },
+  "placementType.VERBAL": { ru: "Упоминание в диалоге", en: "Verbal mention", hy: "Բանավոր հիշատակում" },
+  "placementType.NAMING": { ru: "Права на название", en: "Naming rights", hy: "Անվանակոչման իրավունք" },
+  "placementTypeHint.PRODUCT": {
+    ru: "Товар или бренд виден в кадре — герой им пользуется или носит его.",
+    en: "The product or brand is visible on screen — the character uses or wears it.",
+    hy: "Ապրանքը/բրենդը տեսողականորեն երևում է կադրում (հերոսը օգտագործում/կրում է)։",
+  },
+  "placementTypeHint.LOGO": {
+    ru: "Логотип показан в титрах или на финальной заставке.",
+    en: "The logo appears in the credits or on the end card.",
+    hy: "Լոգոն երևում է կրեդիտներում/end-card-ում։",
+  },
+  "placementTypeHint.VERBAL": {
+    ru: "Герой произносит название бренда в диалоге.",
+    en: "A character says the brand name in dialogue.",
+    hy: "Հերոսը հիշատակում է բրենդի անունը երկխոսության մեջ։",
+  },
+  "placementTypeHint.NAMING": {
+    ru: "Именование всего сериала или сезона — как title sponsorship.",
+    en: "Naming of the whole series or season — like a title sponsorship.",
+    hy: "Ամբողջ սերիալի/սեզոնի անվանակցում (title sponsorship-ի պես)։",
+  },
   "category.Automotive": { ru: "Автомобили", en: "Automotive", hy: "Ավտոմեքենաներ" },
   "category.Beverages": { ru: "Напитки", en: "Beverages", hy: "Ըմպելիքներ" },
   "category.Food & Beverages": { ru: "Еда и напитки", en: "Food & Beverages", hy: "Սնունդ և ըմպելիք" },
@@ -367,6 +396,11 @@ export const UI: Record<string, Dict> = {
   // specific-format selection.
   "catalog.formatUnspecified": { ru: "Не указан", en: "Unspecified", hy: "Չնշված" },
   "catalog.platform": { ru: "Платформа", en: "Platform", hy: "Հարթակ" },
+  "catalog.placementType": {
+    ru: "Тип интеграции",
+    en: "Integration kind",
+    hy: "Ինտեգրման տեսակ",
+  },
   "catalog.clearAll": { ru: "Сбросить всё", en: "Clear All", hy: "Մաքրել բոլորը" },
   "catalog.showResults": { ru: "Показать", en: "Show", hy: "Ցուցադրել" },
   "catalog.searchPlaceholder": {
@@ -1886,6 +1920,14 @@ export const UI: Record<string, Dict> = {
     hy: "Ինչ է ստանում բրենդը (մեկը՝ մեկ տողում)",
   },
   "projectForm.placements.image": { ru: "Кадр", en: "Still", hy: "Կադր" },
+  // Optional: an offer with no kind picked is still a valid, sellable
+  // placement — the storefront just shows no kind chip for it.
+  "projectForm.placements.type": {
+    ru: "Тип интеграции",
+    en: "Integration kind",
+    hy: "Ինտեգրման տեսակը",
+  },
+  "projectForm.placements.typeNotSet": { ru: "Не указан", en: "Not set", hy: "Նշված չէ" },
   // Empty price is not zero — it means the creator hasn't priced this
   // integration, and the storefront says "on request" instead of a number.
   "projectForm.placements.price": { ru: "Цена (AMD)", en: "Price (AMD)", hy: "Գին (AMD)" },
