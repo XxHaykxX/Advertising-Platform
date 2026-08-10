@@ -62,7 +62,7 @@ export default async function EditCreatorAdSpacePage({
           {space.titleHy || space.titleRu || space.titleEn || space.title}
         </h1>
         <p className="mt-4 rounded-2xl border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
-          {t("account.form.approvedLocked")}
+          {t("adSpace.approvedLocked")}
         </p>
       </Reveal>
     );

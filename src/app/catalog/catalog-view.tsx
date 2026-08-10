@@ -940,22 +940,27 @@ export function CatalogView({
               </div>
             </div>
 
-            <p className="mb-4 text-sm text-muted-foreground">
-              {t("catalog.showingProjectsPrefix")}{" "}
-              {/* Split count (plan B4) — a project and an ad space are too
-                  different to lump into one number, and either half drops out
-                  entirely once a channel pick leaves nothing of that kind. */}
-              {[
-                projectCount > 0
-                  ? t(`catalog.projectCount.${pluralForm(locale, projectCount)}`, { n: projectCount })
-                  : null,
-                adSpaceCount > 0
-                  ? t(`catalog.adSpaceCount.${pluralForm(locale, adSpaceCount)}`, { n: adSpaceCount })
-                  : null,
-              ]
-                .filter(Boolean)
-                .join(" · ")}
-            </p>
+            {/* Both halves drop out at zero, and the bare prefix ("Показано")
+                left behind reads as a truncated sentence — the empty-state
+                block below already says there is nothing, so say it once. */}
+            {projectCount + adSpaceCount > 0 && (
+              <p className="mb-4 text-sm text-muted-foreground">
+                {t("catalog.showingProjectsPrefix")}{" "}
+                {/* Split count (plan B4) — a project and an ad space are too
+                    different to lump into one number, and either half drops out
+                    entirely once a channel pick leaves nothing of that kind. */}
+                {[
+                  projectCount > 0
+                    ? t(`catalog.projectCount.${pluralForm(locale, projectCount)}`, { n: projectCount })
+                    : null,
+                  adSpaceCount > 0
+                    ? t(`catalog.adSpaceCount.${pluralForm(locale, adSpaceCount)}`, { n: adSpaceCount })
+                    : null,
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </p>
+            )}
 
             {sorted.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-border p-16 text-center text-muted-foreground">

@@ -3128,8 +3128,34 @@ export const UI: Record<string, Dict> = {
   "adSpace.none": { ru: "У вас пока нет рекламных мест.", en: "You have no ad spaces yet.", hy: "Դուք դեռ գովազդային տարածքներ չունեք։" },
   "adSpace.edit": { ru: "Редактировать место", en: "Edit the space", hy: "Խմբագրել տարածքը" },
   "adSpace.offersCount": { ru: "Предложений", en: "Offers", hy: "Առաջարկներ" },
-  // Что мешает месту стать публичным — подставляется в publish.blockedSubmit /
-  // publish.blockedApprove списком, как ключи publish.missing.* у проекта.
+  // Место, уже прошедшее модерацию: то же правило, что у проекта, но своим
+  // словом — account.form.approvedLocked / errApproved говорят «Проект».
+  "adSpace.approvedLocked": {
+    ru: "Место опубликовано, поэтому правки вносит редакция.",
+    en: "This ad space is published, so edits are made by the editors.",
+    hy: "Տարածքը հրապարակված է, ուստի փոփոխությունները կատարում է խմբագրությունը։",
+  },
+  "adSpace.errApproved": {
+    ru: "Место уже опубликовано — правки вносит редакция.",
+    en: "This ad space is already published — edits are made by the editors.",
+    hy: "Տարածքն արդեն հրապարակված է — փոփոխությունները կատարում է խմբագրությունը։",
+  },
+  // Вводная строка списка блокеров. Отдельная от publish.blockedSubmit /
+  // publish.blockedApprove: те говорят «Проект…», и место, отправленное на
+  // модерацию, показывало создателю «Проект нельзя отправить…» — один ключ на
+  // два разных предмета.
+  "adSpace.publish.blockedSubmit": {
+    ru: "Место нельзя отправить на модерацию, пока не заполнено:",
+    en: "This ad space can't be submitted for review until you fill in:",
+    hy: "Տարածքը հնարավոր չէ ուղարկել մոդերացիայի, քանի դեռ լրացված չէ․",
+  },
+  "adSpace.publish.blockedApprove": {
+    ru: "Место нельзя опубликовать — создатель не заполнил:",
+    en: "This ad space can't be published — the creator hasn't filled in:",
+    hy: "Տարածքը հնարավոր չէ հրապարակել — ստեղծողը չի լրացրել․",
+  },
+  // Что мешает месту стать публичным — подставляется в них списком, как ключи
+  // publish.missing.* у проекта.
   "adSpace.publish.offers": { ru: "хотя бы одно предложение", en: "at least one offer", hy: "առնվազն մեկ առաջարկ" },
   "adSpace.publish.sizeFormat": { ru: "размер или формат", en: "size or format", hy: "չափը կամ ձևաչափը" },
 

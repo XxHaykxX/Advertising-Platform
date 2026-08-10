@@ -7,6 +7,7 @@ import { requireMember } from "@/lib/auth/require";
 import { canSell } from "@/lib/auth/capabilities";
 import { prisma } from "@/lib/prisma";
 import { getLocale } from "@/lib/data/locale";
+import { localizeCity } from "@/lib/cities";
 import { labelSep, makeUI } from "@/lib/i18n";
 import type { ModerationStatus } from "@prisma/client";
 
@@ -97,8 +98,13 @@ export default async function MyAdSpacesPage() {
                   </h3>
                   <p className="mt-1 truncate text-sm text-muted-foreground">
                     {t(`adChannel.${s.channel}`)}
-                    {[s.city, s.address].filter(Boolean).length
-                      ? ` · ${[s.city, s.address].filter(Boolean).join(", ")}`
+                    {/* `city` is stored as the canonical English token, so it
+                        has to go through the dictionary here the same way the
+                        public card and the catalog facet do — otherwise the
+                        creator's own list is the one place that prints
+                        "Yerevan" to a Russian reader. */}
+                    {[s.city && localizeCity(locale, s.city), s.address].filter(Boolean).length
+                      ? ` · ${[s.city && localizeCity(locale, s.city), s.address].filter(Boolean).join(", ")}`
                       : ""}
                   </p>
                   <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">

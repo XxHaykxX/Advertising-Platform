@@ -64,7 +64,7 @@ export async function createAdSpace(
   if (data.isActive) {
     const missing = adSpacePublishBlockers(data, offers.length);
     if (missing.length) {
-      return { error: `${t("publish.blockedSubmit")} ${missing.map((k) => t(k)).join(", ")}.`, values: data };
+      return { error: `${t("adSpace.publish.blockedSubmit")} ${missing.map((k) => t(k)).join(", ")}.`, values: data };
     }
   }
 
@@ -137,7 +137,7 @@ export async function updateAdSpace(
   if (data.isActive) {
     const missing = adSpacePublishBlockers(data, offers.length);
     if (missing.length) {
-      return { error: `${t("publish.blockedSubmit")} ${missing.map((k) => t(k)).join(", ")}.`, values: data };
+      return { error: `${t("adSpace.publish.blockedSubmit")} ${missing.map((k) => t(k)).join(", ")}.`, values: data };
     }
   }
 

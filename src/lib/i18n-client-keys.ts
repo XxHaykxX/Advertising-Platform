@@ -312,7 +312,6 @@ export const CLIENT_KEYS: readonly string[] = [
   "projectForm.activeCheckbox",
   "projectForm.addReference",
   "projectForm.availableOnPlaceholder",
-  "projectForm.cancel",
   "projectForm.cast.addMember",
   "projectForm.cast.customPerson",
   "projectForm.cast.directoryOwned",

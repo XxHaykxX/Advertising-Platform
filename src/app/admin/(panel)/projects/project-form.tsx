@@ -2196,11 +2196,16 @@ export function ProjectForm({
             {submitLabel}
           </button>
         )}
+        {/* Same escape as the sticky bar at the top, so it must say the same
+            thing and do the same thing — this row still read "Отмена" after
+            the bar became "Save draft and leave", which is how the form ended
+            up offering two differently-named ways out of one page. */}
         <Link
           href={mode === "creator" ? "/account" : "/admin/projects"}
+          onClick={saveDraftNow}
           className="text-sm text-muted-foreground hover:text-foreground"
         >
-          {t("projectForm.cancel")}
+          {isEdit ? t("projectForm.leave") : t("projectForm.saveDraftAndLeave")}
         </Link>
       </div>
 

@@ -54,7 +54,7 @@ function submitGate(
 ): string | null {
   const missing = adSpacePublishBlockers(data, offersCount);
   if (!missing.length) return null;
-  return `${t("publish.blockedSubmit")} ${missing.map((k) => t(k)).join(", ")}.`;
+  return `${t("adSpace.publish.blockedSubmit")} ${missing.map((k) => t(k)).join(", ")}.`;
 }
 
 /** Both halves of "a moderator has something to look at": the in-app/push
@@ -77,7 +77,7 @@ export async function createCreatorAdSpace(
   fd: FormData,
 ): Promise<AdSpaceFormState> {
   const { user, t, isCreator } = await guardCreator();
-  if (!isCreator) return { error: t("account.form.errRequired") };
+  if (!isCreator) return { error: t("interests.errNotAllowed") };
 
   const data = buildAdSpaceData(fd);
   const error = validateAdSpace(data, t);
@@ -135,7 +135,7 @@ export async function updateCreatorAdSpace(
   fd: FormData,
 ): Promise<AdSpaceFormState> {
   const { user, t, isCreator } = await guardCreator();
-  if (!isCreator) return { error: t("account.form.errRequired") };
+  if (!isCreator) return { error: t("interests.errNotAllowed") };
 
   // 404 for both "doesn't exist" and "not yours" — a creator must not be able
   // to tell the two apart.
@@ -145,7 +145,7 @@ export async function updateCreatorAdSpace(
   });
   if (!existing) notFound();
   if (existing.ownerId !== user.id) notFound();
-  if (existing.moderationStatus === "APPROVED") return { error: t("account.form.errApproved") };
+  if (existing.moderationStatus === "APPROVED") return { error: t("adSpace.errApproved") };
 
   const data = buildAdSpaceData(fd);
   const error = validateAdSpace(data, t);

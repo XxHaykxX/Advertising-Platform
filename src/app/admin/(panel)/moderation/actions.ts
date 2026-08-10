@@ -197,7 +197,7 @@ export async function approveAdSpace(adSpaceId: number): Promise<{ ok: true } | 
   const missing = adSpacePublishBlockers(before, before._count.offers);
   if (missing.length > 0) {
     const t = makeUI(await getLocale());
-    return { error: `${t("publish.blockedApprove")} ${missing.map((key) => t(key)).join(", ")}.` };
+    return { error: `${t("adSpace.publish.blockedApprove")} ${missing.map((key) => t(key)).join(", ")}.` };
   }
 
   const space = await prisma.adSpace.update({
