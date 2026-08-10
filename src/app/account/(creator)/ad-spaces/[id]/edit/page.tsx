@@ -7,6 +7,7 @@ import { canSell } from "@/lib/auth/capabilities";
 import { prisma } from "@/lib/prisma";
 import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
+import { getCityOptions } from "@/lib/data/cities";
 import { AdSpaceForm } from "@/app/admin/(panel)/ad-spaces/ad-space-form";
 import {
   adSpaceChannelOptions,
@@ -46,7 +47,7 @@ export default async function EditCreatorAdSpacePage({
       className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
     >
       <ArrowLeft className="h-4 w-4" />
-      {t("account.form.cancel")}
+      {t("account.form.backToCabinet")}
     </Link>
   );
 
@@ -67,6 +68,8 @@ export default async function EditCreatorAdSpacePage({
     );
   }
 
+  const cityOptions = await getCityOptions();
+
   return (
     <>
       <Reveal>
@@ -80,6 +83,7 @@ export default async function EditCreatorAdSpacePage({
         action={updateCreatorAdSpace.bind(null, spaceId)}
         translateAction={translateCreatorAdSpaceAction}
         channels={adSpaceChannelOptions(locale)}
+        cityOptions={cityOptions}
         initial={toAdSpaceFormInitial(space)}
         initialOffers={toAdSpaceOfferRows(space.offers)}
         mode="creator"

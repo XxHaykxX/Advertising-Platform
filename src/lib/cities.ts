@@ -1,16 +1,22 @@
-/* QA-8: AdSpace.city is free text (a plain <input>, never converted to a
- * closed picker the way Country/StreamingSource were on 2026-07-27) — a
- * creator types it in whatever script they're using, so the DB holds
- * "Երևան" verbatim and every locale printed it verbatim too.
+/* QA-8/#64: AdSpace.city used to be plain free text — a creator typed it in
+ * whatever script they were using, so the DB held "Երևան" verbatim and every
+ * locale printed it verbatim too. Owner decision (11.08): turn it into a
+ * closed picker, same mechanic as Country/StreamingSource (2026-07-27) — the
+ * DB-backed City dictionary (prisma/schema.prisma) is the picker's option
+ * list and normalizeCityToken() is what the form's save path runs every value
+ * through before it reaches AdSpace.city, so the column always holds one of
+ * these canonical English keys from here on.
  *
- * Rather than turn city into a closed field (a data-model change, owner's
- * call — see the QA-8 report), this covers Armenia's well-known towns by
- * name, same shape as src/lib/countries.ts: ALIASES resolves any spelling a
- * creator is likely to type (hy/ru/en) to one canonical English key, and an
- * unrecognised value — a village, a typo, a foreign city — passes through
- * unchanged rather than rendering blank or "undefined". Pure data, no
- * imports, safe to import from both server (ad-spaces.ts) and client
- * (catalog-view.tsx's City facet) code. */
+ * `address` (street, building) is NOT part of this — it stays free text, by
+ * design (see the comment on AdSpace.city/address): a street address doesn't
+ * fit a closed list, only the city name does.
+ *
+ * ALIASES resolves any spelling already on file, or that a creator's custom
+ * entry might use (hy/ru/en), to one canonical key; an unrecognised value — a
+ * village, a typo, a foreign city — passes through unchanged rather than
+ * rendering blank or "undefined", same contract as src/lib/countries.ts. Pure
+ * data, no imports, safe to import from both server (ad-spaces.ts, write.ts)
+ * and client (catalog-view.tsx's City facet, ad-space-form.tsx) code. */
 
 const CITY_LABELS: Record<string, { ru: string; hy: string }> = {
   Yerevan: { ru: "Ереван", hy: "Երևան" },
@@ -48,10 +54,23 @@ ALIASES["Echmiadzin"] = "Vagharshapat";
 ALIASES["Эчмиадзин"] = "Vagharshapat";
 ALIASES["Էջմիածին"] = "Vagharshapat";
 
+/** The picker's built-in option list, and the City table's seed (2026-08-11) —
+ *  same relationship COUNTRY_VALUES has to Country. */
+export const CITY_VALUES: string[] = Object.keys(CITY_LABELS);
+
+/** Resolves any known spelling to the canonical English key; an unrecognised
+ *  value passes through unchanged (a village, a typo — same fallback as
+ *  localizeCity below). This is what the ad-space save path runs `city`
+ *  through so the column only ever holds a canonical key or a value nothing
+ *  here recognises, never a known city under an alternate spelling. */
+export function canonicalCityToken(token: string): string {
+  return ALIASES[token] ?? token;
+}
+
 /** One city token in the reader's language; unknown tokens pass through
  *  unchanged so a hand-typed value (a village, a typo) still renders. */
 export function localizeCity(locale: "hy" | "ru" | "en", token: string): string {
-  const key = ALIASES[token] ?? token;
+  const key = canonicalCityToken(token);
   if (locale === "en") return key;
   const entry = CITY_LABELS[key];
   if (!entry) return token;

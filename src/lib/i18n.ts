@@ -1480,6 +1480,17 @@ export const UI: Record<string, Dict> = {
 
   // ── creator: submission form fields ──
   "account.form.submit": { ru: "Отправить на модерацию", en: "Submit for review", hy: "Ուղարկել մոդերացիայի" },
+  /* The link above the form. It is a PATH, not an action: it goes to the
+     cabinet dashboard, which is why it no longer says "Cancel" — that word
+     sat here and on the bar button at the same time, and on a form that
+     autosaves a draft it cancelled nothing (owner report 2026-08-11).
+     account.form.cancel is left in place unused rather than deleted: dropping
+     a key can silently discard a translator's pending draft for it. */
+  "account.form.backToCabinet": {
+    ru: "В кабинет",
+    en: "Back to cabinet",
+    hy: "Դեպի անձնական էջ",
+  },
   "account.form.cancel": { ru: "Отмена", en: "Cancel", hy: "Չեղարկել" },
   /* Shown on the creator's edit page once the project is APPROVED: it is live
      in the catalog, so further edits go through staff (2026-08-07). */
@@ -1907,6 +1918,18 @@ export const UI: Record<string, Dict> = {
     hy: "Cinema Star, Moscow Cinema, Kino Park",
   },
   "projectForm.activeCheckbox": { ru: "Активен (показывать в каталоге)", en: "Active (show in catalog)", hy: "Ակտիվ է (ցուցադրել կատալոգում)" },
+  /* The bar button — what happens to the WORK, as opposed to
+     account.form.backToCabinet above the form, which is where you go. Two
+     wordings because the form only drafts while creating: on an edit page
+     scheduleSaveDraft() returns early, so promising a saved draft there
+     would be false. projectForm.cancel stays defined for the ad-space form,
+     which has no draft at all. */
+  "projectForm.saveDraftAndLeave": {
+    ru: "Сохранить черновик и выйти",
+    en: "Save draft and leave",
+    hy: "Պահել սևագիրը և դուրս գալ",
+  },
+  "projectForm.leave": { ru: "Выйти", en: "Leave", hy: "Դուրս գալ" },
   "projectForm.cancel": { ru: "Отмена", en: "Cancel", hy: "Չեղարկել" },
   "projectForm.remove": { ru: "Удалить", en: "Remove", hy: "Հեռացնել" },
   "projectForm.cast.member": { ru: "участник", en: "member", hy: "անդամ" },
@@ -3124,6 +3147,8 @@ export const UI: Record<string, Dict> = {
   },
   "adSpaceForm.channelNotSet": { ru: "Не выбран", en: "Not selected", hy: "Ընտրված չէ" },
   "adSpaceForm.city": { ru: "Город", en: "City", hy: "Քաղաք" },
+  // #64: picker placeholder, same wording pattern as projectForm.countriesPlaceholder.
+  "adSpaceForm.cityPlaceholder": { ru: "Выберите город…", en: "Pick a city…", hy: "Ընտրեք քաղաքը…" },
   "adSpaceForm.address": { ru: "Адрес", en: "Address", hy: "Հասցե" },
   "adSpaceForm.sizeFormat": { ru: "Размер или формат", en: "Size or format", hy: "Չափ կամ ձևաչափ" },
   "adSpaceForm.sizeFormatHint": {

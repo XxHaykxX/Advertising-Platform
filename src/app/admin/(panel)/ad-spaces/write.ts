@@ -2,6 +2,7 @@ import "server-only";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { AD_SPACE_CHANNELS } from "@/lib/ad-channels";
+import { canonicalCityToken } from "@/lib/cities";
 import { makeUI, type Locale } from "@/lib/i18n";
 import {
   formatDateInput,
@@ -46,7 +47,11 @@ export function adSpaceScalars(data: AdSpaceFormValues) {
     descriptionHy: data.descriptionHy.trim() ? bulletsToJson(data.descriptionHy) : null,
     descriptionRu: data.descriptionRu.trim() ? bulletsToJson(data.descriptionRu) : null,
     descriptionEn: data.descriptionEn.trim() ? bulletsToJson(data.descriptionEn) : null,
-    city: data.city,
+    // #64: the picker offers canonical keys plus whatever custom entry a
+    // staff member typed — this is what guarantees the column only ever
+    // holds the canonical spelling (localizeCity keys off it downstream), no
+    // matter which alias the picker/custom text produced.
+    city: canonicalCityToken(data.city),
     address: data.address,
     sizeFormat: data.sizeFormat,
     reachPerDay: data.reachPerDay,

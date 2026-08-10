@@ -1113,22 +1113,30 @@ export function ProjectForm({
     }
   }, [isEdit]);
 
+  /** Writes the draft immediately, skipping the 600ms debounce. The bar's
+   *  leave button says "save the draft and leave", so it has to be true the
+   *  instant it is pressed — waiting on a timer that may not have fired yet
+   *  would lose the last thing typed. */
+  function saveDraftNow() {
+    if (isEdit) return;
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    const form = formRef.current;
+    if (!form) return;
+    try {
+      const snapshot: Record<string, string> = {};
+      for (const [k, v] of new FormData(form).entries()) {
+        if (typeof v === "string") snapshot[k] = v;
+      }
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(snapshot));
+    } catch {
+      /* storage full / unavailable — drafting is best-effort */
+    }
+  }
+
   function scheduleSaveDraft() {
     if (isEdit) return;
     if (saveTimer.current) clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(() => {
-      const form = formRef.current;
-      if (!form) return;
-      try {
-        const snapshot: Record<string, string> = {};
-        for (const [k, v] of new FormData(form).entries()) {
-          if (typeof v === "string") snapshot[k] = v;
-        }
-        localStorage.setItem(DRAFT_KEY, JSON.stringify(snapshot));
-      } catch {
-        /* storage full / unavailable — drafting is best-effort */
-      }
-    }, 600);
+    saveTimer.current = setTimeout(saveDraftNow, 600);
   }
 
   // Re-save whenever a controlled widget changes (its hidden input has already
@@ -1372,18 +1380,27 @@ export function ProjectForm({
               </span>
             ) : null}
           </div>
-          {/* Actions grouped on the right: Cancel (outline) beside Save. Back nav
-              lives in the top "Back to projects" link, so Cancel here is a button,
-              not a left-aligned back-link (user request 2026-07-24). */}
+          {/* Actions grouped on the right, beside Save. This used to say
+              "Cancel" — and so did the back-link above the form, two identical
+              words a centimetre apart, both going to the same place (owner
+              report 2026-08-11). Worse, "Cancel" was a lie: the form autosaves
+              a draft, so nothing was ever cancelled, only left behind.
+              Roles are split now — the link above the form is the way back
+              (a path), this is what happens to the work (an action). While
+              creating, that is "save the draft and leave" and the click really
+              does write it; while editing there is no draft (scheduleSaveDraft
+              returns early on isEdit), so it is plainly "leave" and the
+              unsaved-changes interceptor below still asks first. */}
           <div className="flex shrink-0 items-center gap-2">
             <Link
               href={mode === "creator" ? "/account" : "/admin/projects"}
+              onClick={saveDraftNow}
               // min-h-11 under sm: 36px is fine for a cursor and short of the
               // 44px a finger needs — and on a phone this bar IS the form's
               // only control surface.
               className="inline-flex min-h-11 items-center rounded-lg border border-border px-5 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-muted sm:min-h-0"
             >
-              {t("projectForm.cancel")}
+              {isEdit ? t("projectForm.leave") : t("projectForm.saveDraftAndLeave")}
             </Link>
             {!readOnly && (
               <button

@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireContentEditor } from "@/lib/auth/require";
+import { getCityOptions } from "@/lib/data/cities";
 import { buildEntityHistoryGroups, getEntityHistory } from "@/app/admin/(panel)/history/lib";
 import { EntityEditTabs } from "@/app/admin/(panel)/history/entity-edit-tabs";
 import { EntityHistoryPanel } from "@/app/admin/(panel)/history/entity-history-panel";
@@ -30,6 +31,7 @@ export default async function EditAdSpacePage({ params }: { params: Promise<{ id
   // "History" tab — every save of this space next to the form that makes them.
   // Restoring stays SUPERADMIN-only, same as the projects page.
   const historyGroups = buildEntityHistoryGroups(await getEntityHistory("AdSpace", spaceId));
+  const cityOptions = await getCityOptions();
 
   return (
     <div>
@@ -57,6 +59,7 @@ export default async function EditAdSpacePage({ params }: { params: Promise<{ id
           action={updateAdSpace.bind(null, spaceId)}
           translateAction={translateAdSpaceAction}
           channels={adSpaceChannelOptions("en")}
+          cityOptions={cityOptions}
           initial={toAdSpaceFormInitial(space)}
           initialOffers={toAdSpaceOfferRows(space.offers)}
           mode="staff"

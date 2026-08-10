@@ -343,6 +343,21 @@ model Studio {
   sortOrder Int    @default(0)
 }
 
+/// Global, editable dictionary of city names offered by the ad-space form's
+/// City picker (2026-08-11, QA-8/owner decision). Same shape as Country/
+/// Studio/StreamingSource: `AdSpace.city`/`address` stay free text (a street
+/// address genuinely does not fit a closed list — see the comment there) but
+/// the city half of it now does, so `localizeCity()` (src/lib/cities.ts) can
+/// translate it instead of printing whatever script it was typed in. Seeded
+/// from CITY_VALUES in that file; a city typed into one ad space is offered on
+/// every future one, and deleting one removes it from the pool without
+/// touching what spaces already store.
+model City {
+  id        Int    @id @default(autoincrement())
+  name      String @unique
+  sortOrder Int    @default(0)
+}
+
 model Person {
   id        Int      @id @default(autoincrement())
   name      String // legacy base — kept as the ultimate fallback (see pickPersonName)

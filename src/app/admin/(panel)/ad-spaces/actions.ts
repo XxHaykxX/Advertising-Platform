@@ -11,6 +11,8 @@ import { findUploadUsage } from "@/lib/uploads-usage";
 import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
 import { revalidateAdSpaces } from "@/lib/data/revalidate-ad-spaces";
+import { addCities } from "@/lib/actions/cities";
+import { canonicalCityToken } from "@/lib/cities";
 import {
   adSpacePublishBlockers,
   buildAdSpaceData,
@@ -44,6 +46,16 @@ export async function createAdSpace(
   const data = buildAdSpaceData(fd);
   const error = validateAdSpace(data, t);
   if (error) return { error, values: data };
+
+  // #64: persist a custom city into the global dictionary so future spaces
+  // offer it too — never blocks the save. Same "typed once, offered forever"
+  // contract as addCountries/addStudios; only staff widens it (addCities is a
+  // no-op for a creator's own action, which doesn't call it).
+  try {
+    await addCities([canonicalCityToken(data.city)]);
+  } catch {
+    /* ignore */
+  }
 
   const offers = parseAdSpaceOfferRows(fd);
   // Staff saves are APPROVED on the spot, so "public" is decided by the
@@ -113,6 +125,13 @@ export async function updateAdSpace(
   const data = buildAdSpaceData(fd);
   const error = validateAdSpace(data, t);
   if (error) return { error, values: data };
+
+  // #64: see the same call in createAdSpace.
+  try {
+    await addCities([canonicalCityToken(data.city)]);
+  } catch {
+    /* ignore */
+  }
 
   const offers = parseAdSpaceOfferRows(fd);
   if (data.isActive) {

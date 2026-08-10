@@ -6,8 +6,12 @@ import { AlertTriangle, Languages, Loader2 } from "lucide-react";
 import { MediaField } from "@/components/media-field";
 import { FormSectionNav } from "@/components/form-section-nav";
 import { BulletListEditor } from "@/components/ui/bullet-list-editor";
+import { MultiSelect } from "@/components/ui/multi-select";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { ImageUploader } from "@/app/admin/(panel)/projects/image-uploader";
 import { OFFER_LANGS, type OfferLang } from "@/app/admin/(panel)/projects/form-shared";
+import { localizeCity } from "@/lib/cities";
+import { deleteCity } from "@/lib/actions/cities";
 import { useUI, type Locale } from "@/lib/i18n-client";
 import { AdSpaceOffersSection } from "./offers-editor";
 import type { TranslateAdSpaceState } from "./translate-shared";
@@ -135,6 +139,7 @@ export function AdSpaceForm({
   action,
   translateAction,
   channels,
+  cityOptions: cityOptions0,
   initial,
   initialOffers = [],
   submitLabel,
@@ -147,6 +152,10 @@ export function AdSpaceForm({
    *  gated action — see the note in ./translate-action.ts. */
   translateAction: (fd: FormData) => Promise<TranslateAdSpaceState>;
   channels: AdSpaceChannelOption[];
+  /** The City dictionary's option list (#64) — same contract as
+   *  project-form's countryOptions/studioOptions: a value typed in one ad
+   *  space persists here for future ones, staff can prune it. */
+  cityOptions: string[];
   initial?: AdSpaceFormValues;
   initialOffers?: AdSpaceOfferRow[];
   submitLabel: string;
@@ -156,7 +165,8 @@ export function AdSpaceForm({
   locale?: Locale;
   cancelHref: string;
 }) {
-  const t = useUI(mode === "staff" ? "en" : (locale ?? "hy"));
+  const formLocale: Locale = mode === "staff" ? "en" : (locale ?? "hy");
+  const t = useUI(formLocale);
   const [state, formAction, pending] = useActionState<AdSpaceFormState, FormData>(action, {});
 
   // Full page load rather than the client router: a redirect() inside the
@@ -187,6 +197,16 @@ export function AdSpaceForm({
   const [sizeFormat, setSizeFormat] = useState(data.sizeFormat);
   const [offers, setOffers] = useState<AdSpaceOfferRow[]>(initialOffers);
   const [dirty, setDirty] = useState(false);
+
+  // ── City (#64) — same "picker over a growable dictionary" mechanic as
+  // project-form's Country/Studio, just single-valued (an ad space has one
+  // city). MultiSelect stays multi-valued under the hood; onChange below
+  // collapses whatever it produces to its last entry so picking a new city
+  // replaces the old one instead of adding to it.
+  const [city, setCity] = useState(data.city);
+  const [cityOptions, setCityOptions] = useState<string[]>(cityOptions0);
+  const [deletingCityOption, setDeletingCityOption] = useState<string | null>(null);
+  const [cityOptionPending, startCityOptionTransition] = useTransition();
 
   // ── Translate ────────────────────────────────────────────────────────────
   const [translating, startTranslate] = useTransition();
@@ -289,7 +309,7 @@ export function AdSpaceForm({
               // control surface, and 36px is short of the 44px a finger needs.
               className="inline-flex min-h-11 items-center rounded-lg border border-border px-5 py-2 text-sm font-semibold text-foreground transition-colors hover:bg-muted sm:min-h-0"
             >
-              {t("projectForm.cancel")}
+              {t("projectForm.leave")}
             </Link>
             <button
               type="submit"
@@ -472,7 +492,21 @@ export function AdSpaceForm({
             </Field>
 
             <Field label={t("adSpaceForm.city")}>
-              <input name="city" defaultValue={data.city} className={inputCls} />
+              <MultiSelect
+                options={cityOptions.map((c) => ({ value: c, label: localizeCity(formLocale, c) }))}
+                value={city ? [city] : []}
+                onChange={(v) => setCity(v[v.length - 1] ?? "")}
+                allowCustom
+                placeholder={t("adSpaceForm.cityPlaceholder")}
+                addLabel={t("ui.addOption")}
+                removeLabel={t("ui.remove")}
+                // Deleting is global — staff-only, same as Country/Studio.
+                onDeleteOption={mode === "creator" ? undefined : (v) => setDeletingCityOption(v)}
+              />
+              {/* MultiSelect's own `name` prop would submit a JSON array;
+                  `city` is a plain string column, so it rides along as its
+                  own mirror instead — same trick description[l] uses above. */}
+              <input type="hidden" name="city" value={city} />
             </Field>
             <Field label={t("adSpaceForm.address")}>
               <input name="address" defaultValue={data.address} className={inputCls} />
@@ -554,9 +588,30 @@ export function AdSpaceForm({
           {submitLabel}
         </button>
         <Link href={cancelHref} className="text-sm text-muted-foreground hover:text-foreground">
-          {t("projectForm.cancel")}
+          {t("projectForm.leave")}
         </Link>
       </div>
+
+      {/* Removing a City value takes it away from every future ad space —
+          same styled warning as project-form's Country/Studio dialogs. */}
+      <ConfirmDialog
+        open={deletingCityOption !== null}
+        title={`Delete “${deletingCityOption ?? ""}” from the city list?`}
+        message="It stops being offered on every future ad space. Spaces that already list it keep it."
+        confirmLabel="Delete"
+        pending={cityOptionPending}
+        onCancel={() => setDeletingCityOption(null)}
+        onConfirm={() => {
+          const value = deletingCityOption;
+          if (!value) return;
+          startCityOptionTransition(async () => {
+            await deleteCity(value);
+            setCityOptions((opts) => opts.filter((x) => x !== value));
+            if (city === value) setCity("");
+            setDeletingCityOption(null);
+          });
+        }}
+      />
     </form>
   );
 }

@@ -55,7 +55,7 @@ export default async function NewProjectPage() {
           className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
-          {t("account.form.cancel")}
+          {t("account.form.backToCabinet")}
         </Link>
         <h1 className="mb-2 mt-4 text-3xl font-bold text-foreground md:text-4xl">
           {t("account.submitProject")}
