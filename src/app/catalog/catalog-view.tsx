@@ -472,6 +472,9 @@ export function CatalogView({
   // churn); "Clear all" naturally overwrites it with the empty state.
   const FILTERS_KEY = "catalog:filters";
   const restoredRef = useRef(false);
+  // Has to be an effect: sessionStorage doesn't exist during the server render,
+  // so the stored selection can only be applied after mount.
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (restoredRef.current) return;
     restoredRef.current = true;
@@ -495,6 +498,7 @@ export function CatalogView({
       /* corrupt/blocked storage — fall back to defaults */
     }
   }, [initialChannel]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     // Skip the very first render so we don't clobber stored filters with the
@@ -537,9 +541,9 @@ export function CatalogView({
   // the very first render (mirrors the guard above) so restoring a persisted
   // search doesn't clobber a resumed scroll position with page 1 anyway —
   // it's still page 1 by default, but keeps the two effects symmetric.
-  useEffect(() => {
-    setVisibleCount(PAGE_SIZE);
-  }, [
+  // Adjusted during render, not from an effect: paginating the OLD page size
+  // over the new result set for a frame is the visible glitch this prevents.
+  const resultShapeKey = JSON.stringify([
     selectedChannels,
     selectedGenres,
     selectedFormats,
@@ -550,6 +554,11 @@ export function CatalogView({
     search,
     sortBy,
   ]);
+  const [seenShapeKey, setSeenShapeKey] = useState(resultShapeKey);
+  if (seenShapeKey !== resultShapeKey) {
+    setSeenShapeKey(resultShapeKey);
+    setVisibleCount(PAGE_SIZE);
+  }
 
   // Count of active filter facets (excluding free-text search, which has its
   // own always-visible box) — shown as a badge on the mobile "Filters" button.

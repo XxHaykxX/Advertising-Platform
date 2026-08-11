@@ -62,10 +62,14 @@ export function ProfileForm({
   const { errors, check, clear, fieldProps } = useRequiredFields(t("form.required"));
   const hasErrors = Object.keys(errors).length > 0;
 
-  useEffect(() => {
-    if (!state.ok || state.website === undefined) return;
-    setWebsiteValue(state.website ?? "");
-  }, [state]);
+  // Reflect what the server actually stored. Adjusted during render rather
+  // than from an effect, keyed on the action result object so it runs once per
+  // submit — the same trigger the effect had.
+  const [seenState, setSeenState] = useState(state);
+  if (seenState !== state) {
+    setSeenState(state);
+    if (state.ok && state.website !== undefined) setWebsiteValue(state.website ?? "");
+  }
 
   return (
     <div className="mt-8 flex flex-col gap-6">

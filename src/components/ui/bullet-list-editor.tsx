@@ -56,7 +56,13 @@ export function BulletListEditor({
   // Re-seed when the value changes underneath us (a form reset, a restored
   // draft, a row cloned into this slot). Our own edits are skipped: they
   // already produced this exact string.
+  // Stays an effect on purpose. Adjusting during render (the usual cure for
+  // this warning) would re-run the comparison on EVERY render, not only when
+  // `value` changes — and a parent that takes our onChange without feeding the
+  // new string back would then have the user's typing overwritten from its
+  // stale prop on the next unrelated re-render.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setItems((prev) => (prev.join("\n") === value ? prev : value === "" ? [] : value.split("\n")));
   }, [value]);
 
@@ -67,6 +73,8 @@ export function BulletListEditor({
     autoFocusLast ? { index: Math.max(0, items.length - 1), caret: "end" } : null,
   );
 
+  // Stays an effect: the input for a brand-new index only exists after commit,
+  // and clearing the one-shot signal ends that DOM work.
   useEffect(() => {
     if (!focus) return;
     const el = inputs.current[focus.index];
@@ -75,6 +83,7 @@ export function BulletListEditor({
       const pos = focus.caret === "end" ? el.value.length : 0;
       el.setSelectionRange(pos, pos);
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFocus(null);
   }, [focus]);
 

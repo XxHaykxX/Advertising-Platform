@@ -89,14 +89,12 @@ export function PosterGenerator({
   const reducedMotion = useReducedMotion();
 
   // Seed the prompt the first time the panel opens (works for both the
-  // built-in trigger and a controlled parent trigger).
-  useEffect(() => {
-    if (open && !initialized) {
-      setPrompt(getDefaultPrompt());
-      setInitialized(true);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+  // built-in trigger and a controlled parent trigger). During render, so the
+  // textarea is never shown empty for a frame; `initialized` keeps it once.
+  if (open && !initialized) {
+    setPrompt(getDefaultPrompt());
+    setInitialized(true);
+  }
 
   function onPickSource(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];

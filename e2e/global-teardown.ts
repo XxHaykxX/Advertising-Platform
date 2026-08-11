@@ -28,7 +28,6 @@ export default async function globalTeardown() {
       await prisma.project.deleteMany({ where: { ownerId: { in: ids } } });
       await prisma.user.deleteMany({ where: { id: { in: ids } } });
     }
-    // eslint-disable-next-line no-console
     console.log(`[e2e teardown] removed ${ids.length} e2e user(s) + related rows`);
   } finally {
     await prisma.$disconnect();

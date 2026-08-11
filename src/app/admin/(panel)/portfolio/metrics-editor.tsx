@@ -62,9 +62,13 @@ export function MetricsEditor({ name, initial }: { name: string; initial: string
 
   // A failed submit re-renders the form with the echoed values — reseed so the
   // editor shows what the server sent back rather than the first mount's state.
-  useEffect(() => {
+  // Adjusted during render, not from an effect (React's "you might not need an
+  // effect") — the re-render lands before paint, so no stale frame.
+  const [seenInitial, setSeenInitial] = useState(initial);
+  if (seenInitial !== initial) {
+    setSeenInitial(initial);
     setRows(parseRows(initial));
-  }, [initial]);
+  }
 
   function update(i: number, patch: Partial<Row>) {
     setRows((prev) => prev.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));

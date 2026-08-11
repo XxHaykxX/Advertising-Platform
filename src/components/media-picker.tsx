@@ -72,9 +72,12 @@ export function MediaPicker({
   const list = scope === "member" ? listMemberUploads : listUploads;
   const upload = scope === "member" ? uploadMemberImage : uploadImage;
 
+  // Stays an effect: opening the picker fires a request, and the loading flag
+  // belongs to that request's lifecycle.
   useEffect(() => {
     if (!open) return;
     let alive = true;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     setError(null);
     list()

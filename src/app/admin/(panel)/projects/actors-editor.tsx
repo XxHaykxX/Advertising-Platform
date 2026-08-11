@@ -98,10 +98,15 @@ export function ActorsSection({
   // ids array in lockstep with our own mutations; an effect re-seeds it only
   // when `value` is swapped wholesale from outside (draft restore / reset),
   // where a remount is fine anyway.
-  const uid = useRef(0);
+  // Seeded with plain indices so the ref is never read during render — see
+  // useSortableRows (offer-card.tsx), which does the same.
+  const uid = useRef(value.length);
   const makeIds = (n: number) => Array.from({ length: n }, () => uid.current++);
-  const [ids, setIds] = useState<number[]>(() => makeIds(value.length));
+  const [ids, setIds] = useState<number[]>(() => Array.from({ length: value.length }, (_, i) => i));
+  // Stays an effect: the replacement ids come from the counter ref, which must
+  // not be touched during render (react-hooks/refs).
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (ids.length !== value.length) setIds(makeIds(value.length));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value.length]);
@@ -116,9 +121,12 @@ export function ActorsSection({
   );
 
   // New (prepended) rows autofocus the Name input (redesign spec 3.1).
+  // Genuinely an effect — same reasoning as cast-manager.tsx: the input only
+  // exists after commit, and clearing the signal ends that DOM work.
   useEffect(() => {
     if (focusId == null) return;
     nameInputs.current.get(focusId)?.focus();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFocusId(null);
   }, [focusId]);
 
@@ -308,7 +316,13 @@ function PersonNameField({
     [knownPeople, value],
   );
 
-  useEffect(() => setActiveIndex(0), [value, open]);
+  // Same as MultiSelect: a new query resets the highlight, during render so it
+  // never lags a frame behind the list it points into.
+  const [seenQuery, setSeenQuery] = useState(`${open}:${value}`);
+  if (seenQuery !== `${open}:${value}`) {
+    setSeenQuery(`${open}:${value}`);
+    setActiveIndex(0);
+  }
 
   // Close on outside click — same pattern as MultiSelect/CurrencySwitcher.
   useEffect(() => {

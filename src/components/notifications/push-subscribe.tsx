@@ -87,7 +87,7 @@ export function PushSubscribe({
     return () => {
       alive = false;
     };
-  }, []);
+  }, [scope, vapidPublicKey]);
 
   async function enable() {
     setBusy(true);

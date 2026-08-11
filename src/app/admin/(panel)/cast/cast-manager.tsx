@@ -75,10 +75,13 @@ export function CastManager({ persons }: { persons: PersonRow[] }) {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
-  // New rows autofocus the Name input (redesign spec 3.1).
+  // New rows autofocus the Name input (redesign spec 3.1). Genuinely an
+  // effect: the input for a row added this render only exists after commit,
+  // and clearing the one-shot signal is the last step of that DOM work.
   useEffect(() => {
     if (focusId == null) return;
     nameInputs.current.get(focusId)?.focus();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFocusId(null);
   }, [focusId]);
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -209,10 +209,14 @@ export function MediaManager({ files }: { files: MediaFile[] }) {
   }, [visible, search]);
 
   // New folder or new search query invalidates the lightbox index (it's
-  // positional into `shown`) — close it rather than risk showing the wrong file.
-  useEffect(() => {
+  // positional into `shown`) — close it rather than risk showing the wrong
+  // file. During render, not from an effect: one frame of the WRONG file is
+  // exactly what this guards against.
+  const [seenScope, setSeenScope] = useState(`${open}:${search}`);
+  if (seenScope !== `${open}:${search}`) {
+    setSeenScope(`${open}:${search}`);
     setLightboxIndex(null);
-  }, [open, search]);
+  }
 
   // Shared by the Dropzone below and the page-level drop target — both just
   // gather a File[] and hand it here. Uploads one at a time (uploadImage is
@@ -397,12 +401,14 @@ export function MediaManager({ files }: { files: MediaFile[] }) {
     setTimeout(() => setCopied((c) => (c === path ? null : c)), 1500);
   }
 
-  function showPrev() {
+  // useCallback so the keyboard effect below can depend on them honestly
+  // instead of listing `shown.length` and hoping the two stay in sync.
+  const showPrev = useCallback(() => {
     setLightboxIndex((i) => (i === null ? null : (i - 1 + shown.length) % shown.length));
-  }
-  function showNext() {
+  }, [shown.length]);
+  const showNext = useCallback(() => {
     setLightboxIndex((i) => (i === null ? null : (i + 1) % shown.length));
-  }
+  }, [shown.length]);
 
   useEffect(() => {
     if (lightboxIndex === null) return;
@@ -413,7 +419,7 @@ export function MediaManager({ files }: { files: MediaFile[] }) {
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [lightboxIndex, shown.length]);
+  }, [lightboxIndex, showPrev, showNext]);
 
   const activeFile = lightboxIndex !== null ? shown[lightboxIndex] : null;
 

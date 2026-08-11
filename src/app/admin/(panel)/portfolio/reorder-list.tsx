@@ -51,11 +51,14 @@ export function ReorderablePortfolioTable({ items }: { items: PortfolioRow[] }) 
 
   // Re-seed when the server list actually changes (a delete, an edit, another
   // admin) — useState alone would keep showing a stale copy until a reload.
+  // Adjusted during render, not from an effect — see the same block in
+  // partners/reorder-list.tsx.
   const serverSignature = items.map((p) => `${p.id}:${p.title}:${p.brand}`).join("|");
-  useEffect(() => {
+  const [seenSignature, setSeenSignature] = useState(serverSignature);
+  if (seenSignature !== serverSignature) {
+    setSeenSignature(serverSignature);
     setRows(items);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [serverSignature]);
+  }
 
   const [pending, startTransition] = useTransition();
   const [showSaved, setShowSaved] = useState(false);

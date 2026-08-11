@@ -110,6 +110,9 @@ export function ReportInterestProvider({
   // on the card the guest clicked before signing in. The parameter is wiped
   // from the URL right away so a reload — or a shared link — doesn't reopen
   // it, and so the address bar stays clean.
+  // Stays an effect: it reads window.location and rewrites history, neither of
+  // which exists (or is allowed) during the server render.
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     const url = new URL(window.location.href);
     const wanted = url.searchParams.get(OFFER_QUERY_PARAM);
@@ -136,6 +139,7 @@ export function ReportInterestProvider({
     // on mount, when the URL is read.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [archived, viewer]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const value: ReportInterestContextValue = {
     applied: sentOffers.size > 0,

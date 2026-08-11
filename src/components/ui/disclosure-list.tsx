@@ -41,11 +41,13 @@ export function DisclosureList({
   // Auto-open + scroll to the row matching #f-<id> on load. Only fires once:
   // a hash typed/clicked after mount is a normal same-page jump, not
   // something this component needs to intercept.
+  // Stays an effect: it reads location.hash and scrolls — browser-only work.
   useEffect(() => {
     const hash = window.location.hash;
     if (!hash.startsWith("#f-")) return;
     const id = hash.slice(3);
     if (!rows.some((row) => row.id === id)) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setOpenIds((prev) => new Set(prev).add(id));
     // Let the panel render before scrolling to it.
     requestAnimationFrame(() => {

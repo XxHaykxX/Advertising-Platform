@@ -102,7 +102,7 @@ export function NotificationToaster({ locale }: { locale: Locale }) {
       clearInterval(iv);
       document.removeEventListener("visibilitychange", onVisible);
     };
-  }, [locale]);
+  }, [locale, t]);
 
   function open(toast: Toast) {
     void markNotificationRead(toast.id, "member");

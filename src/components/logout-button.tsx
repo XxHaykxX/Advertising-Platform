@@ -91,6 +91,9 @@ function LogoutConfirmDialog({
   // centred the dialog inside the 15rem sidebar and clipped it against the left
   // edge of the screen instead of centring it on the viewport.
   const [mounted, setMounted] = useState(false);
+  // The portal target only exists in the browser, so "are we past hydration?"
+  // can only be answered from an effect.
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- setter is the whole effect body
   useEffect(() => setMounted(true), []);
 
   // Portalling has a sharp edge, and it bit immediately: this dialog is opened

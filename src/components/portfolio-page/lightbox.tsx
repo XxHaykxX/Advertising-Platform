@@ -24,6 +24,9 @@ export function CaseLightbox({
   const t = useUI(locale);
   const metricLabel = useMetricLabeler(locale);
   const [mounted, setMounted] = useState(false);
+  // Same as logout-button.tsx: the portal target is browser-only, so this can
+  // only be answered after mount.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setMounted(true), []);
 
   const active = activeIndex !== null ? cases[activeIndex] : null;

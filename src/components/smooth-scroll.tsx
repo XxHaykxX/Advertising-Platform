@@ -30,8 +30,10 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
   const [reducedMotion, setReducedMotion] = useState(false);
   const pathname = usePathname();
 
+  // Stays an effect: matchMedia is browser-only — same as video-player.tsx.
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setReducedMotion(mq.matches);
     const onChange = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
     mq.addEventListener("change", onChange);

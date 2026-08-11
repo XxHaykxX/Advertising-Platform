@@ -723,13 +723,17 @@ export function ProjectForm({
   //
   // Remounting the radios after every dispatch re-applies `checked` from state,
   // whatever the reset did to the DOM.
+  // Bumped during render, not from an effect: the radios have to be remounted
+  // in the very commit that shows the action result, or the wrong dial is on
+  // screen for a frame.
   const [formEpoch, setFormEpoch] = useState(0);
-  useEffect(() => {
+  const [seenActionState, setSeenActionState] = useState(state);
+  if (seenActionState !== state) {
+    setSeenActionState(state);
     // Skip the initial mount — useActionState starts at {} and no submit has
     // happened yet.
-    if (!state.ok && !state.error) return;
-    setFormEpoch((n) => n + 1);
-  }, [state]);
+    if (state.ok || state.error) setFormEpoch((n) => n + 1);
+  }
 
   // ── Sticky Save bar dirty flag ── independent of the create-only draft
   // autosave above: works in both admin/creator and create/edit modes. Any
@@ -1103,10 +1107,12 @@ export function ProjectForm({
   // Plain uncontrolled fields to replay onto the DOM after a restore re-render.
   const pendingRestore = useRef<Record<string, string> | null>(null);
 
-  // Detect an existing draft once, on mount (create mode only).
+  // Detect an existing draft once, on mount (create mode only). Has to be an
+  // effect: localStorage is not readable while the server renders.
   useEffect(() => {
     if (isEdit) return;
     try {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (localStorage.getItem(DRAFT_KEY)) setDraftFound(true);
     } catch {
       /* ignore */
@@ -1192,11 +1198,18 @@ export function ProjectForm({
     }
     pendingRestore.current = null;
     // The title/synopsis/tagline refs just got their values replayed above —
-    // re-check every tab's dot against what's actually in the DOM now.
+    // re-check every tab's dot against what's actually in the DOM now. This
+    // whole effect exists to read the DOM after a replay, so the state it sets
+    // can only be set from here.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     for (const l of ABOUT_LANGS) recomputeAboutFilled(l);
     // A restored draft IS unsaved work — compare against the stored values,
     // not against what was just replayed onto the DOM.
     recomputeDirty();
+    // Deliberately keyed on the nonce alone: the two recompute* helpers are
+    // re-created on every render, so listing them would replay the whole draft
+    // restore on every keystroke instead of once per "Restore" click.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [restoreNonce]);
 
   function restoreDraft() {

@@ -5,14 +5,15 @@ const eslintConfig = defineConfig([
   ...nextVitals,
   {
     rules: {
-      // Two React-Compiler-era rules that fire on code written long before the
-      // linter existed here: 37 sites call setState inside an effect, 5 read a
-      // ref during render. Neither is a live defect — they are warnings about
-      // what the compiler will not be able to memoize later. Kept as `warn` so
-      // `npm run lint` can be a gate for new code today; clearing the backlog
-      // is its own refactor and has to be done component by component.
-      'react-hooks/set-state-in-effect': 'warn',
-      'react-hooks/refs': 'warn',
+      // The two React-Compiler-era rules that used to carry a 40-odd site
+      // backlog. Cleared on 2026-08-12: the derived-state cases now adjust
+      // during render, the ref-during-render ones seed their counters from a
+      // plain index, and what genuinely has to be an effect (browser APIs,
+      // focus after commit, object URLs) carries a one-line reason at the
+      // exact statement. `error`, not `warn`, so the next one is caught while
+      // it is being written rather than added to a backlog.
+      'react-hooks/set-state-in-effect': 'error',
+      'react-hooks/refs': 'error',
     },
   },
   globalIgnores([

@@ -45,13 +45,19 @@ export const OFFER_ASPECT = 16 / 9;
 // keystroke replaces the row object). Extracted from the two editors, which
 // carried the same 40 lines each.
 export function useSortableRows<T>(value: T[], onChange: (rows: T[]) => void) {
-  const uid = useRef(0);
+  // The initial ids are plain indices and the counter starts past them, so
+  // nothing touches the ref while rendering (react-hooks/refs). Every later
+  // id still comes from the ref, from an effect or an event handler.
+  const uid = useRef(value.length);
   const makeIds = (n: number) => Array.from({ length: n }, () => uid.current++);
-  const [ids, setIds] = useState<number[]>(() => makeIds(value.length));
+  const [ids, setIds] = useState<number[]>(() => Array.from({ length: value.length }, (_, i) => i));
 
   // Re-seed when the parent swaps the whole list (a form reset, a restored
   // draft) — length is the only signal available for that.
+  // Stays an effect: the replacement ids come from the counter ref, which must
+  // not be touched during render (react-hooks/refs).
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (ids.length !== value.length) setIds(makeIds(value.length));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value.length]);

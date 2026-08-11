@@ -180,7 +180,13 @@ function AdsNavDropdown({
   const close = useCallback(() => setOpen(false), []);
   useDismissable(open, close, containerRef, triggerRef);
 
-  useEffect(() => setOpen(false), [pathname]);
+  // Close the menu on navigation. Adjusted during render, not from an effect,
+  // so it is closed in the same commit that renders the new route.
+  const [seenPathname, setSeenPathname] = useState(pathname);
+  if (seenPathname !== pathname) {
+    setSeenPathname(pathname);
+    setOpen(false);
+  }
 
   return (
     <div ref={containerRef} className="relative">

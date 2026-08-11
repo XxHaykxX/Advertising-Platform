@@ -97,9 +97,12 @@ export function ProfileForm({ profile, locale }: { profile: BrandProfileDTO; loc
   // from the second consecutive save on — with [state.ok] the effect never
   // re-fired, the post-action form reset left the select showing its
   // page-load value, and the saved change looked lost (IA-15 reopen).
+  // Stays an effect: it also fires router.refresh() and owns a timeout, both
+  // of which are side effects that must not run during render.
   useEffect(() => {
     if (!state.ok) return;
     router.refresh();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setShowSaved(true);
     // Reflect what the server actually stored — `website` is the one field
     // this action rewrites before saving it (IA-35); every other field here

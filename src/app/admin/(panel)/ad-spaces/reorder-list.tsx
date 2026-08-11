@@ -66,11 +66,14 @@ export function ReorderableAdSpacesTable({
 
   // Re-seed when the server list changes underneath us (delete, edit, another
   // admin) — useState alone would keep showing a stale copy until a reload.
+  // Adjusted during render, not from an effect — see the same block in
+  // partners/reorder-list.tsx.
   const serverSignature = serverRows.map((s) => `${s.id}:${s.title}:${s.status}:${s.isActive}`).join("|");
-  useEffect(() => {
+  const [seenSignature, setSeenSignature] = useState(serverSignature);
+  if (seenSignature !== serverSignature) {
+    setSeenSignature(serverSignature);
     setRows(serverRows);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [serverSignature]);
+  }
 
   const [pending, startTransition] = useTransition();
   const [showSaved, setShowSaved] = useState(false);

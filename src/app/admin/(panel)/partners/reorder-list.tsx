@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import {
   DndContext,
   KeyboardSensor,
@@ -40,11 +40,15 @@ export function ReorderablePartnersTable({ partners }: { partners: PartnerRow[] 
 
   // Re-seed when the server list changes underneath us (delete, edit, another
   // admin) — useState alone would keep showing a stale copy until a reload.
+  // Adjusted during render rather than from an effect (React's "you might not
+  // need an effect"): the re-render happens before anything is painted, so the
+  // stale list is never shown for a frame.
   const serverSignature = partners.map((p) => `${p.id}:${p.name}:${p.logo}`).join("|");
-  useEffect(() => {
+  const [seenSignature, setSeenSignature] = useState(serverSignature);
+  if (seenSignature !== serverSignature) {
+    setSeenSignature(serverSignature);
     setRows(partners);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [serverSignature]);
+  }
 
   const [pending, startTransition] = useTransition();
   const [showSaved, setShowSaved] = useState(false);

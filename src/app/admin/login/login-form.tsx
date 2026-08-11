@@ -37,12 +37,14 @@ export function LoginForm({
   }, [state]);
 
   // IA-4: wipe the password on a failed submit so the field is genuinely
-  // empty and PasswordInput's eye toggle auto-disables.
-  useEffect(() => {
-    if (!state.ok && state.error) {
-      setPassword("");
-    }
-  }, [state]);
+  // empty and PasswordInput's eye toggle auto-disables. Done during render,
+  // keyed on the action result object, so the field is already empty in the
+  // commit that shows the error.
+  const [seenState, setSeenState] = useState(state);
+  if (seenState !== state) {
+    setSeenState(state);
+    if (!state.ok && state.error) setPassword("");
+  }
 
   return (
     <form action={formAction} className="space-y-4">

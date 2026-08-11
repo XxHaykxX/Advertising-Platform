@@ -603,15 +603,24 @@ export function TranslationsEditor({
   /* Validation is the only expensive per-keystroke work (regexes over three
      strings), so it runs for touched rows only — untouched ones came from the
      committed dictionary, which src/lib/i18n.guard.test.ts already proves valid
-     — and its result is cached per key while the values object stays the same. */
-  const issueCache = useRef(new Map<string, { values: Values; issues: ValidationIssue[] }>());
-  const validate = useCallback((key: string, values: Values, code: Values) => {
-    const hit = issueCache.current.get(key);
-    if (hit && hit.values === values) return hit.issues;
-    const issues = validateEntry(key, values, code);
-    issueCache.current.set(key, { values, issues });
-    return issues;
-  }, []);
+     — and its result is cached per key while the values object stays the same.
+
+     A useMemo, not a useRef: the callers below are useMemo bodies, i.e. the
+     render phase, where a ref must not be touched (react-hooks/refs). A cache
+     is the one thing safe to read there anyway — same values in, same issues
+     out. */
+  const issueCache = useMemo(() => new Map<string, { values: Values; issues: ValidationIssue[] }>(), []);
+  const validate = useCallback(
+    (key: string, values: Values, code: Values) => {
+      const hit = issueCache.get(key);
+      if (hit && hit.values === values) return hit.issues;
+      const issues = validateEntry(key, values, code);
+      // eslint-disable-next-line react-hooks/immutability -- a memo cache is meant to be written to; same values in, same issues out
+      issueCache.set(key, { values, issues });
+      return issues;
+    },
+    [issueCache],
+  );
 
   const { changedKeys, pendingCount, awaitingCount, problemKeys, markCounts } = useMemo(() => {
     const changed = new Set<string>();

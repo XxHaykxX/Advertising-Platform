@@ -277,11 +277,14 @@ export function ReorderableProjectsTable({
   // dependency, so a re-render with identical data doesn't clobber an
   // in-flight drag; PlainProjectsTable below never had this problem because
   // it renders the prop directly.
+  // Adjusted during render, not from an effect — see the same block in
+  // partners/reorder-list.tsx.
   const serverSignature = projects.map((p) => `${p.id}:${p.isActive}:${p.title}`).join("|");
-  useEffect(() => {
+  const [seenSignature, setSeenSignature] = useState(serverSignature);
+  if (seenSignature !== serverSignature) {
+    setSeenSignature(serverSignature);
     setRows(projects);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [serverSignature]);
+  }
   const [pending, startTransition] = useTransition();
   // Transient "Saved" confirmation, same pattern as profile-form.tsx (IA-28).
   const [showSaved, setShowSaved] = useState(false);

@@ -69,9 +69,14 @@ export function MultiSelect({
   );
   const showCustomOption = allowCustom && query.trim().length > 0 && !exactMatch;
 
-  useEffect(() => {
+  // A new query (or reopening the list) puts the highlight back on the first
+  // option. Adjusted during render, not from an effect, so the highlight never
+  // points at the previous query's row for a frame.
+  const [seenQuery, setSeenQuery] = useState(`${open}:${query}`);
+  if (seenQuery !== `${open}:${query}`) {
+    setSeenQuery(`${open}:${query}`);
     setActiveIndex(0);
-  }, [query, open]);
+  }
 
   // Close on outside click — same pattern as CurrencySwitcher/LocaleSwitcher.
   useEffect(() => {

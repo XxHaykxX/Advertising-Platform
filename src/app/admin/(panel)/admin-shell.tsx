@@ -35,8 +35,12 @@ export function AdminShell({
   const [collapsed, setCollapsed] = useState(false);
   const pathname = usePathname();
 
+  // Has to be an effect: localStorage doesn't exist while the server renders,
+  // so the stored value can only be applied once the client is mounted (see
+  // the note on `collapsed` above).
   useEffect(() => {
     try {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCollapsed(localStorage.getItem(COLLAPSED_KEY) === "1");
     } catch {
       // Storage unavailable (private mode etc.) — stay expanded.
@@ -56,9 +60,13 @@ export function AdminShell({
   }
 
   // Close the drawer whenever the route changes (link tap on mobile).
-  useEffect(() => {
+  // Adjusted during render, not from an effect — the drawer must be gone in
+  // the same commit that shows the new page, not one frame later.
+  const [seenPathname, setSeenPathname] = useState(pathname);
+  if (seenPathname !== pathname) {
+    setSeenPathname(pathname);
     setOpen(false);
-  }, [pathname]);
+  }
 
   return (
     <div className="flex min-h-screen bg-section">

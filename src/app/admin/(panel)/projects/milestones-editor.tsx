@@ -44,10 +44,15 @@ export function MilestonesSection({
 }) {
   // Stable client-side ids parallel to `value` — see TiersSection for why
   // index/object identity aren't safe keys and how the re-seed effect works.
-  const uid = useRef(0);
+  // Seeded with plain indices so the ref is never read during render — see
+  // useSortableRows (offer-card.tsx), which does the same.
+  const uid = useRef(value.length);
   const makeIds = (n: number) => Array.from({ length: n }, () => uid.current++);
-  const [ids, setIds] = useState<number[]>(() => makeIds(value.length));
+  const [ids, setIds] = useState<number[]>(() => Array.from({ length: value.length }, (_, i) => i));
+  // Stays an effect: the replacement ids come from the counter ref, which must
+  // not be touched during render (react-hooks/refs).
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (ids.length !== value.length) setIds(makeIds(value.length));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value.length]);

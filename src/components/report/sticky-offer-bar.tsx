@@ -30,6 +30,8 @@ export function StickyOfferBar({
   const [pastOverview, setPastOverview] = useState(false);
   const [footerVisible, setFooterVisible] = useState(false);
 
+  // Stays an effect: it queries the DOM and owns an IntersectionObserver.
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     const overview = document.getElementById("overview");
     // No overview section to scroll past — show the bar straight away rather
@@ -45,6 +47,7 @@ export function StickyOfferBar({
     observer.observe(overview);
     return () => observer.disconnect();
   }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     const footer = document.querySelector("footer");

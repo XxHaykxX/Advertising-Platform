@@ -86,8 +86,11 @@ export function MediaCropDialog({
 
   // Fresh object URL per file, and crop/zoom reset with it — otherwise a
   // second image would reopen at the first one's pan/zoom position.
+  // Stays an effect: it creates an object URL and revokes it on cleanup, which
+  // is exactly the external-resource lifecycle effects are for.
   useEffect(() => {
     if (!file) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setObjectUrl(null);
       return;
     }

@@ -36,8 +36,11 @@ export function UserForm({
   // the button disabled and spinning forever until a manual reload.
   const [leaving, setLeaving] = useState(false);
 
+  // Stays an effect: it navigates, and a navigation must not be fired from
+  // render.
   useEffect(() => {
     if (state.ok && state.redirect) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLeaving(true);
       window.location.assign(state.redirect);
     }
@@ -138,10 +141,14 @@ function ResetPasswordForm({ id, onDone }: { id: number; onDone: () => void }) {
   const [password, setPassword] = useState("");
 
   // The field is now controlled, so it no longer auto-clears on success the
-  // way an uncontrolled input did — replicate that here explicitly.
-  useEffect(() => {
+  // way an uncontrolled input did — replicate that here explicitly. During
+  // render, keyed on the action result object, so it clears in the same commit
+  // that reports the success.
+  const [seenState, setSeenState] = useState(state);
+  if (seenState !== state) {
+    setSeenState(state);
     if (state.ok) setPassword("");
-  }, [state]);
+  }
 
   return (
     <form action={formAction} className="mt-2 flex flex-wrap items-center gap-2">

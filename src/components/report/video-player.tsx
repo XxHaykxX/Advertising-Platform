@@ -40,8 +40,11 @@ export function VideoPlayer({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
 
+  // Stays an effect: matchMedia is browser-only, so the initial answer can
+  // only be read after mount (and the subscription belongs here anyway).
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setReducedMotion(mq.matches);
     const onChange = () => setReducedMotion(mq.matches);
     mq.addEventListener("change", onChange);

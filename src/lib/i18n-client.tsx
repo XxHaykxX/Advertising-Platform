@@ -23,7 +23,7 @@
    Both functions read context, which makes them hooks in all but name: call
    them in a component body, never at module scope or inside a callback. */
 
-import { createContext, useContext, useMemo, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useMemo, type ReactNode } from "react";
 import {
   LOCALES,
   DEFAULT_LOCALE,
@@ -108,15 +108,22 @@ export function useLocalizer(locale: Locale) {
   };
 }
 
+/** Memoized on the dictionary slice, which the provider above already keeps
+ *  stable: callers that put `t` in an effect's dependency list (the toaster's
+ *  poll loop, for one) would otherwise restart that effect on every render,
+ *  which is why they used to list `locale` and quietly omit `t`. */
 export function useUI(locale: Locale) {
   const dict = useDict(locale);
-  return function t(key: string, vars?: Record<string, string | number>): string {
-    let s = dict[key] ?? key;
-    if (vars) {
-      for (const [k, v] of Object.entries(vars)) {
-        s = s.replaceAll(`{${k}}`, String(v));
+  return useCallback(
+    function t(key: string, vars?: Record<string, string | number>): string {
+      let s = dict[key] ?? key;
+      if (vars) {
+        for (const [k, v] of Object.entries(vars)) {
+          s = s.replaceAll(`{${k}}`, String(v));
+        }
       }
-    }
-    return s;
-  };
+      return s;
+    },
+    [dict],
+  );
 }

@@ -51,10 +51,6 @@ const ANCHORS: Record<CompletenessKey, string> = {
   releaseDate: "field-releaseDate",
   platforms: "field-platforms",
   cinemas: "field-cinemas",
-  // NB: no "field-countries" anchor exists yet — the Countries field
-  // (project-form.tsx, the "General" section) has no anchorId, so this key
-  // falls through to the plain-text (non-link) render below until one's
-  // added. See the report back to the form owner.
   countries: "field-countries",
   budget: "field-budget",
   ageRating: "field-ageRating",
