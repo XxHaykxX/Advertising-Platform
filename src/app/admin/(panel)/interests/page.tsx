@@ -20,8 +20,9 @@ function budgetLabel(value: string): string {
    was deleted in cd7fb5a, which is what made a brand's Interest write-only:
    the message and contact were saved but no admin page ever read them back.
    Mirrors moderation/page.tsx's layout (staff-only list, same pill/table
-   conventions); the creator's own view of the same data is
-   /account/interests, sharing this module's getAllInterests/getInterestsForOwner. */
+   conventions). Since 2026-08-07 this is the ONLY view of the data: the
+   creator's mirror of it, and its owner-scoped queries, were removed when
+   staff took over answering applications. */
 
 const STATUS_PILL: Record<InterestStatus, string> = {
   SENT: "border-warn/25 bg-warn/10 text-warn",

@@ -419,6 +419,55 @@ export function interestAnsweredTemplate(
   return { subject, html, text };
 }
 
+/** Stage S1 of docs/plan-interests-staff-only.md. A new application produced
+ *  an inbox row and a web push, and nothing else — so a lead that arrived while
+ *  nobody had the tab open waited on someone happening to look. Staff run the
+ *  negotiation, which makes a missed lead nobody's lead.
+ *
+ *  Deliberately no brand contacts in the body: the e-mail says a lead exists
+ *  and links to the panel, where who-they-are is already shown. */
+export function newInterestForStaffTemplate(
+  input: Pick<InterestMailInput, "projectTitle" | "brandName" | "tierName" | "placementName">,
+  base: string = siteUrl(),
+) {
+  const url = `${base}/admin/interests`;
+  const offer = input.tierName || input.placementName || "";
+  const offerLine = offer ? ` — ${escapeHtml(offer)}` : "";
+  const subject = `Նոր հայտ / Новая заявка: «${input.projectTitle}» — ${input.brandName}`;
+  const html = layout(
+    `
+    <p><strong>Նոր հայտ բրենդից</strong><br/>
+    ${escapeHtml(input.brandName)} → «${escapeHtml(input.projectTitle)}»${offerLine}</p>
+    <p><strong>Новая заявка от бренда</strong><br/>
+    ${escapeHtml(input.brandName)} → «${escapeHtml(input.projectTitle)}»${offerLine}</p>
+    <p><strong>New application from a brand</strong><br/>
+    ${escapeHtml(input.brandName)} → «${escapeHtml(input.projectTitle)}»${offerLine}</p>
+    `,
+    "Բացել հայտերը / Открыть заявки / Open applications",
+    url,
+  );
+  const text = [
+    `Նոր հայտ․ ${input.brandName} → «${input.projectTitle}»${offer ? ` — ${offer}` : ""}. ${url}`,
+    `Новая заявка: ${input.brandName} → «${input.projectTitle}»${offer ? ` — ${offer}` : ""}. ${url}`,
+    `New application: ${input.brandName} → «${input.projectTitle}»${offer ? ` — ${offer}` : ""}. ${url}`,
+  ].join("\n\n");
+  return { subject, html, text };
+}
+
+/** Same recipient resolution and same best-effort contract as the moderation
+ *  notices above — a dead SMTP hop must not fail the brand's submit. */
+export async function notifyNewInterestToStaff(
+  input: Pick<InterestMailInput, "projectTitle" | "brandName" | "tierName" | "placementName">,
+) {
+  const adminEmail = await resolveAdminEmail();
+  if (!adminEmail) {
+    console.warn("[mail] no admin email available — skipping new-application notice");
+    return { ok: false };
+  }
+  const { subject, html, text } = newInterestForStaffTemplate(input);
+  return sendMail({ to: adminEmail, subject, html, text });
+}
+
 /** Sent to the brand once the creator accepted or declined. */
 export async function notifyInterestAnswered(
   input: InterestMailInput & { accepted: boolean },

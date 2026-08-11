@@ -9,8 +9,10 @@ import { getLocale } from "@/lib/data/locale";
 import { getBrandProfile } from "@/lib/data/brand-profile";
 import { getBrandInterestCount, getBrandInterests } from "@/lib/data/brand-interests";
 import { BRAND_CATEGORIES, BUDGET_RANGES } from "@/lib/brand-categories";
-import { makeUI } from "@/lib/i18n";
+import { DEFAULT_LOCALE, makeUI } from "@/lib/i18n";
 import { notifyRoles } from "@/lib/data/notifications";
+import { notifyNewInterestToStaff } from "@/lib/mail";
+import { OFFER_NAME_SELECT, pickPlacementTitle, pickTierName } from "@/lib/data/pick-locale";
 import { offerKeyOf } from "@/lib/offer-value";
 import { parseWebsiteUrl } from "@/lib/website-url";
 
@@ -362,6 +364,30 @@ export async function submitApplication(
         type: "INTEREST" as const,
         data: { projectId, projectTitle: project.title, brandName: user.name },
         link: "/admin/interests",
+      });
+      // …and by e-mail (stage S1). The bell and the push only reach whoever
+      // has the panel open; a lead that lands overnight has to survive until
+      // morning. Named in the default locale — the letter is tri-lingual and
+      // has no reader locale of its own, same call as respondToInterest makes.
+      const [tier, placement] = await Promise.all([
+        resolvedTierId
+          ? prisma.sponsorshipTier.findUnique({
+              where: { id: resolvedTierId },
+              select: OFFER_NAME_SELECT.tier,
+            })
+          : null,
+        resolvedPlacementId
+          ? prisma.placement.findUnique({
+              where: { id: resolvedPlacementId },
+              select: OFFER_NAME_SELECT.placement,
+            })
+          : null,
+      ]);
+      await notifyNewInterestToStaff({
+        projectTitle: project.title,
+        brandName: user.name,
+        tierName: pickTierName(DEFAULT_LOCALE, tier) || undefined,
+        placementName: pickPlacementTitle(DEFAULT_LOCALE, placement) || undefined,
       });
     }
   } catch {

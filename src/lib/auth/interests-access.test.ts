@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -76,20 +76,23 @@ describe("respondToInterest — only staff who handle applications get through",
 });
 
 /* ── The route ──────────────────────────────────────────────────────────
-   /account/interests was the creator's inbox. It is a redirect now, kept
-   alive only because notifications written before 2026-08-07 still link to
-   it (stage S2 rewrites those and then deletes the file). Until then it
-   must not grow a page again. */
+   /account/interests was the creator's inbox. It survived as a redirect
+   only while notifications written before 2026-08-07 still pointed at it;
+   stage S2 rewrote those two rows on production (see
+   docs/prod-migrations/2026-08-11-interest-notification-links.sql) and the
+   file went with them. Nothing links there any more, and nothing should. */
 
 describe("/account/interests — the creator's inbox stays gone", () => {
-  const routeFile = path.join(SRC, "app", "account", "interests", "page.tsx");
+  it("has no route file at all", () => {
+    expect(existsSync(path.join(SRC, "app", "account", "interests"))).toBe(false);
+  });
 
-  it("is a redirect to the notifications page and nothing else", () => {
-    const src = readFileSync(routeFile, "utf8");
-    expect(src).toMatch(/redirect\("\/account\/notifications"\)/);
-    // A real inbox needs data: any of these appearing here means the page
-    // came back.
-    expect(src).not.toMatch(/prisma|getInterests|InterestInboxDTO|respondToInterest/);
+  it("nothing in the codebase links to it", () => {
+    // Link-shaped mentions only — an href, a redirect, or a notification's
+    // `link:`. Prose in a comment may still explain what used to live there,
+    // and should: that history is why the redirect existed at all.
+    const offenders = filesMentioning(SRC, /(href=|redirect\(|link:\s*)["'`]\/account\/interests/);
+    expect(offenders, `dead links to the removed inbox:\n${offenders.join("\n")}`).toEqual([]);
   });
 });
 
@@ -128,13 +131,23 @@ describe("interest queries are reachable from the admin panel only", () => {
  *  import. Path-based rather than clever: the question is only "does the
  *  member side reach for this module at all". */
 function filesImporting(dir: string, moduleId: string): string[] {
+  return scan(dir, (src) => src.includes(`from "${moduleId}"`));
+}
+
+/** Files under `dir` matching `pattern` — used for the dead route, which could
+ *  be linked as a plain string from an href, a redirect or a notification
+ *  payload rather than imported. This file itself is excluded: it has to name
+ *  the path in order to forbid it. */
+function filesMentioning(dir: string, pattern: RegExp): string[] {
+  return scan(dir, (src, full) => pattern.test(src) && !full.endsWith("interests-access.test.ts"));
+}
+
+function scan(dir: string, match: (src: string, full: string) => boolean): string[] {
   const hits: string[] = [];
   for (const entry of readdirSync(dir, { withFileTypes: true, recursive: true })) {
     if (!entry.isFile() || !/\.tsx?$/.test(entry.name)) continue;
     const full = path.join(entry.parentPath ?? dir, entry.name);
-    if (readFileSync(full, "utf8").includes(`from "${moduleId}"`)) {
-      hits.push(path.relative(SRC, full));
-    }
+    if (match(readFileSync(full, "utf8"), full)) hits.push(path.relative(SRC, full));
   }
   return hits;
 }

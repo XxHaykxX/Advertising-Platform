@@ -16,8 +16,8 @@ const declineCls = `${baseCls} bg-danger text-white`;
 
 /** Accept/Decline buttons for one brand offer — same useTransition +
    bound-Server-Action shape as moderation/registrations row-actions, calling
-   respondToInterest() (audit 2.2), the exact action /account/interests uses
-   too. Hidden once the offer already has an answer: MUTUAL/DECLINED is final,
+   respondToInterest() (audit 2.2), which since 2026-08-07 only a staff
+   session can call at all. Hidden once the offer already has an answer: MUTUAL/DECLINED is final,
    nothing left to click. */
 export function RowActions({
   interestId,

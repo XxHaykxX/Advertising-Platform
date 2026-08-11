@@ -11,8 +11,9 @@ import { OFFER_NAME_SELECT, pickPlacementTitle, pickTierName } from "@/lib/data/
  * and then read by nobody (the /admin/interests section had been deleted, and
  * the creator had no applications page at all), so a creator got a "brand X is
  * interested" notification with no text, no contact and no way to answer
- * (audit 2.1). This module is the read side that was missing — used by both
- * /admin/interests (all applications) and /account/interests (a creator's own).
+ * (audit 2.1). This module is the read side that was missing. It served two
+ * inboxes at first; since 2026-08-07 the only reader is /admin/interests —
+ * see the note on the removed owner-scoped queries at the bottom of the file.
  *
  * Small, staff/owner-scoped queries: no unstable_cache, same reasoning as
  * brand-interests.ts. */
