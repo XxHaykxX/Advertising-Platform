@@ -12,19 +12,26 @@ type ButtonVariantProps = VariantProps<typeof buttonVariants>;
 // Returns the user to wherever they came from (catalog, portfolio, favorites,
 // featured …) instead of a hardcoded /catalog (IA-14). Falls back to /catalog
 // when there's no in-app history (e.g. a shared deep link opened cold).
+// IA-54: the word itself is not rendered any more — an arrow already reads as
+// "back", and next to it sat "Հետ Կատալոգ", two words for one action. `label`
+// becomes the accessible name instead of visible text, so the control keeps
+// telling a screen reader what it does.
 export function BackButton({ label, fallbackHref = "/catalog" }: { label: string; fallbackHref?: string }) {
   const router = useRouter();
   return (
     <button
       type="button"
+      aria-label={label}
       onClick={() => {
         if (window.history.length > 1) router.back();
         else router.push(fallbackHref);
       }}
-      className="inline-flex items-center gap-1.5 font-medium text-foreground transition-colors hover:text-primary"
+      // Was inline-flex with a text label; with the icon alone the tap target
+      // would collapse to 16px, hence the fixed box (still under the 24px the
+      // surrounding line is tall, so the row doesn't grow).
+      className="-ml-1 grid h-6 w-6 place-items-center rounded-md text-foreground transition-colors hover:text-primary"
     >
       <ArrowLeft className="h-4 w-4" />
-      {label}
     </button>
   );
 }
