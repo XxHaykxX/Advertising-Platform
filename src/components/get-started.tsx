@@ -5,8 +5,9 @@ import { Container } from "@/components/ui/container";
 import { Reveal } from "@/components/ui/reveal";
 import { Button } from "@/components/ui/button";
 import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
+import { signupCtaHref } from "@/lib/auth/signup-cta";
 
-export default function GetStarted({
+export default async function GetStarted({
   locale = DEFAULT_LOCALE,
   className,
 }: {
@@ -16,6 +17,12 @@ export default function GetStarted({
   className?: string;
 }) {
   const t = makeUI(locale);
+  // IA-53: both cards offered to register an account to whoever clicked,
+  // including a member already signed into one — see signupCtaHref.
+  const [brandHref, creatorHref] = await Promise.all([
+    signupCtaHref("brand"),
+    signupCtaHref("creator"),
+  ]);
   return (
     <Section id="get-started" className={className}>
       <Container>
@@ -38,10 +45,10 @@ export default function GetStarted({
               </p>
               <Button asChild variant="primary" size="md">
                 {/* IA-48 §1: this card is the brand half of "register on the
-                    platform", so it goes to the sign-up form, not the catalog.
-                    ?role=brand is what the picker defaults to anyway — spelled
-                    out so the link says which half it opens. */}
-                <Link href="/register?role=brand">{t("btn.createAccount")}</Link>
+                    platform", so a visitor goes to the sign-up form, not the
+                    catalog — ?role=brand preselects that half of the picker.
+                    A signed-in member goes to their cabinet instead (IA-53). */}
+                <Link href={brandHref}>{t("btn.createAccount")}</Link>
               </Button>
             </div>
           </Reveal>
@@ -57,9 +64,9 @@ export default function GetStarted({
                 {t("getStarted.forCreatorsBody")}
               </p>
               <Button asChild variant="secondary" size="md">
-                {/* Register has no query-param role preselection (5.9) — plain
-                    /register lands on the account-type picker, defaulted to brand. */}
-                <Link href="/register?role=creator">{t("btn.listProject")}</Link>
+                {/* Same rule as the brand card: sign-up for a visitor, the
+                    submit form for a member who already sells (IA-53). */}
+                <Link href={creatorHref}>{t("btn.listProject")}</Link>
               </Button>
             </div>
           </Reveal>

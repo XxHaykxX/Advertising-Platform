@@ -12,6 +12,7 @@ import { PageHero } from "@/components/ui/page-hero";
 import { DisclosureList, type DisclosureRow } from "@/components/ui/disclosure-list";
 import { TierBadge } from "@/components/creator-guide/tier-badge";
 import { GUIDE_STEPS, GUIDE_TIERS, FILE_REQUIREMENTS, type GuideTier } from "@/lib/creator-guide";
+import { signupCtaHref } from "@/lib/auth/signup-cta";
 import { getLocale } from "@/lib/data/locale";
 import { getCurrency } from "@/lib/data/currency";
 import { getProject } from "@/lib/data/projects";
@@ -69,6 +70,9 @@ export default async function ForCreatorsPage() {
   const locale = await getLocale();
   const currency = await getCurrency();
   const t = makeUI(locale);
+  // IA-53: both "submit a project" buttons on this page pointed at /register,
+  // including for a member who is already signed in and looking at the guide.
+  const submitHref = await signupCtaHref("creator");
   const exampleRow = await prisma.project.findFirst({
     where: { titleHy: EXAMPLE_PROJECT_TITLE, isActive: true, moderationStatus: "APPROVED" },
     select: { id: true },
@@ -86,7 +90,7 @@ export default async function ForCreatorsPage() {
         title={t("forCreators.hero.title")}
         subtitle={t("forCreators.hero.subtitle")}
         locale={locale}
-        primaryCta={{ label: t("forCreators.hero.ctaSubmit"), href: "/register?role=creator" }}
+        primaryCta={{ label: t("forCreators.hero.ctaSubmit"), href: submitHref }}
         secondaryCta={{ label: t("forCreators.hero.ctaPrepare"), href: "#steps" }}
       />
 
@@ -338,7 +342,7 @@ export default async function ForCreatorsPage() {
 
                 <div className="mt-8 flex justify-center">
                   <Button asChild variant="primary" size="md">
-                    <Link href="/register?role=creator">{t("forCreators.finalCta.button")}</Link>
+                    <Link href={submitHref}>{t("forCreators.finalCta.button")}</Link>
                   </Button>
                 </div>
               </div>
