@@ -24,6 +24,7 @@ import {
 import { StickyOfferBar } from "@/components/report/sticky-offer-bar";
 import { ViewPing } from "@/components/report/view-ping";
 import { makeUI } from "@/lib/i18n";
+import { slotsLabelKey } from "@/lib/plural";
 
 export async function generateStaticParams() {
   const ids = await getProjectIds();
@@ -250,7 +251,7 @@ export default async function ReportPage({
           }
           slotsLabel={
             slotsTotal > 0
-              ? t("report.offerBarSlots", { free: slotsFree, total: slotsTotal })
+              ? t(slotsLabelKey(locale, slotsTotal), { free: slotsFree, total: slotsTotal })
               : null
           }
           ctaLabel={t("report.offerBarCta")}

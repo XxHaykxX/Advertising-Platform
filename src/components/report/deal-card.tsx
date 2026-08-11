@@ -15,6 +15,7 @@ import { PresentationDownload } from "@/components/report/presentation-download"
 import { formatFullDate, splitCountries } from "@/lib/data/format";
 import { cn } from "@/lib/utils";
 import { DEFAULT_LOCALE, intlLocale, localizeValue, makeUI, type Locale } from "@/lib/i18n";
+import { slotsLabelKey } from "@/lib/plural";
 
 /** The offer, in the right column of the hero (owner decision 2026-07-29).
  *
@@ -170,7 +171,7 @@ export function DealCard({
           ) : null}
           {slotsTotal > 0 ? (
             <div className={cn("text-xs", fromPrice ? "mt-1" : "mt-2", "text-muted-foreground")}>
-              {t("report.offerBarSlots", { free: slotsFree, total: slotsTotal })}
+              {t(slotsLabelKey(locale, slotsTotal), { free: slotsFree, total: slotsTotal })}
             </div>
           ) : null}
         </div>

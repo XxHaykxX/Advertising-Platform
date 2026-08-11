@@ -28,3 +28,17 @@ export function pluralForm(locale: "hy" | "ru" | "en", n: number): PluralForm {
   const category = rules(locale).select(n);
   return category === "one" || category === "few" ? category : "many";
 }
+
+/** Key for "{free} из {total} размещений свободно" — the noun agrees with
+ *  `total`, so a project with 21 placements read "21 размещений". Shared by
+ *  the report's sticky offer bar and its deal card, which render the same
+ *  sentence from different files. */
+export function slotsLabelKey(
+  locale: "hy" | "ru" | "en",
+  total: number,
+): "report.offerBarSlots" | "report.offerBarSlotsFew" | "report.offerBarSlotsOne" {
+  const form = pluralForm(locale, total);
+  if (form === "one") return "report.offerBarSlotsOne";
+  if (form === "few") return "report.offerBarSlotsFew";
+  return "report.offerBarSlots";
+}

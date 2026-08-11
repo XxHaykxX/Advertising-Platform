@@ -975,9 +975,21 @@ export const UI: Record<string, Dict> = {
   // within reach. Social proof stays limited to free slots — view and
   // application counts are deliberately not shown (owner decision).
   "report.offerBarFrom": { ru: "Размещение от {price}", en: "Placements from {price}", hy: "Տեղադրումը՝ {price}-ից" },
+  // Three ru forms — the noun agrees with {total}, so "15 из 21 размещений"
+  // was wrong on every project whose total ends in 1, 2, 3 or 4.
   "report.offerBarSlots": {
     ru: "{free} из {total} размещений свободно",
     en: "{free} of {total} placements available",
+    hy: "{total}-ից {free} տեղադրում ազատ է",
+  },
+  "report.offerBarSlotsFew": {
+    ru: "{free} из {total} размещения свободно",
+    en: "{free} of {total} placements available",
+    hy: "{total}-ից {free} տեղադրում ազատ է",
+  },
+  "report.offerBarSlotsOne": {
+    ru: "{free} из {total} размещение свободно",
+    en: "{free} of {total} placement available",
     hy: "{total}-ից {free} տեղադրում ազատ է",
   },
   // The one name for the action, used by every apply button on the report:
