@@ -2303,6 +2303,14 @@ export const UI: Record<string, Dict> = {
   "apply.submit": { ru: "Отправить предложение", en: "Send offer", hy: "Ուղարկել առաջարկը" },
   "apply.cancel": { ru: "Отмена", en: "Cancel", hy: "Չեղարկել" },
   "apply.success": { ru: "Предложение отправлено", en: "Offer sent", hy: "Առաջարկն ուղարկվեց" },
+  // Who answers, and where. Without this the brand waits for the project's
+  // creator — who has not been part of this chain since 2026-08-07: an
+  // application is worked end to end by the iGovazd team (/admin/interests).
+  "apply.successWho": {
+    ru: "Заявку принимает команда iGovazd. Ответ придёт в ваш кабинет и на эл. почту.",
+    en: "Your application goes to the iGovazd team. The answer will arrive in your account and by email.",
+    hy: "Հայտն ընդունում է iGovazd-ի թիմը։ Պատասխանը կստանաք ձեր հաշվում և էլ. փոստով։",
+  },
   "apply.error": { ru: "Не удалось отправить предложение. Попробуйте ещё раз.", en: "Could not send the offer. Please try again.", hy: "Չհաջողվեց ուղարկել առաջարկը։ Փորձեք նորից։" },
   "notif.generic.title": { ru: "Уведомление", en: "Notification", hy: "Ծանուցում" },
   "notif.broadcast.title": { ru: "Объявление", en: "Announcement", hy: "Հայտարարություն" },
@@ -2354,7 +2362,11 @@ export const UI: Record<string, Dict> = {
     hy: "Դիտեք կատալոգը և առաջարկ ուղարկեք ձեր բրենդին համապատասխան նախագծերին։",
   },
   "account.brand.interestStatusSent": { ru: "Отправлено", en: "Sent", hy: "Ուղարկված" },
-  "account.brand.interestStatusMutual": { ru: "Взаимный интерес", en: "Mutual interest", hy: "Փոխադարձ հետաքրքրություն" },
+  // Was "Взаимный интерес" / "Mutual interest" — the name the status carried
+  // while MUTUAL meant "the creator expressed interest back". Nobody expresses
+  // anything back: staff accept or decline the application (respondToInterest),
+  // so the pill now says what actually happened.
+  "account.brand.interestStatusMutual": { ru: "Заявка принята", en: "Accepted", hy: "Հայտն ընդունված է" },
   "account.brand.interestStatusDeclined": { ru: "Отклонено", en: "Declined", hy: "Մերժված" },
   "account.brand.interestedOn": { ru: "Интерес проявлен {date}", en: "Interest expressed {date}", hy: "Հետաքրքրությունը հայտնվել է {date}" },
 

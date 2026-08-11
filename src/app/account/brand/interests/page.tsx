@@ -20,10 +20,11 @@ const STATUS_PILL: Record<InterestStatus, string> = {
   DECLINED: "border-danger/30 bg-danger/10 text-danger",
 };
 
-/** "My Interests" — every project this BRAND member has expressed interest
- *  in (#23). MUTUAL is reserved for a future two-sided reveal (the creator
- *  also expressing interest back) — nothing currently sets it, every row
- *  starts and stays SENT (TODO, see #23 report). */
+/** "My Interests" — every project this BRAND member has applied to (#23).
+ *  MUTUAL/DECLINED are set by respondToInterest, and since 2026-08-07 the one
+ *  who sets them is staff, not the project's creator: the answer block below
+ *  is "the platform replied", which is why it says "Ответ площадки" and the
+ *  accepted pill no longer talks about a mutual interest. */
 export default async function BrandInterestsPage() {
   const user = await requireMember();
   if (!canBuy(user)) redirect("/account");

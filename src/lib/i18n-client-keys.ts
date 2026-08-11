@@ -109,6 +109,7 @@ export const CLIENT_KEYS: readonly string[] = [
   "apply.replaceWarning",
   "apply.submit",
   "apply.success",
+  "apply.successWho",
   "apply.tierNone",
   "apply.tierSoldOut",
   "apply.title",

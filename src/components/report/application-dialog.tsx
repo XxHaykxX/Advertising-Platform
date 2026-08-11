@@ -210,6 +210,7 @@ export function ApplicationDialog({
         {sent ? (
           <>
             <p className="mt-4 text-sm text-foreground">{t("apply.success")}</p>
+            <p className="mt-2 text-sm text-muted-foreground">{t("apply.successWho")}</p>
             <div className="mt-6 flex justify-end">
               <Button type="button" variant="primary" onClick={onClose}>
                 {t("apply.cancel")}
