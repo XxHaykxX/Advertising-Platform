@@ -179,7 +179,7 @@ can be read on its own.
     with a known password on whatever machine ran it, and it was pointed at a port that
     another application answers on — so it had been quietly checking somebody else's app
     and failing four of its own checks on a refused login. Both of the defects fixed in
-    items 5 and 31 were found by putting it right.
+    items 5 and 33 were found by putting it right.
 40. Page scrolling stopped three separate pieces of code competing for the same frame.
 41. Interface wording was corrected in four rounds by the platform's own translator,
     straight from the editor in the admin panel — 19 entries across Armenian, Russian and
