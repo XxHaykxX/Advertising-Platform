@@ -73,7 +73,7 @@ test.describe("brand — sends an offer (V8)", () => {
 
     // Pick whatever project the catalog offers first — the seed set differs
     // between machines, so no id is hard-coded.
-    await page.goto("/account/brand/browse");
+    await page.goto("/catalog");
     const firstReport = page.locator('a[href^="/reports/"]').first();
     await expect(firstReport).toBeVisible({ timeout: 15000 });
     const href = await firstReport.getAttribute("href");
@@ -111,7 +111,7 @@ test.describe("brand — sends an offer (V8)", () => {
     await page.getByRole("button", { name: "Գրանցվել", exact: true }).click();
     await page.waitForURL((u) => u.pathname === "/account/brand", { timeout: 20000 });
 
-    await page.goto("/account/brand/browse");
+    await page.goto("/catalog");
     const firstReport = page.locator('a[href^="/reports/"]').first();
     await expect(firstReport).toBeVisible({ timeout: 15000 });
     await page.goto((await firstReport.getAttribute("href"))!);
@@ -131,7 +131,7 @@ test.describe("brand — sends an offer (V8)", () => {
     await page.getByRole("button", { name: "Գրանցվել", exact: true }).click();
     await page.waitForURL((u) => u.pathname === "/account/brand", { timeout: 20000 });
 
-    await page.goto("/account/brand/browse");
+    await page.goto("/catalog");
     const firstReport = page.locator('a[href^="/reports/"]').first();
     await expect(firstReport).toBeVisible({ timeout: 15000 });
     await page.goto((await firstReport.getAttribute("href"))!);

@@ -34,13 +34,20 @@ export function useStaleChunkReload(error: Error): void {
     let last = 0;
     try {
       last = Number(sessionStorage.getItem(KEY)) || 0;
-      // Private-mode Safari throws on write; a failed guard would mean an
-      // unguarded reload loop, so bail out rather than reload blind.
-      sessionStorage.setItem(KEY, String(Date.now()));
     } catch {
       return;
     }
     if (Date.now() - last < RETRY_AFTER_MS) return;
+    try {
+      // Stamped only when a reload actually follows — stamping every error
+      // instead meant someone tapping "Попробовать снова" every few seconds
+      // kept pushing the window forward and never got the one reload that
+      // fixes it. Private-mode Safari throws on write; a failed guard would
+      // mean an unguarded reload loop, so bail out rather than reload blind.
+      sessionStorage.setItem(KEY, String(Date.now()));
+    } catch {
+      return;
+    }
     window.location.reload();
   }, [error]);
 }

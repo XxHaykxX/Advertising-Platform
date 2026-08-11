@@ -26,7 +26,9 @@ export default async function BrandLayout({ children }: { children: ReactNode })
       <div className="flex flex-col gap-8 lg:flex-row">
         <BrandSidebar
           labels={{
+            dashboard: t("account.title"),
             browse: t("nav.browseProjects"),
+            favorites: t("account.brand.navFavorites"),
             interests: t("account.brand.navInterests"),
             profile: t("account.brand.navProfile"),
             notifications: t("account.brand.navNotifications"),

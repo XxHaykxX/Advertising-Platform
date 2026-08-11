@@ -8,6 +8,22 @@ import type { NotificationScope } from "@/lib/actions/notifications";
 
 type Status = "loading" | "unsupported" | "prompt" | "enabled" | "denied";
 
+/** "No thanks" has to outlive the component. The prompt is mounted by the
+ *  cabinet layout, so a dismissal held in state came back on the next
+ *  navigation — and the banner is `fixed` bottom-right over the content,
+ *  covering a card on every page for an account that will never enable push.
+ *  Kept per browser and per scope (a staff panel and a member cabinet can be
+ *  open in the same browser under independent cookies). */
+const DISMISS_KEY = "pushPromptDismissed";
+
+function isDismissed(scope: string): boolean {
+  try {
+    return localStorage.getItem(`${DISMISS_KEY}:${scope}`) === "1";
+  } catch {
+    return false;
+  }
+}
+
 /** Converts the URL-base64 VAPID public key to the Uint8Array the PushManager
  *  wants for applicationServerKey. */
 function urlBase64ToUint8Array(base64: string): Uint8Array {
@@ -43,11 +59,27 @@ export function PushSubscribe({
   const t = useUI(locale);
   const [status, setStatus] = useState<Status>("loading");
   const [busy, setBusy] = useState(false);
+  // Not a lazy initializer: this component is server-rendered first (it's
+  // mounted in a layout), and localStorage doesn't exist there.
   const [dismissed, setDismissed] = useState(false);
+
+  function dismiss() {
+    setDismissed(true);
+    try {
+      localStorage.setItem(`${DISMISS_KEY}:${scope}`, "1");
+    } catch {
+      // Private mode / storage disabled — dismissing for this page is still
+      // better than ignoring the click.
+    }
+  }
 
   useEffect(() => {
     let alive = true;
     async function init() {
+      if (isDismissed(scope)) {
+        if (alive) setDismissed(true);
+        return;
+      }
       const supported =
         typeof window !== "undefined" &&
         "serviceWorker" in navigator &&
@@ -135,7 +167,7 @@ export function PushSubscribe({
         </div>
         <button
           type="button"
-          onClick={() => setDismissed(true)}
+          onClick={dismiss}
           aria-label={t("ui.close")}
           className="shrink-0 rounded-lg p-2 text-muted-foreground transition-colors hover:text-foreground"
         >
@@ -167,7 +199,7 @@ export function PushSubscribe({
       </button>
       <button
         type="button"
-        onClick={() => setDismissed(true)}
+        onClick={dismiss}
         aria-label={t("ui.close")}
         className="grid h-7 w-7 shrink-0 place-items-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
       >

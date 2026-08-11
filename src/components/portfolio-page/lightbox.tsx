@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, Film, X } from "lucide-react";
 import { DEFAULT_LOCALE, useUI, type Locale } from "@/lib/i18n-client";
+import { lockBodyScroll } from "@/lib/body-scroll-lock";
 import type { PortfolioDTO } from "@/lib/types";
 import { useMetricLabeler, parseMetrics } from "./metrics";
 
@@ -33,7 +34,10 @@ export function CaseLightbox({
 
   useEffect(() => {
     if (!active || activeIndex === null) return;
-    document.body.style.overflow = "hidden";
+    // Shared counter (body-scroll-lock.ts). This used to restore `""` on
+    // close no matter what the page had before, which unlocked it under
+    // anything else that was still open.
+    const releaseScroll = lockBodyScroll();
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
       if (e.key === "ArrowRight") onNavigate((activeIndex + 1) % cases.length);
@@ -41,7 +45,7 @@ export function CaseLightbox({
     };
     window.addEventListener("keydown", onKey);
     return () => {
-      document.body.style.overflow = "";
+      releaseScroll();
       window.removeEventListener("keydown", onKey);
     };
   }, [active, activeIndex, cases.length, onClose, onNavigate]);

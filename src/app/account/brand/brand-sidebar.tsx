@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Search, Handshake, User, Bell, LogOut } from "lucide-react";
+import { LayoutDashboard, Search, Heart, Handshake, User, Bell, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoutButton } from "@/components/logout-button";
 import type { Locale } from "@/lib/i18n-client";
@@ -29,7 +29,9 @@ export function BrandSidebar({
   locale,
 }: {
   labels: {
+    dashboard: string;
     browse: string;
+    favorites: string;
     interests: string;
     profile: string;
     notifications: string;
@@ -40,11 +42,19 @@ export function BrandSidebar({
 }) {
   const pathname = usePathname();
 
-  // IA-46: "dashboard" (account.title) and "favorites" moved up into the
-  // header nav next to the wordmark — see Header's BRAND_NAV — and are
-  // deliberately not duplicated here.
+  // 2026-08-12: dashboard and favorites are back here. IA-46 had promoted them
+  // into the header next to the wordmark, which left brand navigation split
+  // across three surfaces — header, avatar dropdown and this sidebar — with
+  // "Кабинет" appearing in two of them and "Избранное" cut off from its
+  // siblings. The creator side has always kept everything in its sidebar
+  // (creator-sidebar.tsx); both sides now follow the same rule.
   const items: NavItem[] = [
-    { href: "/account/brand/browse", label: labels.browse, icon: Search },
+    { href: "/account/brand", label: labels.dashboard, icon: LayoutDashboard, exact: true },
+    // Points at the public catalogue, not the cabinet's own copy: /account/brand/browse
+    // was a 238-line reimplementation of the same grid off the same getProjects()
+    // with a smaller filter set, and it now redirects here.
+    { href: "/catalog", label: labels.browse, icon: Search },
+    { href: "/account/brand/favorites", label: labels.favorites, icon: Heart },
     // Audit 4.2: the interests/applications page existed but had no sidebar
     // entry — a brand could only reach it via a dashboard card link.
     { href: "/account/brand/interests", label: labels.interests, icon: Handshake },

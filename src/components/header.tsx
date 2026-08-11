@@ -15,8 +15,8 @@ import { DEFAULT_CURRENCY, type CurrencyCode } from "@/lib/currency";
 import { ADS_ENABLED, PORTFOLIO_ENABLED } from "@/lib/feature-flags";
 import { AD_CHANNELS, adChannelsByGroup, type AdChannelGroup } from "@/lib/ad-channels";
 import { canSell } from "@/lib/auth/capabilities";
-import { showsBrandNav } from "@/lib/nav-mode";
 import { useDismissable } from "@/lib/use-dismissable";
+import { useBodyScrollLock } from "@/lib/body-scroll-lock";
 import { cn } from "@/lib/utils";
 import { logout as staffLogout } from "@/app/admin/actions";
 import {
@@ -133,28 +133,6 @@ function useNav(t: ReturnType<typeof useUI>): NavItem[] {
     { label: t("nav.about"), href: "/about" },
     { label: t("nav.contact"), href: "/contact" },
   ];
-}
-
-/** IA-46: the BRAND cabinet's two most-used pages (dashboard + favorites),
- *  promoted from BrandSidebar into the header itself, next to the wordmark —
- *  mirrors the "Home / My List" placement on kinodaran.am. Brand-only: never
- *  shown to CREATOR members, guests, or staff (see `isBrand` in Header). */
-function useBrandNav(t: ReturnType<typeof useUI>) {
-  return [
-    { label: t("account.title"), href: "/account/brand", exact: true },
-    { label: t("account.brand.navFavorites"), href: "/account/brand/favorites" },
-  ] as const;
-}
-
-/** Shared by the desktop nav below and MobileNavPanel — `exact` items (the
- *  dashboard root) only highlight on a precise match, everything else also
- *  highlights on nested routes, same convention as BrandSidebar's isActive. */
-function isNavItemActive(
-  pathname: string | null,
-  item: { href: string; exact?: boolean }
-): boolean {
-  if (!pathname) return false;
-  return item.exact ? pathname === item.href : pathname.startsWith(item.href);
 }
 
 /** Desktop-only dropdown under "Advertising" (C2/C3) — a plain `<ul>` of
@@ -541,22 +519,15 @@ export function Header({
   const pathname = usePathname();
   const t = useUI(locale);
   const NAV = useNav(t);
-  const BRAND_NAV = useBrandNav(t);
   // Signed-in BRAND/CREATOR: header drops the marketing nav entirely — the
   // cabinet is reachable via the avatar menu / Wordmark instead
   // (see docs/superpowers/specs/2026-07-19-member-header-nav-design.md).
+  // Brands used to be the exception (IA-46 promoted "Кабинет" + "Избранное"
+  // into this bar), which meant "Кабинет" existed both here and in the avatar
+  // dropdown while "Избранное" sat apart from the rest of the cabinet. Both
+  // links live in BrandSidebar again since 2026-08-12; the rule is now the
+  // same for both member sides.
   const isMember = user != null && !STAFF_ROLES.includes(user.role);
-  // IA-46: gets its two most-used cabinet pages promoted into the header nav
-  // slot, replacing the sidebar entries removed in brand-sidebar.tsx. Not
-  // staff, not guests, and — since 2026-08-11 — not a dual member currently
-  // sitting in their creator cabinet: `role` alone can't tell BRAND apart
-  // from a dual member browsing /account/projects, only the path can (same
-  // "mode lives in the URL" rule the account redirects follow). The exclusion
-  // is the *creator cabinet*, not "everywhere but the brand cabinet": gating
-  // on /account/brand also stripped these links on /catalog and every other
-  // public page, where `isMember` already hides the marketing nav — a brand
-  // browsing the catalogue was left with an empty nav bar.
-  const isBrand = showsBrandNav(user, pathname);
   // Every page that opens on the dark cinematic PageHero (plus the landing
   // page, which has its own bespoke hero) — while the transparent header
   // floats over it, switch text to a light-on-dark scheme.
@@ -587,17 +558,27 @@ export function Header({
   // The mobile panel slides down inside the header rather than covering the
   // page, so nothing stopped the page itself from scrolling under it — a
   // touch drag anywhere below the panel moved the content while the menu sat
-  // open on top. Same body lock the catalog's filter sheet uses; on the
-  // marketing side it also pins Lenis, whose scroll range collapses with the
-  // body's.
+  // open on top. Shared counter (body-scroll-lock.ts) rather than a private
+  // save/restore, so it composes with the filter sheet and the dialogs; on
+  // the marketing side it also pins Lenis, whose scroll range collapses with
+  // the body's.
+  useBodyScrollLock(menuOpen);
+
+  // 🔴 Both the toggle button and the panel are `lg:hidden`. Rotating a
+  // tablet to landscape (or widening a desktop window) past 1024px with the
+  // menu open used to hide the panel AND its close button while `menuOpen`
+  // stayed true — leaving the page scroll-locked with no visible control to
+  // release it. Close the menu when the layout switches to the desktop nav,
+  // which is where those links live at that width anyway.
   useEffect(() => {
-    if (!menuOpen) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const sync = () => {
+      if (mq.matches) setMenuOpen(false);
     };
-  }, [menuOpen]);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
 
   return (
     <header
@@ -619,16 +600,9 @@ export function Header({
         <div className="flex h-16 items-center justify-between gap-4">
           <Wordmark onDark={onDark} user={user} />
 
-          {/* Desktop nav. The marketing links sit centred between the wordmark
-              and the right cluster; the BRAND cabinet links instead hug the
-              wordmark (mr-auto), which is where kinodaran.am puts "Home / My
-              List" and where IA-46's mockup drew them. */}
-          <nav
-            className={cn(
-              "hidden items-center lg:flex",
-              isBrand ? "ml-2 mr-auto gap-1" : "gap-8"
-            )}
-          >
+          {/* Desktop nav — marketing links only, centred between the wordmark
+              and the right cluster. Renders empty for signed-in members. */}
+          <nav className="hidden items-center gap-8 lg:flex">
             {!isMember &&
               NAV.map((item) =>
                 item.children ? (
@@ -651,28 +625,6 @@ export function Header({
                   </Link>
                 )
               )}
-            {isBrand &&
-              BRAND_NAV.map((item) => {
-                const active = isNavItemActive(pathname, item);
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={cn(
-                      // h-11 (44px) hit area — the project's touch-target
-                      // convention (see button.tsx's md size / offer-apply-button.tsx).
-                      "flex h-11 items-center rounded-lg px-3 text-sm font-medium transition-colors hover:bg-primary/10 hover:text-primary",
-                      active
-                        ? "bg-primary/10 text-primary"
-                        : onDark
-                          ? "text-white/75"
-                          : "text-muted-foreground"
-                    )}
-                  >
-                    {item.label}
-                  </Link>
-                );
-              })}
           </nav>
 
           {/* Right cluster (desktop) */}
@@ -713,6 +665,19 @@ export function Header({
         </div>
       </Container>
 
+      {/* Scrim under the open menu. The page is scroll-locked while the panel
+          is open but was still fully tappable through it, so a stray tap
+          opened a card or a dialog on a page that couldn't be scrolled. Also
+          gives the expected tap-outside-to-close. Sits before the panel in the
+          DOM so the panel paints over it. */}
+      {menuOpen && (
+        <div
+          onClick={() => setMenuOpen(false)}
+          aria-hidden
+          className="fixed inset-x-0 bottom-0 top-16 bg-black/40 lg:hidden"
+        />
+      )}
+
       {/* Mobile slide-down panel — unmounted (and framer-motion un-fetched)
           until the toggle above is pressed for the first time. */}
       {menuEverOpened && (
@@ -720,7 +685,6 @@ export function Header({
           open={menuOpen}
           nav={NAV}
           isMember={isMember}
-          brandNav={isBrand ? BRAND_NAV : []}
           user={user}
           locale={locale}
           loginHref={loginHref}

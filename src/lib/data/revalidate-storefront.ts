@@ -17,6 +17,5 @@ export function revalidateStorefront() {
   revalidatePath("/");
   revalidatePath("/catalog");
   revalidatePath("/account/brand");
-  revalidatePath("/account/brand/browse");
   revalidatePath("/account/brand/favorites");
 }

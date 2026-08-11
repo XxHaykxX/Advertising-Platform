@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, type RefObject } from "react";
+import { lockBodyScroll } from "@/lib/body-scroll-lock";
 
 /** The three things a hand-rolled modal owes a keyboard or screen-reader user,
  *  none of which come free with `role="dialog"`:
@@ -42,14 +43,9 @@ export function useModalDialog(panelRef: RefObject<HTMLElement | null>, ready = 
     if (!ready) return;
     const panel = panelRef.current;
     const previouslyFocused = document.activeElement as HTMLElement | null;
-    const body = document.body;
-    const prevOverflow = body.style.overflow;
-    const prevPaddingRight = body.style.paddingRight;
-    // Removing the scrollbar shifts the whole page a few pixels to the right;
-    // the same width as padding keeps it still.
-    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-    body.style.overflow = "hidden";
-    if (scrollbarWidth > 0) body.style.paddingRight = `${scrollbarWidth}px`;
+    // Shared counter (body-scroll-lock.ts), which also carries the
+    // scrollbar-width padding compensation this hook used to own.
+    const releaseScroll = lockBodyScroll();
 
     // Re-queried on every Tab rather than captured once: this dialog swaps its
     // whole form for a success message, and a stale list would trap focus on
@@ -86,8 +82,7 @@ export function useModalDialog(panelRef: RefObject<HTMLElement | null>, ready = 
     document.addEventListener("keydown", onKeyDown, true);
     return () => {
       document.removeEventListener("keydown", onKeyDown, true);
-      body.style.overflow = prevOverflow;
-      body.style.paddingRight = prevPaddingRight;
+      releaseScroll();
       // The trigger may itself have been unmounted while the dialog was open.
       if (previouslyFocused?.isConnected) previouslyFocused.focus();
     };

@@ -22,7 +22,10 @@ import { parseWebsiteUrl } from "@/lib/website-url";
 
 function revalidateBrandPaths() {
   revalidatePath("/account/brand");
-  revalidatePath("/account/brand/browse");
+  // The grid a brand applies from is the public catalogue now (the cabinet's
+  // own copy at /account/brand/browse redirects here) — its cards carry the
+  // free-slot counts an interest can move.
+  revalidatePath("/catalog");
   revalidatePath("/account/brand/interests");
   revalidatePath("/account/brand/profile");
 }

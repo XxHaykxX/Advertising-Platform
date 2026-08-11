@@ -32,6 +32,7 @@ import {
   PLACEMENT_TYPE_VALUES,
 } from "@/app/admin/(panel)/projects/form-shared";
 import { cn } from "@/lib/utils";
+import { useBodyScrollLock } from "@/lib/body-scroll-lock";
 import { DEFAULT_LOCALE, intlLocale, useUI, useLocalizer, type Locale } from "@/lib/i18n-client";
 import { DEFAULT_CURRENCY, type CurrencyCode } from "@/lib/currency";
 import { NO_OFFER_KEY } from "@/lib/offer-value";
@@ -571,15 +572,10 @@ export function CatalogView({
     selectedPlacementTypes.length +
     selectedCities.length;
 
-  // Lock the page scroll behind the open filter sheet.
-  useEffect(() => {
-    if (!filtersOpen) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, [filtersOpen]);
+  // Lock the page scroll behind the open filter sheet — through the shared
+  // counter, so closing this sheet doesn't unlock the page while the burger
+  // menu above it is still open (see body-scroll-lock.ts).
+  useBodyScrollLock(filtersOpen);
 
   const hasFilters =
     selectedChannels.length > 0 ||
