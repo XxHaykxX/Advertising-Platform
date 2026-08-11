@@ -23,6 +23,21 @@ async function typePhone(scope: import("@playwright/test").Locator) {
   await field.pressSequentially("91234567", { delay: 20 });
 }
 
+// The apply button is server-rendered, so Playwright can click it a beat before
+// React has attached the handler — the click lands on plain HTML, nothing
+// opens, and the spec fails on a dialog that was never asked for. Retrying the
+// whole click-then-assert is the Playwright-blessed cure for exactly this, and
+// it stays honest: a button that genuinely never opens the popup still fails,
+// just 15 seconds later.
+async function openApplyDialog(page: import("@playwright/test").Page) {
+  const dialog = page.getByRole("dialog");
+  await expect(async () => {
+    await page.getByRole("button", { name: "Ներկայացնել հայտ" }).first().click();
+    await expect(dialog).toBeVisible({ timeout: 2000 });
+  }).toPass({ timeout: 15000 });
+  return dialog;
+}
+
 test.describe("member registration + role routing", () => {
   test("BRAND registers → lands in the brand cabinet (/account/brand)", async ({ page }) => {
     await page.goto("/register"); // default account type = brand
@@ -34,7 +49,11 @@ test.describe("member registration + role routing", () => {
 
   test("CREATOR registers → lands in /account", async ({ page }) => {
     await page.goto("/register");
-    await page.getByRole("button", { name: /Ստեղծագործող/ }).click(); // switch type → creator
+    // The Armenian label for this side is "Արտադրող" (register.typeCreator),
+    // and has been since the account type switcher shipped — the spec was
+    // matching "Ստեղծագործող", which appears nowhere on this page, so it sat
+    // on a 30s locator timeout.
+    await page.getByRole("button", { name: /Արտադրող/ }).click();
     await fillCommon(page, "E2E Creator", uniqueEmail("creator"));
     await page.getByRole("button", { name: "Գրանցվել", exact: true }).click();
     await page.waitForURL((u) => u.pathname === "/account", { timeout: 20000 });
@@ -62,10 +81,7 @@ test.describe("brand — sends an offer (V8)", () => {
 
     // One short CTA everywhere since 2026-07-29 ("report.offerBarCta") — the
     // old "Ցուցաբերել հետաքրքրություն" wording is gone from the page.
-    await page.getByRole("button", { name: "Ներկայացնել հայտ" }).first().click();
-
-    const dialog = page.getByRole("dialog");
-    await expect(dialog).toBeVisible({ timeout: 10000 });
+    const dialog = await openApplyDialog(page);
 
     // The brief (2026-07-26) — down to this one field since 2026-08-05, when
     // the brand's own price, the deal type and the preferred timing left the
@@ -102,9 +118,7 @@ test.describe("brand — sends an offer (V8)", () => {
 
     // One short CTA everywhere since 2026-07-29 ("report.offerBarCta") — the
     // old "Ցուցաբերել հետաքրքրություն" wording is gone from the page.
-    await page.getByRole("button", { name: "Ներկայացնել հայտ" }).first().click();
-    const dialog = page.getByRole("dialog");
-    await expect(dialog).toBeVisible({ timeout: 10000 });
+    const dialog = await openApplyDialog(page);
 
     await typePhone(dialog);
     await dialog.locator("#apply-message").fill("привет");
@@ -124,9 +138,7 @@ test.describe("brand — sends an offer (V8)", () => {
 
     // One short CTA everywhere since 2026-07-29 ("report.offerBarCta") — the
     // old "Ցուցաբերել հետաքրքրություն" wording is gone from the page.
-    await page.getByRole("button", { name: "Ներկայացնել հայտ" }).first().click();
-    const dialog = page.getByRole("dialog");
-    await expect(dialog).toBeVisible({ timeout: 10000 });
+    const dialog = await openApplyDialog(page);
 
     const submit = dialog.getByRole("button", { name: "Ուղարկել առաջարկը" });
     // "What is being placed" became the required field on 2026-07-29 and the

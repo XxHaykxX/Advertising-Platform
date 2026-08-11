@@ -5,6 +5,7 @@ import { makeUI } from "@/lib/i18n";
 import { redirect } from "next/navigation";
 import { googleConfigured } from "@/lib/auth/google";
 import { loadCurrentMember } from "@/lib/auth/require";
+import { safeMemberRedirect } from "@/lib/auth/member-paths";
 import { RegisterForm } from "./register-form";
 
 export default async function RegisterPage({
@@ -19,7 +20,12 @@ export default async function RegisterPage({
   // footer, final CTA — every one of them points here) used to land on the
   // registration form they had already filled in. Guarding the page instead of
   // each link keeps the CTAs to one href.
-  if (await loadCurrentMember()) redirect("/account");
+  //
+  // ?from= is honoured for the same reason as on /login (see that page): the
+  // register action sets the session cookie, Next re-renders this route, and
+  // this gate would otherwise navigate to /account and beat the form's own
+  // redirect — losing the offer the guest was signing up to apply for.
+  if (await loadCurrentMember()) redirect(safeMemberRedirect(from ?? null) ?? "/account");
 
   const locale = await getLocale();
   const t = makeUI(locale);

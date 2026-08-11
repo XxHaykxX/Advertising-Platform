@@ -94,7 +94,15 @@ export function AdSpaceCard({
               <Eye className="h-3.5 w-3.5 shrink-0" />
               {/* The number never travels alone — it means nothing without
                   "per day" next to it. */}
-              <span>
+              {/* suppressHydrationWarning: this is a client component rendered
+                  on the server too, and Intl group separators come from
+                  whichever ICU each side was built with. Node has full data
+                  and prints "45 000" for hy-AM; a Chromium built without it
+                  falls back and prints "45,000" — React then discards the
+                  whole tree over a space. Real browsers ship full ICU, so this
+                  only bites headless/embedded builds (it turned up in the
+                  Playwright suite), but the number is cosmetic either way. */}
+              <span suppressHydrationWarning>
                 {t("adSpacePublic.reach")}{" "}
                 {new Intl.NumberFormat(intlLocale(locale)).format(space.reachPerDay)}
               </span>

@@ -5,6 +5,7 @@ import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
 import { googleConfigured } from "@/lib/auth/google";
 import { loadCurrentMember } from "@/lib/auth/require";
+import { safeMemberRedirect } from "@/lib/auth/member-paths";
 import { LoginForm } from "./login-form";
 
 export default async function LoginPage({
@@ -12,15 +13,25 @@ export default async function LoginPage({
 }: {
   searchParams: Promise<{ status?: string; error?: string; from?: string }>;
 }) {
+  const { status, error, from } = await searchParams;
+
   // Already signed in as a member → the sign-in form is a dead end; /account
   // routes each side to its own cabinet. loadCurrentMember (not
   // loadCurrentUser) on purpose: a staff session in the same browser must
   // still be able to reach this form and open the member cabinet next to it.
-  if (await loadCurrentMember()) redirect("/account");
+  //
+  // ?from= is honoured here, not just by the action (IA-32 + IA-53, 2026-08-12).
+  // Signing in RE-RENDERS this page — the action sets the session cookie, Next
+  // revalidates the route it was called from, and this gate then fires with a
+  // live member session and navigates to /account, beating the form's own
+  // `window.location.assign(state.redirect)`. So a guest who clicked "sign in"
+  // from a project page landed in the cabinet after all, exactly the bug IA-32
+  // closed. Both paths now resolve the same destination, so whichever wins the
+  // race is the right one.
+  if (await loadCurrentMember()) redirect(safeMemberRedirect(from ?? null) ?? "/account");
 
   const locale = await getLocale();
   const t = makeUI(locale);
-  const { status, error, from } = await searchParams;
   const notice =
     error === "google"
       ? t("login.errGoogle")

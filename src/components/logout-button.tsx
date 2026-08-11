@@ -73,7 +73,16 @@ function LogoutConfirmDialog({
   // it closes, and the page behind frozen while it is open — see the hook.
   // The hook doesn't handle Escape, so that stays here.
   const panelRef = useRef<HTMLDivElement>(null);
-  useModalDialog(panelRef);
+  // `mounted` gates the portal below, so the panel does not exist on the first
+  // commit — the hook has to be told when it appears, or it captures a null
+  // panel and the focus trap silently does nothing (IA-33's e2e spec caught
+  // exactly that: the first Tab walked straight out of the dialog).
+  const [mounted, setMounted] = useState(false);
+  // The portal target only exists in the browser, so "are we past hydration?"
+  // can only be answered from an effect.
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- setter is the whole effect body
+  useEffect(() => setMounted(true), []);
+  useModalDialog(panelRef, mounted);
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -90,12 +99,6 @@ function LogoutConfirmDialog({
   // for `position: fixed` descendants, so `fixed inset-0 place-items-center`
   // centred the dialog inside the 15rem sidebar and clipped it against the left
   // edge of the screen instead of centring it on the viewport.
-  const [mounted, setMounted] = useState(false);
-  // The portal target only exists in the browser, so "are we past hydration?"
-  // can only be answered from an effect.
-  // eslint-disable-next-line react-hooks/set-state-in-effect -- setter is the whole effect body
-  useEffect(() => setMounted(true), []);
-
   // Portalling has a sharp edge, and it bit immediately: this dialog is opened
   // from menus that close themselves on a document-level "click outside"
   // (the header's UserMenu, header.tsx — and the same idiom is used by the

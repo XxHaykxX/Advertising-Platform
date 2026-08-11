@@ -29,8 +29,17 @@ const FOCUSABLE = [
   '[tabindex]:not([tabindex="-1"])',
 ].join(",");
 
-export function useModalDialog(panelRef: RefObject<HTMLElement | null>) {
+/** `ready` is for dialogs that portal into <body> and therefore render nothing
+ *  on their first commit (they wait for a `mounted` flag, since document.body
+ *  doesn't exist during SSR). The effect below reads `panelRef.current` once,
+ *  and a ref object never changes identity — so on those dialogs it ran while
+ *  the panel was still null and then never again: no initial focus, and the
+ *  Tab handler bailing out on every key. Passing the same flag as `ready`
+ *  re-runs it the moment the panel is really there. Dialogs that render their
+ *  panel on the first commit can leave it out. */
+export function useModalDialog(panelRef: RefObject<HTMLElement | null>, ready = true) {
   useEffect(() => {
+    if (!ready) return;
     const panel = panelRef.current;
     const previouslyFocused = document.activeElement as HTMLElement | null;
     const body = document.body;
@@ -82,5 +91,5 @@ export function useModalDialog(panelRef: RefObject<HTMLElement | null>) {
       // The trigger may itself have been unmounted while the dialog was open.
       if (previouslyFocused?.isConnected) previouslyFocused.focus();
     };
-  }, [panelRef]);
+  }, [panelRef, ready]);
 }
