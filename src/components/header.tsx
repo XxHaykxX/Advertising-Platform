@@ -570,14 +570,17 @@ export function Header({
   // stayed true — leaving the page scroll-locked with no visible control to
   // release it. Close the menu when the layout switches to the desktop nav,
   // which is where those links live at that width anyway.
+  // A plain resize listener rather than matchMedia("(min-width:1024px)"):
+  // media-query change events don't fire under CDP viewport emulation, so the
+  // matchMedia version couldn't be verified in the browser at all. 1024 is
+  // Tailwind's `lg`, the breakpoint both `lg:hidden` classes use.
   useEffect(() => {
-    const mq = window.matchMedia("(min-width: 1024px)");
-    const sync = () => {
-      if (mq.matches) setMenuOpen(false);
+    const onResize = () => {
+      if (window.innerWidth >= 1024) setMenuOpen(false);
     };
-    sync();
-    mq.addEventListener("change", sync);
-    return () => mq.removeEventListener("change", sync);
+    onResize();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
   }, []);
 
   return (

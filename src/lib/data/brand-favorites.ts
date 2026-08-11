@@ -18,10 +18,16 @@ export type BrandFavoriteDTO = {
     genre: string;
     poster: string;
     format: string;
+    /** Marketing format bucket (FEATURE|SERIES|…); "" when unset. The compare
+     *  table renders this, not `format` — `format` is the free-text production
+     *  field and is empty on most rows. */
+    formatCategory: string;
     // ── #4.7 comparison-table fields — not needed by the plain list, only
     // by favorites/page.tsx's compare table, but simplest to compute once
     // here alongside everything else this file already fetches. ──
-    priceFromAmd: number | null; // cheapest tier's raw AMD price; null = no tiers yet
+    /** Cheapest priced thing the project sells, placements included; null when
+     *  nothing on it carries a price. */
+    priceFromAmd: number | null;
     priceFromDisplay: string; // preformatted in the visitor's currency; "" when priceFromAmd is null
     slotsAvailable: number;
     slotsTotal: number; // 0 => no tier has a total set, i.e. hide the slots column value
@@ -51,7 +57,17 @@ export async function getBrandFavorites(
 ): Promise<BrandFavoriteDTO[]> {
   const rows = await prisma.favorite.findMany({
     where: { brandId },
-    include: { project: { include: { tiers: { select: { priceAmd: true, availableSlots: true, totalSlots: true } } } } },
+    include: {
+      project: {
+        include: {
+          tiers: { select: { priceAmd: true, availableSlots: true, totalSlots: true } },
+          // A project sells two things and the placement is usually the cheaper
+          // one — a "from" figure taken from the sponsorship packages alone sat
+          // above the number the catalogue card was showing for the same row.
+          placements: { select: { priceAmd: true } },
+        },
+      },
+    },
     orderBy: { createdAt: "desc" },
   });
   const rates = await getRates();
@@ -63,8 +79,10 @@ export async function getBrandFavorites(
     // bare null coerces to 0 and would show the whole project as free. A
     // project whose tiers are ALL unpriced has no "from" figure at all, same
     // as one with no tiers.
-    const pricedTiers = tiers.filter((t): t is typeof t & { priceAmd: number } => t.priceAmd != null);
-    const priceFromAmd = pricedTiers.length === 0 ? null : Math.min(...pricedTiers.map((t) => t.priceAmd));
+    const priced = [...tiers, ...r.project.placements]
+      .map((x) => x.priceAmd)
+      .filter((p): p is number => p != null);
+    const priceFromAmd = priced.length === 0 ? null : Math.min(...priced);
     return {
       id: r.id,
       createdAt: r.createdAt.toISOString(),
@@ -74,6 +92,7 @@ export async function getBrandFavorites(
         genre: r.project.genre,
         poster: r.project.poster ?? "",
         format: r.project.format,
+        formatCategory: r.project.formatCategory,
         priceFromAmd,
         priceFromDisplay: priceFromAmd != null ? formatMoney(priceFromAmd, currency, rates, locale) : "",
         slotsAvailable: tiers.reduce((sum, t) => sum + (t.availableSlots ?? 0), 0),

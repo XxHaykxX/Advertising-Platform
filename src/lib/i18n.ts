@@ -514,8 +514,12 @@ export const UI: Record<string, Dict> = {
   // across both. Each line now carries its own count and its own price.
   "card.offerPlacements": { ru: "Продакт-плейсмент", en: "Product placement", hy: "Փրոդակթ փլեյսմենթ" },
   "card.offerSponsorship": { ru: "Спонсорство", en: "Sponsorship", hy: "Հովանավորություն" },
+  // Three forms, because Russian has three: a plain singular/plural switch
+  // printed "2 вариантов" on every card offering two of anything.
   "card.offerOptions": { ru: "{n} вариантов", en: "{n} options", hy: "{n} տարբերակ" },
-  "card.offerOptionsOne": { ru: "1 вариант", en: "1 option", hy: "1 տարբերակ" },
+  "card.offerOptionsFew": { ru: "{n} варианта", en: "{n} options", hy: "{n} տարբերակ" },
+  // {n}, not a hardcoded "1": CLDR's "one" form also covers 21, 31, 101… in ru.
+  "card.offerOptionsOne": { ru: "{n} вариант", en: "{n} option", hy: "{n} տարբերակ" },
   // Shown instead when every placement and package on the project is unpriced.
   // Shared with the ad-space card (2026-08-10) — same caveat as card.priceFrom.
   "card.priceOnRequest": { ru: "Цена по запросу", en: "Price on request", hy: "Գինը՝ հարցումով" },

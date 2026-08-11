@@ -18,6 +18,7 @@ import { daysUntil, formatFullDate, formatReleaseDate, parseStringArray, splitCo
 import { cn } from "@/lib/utils";
 import { DEFAULT_LOCALE, intlLocale, useUI, useLocalizer, type Locale } from "@/lib/i18n-client";
 import { NO_OFFER_KEY } from "@/lib/offer-value";
+import { pluralForm } from "@/lib/plural";
 import type { SiteHeaderUser } from "@/components/header";
 import type { ProjectListDTO } from "@/lib/types";
 
@@ -151,6 +152,24 @@ export function ProjectCard({
   const slotsTakenPct =
     project.slotsTotal > 0 ? Math.min(100, Math.round((slotsTaken / project.slotsTotal) * 100)) : 0;
   const slotsLow = project.slotsTotal > 0 && project.slotsAvailable <= 2;
+
+  /** "N options" under each product line. Russian needs three forms, and the
+   *  card had two — so every project selling two sponsorship packages read
+   *  "2 вариантов". Same three-key convention as catalog.projectCount. */
+  const offerOptions = (n: number): string => {
+    const form = pluralForm(locale, n);
+    // The ternary stays INSIDE t(...): gen-i18n-client-keys.mjs collects keys
+    // by reading t()'s literal arguments, and a key routed through a local
+    // variable first drops out of the client dictionary slice — the card then
+    // renders the raw key.
+    return t(
+      form === "one"
+        ? "card.offerOptionsOne"
+        : form === "few"
+          ? "card.offerOptionsFew"
+          : "card.offerOptions"
+    ).replace("{n}", String(n));
+  };
   // The marketing bucket ("Series", "Feature film") — already in the DTO and
   // already the catalog's Format filter, but never shown on the card until
   // 2026-08-05. Distinct from `project.format` below, which is the runtime
@@ -321,11 +340,7 @@ export function ProjectCard({
             <OfferLine
               icon={<Megaphone className="h-3.5 w-3.5 shrink-0" />}
               label={t("card.offerPlacements")}
-              detail={
-                project.placementsCount === 1
-                  ? t("card.offerOptionsOne")
-                  : t("card.offerOptions").replace("{n}", String(project.placementsCount))
-              }
+              detail={offerOptions(project.placementsCount)}
               price={project.placementsPriceFromDisplay}
               fromLabel={t("card.priceFrom")}
               onRequestLabel={t("card.priceOnRequest")}
@@ -358,9 +373,7 @@ export function ProjectCard({
                     ? t("card.slotsLeft")
                         .replace("{n}", String(project.slotsAvailable))
                         .replace("{total}", String(project.slotsTotal))
-                    : project.tiersCount === 1
-                      ? t("card.offerOptionsOne")
-                      : t("card.offerOptions").replace("{n}", String(project.tiersCount))
+                    : offerOptions(project.tiersCount)
                 }
                 detailClass={slotsLow ? "text-warn" : undefined}
                 price={project.tiersPriceFromDisplay}

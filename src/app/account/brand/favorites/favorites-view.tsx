@@ -119,7 +119,10 @@ export function FavoritesView({ favorites, locale }: { favorites: BrandFavoriteD
                       ) : null}
                     </td>
                     <td className="border-b border-border py-2.5 pr-4 text-foreground">
-                      {p.priceFromDisplay || dash}
+                      {/* "" means every placement and package on this project
+                          is priced on request — the catalogue card says so in
+                          words, and a bare dash here read as missing data. */}
+                      {p.priceFromDisplay || t("card.priceOnRequest")}
                     </td>
                     <td className="border-b border-border py-2.5 pr-4 text-foreground">
                       {p.slotsTotal > 0 ? `${p.slotsAvailable} / ${p.slotsTotal}` : dash}
@@ -136,7 +139,15 @@ export function FavoritesView({ favorites, locale }: { favorites: BrandFavoriteD
                           ? formatFullDate(p.applicationDeadline, intlLocale(locale))
                           : dash}
                     </td>
-                    <td className="border-b border-border py-2.5 text-foreground">{p.format || dash}</td>
+                    {/* formatCategory first, exactly like the catalogue card:
+                        `format` is the free-text production field and is empty
+                        on most rows, so this column printed a dash for projects
+                        whose format the card was showing perfectly well. */}
+                    <td className="border-b border-border py-2.5 text-foreground">
+                      {p.formatCategory
+                        ? localize("formatCategory", p.formatCategory)
+                        : p.format || dash}
+                    </td>
                   </tr>
                 );
               })}

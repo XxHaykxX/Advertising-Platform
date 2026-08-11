@@ -139,6 +139,7 @@ export const CLIENT_KEYS: readonly string[] = [
   "card.deadlineDaysLeft",
   "card.deadlineLastDay",
   "card.offerOptions",
+  "card.offerOptionsFew",
   "card.offerOptionsOne",
   "card.offerPlacements",
   "card.offerSponsorship",
