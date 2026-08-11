@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
+import { useStaleChunkReload } from "@/lib/use-stale-chunk-reload";
 
 /** Route-segment error boundary for the public zone. Without this, any
    render-time failure (e.g. a nested redirect crashing the flight tree)
@@ -20,6 +21,7 @@ export default function Error({
   useEffect(() => {
     console.error(error);
   }, [error]);
+  useStaleChunkReload(error);
 
   return (
     <Container className="flex min-h-screen flex-col items-center justify-center gap-4 text-center">

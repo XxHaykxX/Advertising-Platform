@@ -584,6 +584,21 @@ export function Header({
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // The mobile panel slides down inside the header rather than covering the
+  // page, so nothing stopped the page itself from scrolling under it — a
+  // touch drag anywhere below the panel moved the content while the menu sat
+  // open on top. Same body lock the catalog's filter sheet uses; on the
+  // marketing side it also pins Lenis, whose scroll range collapses with the
+  // body's.
+  useEffect(() => {
+    if (!menuOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [menuOpen]);
+
   return (
     <header
       className={cn(

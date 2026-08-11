@@ -88,7 +88,16 @@ export function MobileNavPanel({
           transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
           className="overflow-hidden border-b border-border bg-background lg:hidden"
         >
-          <Container className="flex flex-col gap-1 py-4">
+          {/* Capped and scrollable on its own: the page behind is locked while
+              the menu is open (header.tsx), so a list taller than the viewport
+              — nine ad channels plus both account rows — has to scroll here or
+              its last items are unreachable. data-lenis-prevent for the same
+              reason the catalog's filter sheet needs it: on the marketing side
+              Lenis owns the wheel. */}
+          <Container
+            data-lenis-prevent
+            className="flex max-h-[calc(100dvh-4rem)] flex-col gap-1 overflow-y-auto py-4"
+          >
             {!isMember &&
               nav.map((item) => (
                 <div key={item.href}>

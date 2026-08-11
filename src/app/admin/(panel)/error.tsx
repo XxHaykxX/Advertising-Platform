@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useStaleChunkReload } from "@/lib/use-stale-chunk-reload";
 
 /** Route-segment error boundary for the admin panel. Without this, any
    render-time failure (e.g. a nested redirect crashing the flight tree)
@@ -19,6 +20,7 @@ export default function AdminError({
   useEffect(() => {
     console.error(error);
   }, [error]);
+  useStaleChunkReload(error);
 
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center gap-4 text-center">
