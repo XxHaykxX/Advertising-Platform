@@ -36,6 +36,10 @@ export const UI: Record<string, Dict> = {
   "nav.contact": { ru: "Контакты", en: "Contact", hy: "Կոնտակտներ" },
   "nav.signInUp": { ru: "Войти / Регистрация", en: "Sign In / Up", hy: "Մուտք / Գրանցում" },
   "nav.cabinet": { ru: "Кабинет", en: "Dashboard", hy: "Անձնական էջ" },
+  // Shown only when the browser holds a staff AND a member session (IA-47):
+  // the public header speaks for the staff account, and this is the way back
+  // to the member cabinet that would otherwise be unreachable from here.
+  "nav.memberCabinet": { ru: "Кабинет участника", en: "Member cabinet", hy: "Մասնակցի անձնական էջ" },
   "nav.logout": { ru: "Выйти", en: "Log out", hy: "Դուրս գալ" },
   "nav.browseProjects": { ru: "Смотреть проекты", en: "Browse Projects", hy: "Տեսնել նախագծերը" },
   "nav.openMenu": { ru: "Открыть меню", en: "Open menu", hy: "Բացել ընտրացանկը" },

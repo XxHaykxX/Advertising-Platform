@@ -1,5 +1,6 @@
 import "server-only";
-import { loadCurrentUser, type AuthedUser } from "@/lib/auth/require";
+import { loadCurrentUser, loadCurrentMember, type AuthedUser } from "@/lib/auth/require";
+import { canSell } from "@/lib/auth/capabilities";
 import { prisma } from "@/lib/prisma";
 import type { SiteHeaderUser } from "@/components/header";
 
@@ -42,6 +43,23 @@ export async function getSiteHeaderUser(
     },
   });
 
+  // IA-47, re-tested on prod 11.08: with both cookies in the browser the
+  // header above resolves to the staff account, and the member's own cabinet
+  // links vanish from it — while the member session is still perfectly alive
+  // (/account/brand answers 200 on the same cookie). QA reads the missing
+  // links as "the other session was replaced". Rather than flip the staff-wins
+  // rule (an editor browsing the site should keep seeing their own name), the
+  // menu gets one row pointing back at the session that lost the tie.
+  // loadCurrentMember() is React-cached, so this costs nothing on a page that
+  // already resolved it.
+  const otherMember =
+    authUser.isCreator || authUser.isBrand ? null : await loadCurrentMember();
+  const otherCabinetHref = otherMember
+    ? canSell(otherMember)
+      ? "/account"
+      : "/account/brand"
+    : null;
+
   return {
     name: authUser.name,
     email: authUser.email,
@@ -51,5 +69,6 @@ export async function getSiteHeaderUser(
     isBrand: authUser.isBrand,
     projectCount: dbUser?._count.projects ?? 0,
     interestCount: dbUser?._count.interests ?? 0,
+    otherCabinetHref,
   };
 }

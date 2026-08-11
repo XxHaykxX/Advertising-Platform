@@ -4,7 +4,7 @@ import { useTransition } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogIn, LogOut } from "lucide-react";
+import { LogIn, LogOut, UserRound } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { LocaleSwitcher } from "@/components/locale-switcher";
@@ -190,6 +190,19 @@ export function MobileNavPanel({
                     </span>
                   </span>
                 </Link>
+                {/* Same row as UserMenu's (IA-47) — the member session open in
+                    this browser, which the staff-first header would otherwise
+                    hide completely. */}
+                {user.otherCabinetHref ? (
+                  <Link
+                    href={user.otherCabinetHref}
+                    onClick={onNavigate}
+                    className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-foreground transition-colors hover:bg-primary/10"
+                  >
+                    <UserRound className="h-4 w-4 shrink-0" />
+                    {t("nav.memberCabinet")}
+                  </Link>
+                ) : null}
                 <LogoutButton
                   action={logoutAction}
                   locale={locale}
