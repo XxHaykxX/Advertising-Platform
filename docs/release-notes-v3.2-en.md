@@ -105,72 +105,83 @@ can be read on its own.
 23. Offer cards are a size smaller on phones. One card used to fill the whole screen, and
     a project sells up to nine of them; two now fit where one did.
 
+— Getting around —
+24. A brand no longer loses the whole menu when leaving the buyer cabinet. Opening the
+    catalog, a project page or the advertising section left the top bar empty; the two
+    cabinet links now follow you everywhere except the creator side.
+25. The advertising section is reachable from a dropdown in the header, all nine channels
+    at once, and the guide for creators is linked from the footer of every page.
+
 — Applications from brands —
-24. The confirmation screen says who answers. It read "Offer sent" and nothing else, so a
+26. The confirmation screen says who answers. It read "Offer sent" and nothing else, so a
     brand waited for the project's creator — who has not been part of this chain since
     August 7. It now names the iGovazd team as the one who answers and says where the
     answer arrives: in your cabinet and by email.
-25. An accepted application is called accepted. In the brand's cabinet the status read
+27. An accepted application is called accepted. In the brand's cabinet the status read
     "Mutual interest", a name from the time when it meant the creator had expressed
     interest back.
-26. A new application now emails the staff who answer it. Until now it produced an inbox
+28. A new application now emails the staff who answer it. Until now it produced an inbox
     row and a browser notification and nothing else, so a lead arriving overnight waited
     on somebody happening to open the panel. The letter names the project, the brand and
     the offer, and links to the queue; the brand's contact details stay in the panel
     rather than in the mail.
-27. The creator's old application inbox is gone for good. It had been an empty redirect
+29. The creator's old application inbox is gone for good. It had been an empty redirect
     since August 7, kept alive only for notifications written before that day. Those were
     rewritten first, so no old bell entry turns into a dead link.
 
 — Notifications —
-28. If your browser held both a staff session and a member session, the member cabinet
+30. If your browser held both a staff session and a member session, the member cabinet
     showed the staff inbox — someone else's notifications, with "mark all as read" acting
     on them, and admin notification text surfacing on a member's page. Each cabinet now
     reads only its own. Push subscriptions were registering under the wrong account for
     the same reason and are fixed with it.
 
 — Submitting a project —
-29. The form no longer offers differently-named ways out of the same page. The link at the
+31. The form no longer offers differently-named ways out of the same page. The link at the
     top says where it takes you — back to your cabinet — and the buttons say what happens
     to your work: on a new project they save the draft before leaving, and they now really
     do save it rather than relying on the autosave timer. A third exit at the foot of the
     form still said "Cancel" and still dropped the draft; it now matches the others.
 
 — The About page —
-30. The founder cards shipped with invented people and invented biographies. Real names
+32. The founder cards shipped with invented people and invented biographies. Real names
     aren't ready, and placeholder people on a live site read worse than no section at all,
     so the cards are gone and the copy that shared the row with them stands on its own.
     The page's heading also ran far larger than every other section heading on the site
     and now matches them, and the closing block carries one button instead of two.
 
 — Accessibility —
-31. The log-out confirmation keeps the keyboard inside it. Tab used to walk straight out
+33. The log-out confirmation keeps the keyboard inside it. Tab used to walk straight out
     of the dialog into the page behind, which is exactly what a confirmation must not
     allow. Focus now enters the dialog when it opens, stays in it, and returns to the
     button that opened it.
-32. The disabled favourites heart on your own project no longer announces "add to
+34. The disabled favourites heart on your own project no longer announces "add to
     favourites" to a screen reader.
 
 — Staff tools —
-33. The dictionary editor's section list is readable. Over half the platform's interface
+35. The dictionary editor's section list is readable. Over half the platform's interface
     text — 534 of 1002 entries — had no named section and fell back to raw key prefixes,
     entries like `forCreators.field.castPhoto.` sitting in a list of otherwise plain
     names. Every entry now lands in one of 83 human-readable sections, and a new check
     stops an unnamed section from shipping again.
-34. The Members tab of the admin panel spoke Russian inside an otherwise English panel,
+36. The Members tab of the admin panel spoke Russian inside an otherwise English panel,
     because it read the visitor's language instead of the panel's.
-35. The header inside a cabinet shows the cabinet's owner, not whichever session happened
+37. The header inside a cabinet shows the cabinet's owner, not whichever session happened
     to win when a staff account and a member account shared a browser.
 
 — Under the hood —
-36. The code linter reports nothing outstanding for the first time, and its two React
+38. The code linter reports nothing outstanding for the first time, and its two React
     rules now block a new violation instead of adding it to a backlog of forty-odd. Five
     of the findings were real defects rather than style: the editors for cast, milestones
     and offers were reading a counter at the wrong moment, and three background tasks
     were declaring the wrong inputs.
-37. The end-to-end test suite tests this site again. It assumed a test account existed
+39. The end-to-end test suite tests this site again. It assumed a test account existed
     with a known password on whatever machine ran it, and it was pointed at a port that
     another application answers on — so it had been quietly checking somebody else's app
     and failing four of its own checks on a refused login. Both of the defects fixed in
     items 5 and 31 were found by putting it right.
-38. Page scrolling stopped three separate pieces of code competing for the same frame.
+40. Page scrolling stopped three separate pieces of code competing for the same frame.
+41. Interface wording was corrected in four rounds by the platform's own translator,
+    straight from the editor in the admin panel — 19 entries across Armenian, Russian and
+    English.
+42. A security update to one of the platform's image-handling components.
