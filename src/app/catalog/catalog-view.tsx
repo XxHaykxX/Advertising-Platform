@@ -965,6 +965,17 @@ export function CatalogView({
             {sorted.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-border p-16 text-center text-muted-foreground">
                 {t("catalog.noResults")}
+                {/* Filters survive a reload (sessionStorage, IA-24), so someone
+                    coming back later meets an empty catalog with no visible
+                    cause — on mobile the checked boxes sit inside a closed
+                    sheet. The way out belongs next to the dead end. */}
+                {hasFilters ? (
+                  <div className="mt-6">
+                    <Button type="button" variant="secondary" size="sm" onClick={clearAll}>
+                      {t("catalog.clearAll")}
+                    </Button>
+                  </div>
+                ) : null}
               </div>
             ) : view === "grid" ? (
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">

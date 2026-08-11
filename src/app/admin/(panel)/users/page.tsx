@@ -3,7 +3,6 @@ import { Plus } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireSuperadmin } from "@/lib/auth/require";
 import { STAFF_ROLES, type StaffRole } from "@/lib/auth/staff-roles";
-import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
 import type { AccountStatus } from "@prisma/client";
 import { RowActions as StaffRowActions, RoleControl, DeleteAccountButton } from "./user-form";
@@ -23,8 +22,10 @@ const STATUS_PILL: Record<AccountStatus, string> = {
 
 export default async function UsersAdminPage() {
   const me = await requireSuperadmin();
-  const locale = await getLocale();
-  const ui = makeUI(locale);
+  // English like the rest of the panel: these labels come from the site
+  // dictionary, and reading the visitor's locale cookie printed "Одобрен" /
+  // "Заблокировать" in the middle of an English table (QA, 2026-08-11).
+  const ui = makeUI("en");
 
   const [staff, members] = await Promise.all([
     prisma.user.findMany({

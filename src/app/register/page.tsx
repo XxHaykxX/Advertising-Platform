@@ -2,7 +2,9 @@ import Link from "next/link";
 import { Container } from "@/components/ui/container";
 import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
+import { redirect } from "next/navigation";
 import { googleConfigured } from "@/lib/auth/google";
+import { loadCurrentMember } from "@/lib/auth/require";
 import { RegisterForm } from "./register-form";
 
 export default async function RegisterPage({
@@ -13,6 +15,12 @@ export default async function RegisterPage({
   // ?role=creator comes from the "List your project" CTA — anything else falls
   // back to the brand tab, which is the default entry point.
   const { role, from } = await searchParams;
+  // A signed-in member clicking "List your project" (/for-creators hero,
+  // footer, final CTA — every one of them points here) used to land on the
+  // registration form they had already filled in. Guarding the page instead of
+  // each link keeps the CTAs to one href.
+  if (await loadCurrentMember()) redirect("/account");
+
   const locale = await getLocale();
   const t = makeUI(locale);
   const googleEnabled = googleConfigured();

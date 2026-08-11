@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { Container } from "@/components/ui/container";
+import { redirect } from "next/navigation";
 import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
 import { googleConfigured } from "@/lib/auth/google";
+import { loadCurrentMember } from "@/lib/auth/require";
 import { LoginForm } from "./login-form";
 
 export default async function LoginPage({
@@ -10,6 +12,12 @@ export default async function LoginPage({
 }: {
   searchParams: Promise<{ status?: string; error?: string; from?: string }>;
 }) {
+  // Already signed in as a member → the sign-in form is a dead end; /account
+  // routes each side to its own cabinet. loadCurrentMember (not
+  // loadCurrentUser) on purpose: a staff session in the same browser must
+  // still be able to reach this form and open the member cabinet next to it.
+  if (await loadCurrentMember()) redirect("/account");
+
   const locale = await getLocale();
   const t = makeUI(locale);
   const { status, error, from } = await searchParams;
