@@ -67,7 +67,16 @@ export function ReportHero({
               variant="secondary"
               size="sm"
             />
-            <PrintButton label={t("report.downloadPdf")} variant="secondary" size="sm" />
+            {/* Desktop only (audit B6): window.print() on a phone opens a
+                system dialog for a page nobody prints from a phone, and the
+                button was taking a third of the first row a brand sees. Share
+                stays — that one is what a phone is actually for. */}
+            <PrintButton
+              label={t("report.downloadPdf")}
+              variant="secondary"
+              size="sm"
+              className="max-sm:hidden"
+            />
           </div>
         </div>
 
