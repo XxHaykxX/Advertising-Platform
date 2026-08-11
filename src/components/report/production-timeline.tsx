@@ -65,7 +65,10 @@ export function ProductionTimeline({
                 <span
                   key={m.id}
                   className={`ptl-node ptl-node--${state}`}
-                  style={{ gridColumn: i + 1 }}
+                  // --i is the stage's index, read only by the phone layout
+                  // (PTL_CSS), where a node and its card share grid row i+1
+                  // instead of sitting in the same column.
+                  style={{ gridColumn: i + 1, ["--i" as string]: String(i) }}
                   // Read by TimelineScroller to centre the current stage on
                   // load and to work out which dot is lit.
                   data-node-index={i}
@@ -81,7 +84,7 @@ export function ProductionTimeline({
                 <div
                   key={m.id}
                   className={`ptl-card ptl-card--${place} ${filled ? "ptl-card--filled" : ""} ${state === "active" ? "ptl-card--active" : ""}`}
-                  style={{ gridColumn: i + 1 }}
+                  style={{ gridColumn: i + 1, ["--i" as string]: String(i) }}
                 >
                   <p className="ptl-card-name">{m.label}</p>
                   {m.date ? <p className="ptl-card-period">{formatMilestoneDate(m.date)}</p> : null}
@@ -336,6 +339,73 @@ const PTL_CSS = `
 .ptl-dot--done { background: var(--primary); }
 .ptl-dot--active { background: var(--primary); box-shadow: 0 0 8px rgba(79,70,229,0.5); }
 .ptl-dot--upcoming { background: var(--card); border: 2px solid var(--border); }
+/* ── Phones: the timeline stands up ───────────────────────────────────────
+   Ten stages at 240px each is a 2400px rail. On a 375px screen that meant
+   dragging sideways through six and a half screens to read a list — the
+   research behind audit B1 said the same thing: below ~768px a horizontal
+   timeline becomes a vertical one, and only the desktop layout keeps the
+   left-to-right rail. Node i and card i share a grid row, so the pairing
+   survives the flip; the inline grid-column/min-width the component sets for
+   the desktop grid is overridden here, which is what the !important is for. */
+@media (max-width: 640px) {
+  .ptl-scroller {
+    overflow-x: visible;
+    padding: 0.5rem 0.25rem;
+    cursor: default;
+  }
+  /* Nothing scrolls sideways any more, so the affordances for that would be
+     pointing at something that cannot happen. */
+  .ptl-fade, .ptl-dots { display: none; }
+  .ptl-timeline {
+    grid-template-columns: 36px minmax(0, 1fr);
+    grid-template-rows: none;
+    grid-auto-rows: auto;
+    row-gap: 1.1rem;
+    column-gap: 0.9rem;
+    align-items: start;
+    min-width: 0 !important;
+  }
+  .ptl-rail {
+    grid-column: 1 !important;
+    /* Not 1 / -1: -1 is the last EXPLICIT line, and every row here is
+       implicit (grid-auto-rows), so it resolved to a single row and the rail
+       came out 94px long. --nodes is the stage count the component already
+       sets on .ptl-timeline. */
+    grid-row: 1 / calc(var(--nodes) + 1);
+    justify-self: center;
+    /* align-self, not height:100%: the grid sets align-items:start for the
+       cards, which leaves the rail an auto-height box — it drew a stub a dot
+       and a half long instead of running the length of the stage list. */
+    align-self: stretch;
+    width: 6px;
+    height: auto;
+  }
+  .ptl-rail::before {
+    width: 100%;
+    height: var(--progress, 0%);
+    background: linear-gradient(180deg, var(--primary), color-mix(in srgb, var(--primary) 70%, #fff));
+  }
+  .ptl-node {
+    grid-column: 1 !important;
+    grid-row: calc(var(--i) + 1);
+    /* Nudged down to sit level with the card's first line rather than with the
+       top of its border. */
+    margin-top: 0.6rem;
+  }
+  .ptl-card {
+    grid-column: 2 !important;
+    grid-row: calc(var(--i) + 1) !important;
+    justify-self: stretch;
+    max-width: none;
+    text-align: start;
+  }
+  /* Both variants are simply "the card to the right of its dot" here — the
+     above/below zig-zag and its little connector stem are a horizontal idea. */
+  .ptl-card--above { margin-bottom: 0; }
+  .ptl-card--below { margin-top: 0; }
+  .ptl-card::after { display: none; }
+  .ptl-card:hover { transform: none; }
+}
 @media (prefers-reduced-motion: reduce) {
   .ptl-node--active::after { animation: none; }
   .ptl-card { transition: none; }

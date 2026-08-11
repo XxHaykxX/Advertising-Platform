@@ -57,10 +57,15 @@ export function ProductPlacements({
                   </div>
                 ) : null}
 
-                <div className="flex flex-1 flex-col p-7">
+                <div className="flex flex-1 flex-col p-7 max-sm:p-5">
                   {/* Calm regular weight at display size, price as the dominant
-                      figure under it — the same scale as sponsors.tsx. */}
-                  <h3 className="text-2xl font-normal tracking-tight text-foreground">{p.title}</h3>
+                      figure under it — the same scale as sponsors.tsx. One step
+                      down on a phone (2026-08-12): at the desktop scale a single
+                      offer card filled the whole screen, and a project sells up
+                      to nine of them. */}
+                  <h3 className="text-2xl font-normal tracking-tight text-foreground max-sm:text-xl">
+                    {p.title}
+                  </h3>
                   {/* What KIND of integration this is (2026-08-10) — its own
                       chip under the name, deliberately clear of the price
                       below: the two answer different questions, and a kind set
@@ -72,7 +77,7 @@ export function ProductPlacements({
                     </span>
                   ) : null}
                   {/* No price is a deliberate state, not a missing one. */}
-                  <p className="mt-2 text-3xl font-extrabold tracking-tight text-foreground">
+                  <p className="mt-2 text-3xl font-extrabold tracking-tight text-foreground max-sm:text-2xl">
                     {p.priceDisplay ?? (
                       <span className="text-base font-semibold text-foreground/80">
                         {t("report.priceOnRequest")}

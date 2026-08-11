@@ -58,7 +58,7 @@ export function Sponsors({
                   </div>
                 ) : null}
 
-                <div className="flex flex-1 flex-col p-7">
+                <div className="flex flex-1 flex-col p-7 max-sm:p-5">
                   {/* The exclusivity mark gets its own line ABOVE the name, and
                       that line is rendered on every card — `invisible` (not
                       absent) on the ones that aren't exclusive. That is the
@@ -87,13 +87,15 @@ export function Sponsors({
                   </span>
                   {/* Bigger and calmer than before — a regular weight at
                       display size reads as considered, not shouted. */}
-                  <h3 className="text-2xl font-normal tracking-tight text-foreground">
+                  {/* One step down on a phone — see the same note in
+                      product-placements.tsx. */}
+                  <h3 className="text-2xl font-normal tracking-tight text-foreground max-sm:text-xl">
                     {tier.name}
                   </h3>
                   {/* No price is a deliberate state, not a missing one. Price
                       is the dominant figure on the card, and it now has the
                       line to itself. */}
-                  <p className="mt-2 text-3xl font-extrabold tracking-tight text-foreground">
+                  <p className="mt-2 text-3xl font-extrabold tracking-tight text-foreground max-sm:text-2xl">
                     {tier.priceDisplay ?? (
                       <span className="text-base font-semibold text-foreground/80">
                         {t("report.priceOnRequest")}
