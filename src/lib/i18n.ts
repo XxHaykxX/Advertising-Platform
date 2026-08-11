@@ -1449,16 +1449,13 @@ export const UI: Record<string, Dict> = {
     en: "You don't have permission for this action.",
     hy: "Այս գործողության համար իրավունքները բավարար չեն։",
   },
-  "interests.ownerDecides": {
-    ru: "Ответ на заявку даёт владелец проекта.",
-    en: "The project's owner answers this application.",
-    hy: "Հայտին պատասխանում է նախագծի սեփականատերը։",
-  },
-  "interests.errOwnerOnly": {
-    ru: "Ответить на предложение может только владелец проекта.",
-    en: "Only the project's owner can answer this offer.",
-    hy: "Առաջարկին կարող է պատասխանել միայն նախագծի սեփականատերը։",
-  },
+  // "interests.ownerDecides" / "interests.errOwnerOnly" lived here until
+  // 2026-08-11. Both said the project's owner answers an application, which
+  // has been false since 2026-08-07 — staff run the negotiation end to end
+  // (docs/plan-interests-staff-only.md). No code referenced either one, but
+  // the translator still saw them in /admin/i18n and could have translated a
+  // rule that no longer exists. Dropped after checking UiDraft on production
+  // for pending edits under those keys (none).
   "interests.errNotFound": { ru: "Предложение не найдено.", en: "Offer not found.", hy: "Առաջարկը չի գտնվել։" },
   "interests.errNoSlots": {
     ru: "В этом пакете не осталось свободных слотов.",
