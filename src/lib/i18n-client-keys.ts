@@ -248,7 +248,6 @@ export const CLIENT_KEYS: readonly string[] = [
   "nav.closeMenu",
   "nav.contact",
   "nav.logout",
-  "nav.memberCabinet",
   "nav.openMenu",
   "nav.portfolio",
   "nav.sideBrand",

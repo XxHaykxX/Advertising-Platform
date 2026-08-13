@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import dynamic from "next/dynamic";
-import { Check, ChevronDown, LayoutDashboard, LogIn, LogOut, Menu, UserRound, X } from "lucide-react";
+import { Check, ChevronDown, LayoutDashboard, LogIn, LogOut, Menu, X } from "lucide-react";
 import type { Role } from "@prisma/client";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
@@ -48,13 +48,6 @@ export type SiteHeaderUser = {
   // "Бренд · 1 заявка") — only fetched for the side that's actually on.
   projectCount: number;
   interestCount: number;
-  /** Cabinet of the OTHER session open in this browser, or null (IA-47).
-   *  A public page resolves its header from the staff cookie when both are
-   *  present, which is right — an editor browsing the site sees their own
-   *  name — but it also hid every way back to the member cabinet, and a
-   *  member whose session is untouched reads that as "signing in as staff
-   *  logged me out". Set only in that both-cookies case. */
-  otherCabinetHref: string | null;
 };
 
 const STAFF_ROLES: Role[] = ["SUPERADMIN", "PUBLISHER", "MODERATOR", "TRANSLATOR"];
@@ -455,22 +448,6 @@ function UserMenu({
             <LayoutDashboard className="h-4 w-4" />
             {t("nav.cabinet")}
           </Link>
-          {/* The member session open in the same browser (IA-47). Without this
-              row a member who also holds a staff cookie has no way back to
-              their own cabinet from any public page — the header speaks for
-              the staff account, and the side switcher above renders nothing
-              for staff. */}
-          {user.otherCabinetHref ? (
-            <Link
-              href={user.otherCabinetHref}
-              role="menuitem"
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-2 px-4 py-2.5 text-sm text-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-            >
-              <UserRound className="h-4 w-4" />
-              {t("nav.memberCabinet")}
-            </Link>
-          ) : null}
           <LogoutButton
             action={logoutAction}
             locale={locale}

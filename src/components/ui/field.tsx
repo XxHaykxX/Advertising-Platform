@@ -49,6 +49,25 @@ export function FieldError({
   );
 }
 
+/** A whole-form error — a rejected sign-in, an email already taken — as
+ *  opposed to FieldError's "this one field is empty".
+ *
+ *  IA-56: it used to be a filled red box, which reads as a page-level banner
+ *  and hid the fact that the inputs themselves are what's wrong. Now it is the
+ *  same plain red line as a field error, with the (!) inline in front of it;
+ *  the forms that can name the guilty fields also outline them with
+ *  FIELD_ERROR_CLASS. `role="alert"` because unlike a field error nothing
+ *  points at this text via aria-describedby. */
+export function FormError({ message }: { message?: string }) {
+  if (!message) return null;
+  return (
+    <p role="alert" className="flex items-start gap-2 text-sm text-danger">
+      <CircleAlert aria-hidden className="mt-0.5 h-4 w-4 shrink-0" />
+      <span>{message}</span>
+    </p>
+  );
+}
+
 /** The red (!) that sits at the end of an invalid row. Absolutely positioned —
  *  the caller wraps the control in `relative`. `position` shifts it off a
  *  control that already owns its right edge (the password show/hide toggle) or
@@ -118,6 +137,24 @@ export function useRequiredFields(message: string) {
   }
 
   return { errors, check, clear, fieldProps };
+}
+
+/** Keeps a server-side submit error (and the red outlines drawn from it) only
+ *  until the visitor starts fixing the fields.
+ *
+ *  `state` is the action result the error came with: a new one means a new
+ *  submit, which un-dismisses. Compared during render through an explicit
+ *  "seen" state rather than in an effect, so the error and the outlines appear
+ *  in the same commit — an effect would paint one frame of the stale value.
+ *  Call `dismiss()` from the same onInput that clears a required-field error. */
+export function useSubmitError<S>(state: S, error?: string) {
+  const [seen, setSeen] = useState(state);
+  const [dismissed, setDismissed] = useState(false);
+  if (seen !== state) {
+    setSeen(state);
+    setDismissed(false);
+  }
+  return { error: dismissed ? undefined : error, dismiss: () => setDismissed(true) };
 }
 
 /** Moves focus to the first field that failed, so a long form doesn't leave

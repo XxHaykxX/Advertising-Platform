@@ -12,6 +12,7 @@ import {
   FIELD_ERROR_CLASS,
   FieldError,
   FieldErrorIcon,
+  FormError,
   RequiredMark,
   focusFirstError,
   useRequiredFields,
@@ -233,11 +234,7 @@ export function RegisterForm({
         </div>
       </label>
 
-      {state.error && (
-        <p className="rounded-xl border border-primary/40 bg-primary/10 px-4 py-2.5 text-sm text-primary">
-          {state.error}
-        </p>
-      )}
+      <FormError message={state.error} />
 
       <Button type="submit" variant="primary" size="lg" disabled={pending} className="w-full gap-2">
         {pending && <Loader2 className="h-4 w-4 animate-spin" />}

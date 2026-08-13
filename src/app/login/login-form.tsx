@@ -13,9 +13,11 @@ import {
   FIELD_ERROR_CLASS,
   FieldError,
   FieldErrorIcon,
+  FormError,
   RequiredMark,
   focusFirstError,
   useRequiredFields,
+  useSubmitError,
 } from "@/components/ui/field";
 
 const REQUIRED = ["email", "password"] as const;
@@ -39,7 +41,12 @@ export function LoginForm({
 }) {
   const t = useUI(locale);
   const [state, formAction, pending] = useActionState<LoginState, FormData>(login, {});
-  const message = state.error ?? notice;
+  // IA-56: a rejected sign-in blames the pair of fields, so both get outlined
+  // — but only for the action's own error. `notice` comes from a ?status=
+  // redirect (blocked / pending / Google failure) and arrives with the fields
+  // empty, so there is nothing to point at.
+  const { error: authError, dismiss } = useSubmitError(state, state.error);
+  const message = authError ?? notice;
 
   // Controlled (not echoed via server state, unlike the email field above)
   // so a failed submit can clear it below — React's automatic reset of an
@@ -110,9 +117,12 @@ export function LoginForm({
               // action re-renders with the submitted email in `state`, so the
               // reset picks up this defaultValue instead of clearing to "").
               defaultValue={state.email ?? ""}
-              onInput={() => clear("email")}
+              onInput={() => {
+                clear("email");
+                dismiss();
+              }}
               {...fieldProps("email")}
-              className={cn(inputClass, errors.email && FIELD_ERROR_CLASS)}
+              className={cn(inputClass, (errors.email || authError) && FIELD_ERROR_CLASS)}
             />
             {errors.email && <FieldErrorIcon />}
           </div>
@@ -143,9 +153,10 @@ export function LoginForm({
               onChange={(e) => {
                 setPassword(e.target.value);
                 clear("password");
+                dismiss();
               }}
               {...fieldProps("password")}
-              className={cn(inputClass, errors.password && FIELD_ERROR_CLASS)}
+              className={cn(inputClass, (errors.password || authError) && FIELD_ERROR_CLASS)}
             />
             {/* Sits left of the show/hide eye, which owns the right edge. */}
             {errors.password && <FieldErrorIcon position="trailing-control" />}
@@ -154,11 +165,7 @@ export function LoginForm({
         <FieldError id="password-error" message={errors.password} />
       </div>
 
-      {message && (
-        <p className="rounded-xl border border-danger/40 bg-danger/10 px-4 py-2.5 text-sm text-danger">
-          {message}
-        </p>
-      )}
+      <FormError message={message} />
 
       <Button type="submit" variant="primary" size="lg" disabled={pending} className="w-full gap-2">
         {pending && <Loader2 className="h-4 w-4 animate-spin" />}

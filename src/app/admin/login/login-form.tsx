@@ -6,6 +6,11 @@ import { Loader2, Lock } from "lucide-react";
 import { login, type ActionState } from "@/app/admin/actions";
 import { PasswordInput } from "@/components/ui/password-input";
 import { useUI, type Locale } from "@/lib/i18n-client";
+import { cn } from "@/lib/utils";
+import { FIELD_ERROR_CLASS, FormError, useSubmitError } from "@/components/ui/field";
+
+const inputClass =
+  "w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:border-primary/50";
 
 export function LoginForm({
   from,
@@ -27,6 +32,10 @@ export function LoginForm({
   // uncontrolled input skips onChange, leaving PasswordInput's eye toggle
   // stuck enabled on a field that looks empty (IA-4).
   const [password, setPassword] = useState("");
+
+  // IA-56: same treatment as the member form — the rejected pair is outlined,
+  // and the message is a plain red line rather than a filled box.
+  const { error: authError, dismiss } = useSubmitError(state, state.error);
 
   // Navigate on the client with a fresh full request, so the just-set
   // session cookie is carried and the auth gate sees it (see actions.ts).
@@ -65,7 +74,8 @@ export function LoginForm({
           // (falls back to the remembered-email cookie on first render).
           defaultValue={state.email ?? initialEmail}
           placeholder="you@example.com"
-          className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:border-primary/50"
+          onInput={dismiss}
+          className={cn(inputClass, authError && FIELD_ERROR_CLASS)}
         />
       </label>
 
@@ -82,8 +92,11 @@ export function LoginForm({
           autoComplete="current-password"
           placeholder="••••••••"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:border-primary/50"
+          onChange={(e) => {
+            setPassword(e.target.value);
+            dismiss();
+          }}
+          className={cn(inputClass, authError && FIELD_ERROR_CLASS)}
         />
       </label>
 
@@ -97,11 +110,7 @@ export function LoginForm({
         {t("auth.rememberMe")}
       </label>
 
-      {state.error && (
-        <p className="rounded-lg border border-danger/40 bg-danger/10 px-4 py-2.5 text-sm text-danger">
-          {state.error}
-        </p>
-      )}
+      <FormError message={authError} />
 
       <button
         type="submit"

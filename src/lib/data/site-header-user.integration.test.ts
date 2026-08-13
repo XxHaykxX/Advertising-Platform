@@ -1,21 +1,7 @@
-import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { getSiteHeaderUser } from "./site-header-user";
 import type { AuthedUser } from "@/lib/auth/require";
-
-// IA-47 (2026-08-11, commit 8c28d8b) gave getSiteHeaderUser a second job: for a
-// staff row it also looks for a member session, so the menu can offer a way
-// back to the cabinet that lost the staff-wins tie. That reads cookies(), which
-// only exists inside a request — so from here it threw "`cookies` was called
-// outside a request scope" and the staff case went red.
-//
-// Only that one call is stubbed, and only to "no member session": everything
-// this file is actually about — the real function, the real database, the
-// _count select shape — stays real.
-vi.mock("@/lib/auth/require", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/lib/auth/require")>()),
-  loadCurrentMember: async () => null,
-}));
 
 // Integration: hits the local docker MySQL, same setup as the auth files.
 //
