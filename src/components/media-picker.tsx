@@ -1,13 +1,22 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import { Download, Loader2, X } from "lucide-react";
 import { listUploads, uploadImage, type MediaFile } from "@/lib/actions/uploads";
 import { listMemberUploads, uploadMemberImage } from "@/lib/actions/member-uploads";
 import { useUI, type Locale } from "@/lib/i18n-client";
 import { captureVideoPoster, isPosterPath, posterPathFor } from "@/lib/video-poster";
+import { cropAspectForDir } from "@/lib/images/size-hint";
 import { Dropzone, DropzoneEmptyState } from "@/components/ui/dropzone";
+
+// react-easy-crop is ~37 KB and most opens of this dialog only pick an existing
+// file, so it loads on demand — same treatment as in media-field.tsx.
+const MediaCropDialog = dynamic(
+  () => import("@/components/media-crop-dialog").then((m) => m.MediaCropDialog),
+  { ssr: false },
+);
 
 // Reusable image picker modal. Opens a library of existing uploads and lets you
 // either pick one or upload a new file from the computer — the chosen /uploads/…
@@ -129,10 +138,46 @@ export function MediaPicker({
   // Click-to-browse and drag-and-drop both land here — the dropzone below is
   // the dialog's only upload affordance now (audit: "uploading is a button
   // only, there is no drop zone at all").
+  /** Files waiting for their turn in the crop dialog, and the ones already
+   *  framed. A ref rather than state for the results: the queue advances from
+   *  inside the dialog's callbacks and the finished batch is read once, when
+   *  the last file is done — re-rendering on every append would buy nothing. */
+  const [cropQueue, setCropQueue] = useState<File[]>([]);
+  const croppedRef = useRef<File[]>([]);
+  const cropAspect = cropAspectForDir(uploadDir);
+
+  /** Hand the next file to the dialog, or start uploading once none are left.
+   *  Cancelling one file skips that file only — the rest of a dropped batch
+   *  still goes through, which is what "cancel" means when five were dropped
+   *  and one was wrong. */
+  function advanceCrop(rest: File[]) {
+    if (rest.length > 0) {
+      setCropQueue(rest);
+      return;
+    }
+    setCropQueue([]);
+    const batch = croppedRef.current;
+    croppedRef.current = [];
+    if (batch.length) uploadFiles(batch);
+  }
+
   function handleFiles(picked: File[]) {
     if (!picked.length) return;
     setError(null);
     setWarning(null);
+    // Nothing to frame: no crop rule for this folder (the server pads instead
+    // of cutting), or these are videos.
+    const needsCrop =
+      cropAspect !== null && accept !== "video" && picked.some((f) => f.type.startsWith("image/"));
+    if (!needsCrop) {
+      uploadFiles(picked);
+      return;
+    }
+    croppedRef.current = picked.filter((f) => !f.type.startsWith("image/"));
+    setCropQueue(picked.filter((f) => f.type.startsWith("image/")));
+  }
+
+  function uploadFiles(picked: File[]) {
     startTransition(async () => {
       const added: MediaFile[] = [];
       for (const file of picked) {
@@ -184,6 +229,7 @@ export function MediaPicker({
   if (!open) return null;
 
   return (
+    <>
     <div
       role="dialog"
       aria-modal="true"
@@ -334,5 +380,28 @@ export function MediaPicker({
         </div>
       </div>
     </div>
+
+    {/* Outside the backdrop above on purpose: rendered inside it, a click on
+        the crop frame would bubble to that div's onClick and close the picker
+        underneath. */}
+    {cropQueue.length > 0 && cropAspect !== null ? (
+      <MediaCropDialog
+        file={cropQueue[0]}
+        aspect={cropAspect}
+        locale={locale}
+        labels={{
+          title: t("projectForm.offer.crop.title"),
+          zoom: t("projectForm.offer.crop.zoom"),
+          cancel: t("projectForm.offer.crop.cancel"),
+          apply: t("projectForm.offer.crop.apply"),
+        }}
+        onCancel={() => advanceCrop(cropQueue.slice(1))}
+        onDone={(file) => {
+          croppedRef.current.push(file);
+          advanceCrop(cropQueue.slice(1));
+        }}
+      />
+    ) : null}
+    </>
   );
 }
