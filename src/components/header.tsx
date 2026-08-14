@@ -70,7 +70,6 @@ function cabinetHrefFor(user: SiteHeaderUser): string {
 const DARK_HERO_PATHS = new Set([
   "/",
   "/about",
-  "/catalog",
   "/portfolio",
   "/contact",
   "/how-it-works",
@@ -97,17 +96,21 @@ export type NavItem = { label: string; href: string; children?: NavChildGroup[] 
 
 function useNav(t: ReturnType<typeof useUI>): NavItem[] {
   return [
-    { label: t("nav.catalog"), href: "/catalog" },
-    // Hidden behind ADS_ENABLED (src/lib/feature-flags.ts) — the routes 404 too.
+    // /catalog merged into /ads (2026-08-14, stage 1) — the standalone
+    // "Catalog" nav item is gone, /ads (below) is the whole marketplace now.
+    // Which is why the item itself is NOT behind ADS_ENABLED any more: the flag
+    // guards the nine per-channel pages (those still notFound() when it is
+    // off), but /ads is the listing every visitor needs, and gating it would
+    // leave the site with no link to its own catalogue at all.
     // `children` feeds the desktop dropdown (AdsNavDropdown below) and the
     // mobile panel's indented sublist — nine channels, already grouped by
     // adChannelsByGroup(), zero new dictionary keys (adGroup.*/adChannel.*
     // already exist for the /ads pages).
-    ...(ADS_ENABLED
-      ? [
-          {
-            label: t("nav.ads"),
-            href: "/ads",
+    {
+      label: t("nav.ads"),
+      href: "/ads",
+      ...(ADS_ENABLED
+        ? {
             children: adChannelsByGroup().map(({ group, channels }) => ({
               group,
               groupLabel: t(`adGroup.${group}`),
@@ -117,9 +120,9 @@ function useNav(t: ReturnType<typeof useUI>): NavItem[] {
                 href: `/ads/${c.slug}`,
               })),
             })),
-          },
-        ]
-      : []),
+          }
+        : {}),
+    },
     // Hidden behind PORTFOLIO_ENABLED while the owner keeps preparing cases
     // (see src/lib/feature-flags.ts) — the route itself 404s too.
     ...(PORTFOLIO_ENABLED ? [{ label: t("nav.portfolio"), href: "/portfolio" }] : []),
@@ -188,7 +191,10 @@ function AdsNavDropdown({
               onClick={() => setOpen(false)}
               className="block px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-primary/10 hover:text-primary"
             >
-              {t("ads.backToAll")}
+              {/* /catalog merged into /ads (2026-08-14, stage 1) — this row
+                  used to say "All channels" and lead to the tile overview;
+                  /ads is the whole marketplace list now, so it says so. */}
+              {t("ads.allListings")}
             </Link>
           </li>
           {item.children.map((g) => (
@@ -211,18 +217,6 @@ function AdsNavDropdown({
               </ul>
             </li>
           ))}
-          <li className="col-span-2 border-t border-border">
-            <Link
-              href="/catalog"
-              onClick={() => setOpen(false)}
-              className="block px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-            >
-              {/* Not nav.catalog — "Catalogue" is already a sibling item in
-                  this very header, and the same word twice a centimetre apart
-                  reads as a mistake. This row says what the trip is for. */}
-              {t("ads.viewAllInCatalog")}
-            </Link>
-          </li>
         </ul>
       )}
     </div>

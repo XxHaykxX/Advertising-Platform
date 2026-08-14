@@ -181,6 +181,20 @@ model Project {
   studio              String   @default("")
   countries           String   @default("") // "US, UK, …"
   ageRating           String   @default("") // content rating badge on the poster: "16+", "18+", "12+", …
+
+  // ── Event sponsorship (2026-08-14) ──
+  // A project selling sponsorship tiers is an event, and a brand shopping for
+  // one asks "what is in Yerevan in September" — neither question could be
+  // answered before, because a Project carried no city and no event date at
+  // all. First-class columns rather than `attrs` entries: the catalogue sorts
+  // and filters on them and the card shows them. All three empty on a film
+  // that only sells product placement.
+  eventCity           String   @default("") // free text, same reason as AdSpace.city
+  eventDate           DateTime?
+  eventCategory       String   @default("") @db.VarChar(32) // token from AD_CHANNEL_ATTRS.EVENTS
+  // Per-channel attributes, same contract as AdSpace.attrs above — production
+  // stage and exclusivity for placement, attendance and mode for events.
+  attrs               String?  @db.Text
   // Money — admin enters AMD only; the public site converts + formats for
   // display in the visitor's chosen currency (see src/lib/currency).
   // Production budget, the CSV schema's "Budget" (owner decision C.3).
@@ -490,6 +504,16 @@ model AdSpace {
   sizeFormat  String @default("") // "3×6 м", "30 сек", "1080×1920" — the unit differs per channel, so it is text
   reachPerDay Int? // audience or traffic per day; null when the owner has no figure rather than zero
   sides       Int? // billboards and transit sell by side; null for channels where the idea makes no sense
+
+  // ── What this channel, and only this channel, sells on ──
+  // JSON object keyed by the attribute tokens in src/lib/ad-channel-attrs.ts:
+  // a billboard stores structureType/lighting/trafficSide, a radio station
+  // stores stationFormat/daypart/spotLength. One column instead of thirty-odd
+  // sparse ones — the sets barely overlap, so `lighting` would be NULL on
+  // every radio row forever. Same convention as description/gallery above.
+  // Writes go through normalizeAttrs(), which drops anything the directory
+  // does not know; filtering is client-side, so this wants no index.
+  attrs String? @db.Text
 
   // ── When it can be bought. Both nullable: an always-available panel sets
   //    neither, a seasonal one sets both, a "from March" one sets only the

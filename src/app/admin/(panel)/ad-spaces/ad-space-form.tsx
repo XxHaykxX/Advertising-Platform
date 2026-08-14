@@ -9,7 +9,10 @@ import { BulletListEditor } from "@/components/ui/bullet-list-editor";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { ImageUploader } from "@/app/admin/(panel)/projects/image-uploader";
+import { AttrFields } from "@/components/ad-channel-attr-fields";
 import { OFFER_LANGS, type OfferLang } from "@/app/admin/(panel)/projects/form-shared";
+import { attrsFor } from "@/lib/ad-channel-attrs";
+import { WIDE_ASPECT } from "@/lib/images/size-hint";
 import { localizeCity } from "@/lib/cities";
 import { deleteCity } from "@/lib/actions/cities";
 import { useUI, type Locale } from "@/lib/i18n-client";
@@ -198,6 +201,11 @@ export function AdSpaceForm({
   const [offers, setOffers] = useState<AdSpaceOfferRow[]>(initialOffers);
   const [dirty, setDirty] = useState(false);
 
+  // Channel drives which attribute fields show below it (stage 3), so it has
+  // to be controlled — it used to be an uncontrolled <select defaultValue>.
+  const [channel, setChannel] = useState(data.channel);
+  const [attrs, setAttrs] = useState<Record<string, unknown>>(data.attrs);
+
   // ── City (#64) — same "picker over a growable dictionary" mechanic as
   // project-form's Country/Studio, just single-valued (an ad space has one
   // city). MultiSelect stays multi-valued under the hood; onChange below
@@ -283,6 +291,7 @@ export function AdSpaceForm({
           storage on update — this mirror only keeps it visible in edit mode. */}
       <input type="hidden" name="code" value={data.code} />
       <input type="hidden" name="offersRows" value={JSON.stringify(offers)} />
+      <input type="hidden" name="attrs" value={JSON.stringify(attrs)} />
 
       {/* ── Sticky Save bar ── pinned so Save is reachable without scrolling to
           the bottom. The offset differs by side because the chrome above it
@@ -438,6 +447,19 @@ export function AdSpaceForm({
                   replaceLabel={t("media.replace")}
                   removeLabel={t("ui.remove")}
                   dropReplaceLabel={t("media.dropToReplace")}
+                  // Same fix as the project poster/gallery (Ostikanner bug,
+                  // 2026-08-14): let the editor choose the 16:9 crop the
+                  // server resize (lib/images/optimize.ts) applies anyway.
+                  // Reuses the offer still's crop copy — same ratio, same
+                  // dialog string.
+                  cropAspect={WIDE_ASPECT}
+                  cropLabels={{
+                    title: t("projectForm.offer.crop.title"),
+                    zoom: t("projectForm.offer.crop.zoom"),
+                    apply: t("projectForm.offer.crop.apply"),
+                    cancel: t("projectForm.offer.crop.cancel"),
+                    hint: t("projectForm.offer.crop.hint"),
+                  }}
                 />
               </MediaCard>
               <MediaCard heading={t("adSpaceForm.gallery")} hint={t("adSpaceForm.galleryHint")}>
@@ -455,6 +477,14 @@ export function AdSpaceForm({
                   addLabel={t("media.addImage")}
                   dropReplaceLabel={t("media.dropToReplace")}
                   removeLabel={t("ui.remove")}
+                  cropAspect={WIDE_ASPECT}
+                  cropLabels={{
+                    title: t("projectForm.offer.crop.title"),
+                    zoom: t("projectForm.offer.crop.zoom"),
+                    apply: t("projectForm.offer.crop.apply"),
+                    cancel: t("projectForm.offer.crop.cancel"),
+                    hint: t("projectForm.offer.crop.hint"),
+                  }}
                 />
               </MediaCard>
             </div>
@@ -481,7 +511,12 @@ export function AdSpaceForm({
             </h2>
 
             <Field label={t("adSpaceForm.channel")} hint={t("adSpaceForm.channelHint")}>
-              <select name="channel" defaultValue={data.channel} className={inputCls}>
+              <select
+                name="channel"
+                value={channel}
+                onChange={(e) => setChannel(e.target.value)}
+                className={inputCls}
+              >
                 <option value="">{t("adSpaceForm.channelNotSet")}</option>
                 {channels.map((c) => (
                   <option key={c.code} value={c.code}>
@@ -490,6 +525,25 @@ export function AdSpaceForm({
                 ))}
               </select>
             </Field>
+
+            {/* Per-channel attributes (stage 3) — a billboard's surface size,
+                a radio slot's daypart, … Only renders once a channel with a
+                directory entry is picked (AttrFields returns null otherwise). */}
+            {attrsFor(channel).length > 0 ? (
+              <div className="space-y-3 border-t border-border pt-3">
+                <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  {t("adSpaceForm.section.attrs")}
+                </h3>
+                <AttrFields
+                  channelCode={channel}
+                  value={attrs}
+                  onChange={setAttrs}
+                  t={t}
+                  inputCls={inputCls}
+                  labelCls={labelCls}
+                />
+              </div>
+            ) : null}
 
             <Field label={t("adSpaceForm.city")}>
               <MultiSelect

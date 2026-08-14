@@ -6,57 +6,42 @@
  * way to hand that view to a colleague — the address bar said "/catalog" the
  * whole time, and Back never undid a filter either (QA pass, 2026-08-14).
  *
+ * Moved from /catalog into /ads (2026-08-14, stage 1 of the ads/catalog
+ * merge) — the module itself didn't change, only where it lives. Generalized
+ * from a fixed seven-field CatalogFilters to a facet-keyed record (stage 2)
+ * — FACET_KEYS (facets.ts) is the one list of query param names now, so a
+ * facet added there needs no matching edit here.
+ *
  * Kept as plain functions so both directions are testable without a DOM.
  */
 
+import { FACET_KEYS } from "@/lib/catalog/facets";
+
 export type CatalogFilters = {
-  channels: string[];
-  genres: string[];
-  formats: string[];
-  platforms: string[];
-  countries: string[];
-  placementTypes: string[];
-  cities: string[];
+  /** One entry per facet key (facets.ts) — e.g. facets.genre, facets.ptype. */
+  facets: Record<string, string[]>;
   search: string;
   view: "grid" | "list";
   sortBy: "default" | "newest" | "deadline" | "title";
 };
 
 export const EMPTY_FILTERS: CatalogFilters = {
-  channels: [],
-  genres: [],
-  formats: [],
-  platforms: [],
-  countries: [],
-  placementTypes: [],
-  cities: [],
+  facets: Object.fromEntries(FACET_KEYS.map((key) => [key, []])),
   search: "",
   view: "grid",
   sortBy: "default",
-};
-
-/** Query-string name per list facet. `channel` keeps the name the arrival link
- *  from /ads already uses, so an existing bookmark keeps working. */
-const LIST_PARAMS: Record<string, keyof CatalogFilters> = {
-  channel: "channels",
-  genre: "genres",
-  format: "formats",
-  platform: "platforms",
-  country: "countries",
-  ptype: "placementTypes",
-  city: "cities",
 };
 
 const VIEWS = ["grid", "list"] as const;
 const SORTS = ["default", "newest", "deadline", "title"] as const;
 
 /** Filters → "?genre=Drama,Comedy&q=aram". Defaults are omitted, so an
- *  untouched catalogue keeps a clean "/catalog" in the address bar. */
+ *  untouched catalogue keeps a clean "/ads" in the address bar. */
 export function filtersToQuery(f: CatalogFilters): string {
   const params = new URLSearchParams();
-  for (const [param, key] of Object.entries(LIST_PARAMS)) {
-    const values = f[key] as string[];
-    if (values.length > 0) params.set(param, values.join(","));
+  for (const key of FACET_KEYS) {
+    const values = f.facets[key];
+    if (values && values.length > 0) params.set(key, values.join(","));
   }
   if (f.search.trim()) params.set("q", f.search.trim());
   if (f.view !== "grid") params.set("view", f.view);
@@ -70,17 +55,20 @@ export function filtersToQuery(f: CatalogFilters): string {
  *  back to sessionStorage instead of overwriting it with defaults. */
 export function filtersFromQuery(search: string): Partial<CatalogFilters> | null {
   const params = new URLSearchParams(search);
-  const out: Partial<CatalogFilters> = {};
+  const facets: Record<string, string[]> = {};
 
-  for (const [param, key] of Object.entries(LIST_PARAMS)) {
-    const raw = params.get(param);
+  for (const key of FACET_KEYS) {
+    const raw = params.get(key);
     if (raw === null) continue;
     const values = raw
       .split(",")
       .map((v) => v.trim())
       .filter(Boolean);
-    if (values.length > 0) (out[key] as string[]) = values;
+    if (values.length > 0) facets[key] = values;
   }
+
+  const out: Partial<CatalogFilters> = {};
+  if (Object.keys(facets).length > 0) out.facets = facets;
 
   const q = params.get("q");
   if (q) out.search = q;

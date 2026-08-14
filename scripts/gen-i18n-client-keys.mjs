@@ -49,7 +49,11 @@ const CHECK = process.argv.includes("--check");
 //   - translate.${errorCode} — AI-translate error banner (project-form.tsx,
 //     portfolio-form.tsx)
 //   - faq.q${n}.question / faq.q${n}.answer — FAQ accordion (faq.tsx)
-const EXTRA_PREFIXES = ["translate.", "faq."];
+//   - attr.${key} / attrValue.${key}.${value} — ad-channel attribute filters
+//     and form fields, built via attrLabelKey()/attrValueLabelKey()
+//     (ad-channel-attrs.ts) rather than a t(`...`) template literal, so the
+//     scan above never sees the prefix at the call site.
+const EXTRA_PREFIXES = ["translate.", "faq.", "attr.", "attrValue."];
 
 async function walk(dir, out = []) {
   const entries = await readdir(dir, { withFileTypes: true });

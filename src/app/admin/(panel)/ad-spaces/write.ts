@@ -3,6 +3,7 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { AD_SPACE_CHANNELS } from "@/lib/ad-channels";
 import { canonicalCityToken } from "@/lib/cities";
+import { normalizeAttrs, parseAttrs } from "@/lib/ad-channel-attrs";
 import { makeUI, type Locale } from "@/lib/i18n";
 import {
   formatDateInput,
@@ -60,6 +61,12 @@ export function adSpaceScalars(data: AdSpaceFormValues) {
     availableTo: dateOrNull(data.availableTo),
     image: data.image || null,
     gallery: galleryToJson(data.gallery),
+    // The only gate between a form post and the stored JSON — drops anything
+    // that doesn't belong to this channel or fails its closed list (2026-08-14,
+    // stage 3). Keyed on the channel just saved, not the row's old one: an
+    // editor who switches channel and saves in one go gets that channel's
+    // rules, not the one the space used to be on.
+    attrs: normalizeAttrs(data.channel, data.attrs),
   };
 }
 
@@ -95,6 +102,7 @@ export function toAdSpaceFormInitial(row: {
   image: string | null;
   gallery: string | null;
   isActive: boolean;
+  attrs: string | null;
 }): AdSpaceFormValues {
   return {
     code: row.code,
@@ -117,6 +125,7 @@ export function toAdSpaceFormInitial(row: {
     image: row.image ?? "",
     gallery: parseGalleryInput(row.gallery),
     isActive: row.isActive,
+    attrs: parseAttrs(row.attrs),
   };
 }
 

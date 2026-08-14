@@ -15,7 +15,8 @@ import { revalidatePath } from "next/cache";
  *  audit finding about exports from "use server" files. */
 export function revalidateStorefront() {
   revalidatePath("/");
-  revalidatePath("/catalog");
+  // /catalog merged into /ads on 2026-08-14.
+  revalidatePath("/ads");
   revalidatePath("/account/brand");
   revalidatePath("/account/brand/favorites");
 }

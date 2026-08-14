@@ -1,11 +1,13 @@
 import { describe, it, expect } from "vitest";
 import {
   adSpacePublishBlockers,
+  buildAdSpaceData,
   nextAdSpaceCode,
   parseAdSpaceOfferRows,
   validateAdSpace,
   EMPTY_AD_SPACE,
 } from "./form-shared";
+import { adSpaceScalars } from "./write";
 
 // The translator the actions pass in — here it just echoes the key, which is
 // what makes "which message" assertable without loading the dictionary.
@@ -83,5 +85,46 @@ describe("parseAdSpaceOfferRows", () => {
     const f = new FormData();
     f.set("offersRows", "{not json");
     expect(parseAdSpaceOfferRows(f)).toEqual([]);
+  });
+});
+
+describe("attrs: FormData -> buildAdSpaceData -> adSpaceScalars (the normalizeAttrs gate)", () => {
+  function fd(channel: string, attrs: unknown) {
+    const f = new FormData();
+    f.set("channel", channel);
+    f.set("titleHy", "Վահանակ");
+    f.set("attrs", JSON.stringify(attrs));
+    return f;
+  }
+
+  it("keeps a value in the channel's closed list, drops one outside it, drops an attribute the channel doesn't own", () => {
+    const data = buildAdSpaceData(
+      fd("BILLBOARD", {
+        surfaceKind: "DIGITAL", // valid BILLBOARD value
+        lighting: "not a color", // not "true"/true/"on" -> dropped by normalizeAttrs' boolean case
+        stationFormat: "POP", // a RADIO attribute — BILLBOARD doesn't carry this key at all
+      }),
+    );
+    // buildAdSpaceData itself is trust-free (same as every other field here) —
+    // the raw record round-trips untouched until the write boundary.
+    expect(data.attrs).toEqual({
+      surfaceKind: "DIGITAL",
+      lighting: "not a color",
+      stationFormat: "POP",
+    });
+
+    const stored = JSON.parse(adSpaceScalars(data).attrs ?? "{}");
+    expect(stored).toEqual({ surfaceKind: "DIGITAL" });
+  });
+
+  it("passes free text through for an open-list attribute (district)", () => {
+    const data = buildAdSpaceData(fd("BILLBOARD", { district: "Kentron" }));
+    const stored = JSON.parse(adSpaceScalars(data).attrs ?? "{}");
+    expect(stored).toEqual({ district: "Kentron" });
+  });
+
+  it("writes null, not the string \"{}\", when nothing survives", () => {
+    const data = buildAdSpaceData(fd("BILLBOARD", { stationFormat: "POP" }));
+    expect(adSpaceScalars(data).attrs).toBeNull();
   });
 });

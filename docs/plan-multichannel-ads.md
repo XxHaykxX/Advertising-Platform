@@ -75,7 +75,7 @@
 | `src/app/admin/(panel)/projects/form-shared.ts` | `FORMAT_CATEGORY_VALUES` + `deriveFormatCategory()` — образец «закрытый список живёт TS-константой, показывается через `localizeValue`». |
 | `src/lib/auth/member-paths.ts` | `MEMBER_ALLOWED_PUBLIC_PREFIXES`. Новый публичный путь обязан быть здесь, иначе участника выкинет в кабинет. |
 | `src/components/header.tsx` | `useNav()` (пункты меню) и `DARK_HERO_PATHS` (страницы с тёмным `PageHero`). |
-| `src/app/catalog/catalog-view.tsx` | Фасеты фильтров строятся из данных, не из констант — тот же приём для новых фильтров. |
+| `src/app/catalog/catalog-view.tsx` (14.08.2026: `/catalog` слился с `/ads`, файла больше нет — приём унаследовал `src/lib/catalog/facets.ts`, см. `docs/ad-channel-filters.md`) | Фасеты фильтров строятся из данных, не из констант — тот же приём для новых фильтров. |
 | Модерация проектов (`ModerationStatus`, очередь в админке) | Та же схема для `AdSpace`. |
 
 ## Этап 1 — подтипы плейсмента

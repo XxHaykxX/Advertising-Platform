@@ -2,6 +2,7 @@
 
 import { forwardRef, useImperativeHandle, useRef, useState } from "react";
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import { ImageIcon, Plus, Trash2 } from "lucide-react";
 import {
   DndContext,
@@ -31,6 +32,13 @@ import { UploadProgress } from "@/components/ui/upload-progress";
 import { holdProgress, uploadViaXhr } from "@/lib/upload-xhr";
 import type { Locale } from "@/lib/i18n-client";
 import { imageSizeHint } from "@/lib/images/size-hint";
+
+/** Same lazy-load reasoning as media-field.tsx: react-easy-crop only ships to
+ *  a page that actually crops. */
+const MediaCropDialog = dynamic(
+  () => import("@/components/media-crop-dialog").then((m) => m.MediaCropDialog),
+  { ssr: false },
+);
 
 /** Mirrors MAX_BYTES in lib/uploads-store.ts. Checked before the round trip:
  *  past the framework body limit the request is cut off mid-flight and the
@@ -71,6 +79,16 @@ export const ImageUploader = forwardRef<ImageUploaderHandle, {
   replaceLabel?: string; // overlay action on the filled single-image preview
   dropReplaceLabel?: string; // shown while a file hovers over a filled field
   addLabel?: string; // caption of the "+" tile that ends the gallery grid
+  /** Opts this field into the crop step (Ostikanner bug, 2026-08-14): a
+   *  freshly dropped/picked file is cropped to this w/h ratio before it goes
+   *  out, so the server's own `cover` resize (lib/images/optimize.ts) has
+   *  nothing left to cut off the top/bottom of. Undefined leaves every
+   *  existing caller unaffected; a file picked from the media library is
+   *  already on the server and skips this, same as media-field.tsx. */
+  cropAspect?: number;
+  /** Crop dialog copy, localized by the caller. Omit to keep MediaCropDialog's
+   *  own English defaults. */
+  cropLabels?: { title: string; zoom: string; cancel: string; apply: string; hint?: string };
 }>(function ImageUploader({
   name,
   dir,
@@ -90,6 +108,8 @@ export const ImageUploader = forwardRef<ImageUploaderHandle, {
   replaceLabel = "Replace",
   dropReplaceLabel = "Drop to replace",
   addLabel = "Add",
+  cropAspect,
+  cropLabels,
 }, ref) {
   const [pickerOpen, setPickerOpen] = useState(false);
   // Drag-and-drop upload straight onto the field. The picker dialog could
@@ -98,6 +118,12 @@ export const ImageUploader = forwardRef<ImageUploaderHandle, {
   const [dropError, setDropError] = useState<string | null>(null);
   const [job, setJob] = useState<UploadJob | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  // Files still waiting their turn in the crop dialog — cropQueue[0] is the
+  // one on screen. Cropped results collect in a ref (a plain event-driven
+  // accumulator, not render state) until the queue drains, then go out as one
+  // batch through the normal upload loop.
+  const [cropQueue, setCropQueue] = useState<File[]>([]);
+  const croppedRef = useRef<File[]>([]);
   const [paths, setPaths] = useState<string[]>(
     initial ? initial.split("\n").map((s) => s.trim()).filter(Boolean) : [],
   );
@@ -132,27 +158,47 @@ export const ImageUploader = forwardRef<ImageUploaderHandle, {
     commit(next);
   }
 
-  /** Files dropped on the zone. Each goes to /api/uploads over XHR rather than
-   *  through the upload server action: the checks and the write on the far end
-   *  are the same code either way, but only a plain request reports how many
-   *  bytes have actually left the browser — which is the whole point of the
-   *  bar the zone shows while this runs. One at a time, so the bar means
-   *  something; a single-image field keeps only the last one, matching what
-   *  picking does. */
+  /** Files dropped on the zone. Size is checked against the ORIGINAL file
+   *  here — before any crop UI opens — so an oversized file is rejected
+   *  outright instead of walking the editor through a crop dialog for
+   *  nothing. What's left either goes straight to uploadQueue, or — on a
+   *  `cropAspect` field — into cropQueue to go through the crop dialog first,
+   *  one file at a time (see advanceCrop). */
   async function handleFiles(files: File[]) {
     if (!files.length) return;
     setDropError(null);
 
     const queue = multiple ? files : files.slice(-1);
+    const ok: File[] = [];
+    for (const file of queue) {
+      if (file.size > MAX_IMAGE_MB * 1024 * 1024) setDropError(`${errTooLargeLabel}: ${file.name}`);
+      else ok.push(file);
+    }
+    if (!ok.length) return;
+
+    if (cropAspect) {
+      croppedRef.current = [];
+      setCropQueue(ok);
+      return;
+    }
+
+    await uploadQueue(ok);
+  }
+
+  /** The actual round trip, shared by a plain drop (handleFiles) and by the
+   *  crop dialog's queue (advanceCrop) once every file in it has a cropped
+   *  result. Each goes to /api/uploads over XHR rather than through the
+   *  upload server action: the checks and the write on the far end are the
+   *  same code either way, but only a plain request reports how many bytes
+   *  have actually left the browser — which is the whole point of the bar the
+   *  zone shows while this runs. One at a time, so the bar means something; a
+   *  single-image field keeps only the last one, matching what picking does. */
+  async function uploadQueue(queue: File[]) {
     const controller = new AbortController();
     abortRef.current = controller;
 
     const added: string[] = [];
     for (const [i, file] of queue.entries()) {
-      if (file.size > MAX_IMAGE_MB * 1024 * 1024) {
-        setDropError(`${errTooLargeLabel}: ${file.name}`);
-        continue;
-      }
       setJob({ file, loaded: 0, total: file.size, index: i + 1, count: queue.length });
       const startedAt = Date.now();
 
@@ -185,6 +231,20 @@ export const ImageUploader = forwardRef<ImageUploaderHandle, {
     abortRef.current = null;
     setJob(null);
     if (added.length) commit(multiple ? [...paths, ...added] : [added[added.length - 1]]);
+  }
+
+  /** Moves the crop queue past its current (first) file, whether that file
+   *  was cropped or skipped by cancel — cancelling one file in a batch drops
+   *  only that file, not the rest of the queue. Once the queue is empty, every
+   *  file that made it through goes out as one upload batch. */
+  function advanceCrop() {
+    const rest = cropQueue.slice(1);
+    setCropQueue(rest);
+    if (!rest.length) {
+      const done = croppedRef.current;
+      croppedRef.current = [];
+      if (done.length) void uploadQueue(done);
+    }
   }
 
   useImperativeHandle(ref, () => ({
@@ -285,6 +345,20 @@ export const ImageUploader = forwardRef<ImageUploaderHandle, {
         uploadDir={dir}
         locale={pickerLocale}
       />
+
+      {cropAspect && cropQueue.length ? (
+        <MediaCropDialog
+          file={cropQueue[0]}
+          aspect={cropAspect}
+          locale={pickerLocale}
+          labels={cropLabels}
+          onCancel={advanceCrop}
+          onDone={(cropped) => {
+            croppedRef.current.push(cropped);
+            advanceCrop();
+          }}
+        />
+      ) : null}
 
     </div>
   );

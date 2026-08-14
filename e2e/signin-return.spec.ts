@@ -12,7 +12,7 @@ test.describe("guest — header sign-in return", () => {
   }) => {
     // Don't hardcode a project id — take whatever the catalog offers first,
     // same as guest.spec.ts, so the spec survives a change of seed data.
-    await page.goto("/catalog");
+    await page.goto("/ads");
     const firstReport = page.locator('a[href^="/reports/"]').first();
     await expect(firstReport).toBeVisible();
     const reportPath = new URL(

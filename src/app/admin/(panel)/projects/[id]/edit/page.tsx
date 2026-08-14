@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireContentEditor } from "@/lib/auth/require";
+import { parseAttrs } from "@/lib/ad-channel-attrs";
 import { getPersonDirectory } from "@/lib/data/actors";
 import { pickPersonName } from "@/lib/person-name";
 import { getStreamingSources } from "@/lib/data/streaming-sources";
@@ -105,6 +106,10 @@ export default async function EditProjectPage({
     videoFile: p.videoFile ?? "",
     // Sales deck (IA-44, 2026-08-05) — same "path or empty" contract as poster.
     presentationPdf: p.presentationPdf ?? "",
+    eventCity: p.eventCity,
+    eventDate: formatDateInput(p.eventDate),
+    eventCategory: p.eventCategory,
+    attrs: parseAttrs(p.attrs),
   };
 
   // "What a brand sees" (audit B8) — computed from the SAVED row (`p`), which

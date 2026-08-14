@@ -8,13 +8,14 @@ import { getRates } from "@/lib/currency/rates";
 import { formatPriceFrom } from "@/lib/data/format";
 import { parseJsonList, pickLocale, pickLocaleList } from "@/lib/data/pick-locale";
 import { localizeCity } from "@/lib/cities";
+import { parseAttrs } from "@/lib/ad-channel-attrs";
 
 /* Read side of AdSpace — advertising inventory that lives outside a film
    (stage 3 of docs/plan-multichannel-ads.md). Deliberately the same shape as
    src/lib/data/projects.ts: cached with the same tag family, prices already
    formatted in the visitor's currency on the server, per-locale columns
    resolved through pickLocale. The channel pages hand these straight to a
-   card, exactly as /catalog does with ProjectListDTO.
+   card, exactly as /ads does with ProjectListDTO.
 
    Tagged "ad-spaces" rather than "projects" so approving a billboard doesn't
    throw away the whole catalog's cache, and vice versa. */
@@ -37,6 +38,7 @@ const LIST_SELECT = {
   reachPerDay: true,
   image: true,
   createdAt: true,
+  attrs: true,
   offers: { select: { priceAmd: true } },
 } as const;
 
@@ -54,6 +56,7 @@ type ListRow = {
   reachPerDay: number | null;
   image: string | null;
   createdAt: Date;
+  attrs: string | null;
   offers: { priceAmd: number | null }[];
 };
 
@@ -63,7 +66,9 @@ function joinLocation(city: string, address: string): string {
   return [city, address].filter(Boolean).join(", ");
 }
 
-function toListDTO(
+// Exported for its unit test (ad-spaces.test.ts) — the rest of this module
+// hits the DB, this mapper is the one pure part of it worth testing directly.
+export function toListDTO(
   locale: Locale,
   currency: CurrencyCode,
   rates: Awaited<ReturnType<typeof getRates>>,
@@ -90,6 +95,7 @@ function toListDTO(
     ),
     offersCount: row.offers.length,
     createdAt: row.createdAt.toISOString(),
+    attrs: parseAttrs(row.attrs),
   };
 }
 
@@ -130,7 +136,7 @@ export function getAdSpacesByChannel(
 
 /** Every approved, visible ad space across all channels (2026-08-10) — the
  *  catalog's half of its unified inventory. Public-only, deliberately: unlike
- *  getAdSpacesByChannel this takes no `activeOnly` — /catalog has no admin
+ *  getAdSpacesByChannel this takes no `activeOnly` — /ads has no admin
  *  call site, and exporting a gate-off mode here would just be a trap for the
  *  next caller. Tagged "ad-spaces", same family as the by-channel query, so
  *  approving/editing a space invalidates both without a second write path. */

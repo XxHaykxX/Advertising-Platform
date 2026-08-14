@@ -12,7 +12,7 @@ export function AboutHero({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
       eyebrow={t("about.heroEyebrow")}
       title={t("about.heroTitle")}
       subtitle={t("about.heroSubtitle")}
-      primaryCta={{ label: t("btn.browseProjects"), href: "/catalog" }}
+      primaryCta={{ label: t("btn.browseProjects"), href: "/ads" }}
       secondaryCta={{ label: t("about.registerCta"), href: "/register" }}
     />
   );

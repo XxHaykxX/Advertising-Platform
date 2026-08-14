@@ -31,6 +31,7 @@ import {
 } from "./form-shared";
 import { revalidateStorefront } from "@/lib/data/revalidate-storefront";
 import { safeUploadPath } from "@/lib/uploads-path";
+import { attrsFor, normalizeAttrs } from "@/lib/ad-channel-attrs";
 
 export type ProjectFormValues = {
   title: string;
@@ -101,6 +102,21 @@ export type ProjectFormValues = {
   // ── Video (#10) — shown on the detail/report page ──
   videoEmbedUrl: string; // YouTube/Vimeo URL; "" when unset
   videoFile: string; // uploaded MP4 path ("/uploads/…"); "" when unset
+  // ── EVENTS-only, first-class columns (2026-08-14, stage 3) — see the note
+  // on Project.eventCity/eventDate/eventCategory in schema.prisma for why
+  // these three aren't in `attrs` below. "" / null when this project doesn't
+  // sell EVENTS, same "empty means unset" contract as everything else here.
+  eventCity: string;
+  eventDate: string; // <input type=date> value, "" when unset
+  eventCategory: string; // one of attrsFor("EVENTS")'s eventCategory values, or ""
+  // Per-channel attributes (stage 3) — the PLACEMENT/EVENTS bag. Raw, not yet
+  // run through normalizeAttrs; same "redisplay what the editor typed"
+  // contract as adSpaceForm's identical field — see its comment for why the
+  // channel gate is applied at the write boundary instead of here. A project
+  // can carry both PLACEMENT's and EVENTS' attributes at once (it isn't
+  // pinned to one channel the way an AdSpace row is), so the write boundary
+  // normalizes against the union of both, not a single channel.
+  attrs: Record<string, unknown>;
 };
 
 export type ProjectFormState = {
@@ -148,6 +164,22 @@ function jsonArray<T>(fd: FormData, key: string): T[] {
     return [];
   }
 }
+
+/** Same shape as jsonArray above, for the one field (attrs) that submits a
+ *  JSON object instead of a JSON array — mirrors ad-spaces/form-shared.ts. */
+function jsonObject(fd: FormData, key: string): Record<string, unknown> {
+  try {
+    const o: unknown = JSON.parse(String(fd.get(key) || "{}"));
+    return o !== null && typeof o === "object" && !Array.isArray(o) ? (o as Record<string, unknown>) : {};
+  } catch {
+    return {};
+  }
+}
+
+// eventCategory rides on its own column (Project.eventCategory), not the
+// attrs JSON bag, but its closed list still lives in the same directory as
+// every other attribute's — see ad-channel-attrs.ts.
+const EVENT_CATEGORY_VALUES = attrsFor("EVENTS").find((d) => d.key === "eventCategory")?.values ?? [];
 
 // ── Slots/deadline/platforms form <-> DB conversions ──────────────────────
 // The form works with plain strings (date-input values, comma-separated
@@ -259,6 +291,10 @@ function buildData(fd: FormData): ProjectFormValues {
     cinemas: jsonArray<string>(fd, "cinemas").join(", "),
     videoEmbedUrl: str(fd, "videoEmbedUrl", VARCHAR_MAX),
     videoFile: safeUploadPath(str(fd, "videoFile", VARCHAR_MAX)),
+    eventCity: str(fd, "eventCity", VARCHAR_MAX),
+    eventDate: str(fd, "eventDate"),
+    eventCategory: enumVal(fd, "eventCategory", EVENT_CATEGORY_VALUES, ""),
+    attrs: jsonObject(fd, "attrs"),
   };
 }
 
@@ -804,6 +840,11 @@ export async function createProject(
     cinemas: data.cinemas || null,
     videoEmbedUrl: data.videoEmbedUrl || null,
     videoFile: data.videoFile || null,
+    eventDate: dateOrNull(data.eventDate),
+    // A project can sell PLACEMENT and/or EVENTS at once (see the type
+    // note above) — normalize against the union of both rather than
+    // picking one, so neither channel's attributes get silently dropped.
+    attrs: normalizeAttrs(["PLACEMENT", "EVENTS"], data.attrs),
     // ownerId is always the creating user — never trusted from the form.
     ownerId: user.id,
     // Last editor — same user on create, kept in step on every later save.
@@ -945,6 +986,8 @@ export async function updateProject(
           cinemas: data.cinemas || null,
           videoEmbedUrl: data.videoEmbedUrl || null,
           videoFile: data.videoFile || null,
+          eventDate: dateOrNull(data.eventDate),
+          attrs: normalizeAttrs(["PLACEMENT", "EVENTS"], data.attrs),
           // Last editor, kept in step on every save (not just create).
           updatedById: user.id,
         },
@@ -1063,7 +1106,8 @@ export async function toggleActive(id: number, isActive: boolean) {
 }
 
 // ── Drag-and-drop catalog ordering (T2) ────────────────────────────────────
-// sortOrder drives /catalog (src/lib/data/projects.ts orderBy sortOrder asc).
+// sortOrder drives /ads (src/lib/data/projects.ts orderBy sortOrder asc) —
+// the former /catalog merged into it on 2026-08-14.
 // The admin list is a single global sequence across every project regardless
 // of owner, so this only makes sense from the SUPERADMIN's full-list view — a
 // Publisher only ever sees their own subset (page.tsx's ownerId scoping), and

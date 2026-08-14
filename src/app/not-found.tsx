@@ -29,7 +29,7 @@ export default async function NotFound() {
           <p className="max-w-md text-sm text-muted-foreground">{t("notFound.body")}</p>
           <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
             <Button variant="primary" size="md" asChild>
-              <Link href="/catalog">{t("btn.browseProjects")}</Link>
+              <Link href="/ads">{t("btn.browseProjects")}</Link>
             </Button>
             <Button variant="ghost" size="md" asChild>
               <Link href="/">{t("legal.backToHome")}</Link>

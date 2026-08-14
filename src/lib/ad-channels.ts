@@ -10,9 +10,10 @@
    src/lib/i18n.ts:
      adChannel.<CODE>        — name
      adChannel.<CODE>.desc   — one line, on the /ads card and in the hero
-     adChannel.<CODE>.about  — "what this is", a short paragraph
-     adChannel.<CODE>.buy1|2|3 — "what you can buy here", three bullets
-   Group names live under adGroup.<GROUP>. */
+   Group names live under adGroup.<GROUP>. (The .about paragraph and .buy1-3
+   bullets that used to fill out the channel page's marketing copy were
+   dropped 2026-08-14, stage 4 — the page now leads with real inventory
+   instead.) */
 
 export const AD_CHANNEL_GROUPS = [
   "CONTENT",

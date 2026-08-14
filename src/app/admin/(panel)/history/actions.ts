@@ -26,9 +26,10 @@ function revalidateAfterRestore(entity: string, entityId: number) {
       updateTag("projects");
       revalidatePath("/admin/projects");
       revalidatePath(`/reports/${entityId}`);
-      // The catalog renders its own cached list; without this a restored title
-      // keeps showing the damaged one to visitors for up to five minutes.
-      revalidatePath("/catalog");
+      // /ads renders its own cached list (the former /catalog merged into it
+      // 2026-08-14); without this a restored title keeps showing the damaged
+      // one to visitors for up to five minutes.
+      revalidatePath("/ads");
       break;
     case "AdSpace":
       // updateTag("ad-spaces") + the whole /ads route tree — the same helper

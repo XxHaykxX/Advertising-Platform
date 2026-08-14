@@ -231,7 +231,6 @@ export const UI: Record<string, Dict> = {
   "footer.company": { ru: "Компания", en: "Company", hy: "Ընկերություն" },
   "footer.legal": { ru: "Правовая информация", en: "Legal", hy: "Իրավական տեղեկություններ" },
   "footer.contacts": { ru: "Контакты", en: "Contacts", hy: "Կապ մեզ հետ" },
-  "footer.browseProjects": { ru: "Смотреть проекты", en: "Browse Projects", hy: "Դիտել նախագծերը" },
   "footer.howItWorks": { ru: "Как это работает", en: "How It Works", hy: "Ինչպես է աշխատում" },
   "footer.ads": { ru: "Рекламные каналы", en: "Advertising channels", hy: "Գովազդային ալիքներ" },
   "footer.portfolio": { ru: "Портфолио", en: "Portfolio", hy: "Պորտֆոլիո" },
@@ -1738,6 +1737,23 @@ export const UI: Record<string, Dict> = {
   "projectForm.section.sponsorshipTiers": { ru: "Спонсоры", en: "Sponsors", hy: "Հովանավորներ" },
   "projectForm.section.placements": { ru: "Продакт-плейсмент", en: "Placements", hy: "Փլեյսմենթներ" },
   "projectForm.section.visibility": { ru: "Видимость", en: "Visibility", hy: "Տեսանելիություն" },
+  // Event fields (stage 3) — eventCity/eventDate are first-class Project
+  // columns (schema.prisma), unlike everything under attr.*/attrValue.*
+  // above; eventCategory is a first-class column too but reuses
+  // attr.eventCategory/attrValue.eventCategory.* for its label and closed
+  // list rather than a third near-duplicate key.
+  "projectForm.section.event": { ru: "Событие", en: "Event", hy: "Միջոցառում" },
+  "projectForm.eventCity": { ru: "Город", en: "City", hy: "Քաղաք" },
+  "projectForm.eventDate": { ru: "Дата", en: "Date", hy: "Ամսաթիվ" },
+  // The PLACEMENT/EVENTS attribute fields (production stage, exclusivity,
+  // attendance, …) — same section title as the ad-space form's equivalent
+  // block, reused rather than a near-duplicate wording.
+  "projectForm.section.channelAttrs": { ru: "Характеристики канала", en: "Channel attributes", hy: "Ալիքի բնութագրեր" },
+  // Sub-heading of the second block inside that section. A project is not
+  // pinned to one channel — it can sell an in-story integration and an event
+  // package at once — so both blocks are always shown, and each says which
+  // side it belongs to rather than relying on field names to imply it.
+  "projectForm.section.placementAttrs": { ru: "Продакт-плейсмент", en: "Product placement", hy: "Փրոդաքթ փլեյսմենթ" },
   // IA-44 (2026-08-05): every project starts with the standard three positions,
   // and an existing project can be topped up with whatever it is missing.
   "projectForm.offers.addDefaultSet": {
@@ -2923,19 +2939,15 @@ export const UI: Record<string, Dict> = {
     hy: "Ինը ալիք՝ հինգ խմբում։ Յուրաքանչյուրն ունի իր էջը՝ նկարագրությամբ և հասանելի գույքագրմամբ։",
   },
   "ads.channelCta": { ru: "Подробнее о канале", en: "About this channel", hy: "Ալիքի մասին" },
-  // The catalog is now the actual shopping list (2026-08-10, stage B), and
-  // this channel's own inventory grid became a 6-item teaser that ends here
-  // with the channel pre-selected. Also the last row of the header's ads
-  // dropdown. The /ads overview tiles do NOT use this — they still lead into
-  // the channel's explanatory page, which is the only way into that copy.
-  "ads.viewAllInCatalog": {
-    ru: "Смотреть в каталоге",
-    en: "View in catalog",
-    hy: "Տեսնել կատալոգում",
-  },
   "ads.backToAll": { ru: "Все каналы", en: "All channels", hy: "Բոլոր ալիքները" },
-  "ads.about.title": { ru: "Что это", en: "What this is", hy: "Ի՞նչ է սա" },
-  "ads.buy.title": { ru: "Что можно купить", en: "What you can buy", hy: "Ի՞նչ կարելի է գնել" },
+  // Header dropdown's top row and the channel page's secondary hero CTA
+  // (2026-08-14, stage 1: /catalog merged into /ads) — "all channels" reads
+  // wrong once the target is the whole marketplace list, not a tile grid.
+  "ads.allListings": {
+    ru: "Все объявления",
+    en: "All listings",
+    hy: "Բոլոր հայտարարությունները",
+  },
   "ads.inventory.title": { ru: "Доступный инвентарь", en: "Available inventory", hy: "Հասանելի գույքագրում" },
   "ads.inventory.projectsSubtitle": {
     ru: "Проекты, в которых этот канал открыт для брендов прямо сейчас.",
@@ -3024,52 +3036,12 @@ export const UI: Record<string, Dict> = {
     en: "The brand inside the story — in frame, in the credits or in a character's line.",
     hy: "Բրենդը՝ պատմության ներսում՝ կադրում, տիտրերում կամ հերոսի խոսքում։",
   },
-  "adChannel.PLACEMENT.about": {
-    ru: "Продукт живёт в сюжете, а не в рекламной паузе: зритель видит его в руках любимого героя и не может перемотать. Формат работает и на узнаваемость, и на доверие — бренд получает контекст, который невозможно купить баннером.",
-    en: "The product lives in the plot rather than in an ad break: the audience sees it in the hands of a character they already trust, and cannot skip it. The format builds both awareness and credibility — a context no banner can buy.",
-    hy: "Ապրանքն ապրում է սյուժեի ներսում, ոչ թե գովազդային ընդմիջմանը․ հանդիսատեսը տեսնում է այն սիրելի հերոսի ձեռքում և չի կարող բաց թողնել։ Ձևաչափն աշխատում է և՛ ճանաչելիության, և՛ վստահության վրա՝ բրենդը ստանում է համատեքստ, որը բաններով հնարավոր չէ գնել։",
-  },
-  "adChannel.PLACEMENT.buy1": {
-    ru: "Появление продукта в кадре — герой пользуется им или носит его",
-    en: "The product on screen — a character uses it or wears it",
-    hy: "Ապրանքի հայտնվելը կադրում՝ հերոսն օգտագործում կամ կրում է այն",
-  },
-  "adChannel.PLACEMENT.buy2": {
-    ru: "Логотип в титрах или на конечной карточке",
-    en: "The logo in the credits or on the end card",
-    hy: "Լոգոն տիտրերում կամ ավարտական քարտում",
-  },
-  "adChannel.PLACEMENT.buy3": {
-    ru: "Упоминание бренда в диалоге и нейминг сезона целиком",
-    en: "A verbal mention in dialogue, or naming rights to a whole season",
-    hy: "Բրենդի հիշատակումը երկխոսության մեջ և ամբողջ սեզոնի անվանակոչում",
-  },
 
   "adChannel.EVENTS": { ru: "Спонсорство событий", en: "Event sponsorship", hy: "Միջոցառումների հովանավորություն" },
   "adChannel.EVENTS.desc": {
     ru: "Бренд рядом с премьерой, съёмками или живым событием проекта.",
     en: "The brand alongside a premiere, a shoot or a live project event.",
     hy: "Բրենդը՝ պրեմիերայի, նկարահանումների կամ նախագծի կենդանի միջոցառման կողքին։",
-  },
-  "adChannel.EVENTS.about": {
-    ru: "Спонсорский пакет — это присутствие бренда вокруг проекта: премьера, пресс-показ, съёмочная площадка, публикации команды. Бренд получает не один кадр, а весь шлейф внимания к проекту.",
-    en: "A sponsorship package is the brand's presence around the project: the premiere, the press screening, the set, the team's own publications. The brand gets the whole trail of attention, not a single frame.",
-    hy: "Հովանավորական փաթեթը բրենդի ներկայությունն է նախագծի շուրջ՝ պրեմիերա, մամուլի ցուցադրություն, նկարահանման հրապարակ, թիմի հրապարակումներ։ Բրենդը ստանում է ոչ թե մեկ կադր, այլ նախագծի ողջ ուշադրության հետքը։",
-  },
-  "adChannel.EVENTS.buy1": {
-    ru: "Титульное спонсорство проекта или отдельного события",
-    en: "Title sponsorship of a project or of a single event",
-    hy: "Նախագծի կամ առանձին միջոցառման տիտղոսային հովանավորություն",
-  },
-  "adChannel.EVENTS.buy2": {
-    ru: "Логотип на площадке, в пресс-материалах и на пресс-волле",
-    en: "The logo on site, in press materials and on the press wall",
-    hy: "Լոգոն վայրում, մամուլի նյութերում և մամուլի պատին",
-  },
-  "adChannel.EVENTS.buy3": {
-    ru: "Совместные публикации команды проекта и доступ к премьере",
-    en: "Joint publications from the project team and access to the premiere",
-    hy: "Նախագծի թիմի համատեղ հրապարակումներ և մուտք պրեմիերա",
   },
 
   "adChannel.VIDEO": { ru: "Видеореклама", en: "Video ads", hy: "Վիդեոգովազդ" },
@@ -3078,14 +3050,6 @@ export const UI: Record<string, Dict> = {
     en: "A spot before, inside or after the content on video platforms.",
     hy: "Հոլովակ բովանդակությունից առաջ, ներսում կամ հետո՝ վիդեոհարթակներում։",
   },
-  "adChannel.VIDEO.about": {
-    ru: "Классический видеоформат: pre-roll, mid-roll и post-roll на YouTube и других видеоплощадках, где смотрят армянский контент. Точный охват, понятная стоимость контакта и полная статистика показов.",
-    en: "The classic video format: pre-roll, mid-roll and post-roll on YouTube and the other platforms where Armenian content is watched. Precise reach, a clear cost per contact and full impression stats.",
-    hy: "Դասական վիդեոձևաչափ՝ pre-roll, mid-roll և post-roll YouTube-ում և այլ հարթակներում, որտեղ դիտում են հայկական բովանդակությունը։ Ճշգրիտ հասանելիություն, հասկանալի կոնտակտի արժեք և ցուցադրումների ամբողջական վիճակագրություն։",
-  },
-  "adChannel.VIDEO.buy1": { ru: "Pre-roll и mid-roll в популярных проектах", en: "Pre-roll and mid-roll in popular projects", hy: "Pre-roll և mid-roll հայտնի նախագծերում" },
-  "adChannel.VIDEO.buy2": { ru: "Брендированные заставки и конечные карточки", en: "Branded bumpers and end cards", hy: "Բրենդավորված պաստառներ և ավարտական քարտեր" },
-  "adChannel.VIDEO.buy3": { ru: "Пакеты показов с гарантированным охватом", en: "Impression packages with guaranteed reach", hy: "Ցուցադրումների փաթեթներ՝ երաշխավորված հասանելիությամբ" },
 
   "adChannel.RADIO": { ru: "Радиореклама", en: "Radio ads", hy: "Ռադիոգովազդ" },
   "adChannel.RADIO.desc": {
@@ -3093,14 +3057,6 @@ export const UI: Record<string, Dict> = {
     en: "Audio spots and on-air mentions on Armenian radio stations.",
     hy: "Աուդիոհոլովակներ և հիշատակումներ հայկական ռադիոկայանների եթերում։",
   },
-  "adChannel.RADIO.about": {
-    ru: "Радио остаётся каналом ежедневного контакта: дорога на работу, такси, магазин. Короткий ролик в правильном временном слоте даёт частоту, которой трудно добиться в digital за те же деньги.",
-    en: "Radio is still a daily-contact channel: the commute, the taxi, the shop. A short spot in the right time slot buys a frequency that is hard to match in digital for the same money.",
-    hy: "Ռադիոն մնում է ամենօրյա շփման ալիք՝ ճանապարհ դեպի աշխատանք, տաքսի, խանութ։ Կարճ հոլովակը ճիշտ ժամային հատվածում տալիս է հաճախականություն, որին դժվար է հասնել թվային ալիքներում նույն գումարով։",
-  },
-  "adChannel.RADIO.buy1": { ru: "Аудиоролик 15–30 секунд в выбранных слотах", en: "A 15–30 second audio spot in the slots you pick", hy: "15–30 վայրկյան աուդիոհոլովակ ընտրված հատվածներում" },
-  "adChannel.RADIO.buy2": { ru: "Спонсорство рубрики или программы", en: "Sponsorship of a segment or a show", hy: "Խորագրի կամ հաղորդման հովանավորություն" },
-  "adChannel.RADIO.buy3": { ru: "Живое упоминание ведущим", en: "A live mention by the host", hy: "Հաղորդավարի կենդանի հիշատակում" },
 
   "adChannel.TV": { ru: "Телереклама", en: "TV ads", hy: "Հեռուստագովազդ" },
   "adChannel.TV.desc": {
@@ -3108,14 +3064,6 @@ export const UI: Record<string, Dict> = {
     en: "Ad breaks, programme sponsorship and on-screen tickers on TV.",
     hy: "Գովազդային բլոկներ, հաղորդումների հովանավորություն և վազող տող հեռուստաեթերում։",
   },
-  "adChannel.TV.about": {
-    ru: "Телевидение по-прежнему даёт самый широкий разовый охват в Армении. Формат подходит бренду, которому нужно быстро стать известным всей стране, а не только городской аудитории.",
-    en: "Television still delivers the widest single-shot reach in Armenia. It suits a brand that needs to become known nationwide fast, not just to a city audience.",
-    hy: "Հեռուստատեսությունը դեռ ապահովում է ամենալայն միանվագ հասանելիությունը Հայաստանում։ Ձևաչափը հարմար է բրենդին, որին պետք է արագ ճանաչելի դառնալ ողջ երկրում, ոչ միայն քաղաքային լսարանում։",
-  },
-  "adChannel.TV.buy1": { ru: "Ролик в рекламном блоке выбранного канала", en: "A spot in the ad break of the channel you pick", hy: "Հոլովակ ընտրված հեռուստաալիքի գովազդային բլոկում" },
-  "adChannel.TV.buy2": { ru: "Спонсорство передачи с заставкой и упоминанием", en: "Programme sponsorship with a bumper and a mention", hy: "Հաղորդման հովանավորություն՝ պաստառով և հիշատակումով" },
-  "adChannel.TV.buy3": { ru: "Бегущая строка и логотип в углу экрана", en: "A ticker line and a corner logo", hy: "Վազող տող և լոգո էկրանի անկյունում" },
 
   "adChannel.BANNER": { ru: "Баннерная реклама", en: "Banner ads", hy: "Բանների գովազդ" },
   "adChannel.BANNER.desc": {
@@ -3123,14 +3071,6 @@ export const UI: Record<string, Dict> = {
     en: "Display banners on sites and apps with an Armenian audience.",
     hy: "Մեդիա բաններներ հայկական լսարան ունեցող կայքերում և հավելվածներում։",
   },
-  "adChannel.BANNER.about": {
-    ru: "Самый управляемый канал: показ можно ограничить городом, устройством и временем суток, а результат виден в тот же день. Хорошо работает как поддержка кампании в других каналах.",
-    en: "The most controllable channel: you can limit delivery by city, device and time of day, and see the result the same day. It works well as support for a campaign running in other channels.",
-    hy: "Ամենակառավարելի ալիքը՝ ցուցադրումը կարելի է սահմանափակել ըստ քաղաքի, սարքի և օրվա ժամի, իսկ արդյունքը երևում է նույն օրը։ Լավ աշխատում է որպես այլ ալիքներում ընթացող արշավի աջակցություն։",
-  },
-  "adChannel.BANNER.buy1": { ru: "Баннеры на главных и внутренних страницах", en: "Banners on home and inner pages", hy: "Բաններներ գլխավոր և ներքին էջերում" },
-  "adChannel.BANNER.buy2": { ru: "Таргетинг по городу, устройству и времени", en: "Targeting by city, device and time", hy: "Թիրախավորում ըստ քաղաքի, սարքի և ժամանակի" },
-  "adChannel.BANNER.buy3": { ru: "Отчёт по показам и переходам", en: "A report on impressions and clicks", hy: "Հաշվետվություն ցուցադրումների և անցումների վերաբերյալ" },
 
   "adChannel.BILLBOARD": { ru: "Билборды", en: "Billboards", hy: "Բիլբորդներ" },
   "adChannel.BILLBOARD.desc": {
@@ -3138,14 +3078,6 @@ export const UI: Record<string, Dict> = {
     en: "Large boards on highways and city arteries.",
     hy: "Խոշոր վահանակներ մայրուղիներում և քաղաքային պողոտաներում։",
   },
-  "adChannel.BILLBOARD.about": {
-    ru: "Щит нельзя закрыть, пропустить или заблокировать — он работает на всех, кто проехал мимо. Канал для запусков, распродаж и брендов, которым важна масштабность сообщения.",
-    en: "A board cannot be closed, skipped or blocked — it works on everyone who drives past. The channel for launches, sales and brands that need scale in the message itself.",
-    hy: "Վահանակը հնարավոր չէ փակել, բաց թողնել կամ արգելափակել․ այն աշխատում է բոլորի վրա, ովքեր անցել են կողքով։ Ալիք՝ գործարկումների, զեղչերի և այն բրենդների համար, որոնց կարևոր է հաղորդագրության մասշտաբը։",
-  },
-  "adChannel.BILLBOARD.buy1": { ru: "Аренда щита на месяц или на кампанию", en: "Renting a board for a month or for the campaign", hy: "Վահանակի վարձակալություն ամսով կամ արշավի տևողությամբ" },
-  "adChannel.BILLBOARD.buy2": { ru: "Выбор конкретной локации и стороны движения", en: "Choosing the exact location and the traffic side", hy: "Կոնկրետ վայրի և երթևեկության կողմի ընտրություն" },
-  "adChannel.BILLBOARD.buy3": { ru: "Печать и монтаж макета", en: "Printing and mounting the artwork", hy: "Մակետի տպագրություն և տեղադրում" },
 
   "adChannel.LIFTS": { ru: "Реклама в лифтах", en: "Lift advertising", hy: "Գովազդ վերելակներում" },
   "adChannel.LIFTS.desc": {
@@ -3153,14 +3085,6 @@ export const UI: Record<string, Dict> = {
     en: "Posters and screens in the lifts of residential buildings and offices.",
     hy: "Պաստառներ և էկրաններ բնակելի շենքերի ու բիզնես կենտրոնների վերելակներում։",
   },
-  "adChannel.LIFTS.about": {
-    ru: "Несколько секунд, когда человеку буквально некуда смотреть, и он видит одно и то же сообщение дважды в день. Точная привязка к району делает канал удобным для локального бизнеса.",
-    en: "A few seconds where there is literally nowhere else to look, and the same message is seen twice a day. The precise tie to a neighbourhood makes it a convenient channel for local business.",
-    hy: "Մի քանի վայրկյան, երբ մարդուն բառացիորեն նայելու տեղ չկա, և նա նույն հաղորդագրությունը տեսնում է օրական երկու անգամ։ Թաղամասին ճշգրիտ կապվածությունը ալիքը հարմար է դարձնում տեղական բիզնեսի համար։",
-  },
-  "adChannel.LIFTS.buy1": { ru: "Постеры в лифтах выбранных домов", en: "Posters in the lifts of the buildings you pick", hy: "Պաստառներ ընտրված շենքերի վերելակներում" },
-  "adChannel.LIFTS.buy2": { ru: "Экраны с видеороликом в бизнес-центрах", en: "Video screens in business centres", hy: "Վիդեոհոլովակով էկրաններ բիզնես կենտրոններում" },
-  "adChannel.LIFTS.buy3": { ru: "Охват по конкретным районам города", en: "Coverage of specific city districts", hy: "Ծածկույթ քաղաքի կոնկրետ թաղամասերում" },
 
   "adChannel.TRANSIT": { ru: "Реклама на транспорте", en: "Transit ads", hy: "Գովազդ տրանսպորտում" },
   "adChannel.TRANSIT.desc": {
@@ -3168,14 +3092,229 @@ export const UI: Record<string, Dict> = {
     en: "Buses and the metro — exteriors, interiors and stations.",
     hy: "Ավտոբուսներ և մետրո՝ կողային մակերեսներ, սրահներ և կայարաններ։",
   },
-  "adChannel.TRANSIT.about": {
-    ru: "Транспорт весь день ездит по самым людным маршрутам, а пассажир в салоне проводит с рекламой десятки минут. Канал сочетает уличный охват с длинным контактом внутри.",
-    en: "Transport spends the whole day on the busiest routes, and a passenger inside spends tens of minutes with the ad. The channel combines street-level reach with a long contact inside.",
-    hy: "Տրանսպորտն ամբողջ օրը շարժվում է ամենամարդաշատ երթուղիներով, իսկ սրահի ուղևորը գովազդի հետ անցկացնում է տասնյակ րոպեներ։ Ալիքը միավորում է փողոցային հասանելիությունը ներսի երկար շփման հետ։",
+
+  // ── Атрибуты каналов: подписи фильтров и полей формы (ad-channel-attrs.ts) ──
+  // One key per attribute token / value token — never per channel, even where
+  // a token (daypart, spotLength, categoryExclusive…) is reused by more than
+  // one channel. attrLabelKey/attrValueLabelKey build these from the token.
+  "attr.apartments": { ru: "Количество квартир", en: "Number of apartments", hy: "Բնակարանների քանակ" },
+  "attr.attendance": { ru: "Посещаемость", en: "Attendance", hy: "Այցելուների թիվ" },
+  "attr.bannerSize": { ru: "Размер баннера", en: "Banner size", hy: "Բաների չափ" },
+  "attrValue.bannerSize.OTHER": { ru: "Другой", en: "Other", hy: "Այլ" },
+  "attrValue.bannerSize.S160X600": { ru: "160×600", en: "160×600", hy: "160×600" },
+  "attrValue.bannerSize.S300X250": { ru: "300×250", en: "300×250", hy: "300×250" },
+  "attrValue.bannerSize.S320X50": { ru: "320×50", en: "320×50", hy: "320×50" },
+  "attrValue.bannerSize.S728X90": { ru: "728×90", en: "728×90", hy: "728×90" },
+  "attrValue.bannerSize.S970X250": { ru: "970×250", en: "970×250", hy: "970×250" },
+  "attr.brandingFormat": { ru: "Формат брендирования", en: "Branding format", hy: "Բրենդավորման ձևաչափ" },
+  "attrValue.brandingFormat.FULL_WRAP": { ru: "Полная оклейка", en: "Full wrap", hy: "Ամբողջական փաթաթում" },
+  "attrValue.brandingFormat.INTERIOR_CARD": { ru: "Карточка в салоне", en: "Interior card", hy: "Քարտ սրահում" },
+  "attrValue.brandingFormat.REAR": { ru: "Задняя часть", en: "Rear", hy: "Հետևի մաս" },
+  "attrValue.brandingFormat.SIDE": { ru: "Борт", en: "Side", hy: "Կողային մակերես" },
+  "attrValue.brandingFormat.STICKER": { ru: "Стикер", en: "Sticker", hy: "Ստիկեր" },
+  "attr.buildingClass": { ru: "Класс здания", en: "Building class", hy: "Շենքի կարգ" },
+  "attrValue.buildingClass.BUSINESS": { ru: "Бизнес", en: "Business", hy: "Բիզնես" },
+  "attrValue.buildingClass.COMFORT": { ru: "Комфорт", en: "Comfort", hy: "Կոմֆորտ" },
+  "attrValue.buildingClass.ECONOMY": { ru: "Эконом", en: "Economy", hy: "Էկոնոմ" },
+  "attrValue.buildingClass.ELITE": { ru: "Элит", en: "Elite", hy: "Էլիտար" },
+  "attr.buildingSpot": { ru: "Место в здании", en: "Spot in the building", hy: "Տեղը շենքում" },
+  "attrValue.buildingSpot.CABIN": { ru: "Кабина лифта", en: "Lift cabin", hy: "Վերելակի խցիկ" },
+  "attrValue.buildingSpot.ENTRANCE": { ru: "Подъезд", en: "Entrance", hy: "Մուտք" },
+  "attrValue.buildingSpot.LOBBY": { ru: "Холл", en: "Lobby", hy: "Հոլ" },
+  "attr.buildingType": { ru: "Тип здания", en: "Building type", hy: "Շենքի տեսակ" },
+  "attrValue.buildingType.CLINIC": { ru: "Клиника", en: "Clinic", hy: "Կլինիկա" },
+  "attrValue.buildingType.HOTEL": { ru: "Отель", en: "Hotel", hy: "Հյուրանոց" },
+  "attrValue.buildingType.MALL": { ru: "Торговый центр", en: "Mall", hy: "Առևտրի կենտրոն" },
+  "attrValue.buildingType.OFFICE": { ru: "Офис", en: "Office", hy: "Գրասենյակ" },
+  "attrValue.buildingType.RESIDENTIAL": { ru: "Жилой дом", en: "Residential", hy: "Բնակելի շենք" },
+  "attrValue.buildingType.UNIVERSITY": { ru: "Университет", en: "University", hy: "Համալսարան" },
+  // "В проекте не будет конкурента из той же товарной категории" — shared by
+  // PLACEMENT and EVENTS, one key either way.
+  "attr.categoryExclusive": { ru: "Эксклюзив категории", en: "Category exclusive", hy: "Կատեգորիայի էքսկլյուզիվություն" },
+  "attr.contentGenre": { ru: "Жанр контента", en: "Content genre", hy: "Բովանդակության ժանր" },
+  "attrValue.contentGenre.DOCUMENTARY": { ru: "Документалистика", en: "Documentary", hy: "Վավերագրական" },
+  "attrValue.contentGenre.ENTERTAINMENT": { ru: "Развлекательное", en: "Entertainment", hy: "Զվարճալի" },
+  "attrValue.contentGenre.FILM": { ru: "Кино", en: "Film", hy: "Կինո" },
+  "attrValue.contentGenre.KIDS": { ru: "Детское", en: "Kids", hy: "Մանկական" },
+  "attrValue.contentGenre.NEWS": { ru: "Новости", en: "News", hy: "Լուրեր" },
+  "attrValue.contentGenre.SERIES": { ru: "Сериалы", en: "Series", hy: "Սերիալներ" },
+  "attrValue.contentGenre.SPORT": { ru: "Спорт", en: "Sport", hy: "Սպորտ" },
+  "attr.contentTopic": { ru: "Тематика контента", en: "Content topic", hy: "Բովանդակության թեմա" },
+  "attrValue.contentTopic.BUSINESS": { ru: "Бизнес", en: "Business", hy: "Բիզնես" },
+  "attrValue.contentTopic.COMEDY": { ru: "Юмор", en: "Comedy", hy: "Հումոր" },
+  "attrValue.contentTopic.EDUCATION": { ru: "Образование", en: "Education", hy: "Կրթություն" },
+  "attrValue.contentTopic.GAMING": { ru: "Игры", en: "Gaming", hy: "Խաղեր" },
+  "attrValue.contentTopic.LIFESTYLE": { ru: "Лайфстайл", en: "Lifestyle", hy: "Ապրելակերպ" },
+  "attrValue.contentTopic.MUSIC": { ru: "Музыка", en: "Music", hy: "Երաժշտություն" },
+  "attrValue.contentTopic.NEWS": { ru: "Новости", en: "News", hy: "Լուրեր" },
+  "attrValue.contentTopic.SPORT": { ru: "Спорт", en: "Sport", hy: "Սպորտ" },
+  "attr.coverage": { ru: "Охват", en: "Coverage", hy: "Ընդգրկում" },
+  "attrValue.coverage.NATIONAL": { ru: "Общенациональный", en: "National", hy: "Հանրապետական" },
+  "attrValue.coverage.REGIONAL": { ru: "Региональный", en: "Regional", hy: "Տարածաշրջանային" },
+  "attr.daypart": { ru: "Эфирное время", en: "Daypart", hy: "Եթերաժամ" },
+  "attrValue.daypart.DAYTIME": { ru: "Дневное", en: "Daytime", hy: "Ցերեկային" },
+  // No single-word Armenian/Russian term for the US ad-industry "drive time" —
+  // a plain description of the peak commute hour reads clearer than a
+  // coined term. Flagged for Мариам to refine if she has a better one.
+  "attrValue.daypart.DRIVE_TIME": { ru: "Час пик", en: "Drive time", hy: "Ժամային գագաթնակետ" },
+  "attrValue.daypart.MORNING": { ru: "Утреннее", en: "Morning", hy: "Առավոտյան" },
+  "attrValue.daypart.NIGHT": { ru: "Ночное", en: "Night", hy: "Գիշերային" },
+  "attrValue.daypart.PRIME": { ru: "Прайм-тайм", en: "Prime time", hy: "Պրայմ-թայմ" },
+  "attr.device": { ru: "Устройство", en: "Device", hy: "Սարք" },
+  "attrValue.device.DESKTOP": { ru: "Десктоп", en: "Desktop", hy: "Դեսքթոփ" },
+  "attrValue.device.MOBILE": { ru: "Мобильный", en: "Mobile", hy: "Բջջային" },
+  // Open list (values come from the data, not this file) — no attrValue keys.
+  "attr.district": { ru: "Район", en: "District", hy: "Թաղամաս" },
+  "attr.entrances": { ru: "Количество подъездов", en: "Number of entrances", hy: "Մուտքերի քանակ" },
+  "attr.eventCategory": { ru: "Тип события", en: "Event category", hy: "Միջոցառման տեսակ" },
+  "attrValue.eventCategory.CHARITY": { ru: "Благотворительность", en: "Charity", hy: "Բարեգործություն" },
+  "attrValue.eventCategory.CONFERENCE": { ru: "Конференция", en: "Conference", hy: "Համաժողով" },
+  "attrValue.eventCategory.EXHIBITION": { ru: "Выставка", en: "Exhibition", hy: "Ցուցահանդես" },
+  "attrValue.eventCategory.FESTIVAL": { ru: "Фестиваль", en: "Festival", hy: "Փառատոն" },
+  "attrValue.eventCategory.MUSIC": { ru: "Музыка", en: "Music", hy: "Երաժշտություն" },
+  "attrValue.eventCategory.SPORT": { ru: "Спорт", en: "Sport", hy: "Սպորտ" },
+  "attrValue.eventCategory.THEATRE": { ru: "Театр", en: "Theatre", hy: "Թատրոն" },
+  "attr.eventMode": { ru: "Формат события", en: "Event mode", hy: "Միջոցառման ձևաչափ" },
+  "attrValue.eventMode.HYBRID": { ru: "Гибридное", en: "Hybrid", hy: "Հիբրիդային" },
+  "attrValue.eventMode.OFFLINE": { ru: "Офлайн", en: "Offline", hy: "Օֆլայն" },
+  "attrValue.eventMode.ONLINE": { ru: "Онлайн", en: "Online", hy: "Օնլայն" },
+  "attr.integrationFormat": { ru: "Формат интеграции", en: "Integration format", hy: "Ինտեգրման ձևաչափ" },
+  "attrValue.integrationFormat.INTEGRATION": {
+    ru: "Интеграция в контент",
+    en: "Content integration",
+    hy: "Ինտեգրում բովանդակության մեջ",
   },
-  "adChannel.TRANSIT.buy1": { ru: "Брендирование бортов автобуса", en: "Branding the exterior of a bus", hy: "Ավտոբուսի կողային մակերեսների բրենդավորում" },
-  "adChannel.TRANSIT.buy2": { ru: "Постеры в салоне и на поручнях", en: "Posters inside the cabin and on the handrails", hy: "Պաստառներ սրահում և բռնակների վրա" },
-  "adChannel.TRANSIT.buy3": { ru: "Щиты и стикеры на станциях метро", en: "Boards and stickers in metro stations", hy: "Վահանակներ և ստիկերներ մետրոյի կայարաններում" },
+  "attrValue.integrationFormat.MID_ROLL": { ru: "Mid-roll", en: "Mid-roll", hy: "Mid-roll" },
+  "attrValue.integrationFormat.POST_ROLL": { ru: "Post-roll", en: "Post-roll", hy: "Post-roll" },
+  "attrValue.integrationFormat.PRE_ROLL": { ru: "Pre-roll", en: "Pre-roll", hy: "Pre-roll" },
+  "attrValue.integrationFormat.REVIEW": { ru: "Обзор", en: "Review", hy: "Ակնարկ" },
+  "attr.inventoryType": { ru: "Тип инвентаря", en: "Inventory type", hy: "Գույքագրման տեսակ" },
+  "attrValue.inventoryType.SCREEN": { ru: "Экран", en: "Screen", hy: "Էկրան" },
+  "attrValue.inventoryType.WEBSITE": { ru: "Сайт", en: "Website", hy: "Կայք" },
+  "attr.language": { ru: "Язык", en: "Language", hy: "Լեզու" },
+  "attrValue.language.EN": { ru: "Английский", en: "English", hy: "Անգլերեն" },
+  "attrValue.language.HY": { ru: "Армянский", en: "Armenian", hy: "Հայերեն" },
+  "attrValue.language.RU": { ru: "Русский", en: "Russian", hy: "Ռուսերեն" },
+  "attr.lighting": { ru: "С подсветкой", en: "Lit", hy: "Լուսավորությամբ" },
+  "attr.mediaType": { ru: "Тип медиа", en: "Media type", hy: "Մեդիայի տեսակ" },
+  "attrValue.mediaType.BOARD": { ru: "Щит", en: "Board", hy: "Վահանակ" },
+  "attrValue.mediaType.SCREEN": { ru: "Экран", en: "Screen", hy: "Էկրան" },
+  "attr.platform": { ru: "Платформа", en: "Platform", hy: "Հարթակ" },
+  "attrValue.platform.FACEBOOK": { ru: "Facebook", en: "Facebook", hy: "Facebook" },
+  "attrValue.platform.INSTAGRAM": { ru: "Instagram", en: "Instagram", hy: "Instagram" },
+  "attrValue.platform.OTT": { ru: "OTT", en: "OTT", hy: "OTT" },
+  "attrValue.platform.TIKTOK": { ru: "TikTok", en: "TikTok", hy: "TikTok" },
+  "attrValue.platform.WEBSITE": { ru: "Сайт", en: "Website", hy: "Կայք" },
+  "attrValue.platform.YOUTUBE": { ru: "YouTube", en: "YouTube", hy: "YouTube" },
+  "attr.position": { ru: "Расположение", en: "Position", hy: "Դիրք" },
+  "attrValue.position.FOOTER": { ru: "Подвал", en: "Footer", hy: "Ստորին մաս" },
+  "attrValue.position.HEADER": { ru: "Шапка", en: "Header", hy: "Վերին մաս" },
+  "attrValue.position.IN_FEED": { ru: "В ленте", en: "In-feed", hy: "Հոսքում" },
+  "attrValue.position.SIDEBAR": { ru: "Боковая панель", en: "Sidebar", hy: "Կողային վահանակ" },
+  "attr.pricingModel": { ru: "Модель оплаты", en: "Pricing model", hy: "Վճարման մոդել" },
+  "attrValue.pricingModel.CPM": {
+    ru: "За тысячу показов (CPM)",
+    en: "Per 1,000 impressions (CPM)",
+    hy: "1000 ցուցադրման դիմաց (CPM)",
+  },
+  "attrValue.pricingModel.FLAT_PERIOD": {
+    ru: "Фикс за период",
+    en: "Flat rate per period",
+    hy: "Ֆիքսված գին ժամանակահատվածի համար",
+  },
+  "attr.productionStage": { ru: "Стадия производства", en: "Production stage", hy: "Արտադրության փուլ" },
+  // Пре-/постпродакшн spelled without a hyphen, matching the existing
+  // "Պրեպրոդակշն" at projectForm.milestones.labelPlaceholder.
+  "attrValue.productionStage.POST_PRODUCTION": { ru: "Постпродакшн", en: "Post-production", hy: "Փոստպրոդակշն" },
+  "attrValue.productionStage.PRE_PRODUCTION": { ru: "Препродакшн", en: "Pre-production", hy: "Պրեպրոդակշն" },
+  "attrValue.productionStage.SCRIPT": { ru: "Сценарий", en: "Script", hy: "Սցենար" },
+  "attrValue.productionStage.SHOOTING": { ru: "Съёмки", en: "Shooting", hy: "Նկարահանումներ" },
+  "attr.projectedReach": { ru: "Прогнозируемый охват", en: "Projected reach", hy: "Կանխատեսվող հասանելիություն" },
+  // Open list — no attrValue keys.
+  "attr.route": { ru: "Маршрут", en: "Route", hy: "Երթուղի" },
+  "attr.siteTopic": { ru: "Тематика сайта", en: "Site topic", hy: "Կայքի թեմա" },
+  "attrValue.siteTopic.BUSINESS": { ru: "Бизнес", en: "Business", hy: "Բիզնես" },
+  "attrValue.siteTopic.CLASSIFIEDS": { ru: "Объявления", en: "Classifieds", hy: "Հայտարարություններ" },
+  "attrValue.siteTopic.ENTERTAINMENT": { ru: "Развлечения", en: "Entertainment", hy: "Ժամանց" },
+  "attrValue.siteTopic.LIFESTYLE": { ru: "Лайфстайл", en: "Lifestyle", hy: "Ապրելակերպ" },
+  "attrValue.siteTopic.NEWS": { ru: "Новости", en: "News", hy: "Լուրեր" },
+  "attrValue.siteTopic.SPORT": { ru: "Спорт", en: "Sport", hy: "Սպորտ" },
+  "attrValue.siteTopic.TECH": { ru: "Технологии", en: "Tech", hy: "Տեխնոլոգիաներ" },
+  // RADIO's spotKind is SPOT/SEGMENT_SPONSORSHIP/HOST_READ, TV's is
+  // SPOT/SHOW_SPONSORSHIP/TICKER — one key, union of values, SPOT shared.
+  "attr.spotKind": { ru: "Тип размещения", en: "Spot kind", hy: "Տեղադրման տեսակ" },
+  "attrValue.spotKind.HOST_READ": {
+    ru: "Живое упоминание ведущим",
+    en: "Host read",
+    hy: "Հաղորդավարի կենդանի հիշատակում",
+  },
+  "attrValue.spotKind.SEGMENT_SPONSORSHIP": {
+    ru: "Спонсорство рубрики",
+    en: "Segment sponsorship",
+    hy: "Խորագրի հովանավորություն",
+  },
+  "attrValue.spotKind.SHOW_SPONSORSHIP": {
+    ru: "Спонсорство передачи",
+    en: "Show sponsorship",
+    hy: "Հաղորդման հովանավորություն",
+  },
+  "attrValue.spotKind.SPOT": { ru: "Ролик", en: "Spot", hy: "Հոլովակ" },
+  "attrValue.spotKind.TICKER": { ru: "Бегущая строка", en: "Ticker", hy: "Վազող տող" },
+  // Seconds, not a "12 to 24" range — see AttrDef comment in ad-channel-attrs.ts.
+  "attr.spotLength": { ru: "Длительность ролика", en: "Spot length", hy: "Հոլովակի տևողություն" },
+  "attrValue.spotLength.S5": { ru: "5 сек", en: "5 sec", hy: "5 վրկ" },
+  "attrValue.spotLength.S10": { ru: "10 сек", en: "10 sec", hy: "10 վրկ" },
+  "attrValue.spotLength.S15": { ru: "15 сек", en: "15 sec", hy: "15 վրկ" },
+  "attrValue.spotLength.S20": { ru: "20 сек", en: "20 sec", hy: "20 վրկ" },
+  "attrValue.spotLength.S30": { ru: "30 сек", en: "30 sec", hy: "30 վրկ" },
+  "attrValue.spotLength.S60": { ru: "60 сек", en: "60 sec", hy: "60 վրկ" },
+  "attr.stationFormat": { ru: "Формат станции", en: "Station format", hy: "Կայանի ձևաչափ" },
+  "attrValue.stationFormat.FOLK": { ru: "Народная музыка", en: "Folk", hy: "Ժողովրդական երաժշտություն" },
+  "attrValue.stationFormat.MIXED": { ru: "Смешанный", en: "Mixed", hy: "Խառը" },
+  "attrValue.stationFormat.NEWS": { ru: "Новостной", en: "News", hy: "Լրատվական" },
+  "attrValue.stationFormat.POP": { ru: "Поп", en: "Pop", hy: "Փոփ" },
+  "attrValue.stationFormat.ROCK": { ru: "Рок", en: "Rock", hy: "Ռոք" },
+  "attrValue.stationFormat.TALK": { ru: "Разговорный", en: "Talk", hy: "Խոսակցական" },
+  "attr.structureType": { ru: "Тип конструкции", en: "Structure type", hy: "Կառուցվածքի տեսակ" },
+  "attrValue.structureType.BILLBOARD_3X6": { ru: "Щит 3×6", en: "3×6 board", hy: "Վահանակ 3×6" },
+  "attrValue.structureType.CITY_FORMAT": { ru: "Сити-формат", en: "City format", hy: "Սիթի-ֆորմատ" },
+  "attrValue.structureType.PRISMATRON": { ru: "Призматрон", en: "Prismatron", hy: "Պրիզմատրոն" },
+  "attrValue.structureType.SCREEN": { ru: "Экран", en: "Screen", hy: "Էկրան" },
+  "attrValue.structureType.SUPERSITE": { ru: "Суперсайт", en: "Supersite", hy: "Սուպերսայթ" },
+  // No settled one-word Armenian/Russian term for this outdoor format either —
+  // kept the English "wallscape" alongside a literal description.
+  "attrValue.structureType.WALLSCAPE": { ru: "Уличное панно (wallscape)", en: "Wallscape", hy: "Պատի պաստառ (wallscape)" },
+  "attr.subscribers": { ru: "Количество подписчиков", en: "Number of subscribers", hy: "Բաժանորդների քանակ" },
+  // "цифровая поверхность или статичная (печать)", not a size — see the
+  // owner's note in the task.
+  "attr.surfaceKind": { ru: "Тип поверхности", en: "Surface kind", hy: "Մակերևույթի տեսակ" },
+  "attrValue.surfaceKind.DIGITAL": { ru: "Цифровая", en: "Digital", hy: "Թվային" },
+  "attrValue.surfaceKind.STATIC": { ru: "Статичная (печать)", en: "Static (print)", hy: "Ստատիկ (տպագիր)" },
+  "attr.surfaceSize": { ru: "Размер поверхности", en: "Surface size", hy: "Մակերևույթի չափ" },
+  "attrValue.surfaceSize.OTHER": { ru: "Другой", en: "Other", hy: "Այլ" },
+  "attrValue.surfaceSize.S3X6": { ru: "3×6 м", en: "3×6 m", hy: "3×6 մ" },
+  "attrValue.surfaceSize.S5X15": { ru: "5×15 м", en: "5×15 m", hy: "5×15 մ" },
+  "attrValue.surfaceSize.S6X3": { ru: "6×3 м", en: "6×3 m", hy: "6×3 մ" },
+  "attrValue.surfaceSize.S12X3": { ru: "12×3 м", en: "12×3 m", hy: "12×3 մ" },
+  // Which way the traffic that sees the board is heading — INBOUND toward the
+  // centre, OUTBOUND away from it, per the owner's note.
+  "attr.trafficSide": { ru: "Сторона движения", en: "Traffic side", hy: "Երթևեկության կողմ" },
+  "attrValue.trafficSide.BOTH": { ru: "Обе стороны", en: "Both sides", hy: "Երկու կողմից" },
+  "attrValue.trafficSide.INBOUND": { ru: "В центр", en: "Into the city", hy: "Դեպի կենտրոն" },
+  "attrValue.trafficSide.OUTBOUND": { ru: "Из центра", en: "Out of the city", hy: "Կենտրոնից" },
+  "attr.transportType": { ru: "Вид транспорта", en: "Transport type", hy: "Տրանսպորտի տեսակ" },
+  "attrValue.transportType.BUS": { ru: "Автобус", en: "Bus", hy: "Ավտոբուս" },
+  "attrValue.transportType.METRO": { ru: "Метро", en: "Metro", hy: "Մետրո" },
+  "attrValue.transportType.MINIBUS": { ru: "Маршрутка", en: "Minibus", hy: "Երթուղային տաքսի" },
+  "attrValue.transportType.TAXI": { ru: "Такси", en: "Taxi", hy: "Տաքսի" },
+  "attrValue.transportType.TRAIN": { ru: "Электричка", en: "Train", hy: "Գնացք" },
+  "attrValue.transportType.TROLLEYBUS": { ru: "Троллейбус", en: "Trolleybus", hy: "Տրոլեյբուս" },
+  "attr.vehicleSide": { ru: "Часть транспорта", en: "Vehicle side", hy: "Տրանսպորտի մասը" },
+  "attrValue.vehicleSide.EXTERIOR": { ru: "Снаружи", en: "Exterior", hy: "Դրսում" },
+  "attrValue.vehicleSide.INTERIOR": { ru: "В салоне", en: "Interior", hy: "Սրահում" },
+  "attr.weekPart": { ru: "Часть недели", en: "Week part", hy: "Շաբաթվա հատված" },
+  "attrValue.weekPart.WEEKDAYS": { ru: "Будни", en: "Weekdays", hy: "Աշխատանքային օրեր" },
+  "attrValue.weekPart.WEEKEND": { ru: "Выходные", en: "Weekend", hy: "Հանգստյան օրեր" },
 
   // ── Рекламные места: кабинет создателя ──────
   "adSpace.mine": { ru: "Мои рекламные места", en: "My ad spaces", hy: "Իմ գովազդային տարածքները" },
@@ -3231,6 +3370,10 @@ export const UI: Record<string, Dict> = {
   "adSpaceForm.section.media": { ru: "Фото", en: "Photos", hy: "Լուսանկարներ" },
   "adSpaceForm.section.offers": { ru: "Что покупает бренд", en: "What the brand buys", hy: "Ինչ է գնում բրենդը" },
   "adSpaceForm.section.visibility": { ru: "Видимость", en: "Visibility", hy: "Տեսանելիություն" },
+  // Per-channel attribute fields (stage 3) — the block under Channel that
+  // changes shape with it (structureType/lighting for a billboard, daypart/
+  // spotLength for a radio slot, …). See src/components/ad-channel-attr-fields.tsx.
+  "adSpaceForm.section.attrs": { ru: "Характеристики", en: "Attributes", hy: "Բնութագրեր" },
   "adSpaceForm.channel": { ru: "Канал", en: "Channel", hy: "Ալիք" },
   "adSpaceForm.channelHint": {
     ru: "Страница, на которой место будет показано брендам.",

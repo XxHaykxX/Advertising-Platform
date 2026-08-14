@@ -28,6 +28,7 @@ import {
 import { revalidateStorefront } from "@/lib/data/revalidate-storefront";
 import type { ProjectFormValues, ProjectFormState } from "@/app/admin/(panel)/projects/actions";
 import { safeUploadPath } from "@/lib/uploads-path";
+import { attrsFor, normalizeAttrs } from "@/lib/ad-channel-attrs";
 
 /* #16 (expanded 2026-07-16): the Creator self-serve submission form
    (/account/projects/new) now reuses admin/(panel)/projects/project-form.tsx
@@ -75,6 +76,21 @@ function jsonArray<T>(fd: FormData, key: string): T[] {
     return [];
   }
 }
+
+/** Same shape as jsonArray above, for the one field (attrs) that submits a
+ *  JSON object instead of a JSON array — mirrors the admin action's copy. */
+function jsonObject(fd: FormData, key: string): Record<string, unknown> {
+  try {
+    const o: unknown = JSON.parse(String(fd.get(key) || "{}"));
+    return o !== null && typeof o === "object" && !Array.isArray(o) ? (o as Record<string, unknown>) : {};
+  } catch {
+    return {};
+  }
+}
+
+// eventCategory rides on its own column, not the attrs bag — see the admin
+// action's identical constant for why.
+const EVENT_CATEGORY_VALUES = attrsFor("EVENTS").find((d) => d.key === "eventCategory")?.values ?? [];
 
 /** "YYYY-MM-DD" (or "") -> Date | null for a Prisma DateTime? column. */
 function dateOrNull(value: string): Date | null {
@@ -173,6 +189,10 @@ function buildData(fd: FormData): ProjectFormValues {
     cinemas: jsonArray<string>(fd, "cinemas").join(", "),
     videoEmbedUrl: str(fd, "videoEmbedUrl", VARCHAR_MAX),
     videoFile: safeUploadPath(str(fd, "videoFile", VARCHAR_MAX)),
+    eventCity: str(fd, "eventCity", VARCHAR_MAX),
+    eventDate: str(fd, "eventDate"),
+    eventCategory: enumVal(fd, "eventCategory", EVENT_CATEGORY_VALUES, ""),
+    attrs: jsonObject(fd, "attrs"),
   };
 }
 
@@ -681,6 +701,10 @@ export async function createCreatorProject(
     cinemas: data.cinemas || null,
     videoEmbedUrl: data.videoEmbedUrl || null,
     videoFile: data.videoFile || null,
+    eventDate: dateOrNull(data.eventDate),
+    // A project can sell PLACEMENT and/or EVENTS at once — normalize
+    // against the union of both, same reasoning as the admin action.
+    attrs: normalizeAttrs(["PLACEMENT", "EVENTS"], data.attrs),
     // ── Never trusted from the form — forced server-side ──
     // ownerId is always the submitting member.
     ownerId: user.id,
@@ -849,6 +873,8 @@ export async function updateCreatorProject(
           cinemas: data.cinemas || null,
           videoEmbedUrl: data.videoEmbedUrl || null,
           videoFile: data.videoFile || null,
+          eventDate: dateOrNull(data.eventDate),
+          attrs: normalizeAttrs(["PLACEMENT", "EVENTS"], data.attrs),
           // ── Never trusted from the form — forced server-side ──
           // `code` is the public #PP-… identifier. It reaches the form as a
           // hidden readonly mirror, and `...data` above carries whatever came

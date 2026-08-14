@@ -1,143 +1,81 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import { ArrowRight } from "lucide-react";
-import { SiteHeader } from "@/components/site-header";
-import { Footer } from "@/components/footer";
-import { Section } from "@/components/ui/section";
-import { Container } from "@/components/ui/container";
-import { Reveal } from "@/components/ui/reveal";
-import { Button } from "@/components/ui/button";
-import { PageHero } from "@/components/ui/page-hero";
+import { getProjects } from "@/lib/data/projects";
+import { getAllAdSpaces } from "@/lib/data/ad-spaces";
 import { getLocale } from "@/lib/data/locale";
 import { getCurrency } from "@/lib/data/currency";
-import { adChannelsByGroup } from "@/lib/ad-channels";
-import { ADS_ENABLED } from "@/lib/feature-flags";
+import { getSiteHeaderUser } from "@/lib/data/site-header-user";
+import { getBrandFavoriteSet, getOwnedProjectIdSet } from "@/lib/data/favorites";
+import { loadCurrentUser } from "@/lib/auth/require";
+import { canBuy, canSell } from "@/lib/auth/capabilities";
+import { findAdChannelByCode } from "@/lib/ad-channels";
 import { makeUI } from "@/lib/i18n";
-import { AD_CHANNEL_ICONS } from "./channel-icons";
+import { Footer } from "@/components/footer";
+import { AdsView, type CatalogRow } from "./ads-view";
+import { projectToRow, spaceToRow } from "./rows";
 
-// Canonical dropped while the section is off (same rule as /portfolio) —
-// nothing should point at a route that 404s.
-export const metadata: Metadata = ADS_ENABLED
-  ? {
-      title: "Advertising Channels — iGovazd",
-      description:
-        "Product placement, event sponsorship, TV, radio, video, banner, billboard, lift and transit advertising — all nine channels in one place.",
-      alternates: { canonical: "/ads" },
-    }
-  : {};
+// The former /catalog and the former channel-tile overview merged here
+// (2026-08-14, stage 1) — every project and ad space in the marketplace, one
+// list with the seven existing facets. /catalog now just redirects here.
+export const metadata: Metadata = {
+  title: "Advertising — iGovazd",
+  description:
+    "Browse every advertising opportunity on the platform — film and TV product placement, event sponsorship, and standalone ad spaces — filter by channel, genre and product category.",
+  alternates: { canonical: "/ads" },
+};
 
-export default async function AdsPage() {
-  if (!ADS_ENABLED) notFound();
-
+export default async function AdsPage({
+  searchParams,
+}: {
+  /** ?channel=<CODE> — kept for old "/catalog?channel=" bookmarks (see the
+   *  redirect in app/catalog/page.tsx) and any other shared link. Only seeds
+   *  the channel facet's initial value. */
+  searchParams: Promise<{ channel?: string }>;
+}) {
   const locale = await getLocale();
   const currency = await getCurrency();
+  const { channel } = await searchParams;
+  const [projects, spaces, user, currentUser] = await Promise.all([
+    getProjects(locale, currency),
+    getAllAdSpaces(locale, currency),
+    getSiteHeaderUser(),
+    loadCurrentUser(),
+  ]);
   const t = makeUI(locale);
+  const rows: CatalogRow[] = [
+    ...projects.map(projectToRow),
+    ...spaces.flatMap((s) => {
+      const row = spaceToRow(s, t);
+      return row ? [row] : [];
+    }),
+  ];
+  const initialChannel = channel && findAdChannelByCode(channel) ? channel : undefined;
+
+  // Favorites (#22) are a BRAND-only private shortlist — everyone else gets
+  // an empty set, which renders every heart outline/inert.
+  const favorites =
+    currentUser != null && canBuy(currentUser)
+      ? await getBrandFavoriteSet(currentUser.id)
+      : new Set<number>();
+  // Nobody buys from themselves (2026-08-11) — a dual member sees their own
+  // listing with no heart/apply button. Skipped entirely for anyone who
+  // can't sell, same as the favorites query above.
+  const ownIds =
+    currentUser != null && canSell(currentUser)
+      ? await getOwnedProjectIdSet(currentUser.id)
+      : new Set<number>();
 
   return (
-    <>
-      <SiteHeader />
-
-      <PageHero
-        eyebrow={t("ads.hero.eyebrow")}
-        title={t("ads.hero.title")}
-        subtitle={t("ads.hero.subtitle")}
-        locale={locale}
-        primaryCta={{ label: t("ads.hero.ctaBrowse"), href: "/catalog" }}
-        secondaryCta={{ label: t("ads.hero.ctaContact"), href: "/contact" }}
-      />
-
-      <Section>
-        <Container>
-          <Reveal>
-            <h2 className="text-3xl font-bold tracking-tight text-foreground md:text-4xl">
-              {t("ads.groupsTitle")}
-            </h2>
-          </Reveal>
-          <Reveal delay={0.08}>
-            <p className="mt-3 max-w-3xl text-muted-foreground">{t("ads.groupsSubtitle")}</p>
-          </Reveal>
-
-          <div className="mt-12 space-y-14">
-            {adChannelsByGroup().map(({ group, channels }, groupIdx) => (
-              <Reveal key={group} delay={0.15 + groupIdx * 0.06}>
-                <div>
-                  <h3 className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                    {t(`adGroup.${group}`)}
-                  </h3>
-                  <div className="mt-5 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {channels.map((channel) => {
-                      const Icon = AD_CHANNEL_ICONS[channel.code];
-                      return (
-                        // Still the channel's own page, not /catalog?channel=
-                        // (2026-08-10, stage B): this overview is the map of
-                        // what each channel IS, and the channel page carries
-                        // its hero plus `about` and `buy1-3` in three
-                        // languages. Sending the tile past all of that to the
-                        // shopping list would leave that copy with no way in
-                        // but the header dropdown. The channel page ends in
-                        // "see everything in the catalogue", so the trip is
-                        // one click longer only for someone who already knows
-                        // what a lift screen is.
-                        <Link
-                          key={channel.code}
-                          href={`/ads/${channel.slug}`}
-                          className="flex h-full flex-col rounded-2xl border border-border bg-card p-8 card-lift"
-                        >
-                          <div className="flex items-center gap-3">
-                            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
-                              <Icon className="h-5 w-5" />
-                            </span>
-                            <span className="text-lg font-semibold text-foreground">
-                              {t(`adChannel.${channel.code}`)}
-                            </span>
-                          </div>
-                          <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-                            {t(`adChannel.${channel.code}.desc`)}
-                          </p>
-                          {/* Placement belongs to Content Integration AND
-                              Sponsorship in the director's table; it is listed
-                              once, under Content, and says so here rather than
-                              appearing twice (see AdChannel.alsoSponsorship). */}
-                          {channel.alsoSponsorship ? (
-                            <span className="mt-4 self-start rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
-                              {t("adGroup.SPONSORSHIP")}
-                            </span>
-                          ) : null}
-                          <span className="mt-auto flex items-center gap-1.5 pt-6 text-sm font-medium text-primary">
-                            {t("ads.channelCta")}
-                            <ArrowRight className="h-4 w-4" />
-                          </span>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-        </Container>
-      </Section>
-
-      <Section muted>
-        <Container>
-          <div className="mx-auto max-w-2xl">
-            <Reveal>
-              <div className="rounded-2xl border border-primary/20 bg-primary/5 px-8 py-12 text-center">
-                <h2 className="text-2xl font-bold text-foreground">{t("ads.cta.title")}</h2>
-                <p className="mt-4 text-muted-foreground">{t("ads.cta.subtitle")}</p>
-                <div className="mt-8 flex justify-center">
-                  <Button asChild variant="primary" size="md">
-                    <Link href="/contact">{t("ads.cta.button")}</Link>
-                  </Button>
-                </div>
-              </div>
-            </Reveal>
-          </div>
-        </Container>
-      </Section>
-
-      <Footer locale={locale} currency={currency} />
-    </>
+    <AdsView
+      rows={rows}
+      locale={locale}
+      currency={currency}
+      user={user}
+      favorites={favorites}
+      ownIds={ownIds}
+      signedIn={currentUser !== null}
+      isBrand={canBuy(currentUser)}
+      initialChannel={initialChannel}
+      footer={<Footer locale={locale} currency={currency} />}
+    />
   );
 }

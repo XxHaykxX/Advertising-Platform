@@ -6,7 +6,7 @@ import { LocaleSwitcher } from "@/components/locale-switcher";
 import { CurrencySwitcher } from "@/components/currency-switcher";
 import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
 import { DEFAULT_CURRENCY, type CurrencyCode } from "@/lib/currency";
-import { ADS_ENABLED, PORTFOLIO_ENABLED } from "@/lib/feature-flags";
+import { PORTFOLIO_ENABLED } from "@/lib/feature-flags";
 
 const CONTACTS = [
   { icon: Mail, label: "hello@igovazd.am", href: "mailto:hello@igovazd.am" },
@@ -80,26 +80,19 @@ export function Footer({
                 {t("footer.product")}
               </h3>
               <ul className="space-y-3">
+                {/* One row, not two: "Browse projects" pointed at /catalog and
+                    "Advertising" at /ads until the two merged (2026-08-14).
+                    Both now resolve to the same page, and the same destination
+                    twice under two names in one six-item column reads as a
+                    mistake. Kept the wording that names the section. */}
                 <li>
                   <Link
-                    href="/catalog"
+                    href="/ads"
                     className="text-sm text-muted-foreground transition-colors hover:text-primary"
                   >
-                    {t("footer.browseProjects")}
+                    {t("footer.ads")}
                   </Link>
                 </li>
-                {/* Hidden behind ADS_ENABLED (src/lib/feature-flags.ts) — the
-                    routes 404 too. */}
-                {ADS_ENABLED ? (
-                  <li>
-                    <Link
-                      href="/ads"
-                      className="text-sm text-muted-foreground transition-colors hover:text-primary"
-                    >
-                      {t("footer.ads")}
-                    </Link>
-                  </li>
-                ) : null}
                 <li>
                   <Link
                     href="/how-it-works"

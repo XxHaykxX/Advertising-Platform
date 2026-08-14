@@ -10,13 +10,14 @@ import type { VariantProps } from "class-variance-authority";
 type ButtonVariantProps = VariantProps<typeof buttonVariants>;
 
 // Returns the user to wherever they came from (catalog, portfolio, favorites,
-// featured …) instead of a hardcoded /catalog (IA-14). Falls back to /catalog
-// when there's no in-app history (e.g. a shared deep link opened cold).
+// featured …) instead of a hardcoded /catalog (IA-14). Falls back to /ads
+// (the former /catalog merged in on 2026-08-14) when there's no in-app
+// history (e.g. a shared deep link opened cold).
 // IA-54: the word itself is not rendered any more — an arrow already reads as
 // "back", and next to it sat "Հետ Կատալոգ", two words for one action. `label`
 // becomes the accessible name instead of visible text, so the control keeps
 // telling a screen reader what it does.
-export function BackButton({ label, fallbackHref = "/catalog" }: { label: string; fallbackHref?: string }) {
+export function BackButton({ label, fallbackHref = "/ads" }: { label: string; fallbackHref?: string }) {
   const router = useRouter();
   return (
     <button

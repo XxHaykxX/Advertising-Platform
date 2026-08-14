@@ -9,7 +9,7 @@ test.describe("guest — public catalog", () => {
     const pageErrors: string[] = [];
     page.on("pageerror", (e) => pageErrors.push(e.message));
 
-    await page.goto("/catalog");
+    await page.goto("/ads");
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 
     // Format filter (V2) exists. The parenthesised-country rule it used to

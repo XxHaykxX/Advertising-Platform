@@ -55,7 +55,7 @@ export function FavoritesView({ favorites, locale }: { favorites: BrandFavoriteD
         <p className="text-lg font-semibold text-foreground">{t("account.brand.noFavoritesTitle")}</p>
         <p className="max-w-sm text-sm text-muted-foreground">{t("account.brand.noFavoritesBody")}</p>
         <Button asChild variant="primary" size="md">
-          <Link href="/catalog">{t("nav.browseProjects")}</Link>
+          <Link href="/ads">{t("nav.browseProjects")}</Link>
         </Button>
       </div>
     );

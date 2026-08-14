@@ -24,12 +24,15 @@ import { deleteStreamingSource } from "@/lib/actions/streaming-sources";
 import { deleteCountry } from "@/lib/actions/countries";
 import { deleteStudio } from "@/lib/actions/studios";
 import { ImageUploader, type ImageUploaderHandle } from "./image-uploader";
+import { WIDE_ASPECT } from "@/lib/images/size-hint";
 import type { ActorRow } from "./actors-editor";
 import type { PersonSuggestion } from "@/lib/data/actors";
 import type { TierRow, TierTemplate } from "./tiers-editor";
 import type { PlacementRow } from "./placements-editor";
 import { ReferencesSection } from "./references-editor";
 import { MultiSelect } from "@/components/ui/multi-select";
+import { AttrFields } from "@/components/ad-channel-attr-fields";
+import { attrLabelKey, attrValueLabelKey, attrsFor } from "@/lib/ad-channel-attrs";
 import { MediaField } from "@/components/media-field";
 import { Dropzone, DropzoneEmptyState, useDropzoneOpen } from "@/components/ui/dropzone";
 import { UploadProgress } from "@/components/ui/upload-progress";
@@ -154,6 +157,10 @@ const EMPTY: ProjectFormInitial = {
   videoEmbedUrl: "",
   videoFile: "",
   presentationPdf: "",
+  eventCity: "",
+  eventDate: "",
+  eventCategory: "",
+  attrs: {},
 };
 
 // #11 About block: the three locale tabs.
@@ -224,6 +231,11 @@ function hydratePlacementRow(r: PlacementRow): PlacementRow {
 const inputCls =
   "w-full rounded-xl border border-border bg-card px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:border-primary";
 const labelCls = "mb-1 block text-xs font-medium text-foreground";
+
+// eventCategory rides on its own Project column, not the attrs bag — see
+// actions.ts's ProjectFormValues comment — but its closed list still lives in
+// the shared directory, same as every other attribute's.
+const EVENT_CATEGORY_VALUES = attrsFor("EVENTS").find((d) => d.key === "eventCategory")?.values ?? [];
 
 /** number|null -> the value <input defaultValue> expects; null renders as an
  *  empty (unset) field. */
@@ -887,6 +899,15 @@ export function ProjectForm({
   const [studioOptions, setStudioOptions] = useState<string[]>(() => studios);
   const [studioOptionPending, startStudioOptionTransition] = useTransition();
   const [deletingStudioOption, setDeletingStudioOption] = useState<string | null>(null);
+  // ── Event (stage 3) — eventCity/eventDate/eventCategory ride on their own
+  // Project columns (see the note in actions.ts's ProjectFormValues), and
+  // `attrs` carries whichever of PLACEMENT's/EVENTS' extra attributes the
+  // editor filled in — a project isn't pinned to one channel, so both sets
+  // are offered together rather than picking one like the ad-space form does.
+  const [eventCity, setEventCity] = useState(data.eventCity);
+  const [eventDate, setEventDate] = useState(data.eventDate);
+  const [eventCategory, setEventCategory] = useState(data.eventCategory);
+  const [channelAttrs, setChannelAttrs] = useState<Record<string, unknown>>(data.attrs);
   // ── Cast/crew + sponsorship tiers, inline (#20²) ──
   const [actors, setActors] = useState<ActorRow[]>(() => initialActors);
   // IA-44 §1: a brand-new project (no `initial`) starts pre-filled with the
@@ -1031,6 +1052,10 @@ export function ProjectForm({
       ["sec-milestones", "projectForm.section.milestones", []],
       ["sec-general", "projectForm.section.general", ["field-runtime", "field-formatCategory"]],
       ["sec-production", "projectForm.section.production", ["field-studio", "field-deadline"]],
+      // Not a publish blocker (owner didn't ask for it to be one) — a project
+      // sells PLACEMENT and/or EVENTS depending on what's filled in above,
+      // not on whether this section has anything in it.
+      ["sec-channel", "projectForm.section.channelAttrs", []],
       // Visibility is staff-only — the section isn't rendered in creator mode.
       ...(mode === "creator"
         ? []
@@ -1637,6 +1662,20 @@ export function ProjectForm({
                   initial={posterInitial}
                   label={t("projectForm.uploadPoster")}
                   removeLabel={t("ui.remove")}
+                  // Ostikanner bug (2026-08-14): the server's own resize crops
+                  // every poster/still to 16:9 already (lib/images/optimize.ts)
+                  // — this just lets the editor see and choose that crop up
+                  // front instead of losing the top/bottom of a taller photo
+                  // silently. Same 16:9 copy as the offer still crop below —
+                  // one ratio, one dialog string.
+                  cropAspect={WIDE_ASPECT}
+                  cropLabels={{
+                    title: t("projectForm.offer.crop.title"),
+                    zoom: t("projectForm.offer.crop.zoom"),
+                    apply: t("projectForm.offer.crop.apply"),
+                    cancel: t("projectForm.offer.crop.cancel"),
+                    hint: t("projectForm.offer.crop.hint"),
+                  }}
                   trailing={
                     <>
                       <span className="text-xs uppercase tracking-wide text-muted-foreground">{t("projectForm.or")}</span>
@@ -1683,6 +1722,14 @@ export function ProjectForm({
                   initial={galleryInitial}
                   label={t("projectForm.uploadGalleryImages")}
                   removeLabel={t("ui.remove")}
+                  cropAspect={WIDE_ASPECT}
+                  cropLabels={{
+                    title: t("projectForm.offer.crop.title"),
+                    zoom: t("projectForm.offer.crop.zoom"),
+                    apply: t("projectForm.offer.crop.apply"),
+                    cancel: t("projectForm.offer.crop.cancel"),
+                    hint: t("projectForm.offer.crop.hint"),
+                  }}
                 />
               </MediaCard>
 
@@ -2165,6 +2212,99 @@ export function ProjectForm({
                 removeLabel={t("ui.remove")}
               />
             </Field>
+          </section>
+
+          {/* ── Channel attributes (stage 3) ── two blocks, both always shown:
+              a project isn't pinned to one channel, it can sell PLACEMENT
+              and/or EVENTS depending on what's filled in above (placements
+              rows / sponsorship tiers), so which of these two actually
+              applies isn't known here — same reasoning as showing the
+              Placements AND Sponsors sections unconditionally. eventCity/
+              eventDate/eventCategory are first-class Project columns
+              (schema.prisma); everything else rides on Project.attrs, the
+              union-of-PLACEMENT-and-EVENTS bag
+              normalizeAttrs(["PLACEMENT","EVENTS"], …) writes in actions.ts.
+              Not a publish blocker — see navSections above. */}
+          <section id="sec-channel" className="scroll-mt-24 space-y-5 rounded-xl border border-border bg-card p-4">
+            <h2 className="text-sm font-semibold uppercase tracking-[0.15em] text-primary">
+              {t("projectForm.section.channelAttrs")}
+            </h2>
+            <input type="hidden" name="attrs" value={JSON.stringify(channelAttrs)} />
+
+            {/* Event — eventCity/eventDate/eventCategory plus EVENTS' own
+                attrs (attendance, eventMode, categoryExclusive). */}
+            <div className="space-y-3">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                {t("projectForm.section.event")}
+              </h3>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <Field label={t("projectForm.eventCity")}>
+                  <input
+                    name="eventCity"
+                    value={eventCity}
+                    onChange={(e) => setEventCity(e.target.value)}
+                    className={inputCls}
+                  />
+                </Field>
+                <Field label={t("projectForm.eventDate")}>
+                  <input
+                    type="date"
+                    name="eventDate"
+                    value={eventDate}
+                    onChange={(e) => setEventDate(e.target.value)}
+                    className={inputCls}
+                  />
+                </Field>
+              </div>
+              {EVENT_CATEGORY_VALUES.length > 0 ? (
+                <Field label={t(attrLabelKey("eventCategory"))}>
+                  <select
+                    name="eventCategory"
+                    value={eventCategory}
+                    onChange={(e) => setEventCategory(e.target.value)}
+                    className={inputCls}
+                  >
+                    <option value="">—</option>
+                    {EVENT_CATEGORY_VALUES.map((v) => (
+                      <option key={v} value={v}>
+                        {t(attrValueLabelKey("eventCategory", v))}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+              ) : null}
+              {/* eventCategory has its own dedicated field above (a
+                  first-class column) — excluded here so it isn't rendered
+                  twice as a generic attribute. */}
+              <AttrFields
+                channelCode="EVENTS"
+                excludeKeys={["eventCategory"]}
+                value={channelAttrs}
+                onChange={setChannelAttrs}
+                t={t}
+                inputCls={inputCls}
+                labelCls={labelCls}
+              />
+            </div>
+
+            {/* Product placement — PLACEMENT's own attrs (production stage,
+                category exclusivity, projected reach). categoryExclusive is
+                shared with EVENTS above (same directory key, same value in
+                `attrs`) — shown in both blocks on purpose: whichever channel
+                a visitor reads this project under, the flag applies. */}
+            <div className="space-y-3 border-t border-border pt-3">
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                {t("projectForm.section.placementAttrs")}
+              </h3>
+              <AttrFields
+                channelCode="PLACEMENT"
+                value={channelAttrs}
+                onChange={setChannelAttrs}
+                t={t}
+                inputCls={inputCls}
+                labelCls={labelCls}
+              />
+            </div>
           </section>
 
           {/* ── Visibility ── admin only: a Creator never controls publication —

@@ -24,7 +24,7 @@ export function Featured({
           </Reveal>
           <Reveal delay={0.1}>
             <Link
-              href="/catalog"
+              href="/ads"
               className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"
             >
               {t("btn.viewAll")}

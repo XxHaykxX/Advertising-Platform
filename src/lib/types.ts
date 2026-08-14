@@ -58,6 +58,18 @@ export interface ProjectListDTO {
   /** How many sponsorship packages the project sells — the companion to
    *  placementsCount above. */
   tiersCount: number;
+  /** Per-channel attributes (2026-08-14, stage 3) — the PLACEMENT/EVENTS
+   *  bag from Project.attrs, already parsed server-side (see parseAttrs in
+   *  ad-channel-attrs.ts) so every caller gets a plain object, never a raw
+   *  JSON string to reparse. {} when unset or the column is malformed. */
+  attrs: Record<string, unknown>;
+  /** EVENTS-only facts (2026-08-14) — first-class columns rather than attrs
+   *  entries because the catalogue sorts/filters on them directly (a date
+   *  range, a city). "" / null when the project isn't an event, same
+   *  "empty means unset" contract as the rest of this DTO. */
+  eventCity: string;
+  eventDate: string | null;
+  eventCategory: string;
 }
 
 export interface ProjectDetailDTO extends ProjectListDTO {
@@ -175,6 +187,9 @@ export interface AdSpaceListDTO {
   /** ISO timestamp (2026-08-10) — the catalog's "newest first" sort needs a
    *  recency signal for a space the same way releaseDate is one for a project. */
   createdAt: string;
+  /** Per-channel attributes (2026-08-14, stage 3) — same contract as
+   *  ProjectListDTO.attrs above. */
+  attrs: Record<string, unknown>;
 }
 
 export interface AdSpaceDetailDTO extends AdSpaceListDTO {

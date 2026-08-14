@@ -13,6 +13,7 @@ import { getCountryOptions } from "@/lib/data/countries";
 import { getStudioOptions } from "@/lib/data/studios";
 import { getTierTemplates } from "@/lib/data/tier-templates";
 import { projectCompleteness } from "@/lib/project-completeness";
+import { parseAttrs } from "@/lib/ad-channel-attrs";
 import { labelSep, makeUI } from "@/lib/i18n";
 import {
   formatDateInput,
@@ -115,6 +116,10 @@ export default async function EditCreatorProjectPage({
     videoFile: p.videoFile ?? "",
     // Sales deck (IA-44, 2026-08-05) — same "path or empty" contract as poster.
     presentationPdf: p.presentationPdf ?? "",
+    eventCity: p.eventCity,
+    eventDate: formatDateInput(p.eventDate),
+    eventCategory: p.eventCategory,
+    attrs: parseAttrs(p.attrs),
   };
 
   // "What a brand sees" (audit B8) — same computation as the admin edit page.

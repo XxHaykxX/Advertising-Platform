@@ -186,7 +186,7 @@ export function Hero({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
           </Link>
           <Link
-            href="/catalog"
+            href="/ads"
             className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-white/15 bg-white/5 px-7 py-3.5 text-sm font-semibold text-white backdrop-blur transition-all duration-200 hover:border-white/30 hover:bg-white/10 sm:w-auto"
           >
             <Play className="h-4 w-4 fill-current" />

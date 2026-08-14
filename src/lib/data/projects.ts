@@ -17,6 +17,7 @@ import {
   parseGenresInput,
 } from "@/app/admin/(panel)/projects/form-shared";
 import { parseJsonList, pickLocale, pickLocaleList } from "@/lib/data/pick-locale";
+import { parseAttrs } from "@/lib/ad-channel-attrs";
 
 
 // ── format token dictionary ──────────────────────────────────────────────
@@ -198,6 +199,10 @@ const getProjectsCached = unstable_cache(
       rates,
       locale,
     ),
+    attrs: parseAttrs(p.attrs),
+    eventCity: p.eventCity,
+    eventDate: p.eventDate?.toISOString() ?? null,
+    eventCategory: p.eventCategory,
   }));
   },
   ["projects-list"],
@@ -345,6 +350,10 @@ const getProjectCached = unstable_cache(
       rates,
       locale,
     ),
+    attrs: parseAttrs(p.attrs),
+    eventCity: p.eventCity,
+    eventDate: p.eventDate?.toISOString() ?? null,
+    eventCategory: p.eventCategory,
     milestones: p.milestones.map((m) => ({
       id: m.id,
       label: m.label,

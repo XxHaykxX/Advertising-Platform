@@ -74,6 +74,14 @@ export type AdSpaceFormValues = {
   gallery: string; // newline-separated "/uploads/…" paths
   /** Staff-only. A creator's save forces this false server-side. */
   isActive: boolean;
+  /** Per-channel attributes (2026-08-14, stage 3) — raw, not yet run through
+   *  normalizeAttrs: the form redisplays exactly what the editor typed on a
+   *  validation error, same as every other field here. The channel gate
+   *  (drop anything that doesn't belong to `channel`, or fails its closed
+   *  list) is applied once, at the write boundary — see adSpaceScalars in
+   *  write.ts, the same place city/gallery/description get their DB-shape
+   *  transform. */
+  attrs: Record<string, unknown>;
 };
 
 export const EMPTY_AD_SPACE: AdSpaceFormValues = {
@@ -95,6 +103,7 @@ export const EMPTY_AD_SPACE: AdSpaceFormValues = {
   image: "",
   gallery: "",
   isActive: true,
+  attrs: {},
 };
 
 export type AdSpaceFormState = {
@@ -132,6 +141,17 @@ function jsonArray<T>(fd: FormData, key: string): T[] {
   }
 }
 
+/** Same shape as jsonArray above, for the one field (attrs) that submits a
+ *  JSON object instead of a JSON array. */
+function jsonObject(fd: FormData, key: string): Record<string, unknown> {
+  try {
+    const o: unknown = JSON.parse(String(fd.get(key) || "{}"));
+    return o !== null && typeof o === "object" && !Array.isArray(o) ? (o as Record<string, unknown>) : {};
+  } catch {
+    return {};
+  }
+}
+
 export function buildAdSpaceData(fd: FormData): AdSpaceFormValues {
   return {
     code: str(fd, "code", VARCHAR_MAX),
@@ -154,6 +174,7 @@ export function buildAdSpaceData(fd: FormData): AdSpaceFormValues {
     image: safeUploadPath(str(fd, "image", VARCHAR_MAX)),
     gallery: str(fd, "gallery"),
     isActive: fd.get("isActive") === "on",
+    attrs: jsonObject(fd, "attrs"),
   };
 }
 

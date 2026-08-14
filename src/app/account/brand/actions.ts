@@ -22,10 +22,11 @@ import { parseWebsiteUrl } from "@/lib/website-url";
 
 function revalidateBrandPaths() {
   revalidatePath("/account/brand");
-  // The grid a brand applies from is the public catalogue now (the cabinet's
-  // own copy at /account/brand/browse redirects here) — its cards carry the
-  // free-slot counts an interest can move.
-  revalidatePath("/catalog");
+  // The grid a brand applies from is the public marketplace list now (the
+  // cabinet's own copy at /account/brand/browse redirects here) — its cards
+  // carry the free-slot counts an interest can move. /catalog merged into
+  // /ads on 2026-08-14.
+  revalidatePath("/ads");
   revalidatePath("/account/brand/interests");
   revalidatePath("/account/brand/profile");
 }

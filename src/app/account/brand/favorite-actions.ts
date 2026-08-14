@@ -13,7 +13,7 @@ import { makeUI } from "@/lib/i18n";
  * notifications: favorites are private, nobody needs to be told about them. */
 
 function revalidateFavoritePaths() {
-  revalidatePath("/catalog");
+  revalidatePath("/ads");
   revalidatePath("/account/brand/favorites");
 }
 

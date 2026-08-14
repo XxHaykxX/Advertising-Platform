@@ -68,7 +68,7 @@ export function PortfolioView({
               {t("portfolio.ctaBody")}
             </p>
             <Button asChild variant="primary" size="lg">
-              <Link href="/catalog">{t("btn.browseCurrentProjects")}</Link>
+              <Link href="/ads">{t("btn.browseCurrentProjects")}</Link>
             </Button>
           </Container>
         </div>

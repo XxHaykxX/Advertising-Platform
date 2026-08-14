@@ -108,7 +108,7 @@ export default async function BrandDashboardPage() {
                 {t("account.brand.noInterestsDashboardBody")}
               </p>
               <Button asChild variant="primary" size="md" className="mt-1">
-                <Link href="/catalog">{t("nav.browseProjects")}</Link>
+                <Link href="/ads">{t("nav.browseProjects")}</Link>
               </Button>
             </div>
           ) : (
@@ -179,7 +179,7 @@ export default async function BrandDashboardPage() {
       <section className="mt-8">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-foreground">{t("account.brand.recentlyAdded")}</h2>
-          <Link href="/catalog" className="text-sm font-semibold text-primary hover:underline">
+          <Link href="/ads" className="text-sm font-semibold text-primary hover:underline">
             {t("btn.viewAll")}
           </Link>
         </div>

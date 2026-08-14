@@ -146,7 +146,7 @@ export default async function HowItWorksPage() {
 
                 <div className="mt-8 flex justify-center">
                   <Button asChild variant="primary" size="md">
-                    <Link href="/catalog">{t("btn.browseProjects")}</Link>
+                    <Link href="/ads">{t("btn.browseProjects")}</Link>
                   </Button>
                 </div>
               </div>

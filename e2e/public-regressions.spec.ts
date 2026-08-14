@@ -13,7 +13,7 @@ test.describe("project page metadata", () => {
     await page.goto("/");
     const homeTitle = await page.title();
 
-    await page.goto("/catalog");
+    await page.goto("/ads");
     const firstReport = page.locator('a[href^="/reports/"]').first();
     await expect(firstReport).toBeVisible();
     const href = await firstReport.getAttribute("href");
@@ -73,6 +73,6 @@ test.describe("404", () => {
     // Next's built-in 404 has none of this: no header, no footer, no links.
     await expect(page.getByRole("link", { name: "iGovazd" }).first()).toBeVisible();
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-    await expect(page.locator('a[href="/catalog"]').first()).toBeVisible();
+    await expect(page.locator('a[href="/ads"]').first()).toBeVisible();
   });
 });

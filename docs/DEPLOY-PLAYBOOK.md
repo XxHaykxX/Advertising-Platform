@@ -40,8 +40,9 @@
    старую версию — снаружи это выглядит как «фикс не применился», хотя код запушен
    (реальный случай: коммит `0bc603e`, см. `MEMORY.md`/`tasks.md`). Обязательно проверять
    статус билда (`hosting_listNodeJSBuildsV1` = `completed`), не доверять факту push.
-6. Смоук-тест ключевых страниц (`/`, `/catalog`, `/reports/[id]`, `/admin/login`, `/login`,
-   `/register`) — см. пример прогона в `docs/archive/Prod-Deploy-2026-07-15.md`.
+6. Смоук-тест ключевых страниц (`/`, `/ads`, `/reports/[id]`, `/admin/login`, `/login`,
+   `/register`) — см. пример прогона в `docs/archive/Prod-Deploy-2026-07-15.md`. (`/catalog`
+   с 14.08.2026 — редирект на `/ads`, страницей не является.)
 
 ## GitHub-токен редактора переводов (`GITHUB_SYNC_TOKEN`)
 
