@@ -222,10 +222,13 @@ export const UI: Record<string, Dict> = {
   "poster.fromLibrary": { ru: "Из библиотеки", en: "From library", hy: "Գրադարանից" },
 
   // ── footer ──────────────────────────────────
+  // Sits on every page. Said "film and TV" only, which stopped being true when
+  // the marketplace started selling billboards, transit, lifts, radio and
+  // digital alongside integrations (2026-08-14).
   "footer.tagline": {
-    ru: "Находите премиальные возможности для брендированного плейсмента в кино и на ТВ.",
-    en: "Discover premium brand placement opportunities in film and TV.",
-    hy: "Բացահայտեք բրենդային տեղադրման պրեմիում հնարավորություններ կինոյում և հեռուստատեսությունում։",
+    ru: "Реклама, которую видно: интеграции в кино и сериалы, спонсорство событий, наружка, транспорт, радио, ТВ и digital.",
+    en: "Advertising people actually see: film and series integrations, event sponsorship, outdoor, transit, radio, TV and digital.",
+    hy: "Գովազդ, որը տեսնում են՝ ինտեգրումներ կինոյում և սերիալներում, միջոցառումների հովանավորություն, բացօթյա գովազդ, տրանսպորտ, ռադիո, հեռուստատեսություն և թվային գովազդ։",
   },
   "footer.product": { ru: "Продукт", en: "Product", hy: "Արտադրանք" },
   "footer.company": { ru: "Компания", en: "Company", hy: "Ընկերություն" },
@@ -2930,8 +2933,21 @@ export const UI: Record<string, Dict> = {
     en: "Product placement in film, event sponsorship, TV and radio, outdoor and digital. Pick a channel and see what is available to buy.",
     hy: "Փրոդաքթ փլեյսմենթ կինոյում, միջոցառումների հովանավորություն, հեռուստատեսություն և ռադիո, բացօթյա և թվային գովազդ։ Ընտրեք ալիքը և տեսեք, թե ինչ է հասանելի գնման համար։",
   },
-  "ads.hero.ctaBrowse": { ru: "Смотреть проекты", en: "Browse projects", hy: "Տեսնել նախագծերը" },
+  // "Browse projects" until 2026-08-14, when the button started scrolling to a
+  // list that is billboards on /ads/billboard and radio slots on /ads/radio.
+  // The label has to survive every channel, so it names what is on offer
+  // rather than what kind of row carries it.
+  "ads.hero.ctaBrowse": { ru: "Смотреть предложения", en: "Browse listings", hy: "Տեսնել առաջարկները" },
   "ads.hero.ctaContact": { ru: "Связаться с нами", en: "Contact us", hy: "Կապվել մեզ հետ" },
+  // Replaces catalog.searchPlaceholder, which promised "genre, market" — half
+  // the rows on this page are billboards and radio slots that have neither.
+  // A new key rather than a reword: the old one carries an unpublished
+  // translator draft, and publishing it would restore the wrong wording.
+  "ads.searchPlaceholder": {
+    ru: "Поиск по названию, каналу, городу…",
+    en: "Search by title, channel, city…",
+    hy: "Փնտրել ըստ վերնագրի, ալիքի, քաղաքի…",
+  },
   "ads.groupsTitle": { ru: "Каналы по группам", en: "Channels by group", hy: "Ալիքները՝ ըստ խմբերի" },
   "ads.groupsSubtitle": {
     ru: "Девять каналов в пяти группах. У каждого — своя страница с описанием и доступным инвентарём.",
@@ -2947,6 +2963,22 @@ export const UI: Record<string, Dict> = {
     ru: "Все объявления",
     en: "All listings",
     hy: "Բոլոր հայտարարությունները",
+  },
+  // The /ads hero. New keys rather than the catalog.hero* pair it replaced:
+  // that pair promised "film and TV productions … filter by genre, product
+  // category and status", which stopped being true the moment the page also
+  // started listing billboards, lifts and radio slots. New keys also keep this
+  // rewrite clear of the translator's unpublished drafts sitting on the old
+  // ones — publishing those would otherwise silently restore the wrong copy.
+  "ads.heroTitle": {
+    ru: "Реклама",
+    en: "Advertising",
+    hy: "Գովազդ",
+  },
+  "ads.heroSubtitle": {
+    ru: "Всё, что можно купить на площадке: интеграции в кино и сериалы, спонсорство событий, билборды, транспорт, лифты, радио, ТВ и digital.",
+    en: "Everything the marketplace sells: film and series integrations, event sponsorship, billboards, transit, lifts, radio, TV and digital.",
+    hy: "Ամեն ինչ, ինչ կարելի է գնել հարթակում՝ ինտեգրումներ կինոյում և սերիալներում, միջոցառումների հովանավորություն, բիլբորդներ, տրանսպորտ, վերելակներ, ռադիո, հեռուստատեսություն և թվային գովազդ։",
   },
   "ads.inventory.title": { ru: "Доступный инвентарь", en: "Available inventory", hy: "Հասանելի գույքագրում" },
   "ads.inventory.projectsSubtitle": {

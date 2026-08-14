@@ -684,9 +684,13 @@ export function AdsView({
 
       {mode === "full" ? (
         <PageHero
-          eyebrow={t("nav.catalog")}
-          title={t("catalog.heroTitle")}
-          subtitle={t("catalog.heroSubtitle")}
+          // No eyebrow here: it used to read "Catalogue" above the title, and
+          // once the title became "Advertising" any nav-level word above it
+          // just repeated itself ("ADVERTISING / Advertising"). The channel
+          // pages still use one — there it names the group the channel sits in,
+          // which the title doesn't say.
+          title={t("ads.heroTitle")}
+          subtitle={t("ads.heroSubtitle")}
           locale={locale}
         />
       ) : null}
@@ -737,7 +741,7 @@ export function AdsView({
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder={t("catalog.searchPlaceholder")}
+                  placeholder={t("ads.searchPlaceholder")}
                   className="w-full rounded-xl border border-border bg-card py-2.5 pl-10 pr-4 text-sm text-foreground outline-none focus:border-primary"
                 />
               </div>
