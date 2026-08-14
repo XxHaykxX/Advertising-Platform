@@ -109,6 +109,15 @@ export const Dropzone = ({
     onError,
     disabled,
     onDrop: (acceptedFiles, fileRejections, event) => {
+      // Clear the <input> so the SAME file can be picked again. A file input
+      // only fires `change` when its value differs, and react-dropzone leaves
+      // the value in place — so picking poster.jpg, backing out of the crop
+      // dialog, then picking poster.jpg again did nothing at all and read as a
+      // broken field (2026-08-14). Harmless for a drag-and-drop, where the
+      // target isn't the input.
+      const target = event?.target;
+      if (target instanceof HTMLInputElement && target.type === "file") target.value = "";
+
       if (fileRejections.length > 0) {
         const message = fileRejections.at(0)?.errors.at(0)?.message;
         onError?.(new Error(message));
