@@ -19,6 +19,7 @@ import {
   type ReferenceRow,
   type MilestoneRow,
 } from "./form-shared";
+import { FormError } from "@/components/ui/field";
 import { deleteStreamingSource } from "@/lib/actions/streaming-sources";
 import { deleteCountry } from "@/lib/actions/countries";
 import { deleteStudio } from "@/lib/actions/studios";
@@ -651,7 +652,7 @@ export function ProjectForm({
   // save (e.g. the publish-time requirements added 2026-07-26) looked exactly
   // like a dead button: nothing visibly happened. Scroll the message into view
   // whenever one arrives.
-  const errorRef = useRef<HTMLParagraphElement>(null);
+  const errorRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (state.error) errorRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [state.error]);
@@ -2189,13 +2190,15 @@ export function ProjectForm({
         </div>
       </fieldset>
 
+      {/* IA-56 turned refusals red on the five auth forms; this one kept the
+          old purple `border-primary/10` banner, so "fill in the title" read as
+          a notification rather than a rejection (QA pass, 2026-08-14). Same
+          FormError as everywhere else now — the div only carries the scroll
+          anchor, since FormError renders its own <p role="alert">. */}
       {state.error && (
-        <p
-          ref={errorRef}
-          className="rounded-lg border border-primary/40 bg-primary/10 px-4 py-2.5 text-sm text-primary"
-        >
-          {state.error}
-        </p>
+        <div ref={errorRef}>
+          <FormError message={state.error} />
+        </div>
       )}
 
       <div className="flex items-center gap-3">

@@ -123,19 +123,23 @@ export const UI: Record<string, Dict> = {
   },
 
   // ── hero ────────────────────────────────────
+  /* The owner rewrote the Armenian hero (IA-48) and left ru/en on the old
+     template, so the three locales advertised three different products — the
+     QA pass on 2026-08-14 found the Russian home page still promising
+     "scene-level placement reports". ru/en now say what hy says. */
   "hero.eyebrow": {
-    ru: "Маркетплейс продакт-плейсмента",
-    en: "Product placement marketplace",
+    ru: "Откройте новые возможности",
+    en: "Discover new opportunities",
     hy: "ԲԱՑԱՀԱՅՏԵ՛Ք ՆՈՐ ՀՆԱՐԱՎՈՐՈՒԹՅՈՒՆՆԵՐ",
   },
   "hero.titleHighlight": {
-    ru: "Брендированный плейсмент",
-    en: "Brand Placement",
+    ru: "Для брендов и авторов медиапроектов",
+    en: "For brands and media project creators",
     hy: "Բրենդների և մեդիա արտադրողների համար",
   },
   "hero.subtitle": {
-    ru: "Соединяем бренды с кино- и сериальными продакшенами через посценовые отчёты о плейсменте.",
-    en: "Connect brands with film & series productions through scene-level placement reports.",
+    ru: "Площадка, где бренды и авторы медиапроектов находят друг друга на прозрачных и взаимовыгодных условиях.",
+    en: "A platform where brands and media project creators find each other on transparent, mutually beneficial terms.",
     hy: "Հարթակ, որտեղ բրենդներն ու մեդիա նախագծերի հեղինակները գտնում են իրար՝ թափանցիկ և փոխշահավետ պայմաններով։",
   },
   "hero.scrollDown": { ru: "Прокрутить вниз", en: "Scroll down", hy: "Ոլորել ներքև" },
@@ -548,19 +552,26 @@ export const UI: Record<string, Dict> = {
     hy: "Խնդրում ենք լրացնել դաշտը",
   },
 
-  // ── trust section ─────────────────────────────
-  "trust.scriptsAnalyzedNumber": { ru: "100 000+", en: "100,000+", hy: "100%" },
-  "trust.scriptsAnalyzedTitle": { ru: "сценариев проанализировано", en: "scripts analyzed", hy: "ապահով գործարք" },
-  "trust.scriptsAnalyzedCaption": {
-    ru: "с полной аналитикой по бренду",
-    en: "with comprehensive brand intelligence",
+  /* ── trust section ─────────────────────────────
+     Renamed from trust.scriptsAnalyzed* / trust.countries* on 2026-08-14. The
+     owner had replaced the Armenian copy with a different claim ("100% secure
+     deal", "50+ trusted partners") but the key names still said "scripts
+     analyzed" and "countries covered" — so ru and en kept advertising
+     "100 000+ сценариев проанализировано" and "100+ стран охвачено" for a
+     platform with nine Armenian projects. The names now match what the
+     section actually says, and the icons in trust.tsx moved with them. */
+  "trust.secureDealNumber": { ru: "100%", en: "100%", hy: "100%" },
+  "trust.secureDealTitle": { ru: "безопасная сделка", en: "secure deal", hy: "ապահով գործարք" },
+  "trust.secureDealCaption": {
+    ru: "Гарантированные платежи и юридическая защита",
+    en: "Guaranteed payments and legal protection",
     hy: "Երաշխավորված վճարումներ և իրավական պաշտպանվածություն",
   },
-  "trust.countriesNumber": { ru: "100+", en: "100+", hy: "50+" },
-  "trust.countriesTitle": { ru: "стран охвачено", en: "countries covered", hy: "վստահելի գործընկերներ" },
-  "trust.countriesCaption": {
-    ru: "доступно на крупнейших рынках мира",
-    en: "available in major markets worldwide",
+  "trust.partnersNumber": { ru: "50+", en: "50+", hy: "50+" },
+  "trust.partnersTitle": { ru: "надёжных партнёров", en: "trusted partners", hy: "վստահելի գործընկերներ" },
+  "trust.partnersCaption": {
+    ru: "Сотрудничество с проверенными авторами медиапроектов",
+    en: "Partnerships with verified media project creators",
     hy: "Համագործակցություններ ստուգված մեդիա նախագծերի հեղինակների hետ",
   },
 
@@ -2136,6 +2147,16 @@ export const UI: Record<string, Dict> = {
 
   // ── notifications (#25 / V9) — copy rendered from Notification.type+data in
   // the viewer's locale; {brand}/{project}/{creator} are raw data placeholders ──
+  // 404 page (QA pass 2026-08-14). Until then a broken link landed on Next's
+  // built-in "404: This page could not be found." — no header, no language
+  // switcher, no way back. The CTA reuses legal.backToHome / btn.browseProjects.
+  "notFound.title": { ru: "Страница не найдена", en: "Page not found", hy: "Էջը չի գտնվել" },
+  "notFound.body": {
+    ru: "Возможно, ссылка устарела или в адресе опечатка.",
+    en: "The link may be out of date, or the address has a typo.",
+    hy: "Հնարավոր է՝ հղումը հնացել է կամ հասցեում վրիպակ կա։",
+  },
+
   "notif.title": { ru: "Уведомления", en: "Notifications", hy: "Ծանուցումներ" },
   "notif.empty": { ru: "Пока нет уведомлений.", en: "No notifications yet.", hy: "Դեռ ծանուցումներ չկան։" },
   "notif.markAllRead": { ru: "Отметить все прочитанными", en: "Mark all as read", hy: "Նշել բոլորը որպես կարդացված" },

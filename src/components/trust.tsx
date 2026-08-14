@@ -1,4 +1,4 @@
-import { FileText, Globe } from 'lucide-react';
+import { Handshake, ShieldCheck } from 'lucide-react';
 import { Container } from './ui/container';
 import { Section } from './ui/section';
 import { Reveal } from './ui/reveal';
@@ -7,17 +7,19 @@ import { DEFAULT_LOCALE, makeUI, type Locale } from '@/lib/i18n';
 export function Trust({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
   const t = makeUI(locale);
   const items = [
+    // The icons follow the copy: this section stopped being about scripts and
+    // countries when the owner rewrote it (see the trust.* block in i18n.ts).
     {
-      icon: FileText,
-      number: t('trust.scriptsAnalyzedNumber'),
-      title: t('trust.scriptsAnalyzedTitle'),
-      caption: t('trust.scriptsAnalyzedCaption'),
+      icon: ShieldCheck,
+      number: t('trust.secureDealNumber'),
+      title: t('trust.secureDealTitle'),
+      caption: t('trust.secureDealCaption'),
     },
     {
-      icon: Globe,
-      number: t('trust.countriesNumber'),
-      title: t('trust.countriesTitle'),
-      caption: t('trust.countriesCaption'),
+      icon: Handshake,
+      number: t('trust.partnersNumber'),
+      title: t('trust.partnersTitle'),
+      caption: t('trust.partnersCaption'),
     },
   ];
 

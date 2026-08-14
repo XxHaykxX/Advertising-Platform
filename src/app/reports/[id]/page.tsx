@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getProject, getProjectIds } from "@/lib/data/projects";
 import { getLocale } from "@/lib/data/locale";
@@ -23,7 +24,7 @@ import {
 } from "@/components/report/report-interest-context";
 import { StickyOfferBar } from "@/components/report/sticky-offer-bar";
 import { ViewPing } from "@/components/report/view-ping";
-import { makeUI } from "@/lib/i18n";
+import { DEFAULT_LOCALE, makeUI } from "@/lib/i18n";
 import { slotsLabelKey } from "@/lib/plural";
 
 export async function generateStaticParams() {
@@ -32,6 +33,47 @@ export async function generateStaticParams() {
 }
 
 export const dynamicParams = true;
+
+/* Without this the whole route inherited the root layout's metadata: every
+   project tab read "iGovazd — Brand Placement Marketplace", every canonical
+   pointed at "/", and a link pasted into Telegram unfurled as the home page.
+   That breaks the one sharing path the product is built around — a creator
+   sending a brand the link to their project (QA pass, 2026-08-14).
+
+   English like every other public page's metadata (the site is noindex; this
+   is only what a shared link unfurls as), with the title itself coming out of
+   the DB in the site's default language — same contract as
+   /ads/[channel]/[code]. activeOnly: an unapproved project must not leak its
+   title through a preview, and staff previewing the moderation queue simply
+   fall back to the site-wide tags. */
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const pid = Number(id);
+  if (!Number.isInteger(pid)) return {};
+
+  const project = await getProject(pid, DEFAULT_LOCALE, "AMD", true);
+  if (!project) return {};
+
+  const description = (project.tagline || project.synopsis || "").slice(0, 200);
+  const url = `/reports/${pid}`;
+  return {
+    title: `${project.title} — iGovazd`,
+    ...(description ? { description } : {}),
+    alternates: { canonical: url },
+    openGraph: {
+      title: `${project.title} — iGovazd`,
+      ...(description ? { description } : {}),
+      url,
+      // The poster is the project's own picture; without it the unfurl falls
+      // back to the site-wide opengraph-image, which is the home page again.
+      ...(project.poster ? { images: [{ url: project.poster }] } : {}),
+    },
+  };
+}
 
 export default async function ReportPage({
   params,

@@ -212,8 +212,11 @@ export function ApplicationDialog({
             <p className="mt-4 text-sm text-foreground">{t("apply.success")}</p>
             <p className="mt-2 text-sm text-muted-foreground">{t("apply.successWho")}</p>
             <div className="mt-6 flex justify-end">
+              {/* "Close", not "Cancel": the application is already sent, and
+                  the only button on the confirmation screen used to invite the
+                  visitor to cancel it (QA pass, 2026-08-14). */}
               <Button type="button" variant="primary" onClick={onClose}>
-                {t("apply.cancel")}
+                {t("btn.close")}
               </Button>
             </div>
           </>
