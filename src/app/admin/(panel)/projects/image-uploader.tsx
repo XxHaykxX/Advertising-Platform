@@ -31,7 +31,7 @@ import {
 import { UploadProgress } from "@/components/ui/upload-progress";
 import { holdProgress, uploadViaXhr } from "@/lib/upload-xhr";
 import type { Locale } from "@/lib/i18n-client";
-import { imageSizeHint } from "@/lib/images/size-hint";
+import { cropAspectForDir, imageSizeHint } from "@/lib/images/size-hint";
 
 /** Same lazy-load reasoning as media-field.tsx: react-easy-crop only ships to
  *  a page that actually crops. */
@@ -79,12 +79,12 @@ export const ImageUploader = forwardRef<ImageUploaderHandle, {
   replaceLabel?: string; // overlay action on the filled single-image preview
   dropReplaceLabel?: string; // shown while a file hovers over a filled field
   addLabel?: string; // caption of the "+" tile that ends the gallery grid
-  /** Opts this field into the crop step (Ostikanner bug, 2026-08-14): a
-   *  freshly dropped/picked file is cropped to this w/h ratio before it goes
-   *  out, so the server's own `cover` resize (lib/images/optimize.ts) has
-   *  nothing left to cut off the top/bottom of. Undefined leaves every
-   *  existing caller unaffected; a file picked from the media library is
-   *  already on the server and skips this, same as media-field.tsx. */
+  /** Overrides the crop ratio (Ostikanner bug, 2026-08-14): a freshly dropped
+   *  file is cropped to this w/h ratio before it goes out, so the server's own
+   *  `cover` resize (lib/images/optimize.ts) has nothing left to cut off the
+   *  top/bottom of. Omit it and the ratio comes from `dir` (cropAspectForDir),
+   *  which mirrors that same server rule. A file picked from the media library
+   *  is already on the server and skips this, same as media-field.tsx. */
   cropAspect?: number;
   /** Crop dialog copy, localized by the caller. Omit to keep MediaCropDialog's
    *  own English defaults. */
@@ -108,9 +108,12 @@ export const ImageUploader = forwardRef<ImageUploaderHandle, {
   replaceLabel = "Replace",
   dropReplaceLabel = "Drop to replace",
   addLabel = "Add",
-  cropAspect,
+  cropAspect: cropAspectProp,
   cropLabels,
 }, ref) {
+  // The destination folder decides the frame unless the caller overrides it —
+  // same rule as MediaPicker and MediaField.
+  const cropAspect = cropAspectProp ?? cropAspectForDir(dir) ?? undefined;
   const [pickerOpen, setPickerOpen] = useState(false);
   // Drag-and-drop upload straight onto the field. The picker dialog could
   // always upload, but reaching a file meant opening a dialog first — there was

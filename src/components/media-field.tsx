@@ -10,7 +10,7 @@ import { holdProgress, uploadViaXhr } from "@/lib/upload-xhr";
 import { captureVideoPoster, posterPathFor } from "@/lib/video-poster";
 import { Dropzone, DropzoneEmptyState, DropzonePreview } from "@/components/ui/dropzone";
 import type { Locale } from "@/lib/i18n-client";
-import { imageSizeHint } from "@/lib/images/size-hint";
+import { cropAspectForDir, imageSizeHint } from "@/lib/images/size-hint";
 
 /** react-easy-crop (~37 KB) is only needed by fields with `cropAspect`, and
  *  only once a file actually needs cropping — loaded on demand instead of
@@ -55,7 +55,7 @@ export function MediaField({
   previewShape = "video",
   compact = false,
   onChange,
-  cropAspect,
+  cropAspect: cropAspectProp,
   cropLabels,
 }: {
   /** Omit to skip the hidden input — used inside a repeatable row list (e.g.
@@ -106,16 +106,22 @@ export function MediaField({
    *  callers that have no hidden-input `name` need this to mirror the path into
    *  their own controlled state. */
   onChange?: (value: string) => void;
-  /** Opts this field into the crop step (task #2): a freshly dropped/picked
-   *  image is cropped to this w/h ratio before it's uploaded. Undefined (the
-   *  default) leaves every existing caller's behaviour untouched — only
-   *  `accept === "image"` fields honour it; video is never cropped, and a
-   *  file already in the media library isn't re-cropped either. */
+  /** Overrides the crop ratio for this field: a freshly dropped image is
+   *  cropped to this w/h ratio before it's uploaded. Omit it and the ratio
+   *  comes from `uploadDir` (cropAspectForDir) — the same rule the server
+   *  crops by, so a plain drop is framed exactly like a pick through the
+   *  picker. Pass one only where the field wants a shape the folder does not
+   *  imply (an avatar squared on purpose). Video is never cropped, and a file
+   *  already in the media library isn't re-cropped either. */
   cropAspect?: number;
   /** Crop dialog copy, localized by the caller. Omit to keep MediaCropDialog's
    *  own English defaults. */
   cropLabels?: { title: string; zoom: string; cancel: string; apply: string; hint?: string };
 }) {
+  // The folder decides the frame unless the caller says otherwise — see
+  // cropAspectForDir. Avatar-shaped folders return null (the server pads there
+  // instead of cutting), which reads as "no dialog".
+  const cropAspect = cropAspectProp ?? cropAspectForDir(uploadDir) ?? undefined;
   const [value, setValue] = useState(initial);
   const [open, setOpen] = useState(false);
   // A file that's mid-crop — set by handleDrop instead of uploading straight
