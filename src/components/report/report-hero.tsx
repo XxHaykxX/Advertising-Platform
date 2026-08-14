@@ -1,6 +1,7 @@
 import { Reveal } from "@/components/ui/reveal";
 import { DealCard } from "@/components/report/deal-card";
 import { BackButton, PrintButton, ShareButton } from "@/components/report/report-actions";
+import { FavoriteHeart } from "@/components/favorite-heart";
 import { PosterSlider } from "@/components/report/poster-slider";
 import { toEmbedUrl } from "@/components/report/report-video";
 import { SynopsisDisclosure } from "@/components/report/synopsis-disclosure";
@@ -22,10 +23,15 @@ export type HeroDeal = {
 export function ReportHero({
   project,
   deal,
+  favorite,
   locale = DEFAULT_LOCALE,
 }: {
   project: ProjectDetailDTO;
   deal: HeroDeal;
+  /** Shortlist state for the toolbar heart. Mirrors what the catalogue card
+   *  gets: until 2026-08-14 a visitor could save a project from the card and
+   *  then lose the button the moment they opened the project itself. */
+  favorite: { favorited: boolean; canFavorite: boolean; isOwn: boolean; signedIn: boolean };
   locale?: Locale;
 }) {
   const t = makeUI(locale);
@@ -60,6 +66,17 @@ export function ReportHero({
             <span className="text-muted-foreground">{t("report.catalogLabel")}</span>
           </div>
           <div className="flex items-center gap-3">
+            <FavoriteHeart
+              variant="inline"
+              projectId={project.id}
+              initialFavorite={favorite.favorited}
+              canFavorite={favorite.canFavorite}
+              isOwn={favorite.isOwn}
+              signedIn={favorite.signedIn}
+              addAria={t("favorite.addAria")}
+              removeAria={t("favorite.removeAria")}
+              ownAria={t("favorite.ownAria")}
+            />
             <ShareButton
               title={project.title}
               label={t("report.share")}
@@ -157,6 +174,7 @@ export function ReportHero({
               meta={{
                 genres: project.genres.length > 0 ? project.genres : [project.genre],
                 format: project.format,
+                formatCategory: project.formatCategory,
                 studio: project.studio,
                 countries: project.countries,
                 release,

@@ -72,6 +72,14 @@ export function I18nProvider({
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
 }
 
+/** The visitor's locale, straight from the provider. Almost every client
+ *  component receives it as a prop from its server parent; this is for the few
+ *  that have no parent to receive it from — Next's error boundaries, which are
+ *  handed nothing but `error` and `reset`. */
+export function useLocale(): Locale {
+  return useContext(I18nContext).locale;
+}
+
 /** Slice for `locale`, falling back to the visitor's own when a caller asks for
  *  a language nobody supplied (a bare key is better than a silently wrong one,
  *  and the dev warning below points at the missing provider). */

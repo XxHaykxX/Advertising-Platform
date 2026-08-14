@@ -8,6 +8,11 @@ import { loadCurrentMember } from "@/lib/auth/require";
 import { safeMemberRedirect } from "@/lib/auth/member-paths";
 import { RegisterForm } from "./register-form";
 
+export const metadata = {
+  title: "Create an account — iGovazd",
+  alternates: { canonical: "/register" },
+};
+
 export default async function RegisterPage({
   searchParams,
 }: {

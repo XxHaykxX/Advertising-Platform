@@ -22,6 +22,27 @@ const LOCAL_FLAGS = defaultCountries.map((c) => {
   return { iso2, src: `/flags/${iso2}.svg` };
 });
 
+/** The first caret position a typed digit may land on: right after the dial
+ *  code. The masked value looks like "+374 77 123456", so everything up to and
+ *  including the first space belongs to the country, not to the number.
+ *
+ *  Why this exists: the field is pre-filled with "+374", and a caret sitting at
+ *  position 0 turns typing "77123456" into "77123456374" — which the library
+ *  re-parses as +7 (Russia) and renders as "+7 712 345-63-74". The form then
+ *  happily accepts a valid Russian number nobody meant to enter (QA pass,
+ *  2026-08-14). A value with no space yet ("+374") has no national part at all,
+ *  so the floor is its full length. */
+export function caretFloor(value: string): number {
+  const afterDialCode = value.indexOf(" ") + 1;
+  return afterDialCode > 0 ? afterDialCode : value.length;
+}
+
+function keepCaretOutOfDialCode(el: HTMLInputElement) {
+  if ((el.selectionStart ?? 0) < caretFloor(el.value)) {
+    el.setSelectionRange(el.value.length, el.value.length);
+  }
+}
+
 export function PhoneInput({
   id,
   value,
@@ -60,7 +81,14 @@ export function PhoneInput({
         // Deliberately no `name`: every caller submits the E.164 value through
         // its own hidden field or server action argument, and a second named
         // input would put the masked string into the same FormData key.
-        inputProps={{ id, required }}
+        // mouseup, not click: the browser has already placed the caret by
+        // then, so this runs after it rather than being overwritten by it.
+        inputProps={{
+          id,
+          required,
+          onFocus: (e) => keepCaretOutOfDialCode(e.currentTarget),
+          onMouseUp: (e) => keepCaretOutOfDialCode(e.currentTarget),
+        }}
       />
     </div>
   );

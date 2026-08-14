@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Film, ShieldCheck, Users } from "lucide-react";
+import { Film, ShieldCheck, UserRound, Users } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth/require";
 import { isTranslatorOnly } from "@/lib/auth/permissions";
@@ -28,7 +28,7 @@ export default async function AdminDashboard() {
   // platform-wide counts (only what's actually live in the catalog / actual
   // staff accounts — audit 7 found both cards counting more than their
   // label promised); a moderator gets the pending-review queue.
-  const [projectCount, userCount, moderationQueueCount] = await Promise.all([
+  const [projectCount, userCount, memberCount, moderationQueueCount] = await Promise.all([
     isSuperadmin
       ? prisma.project.count({ where: { isActive: true, moderationStatus: "APPROVED" } })
       : isModerator
@@ -36,6 +36,12 @@ export default async function AdminDashboard() {
         : prisma.project.count({ where: { ownerId: user.id } }),
     isSuperadmin
       ? prisma.user.count({ where: { role: { in: ["SUPERADMIN", "PUBLISHER", "MODERATOR", "TRANSLATOR"] } } })
+      : Promise.resolve(null),
+    // The brands and creators who actually use the marketplace. The staff
+    // count above sat alone on the dashboard reading "Users 5", so the six
+    // members were nowhere on the overview at all (QA pass, 2026-08-14).
+    isSuperadmin
+      ? prisma.user.count({ where: { role: { in: ["BRAND", "CREATOR"] } } })
       : Promise.resolve(null),
     isModerator ? prisma.project.count({ where: { moderationStatus: "PENDING" } }) : Promise.resolve(null),
   ]);
@@ -61,7 +67,14 @@ export default async function AdminDashboard() {
         ...(isSuperadmin
           ? [
               {
-                label: "Users",
+                label: "Members",
+                value: memberCount ?? 0,
+                sub: "brands & creators",
+                icon: UserRound,
+                href: "/admin/users",
+              },
+              {
+                label: "Staff",
                 value: userCount ?? 0,
                 sub: "admins & publishers",
                 icon: Users,

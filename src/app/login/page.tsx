@@ -8,6 +8,13 @@ import { loadCurrentMember } from "@/lib/auth/require";
 import { safeMemberRedirect } from "@/lib/auth/member-paths";
 import { LoginForm } from "./login-form";
 
+/* Own canonical: without it every auth screen inherited the root layout's
+   `alternates: { canonical: "/" }` (QA pass, 2026-08-14). */
+export const metadata = {
+  title: "Sign in — iGovazd",
+  alternates: { canonical: "/login" },
+};
+
 export default async function LoginPage({
   searchParams,
 }: {

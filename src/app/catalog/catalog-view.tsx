@@ -1,6 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  filtersFromQuery,
+  filtersToQuery,
+  type CatalogFilters,
+} from "./catalog-url-state";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -473,33 +478,41 @@ export function CatalogView({
   // churn); "Clear all" naturally overwrites it with the empty state.
   const FILTERS_KEY = "catalog:filters";
   const restoredRef = useRef(false);
-  // Has to be an effect: sessionStorage doesn't exist during the server render,
-  // so the stored selection can only be applied after mount.
-  /* eslint-disable react-hooks/set-state-in-effect */
+  // Has to be an effect: neither the URL nor sessionStorage exists during the
+  // server render, so a stored/linked selection can only be applied after
+  // mount.
   useEffect(() => {
     if (restoredRef.current) return;
     restoredRef.current = true;
-    try {
-      const raw = sessionStorage.getItem(FILTERS_KEY);
-      if (!raw) return;
-      const f = JSON.parse(raw);
-      // A `?channel=` arrival wins over a stored channel selection (B5) — the
-      // rest of the blob still restores normally underneath it.
-      if (!initialChannel && Array.isArray(f.channels)) setSelectedChannels(f.channels);
-      if (Array.isArray(f.genres)) setSelectedGenres(f.genres);
-      if (Array.isArray(f.formats)) setSelectedFormats(f.formats);
-      if (Array.isArray(f.platforms)) setSelectedPlatforms(f.platforms);
-      if (Array.isArray(f.countries)) setSelectedCountries(f.countries);
-      if (Array.isArray(f.placementTypes)) setSelectedPlacementTypes(f.placementTypes);
-      if (Array.isArray(f.cities)) setSelectedCities(f.cities);
-      if (typeof f.search === "string") setSearch(f.search);
-      if (f.view === "grid" || f.view === "list") setView(f.view);
-      if (["default", "newest", "deadline", "title"].includes(f.sortBy)) setSortBy(f.sortBy);
-    } catch {
-      /* corrupt/blocked storage — fall back to defaults */
+    // A link wins over this tab's history: someone who was sent
+    // "/catalog?genre=Drama" asked for exactly that, whatever they were
+    // browsing here five minutes ago. Only when the address bar says nothing
+    // do we fall back to the stored blob (IA-24's Back behaviour).
+    const fromUrl = filtersFromQuery(window.location.search);
+    let f: Partial<CatalogFilters> | null = fromUrl;
+    if (!f) {
+      try {
+        const raw = sessionStorage.getItem(FILTERS_KEY);
+        f = raw ? (JSON.parse(raw) as Partial<CatalogFilters>) : null;
+      } catch {
+        /* corrupt/blocked storage — fall back to defaults */
+        f = null;
+      }
     }
+    if (!f) return;
+    // A `?channel=` arrival wins over a stored channel selection (B5) — the
+    // rest of the blob still restores normally underneath it.
+    if (!initialChannel && Array.isArray(f.channels)) setSelectedChannels(f.channels);
+    if (Array.isArray(f.genres)) setSelectedGenres(f.genres);
+    if (Array.isArray(f.formats)) setSelectedFormats(f.formats);
+    if (Array.isArray(f.platforms)) setSelectedPlatforms(f.platforms);
+    if (Array.isArray(f.countries)) setSelectedCountries(f.countries);
+    if (Array.isArray(f.placementTypes)) setSelectedPlacementTypes(f.placementTypes);
+    if (Array.isArray(f.cities)) setSelectedCities(f.cities);
+    if (typeof f.search === "string") setSearch(f.search);
+    if (f.view === "grid" || f.view === "list") setView(f.view);
+    if (f.sortBy && ["default", "newest", "deadline", "title"].includes(f.sortBy)) setSortBy(f.sortBy);
   }, [initialChannel]);
-  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     // Skip the very first render so we don't clobber stored filters with the
@@ -523,6 +536,41 @@ export function CatalogView({
       );
     } catch {
       /* storage blocked — persistence is best-effort */
+    }
+  }, [
+    selectedChannels,
+    selectedGenres,
+    selectedFormats,
+    selectedPlatforms,
+    selectedCountries,
+    selectedPlacementTypes,
+    selectedCities,
+    search,
+    view,
+    sortBy,
+  ]);
+
+  // …and mirror the same selection into the address bar, so a filtered
+  // catalogue can be sent to someone. replaceState, not the router: this must
+  // not re-run the server component, push a history entry per keystroke, or
+  // scroll the page — it only rewrites what the address bar shows.
+  useEffect(() => {
+    if (!restoredRef.current) return;
+    const query = filtersToQuery({
+      channels: selectedChannels,
+      genres: selectedGenres,
+      formats: selectedFormats,
+      platforms: selectedPlatforms,
+      countries: selectedCountries,
+      placementTypes: selectedPlacementTypes,
+      cities: selectedCities,
+      search,
+      view,
+      sortBy,
+    });
+    const next = `${window.location.pathname}${query}`;
+    if (next !== `${window.location.pathname}${window.location.search}`) {
+      window.history.replaceState(null, "", next);
     }
   }, [
     selectedChannels,

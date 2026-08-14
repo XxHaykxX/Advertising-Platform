@@ -2147,6 +2147,22 @@ export const UI: Record<string, Dict> = {
 
   // ── notifications (#25 / V9) — copy rendered from Notification.type+data in
   // the viewer's locale; {brand}/{project}/{creator} are raw data placeholders ──
+  // Public error boundary (QA pass 2026-08-14). src/app/error.tsx had its
+  // three strings hardcoded in Russian, on a site whose default language is
+  // Armenian. global-error.tsx keeps its hardcoded copy on purpose: it
+  // replaces the root layout, so no <I18nProvider> is mounted around it.
+  "error.title": {
+    ru: "Что-то пошло не так",
+    en: "Something went wrong",
+    hy: "Ինչ-որ բան այն չէ",
+  },
+  "error.body": {
+    ru: "Произошла непредвиденная ошибка. Попробуйте ещё раз — обычно это помогает.",
+    en: "An unexpected error occurred. Try again — that usually helps.",
+    hy: "Տեղի է ունեցել անսպասելի սխալ։ Փորձեք կրկին՝ սովորաբար դա օգնում է։",
+  },
+  "error.retry": { ru: "Попробовать снова", en: "Try again", hy: "Փորձել կրկին" },
+
   // 404 page (QA pass 2026-08-14). Until then a broken link landed on Next's
   // built-in "404: This page could not be found." — no header, no language
   // switcher, no way back. The CTA reuses legal.backToHome / btn.browseProjects.

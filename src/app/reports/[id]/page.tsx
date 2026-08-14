@@ -158,6 +158,17 @@ export default async function ReportPage({
   const viewer: ReportViewer =
     authed == null ? "guest" : canBuy(authed) && !ownsThis ? "brand" : "none";
 
+  // The shortlist heart the catalogue card has. Only a buyer can hold one, so
+  // nobody else pays for the query; the guest branch of FavoriteHeart is a
+  // link to /login and needs no data at all.
+  const favorited =
+    authed != null && canBuy(authed)
+      ? (await prisma.favorite.findFirst({
+          where: { brandId: authed.id, projectId: pid },
+          select: { id: true },
+        })) != null
+      : false;
+
   // Summary for the sticky bar (audit C3): a brand shouldn't have to read nine
   // cards to learn the entry price and what is still free. Placements and
   // packages are summed together — both are "a placement in this project" from
@@ -251,6 +262,12 @@ export default async function ReportPage({
       <div id="overview" className="scroll-mt-24">
         <ReportHero
           project={project}
+          favorite={{
+            favorited,
+            canFavorite: viewer === "brand",
+            isOwn: ownsThis,
+            signedIn: authed != null,
+          }}
           // The same summary the sticky bar gets — the hero's deal card is
           // what a brand sees before either of them scrolls into view.
           deal={{

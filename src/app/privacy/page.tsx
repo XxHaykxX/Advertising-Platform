@@ -11,6 +11,7 @@ export const metadata: Metadata = {
   title: "Privacy Policy — iGovazd",
   description:
     "Privacy Policy for iGovazd marketplace. Learn how we collect, use, and protect your data.",
+  alternates: { canonical: "/privacy" },
 };
 
 const content: Record<

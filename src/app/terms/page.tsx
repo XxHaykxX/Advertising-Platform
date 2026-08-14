@@ -11,6 +11,7 @@ export const metadata: Metadata = {
   title: "Terms of Service — iGovazd",
   description:
     "Terms of Service for iGovazd marketplace. Understand the rules and conditions for using our platform.",
+  alternates: { canonical: "/terms" },
 };
 
 const content: Record<

@@ -11,6 +11,20 @@ import { cn } from "@/lib/utils";
 import type { InterestStatus } from "@prisma/client";
 import { RowActions } from "./row-actions";
 
+/** True when the contact the brand typed into the application is the same
+ *  phone or email already listed above it from their profile. Compared with
+ *  separators stripped, since the dialog stores E.164 ("+37477123456") while a
+ *  profile may hold a spaced version of the same number. */
+function sameAsProfileContact(interest: {
+  contact: string | null;
+  brand: { email: string; phone: string | null };
+}): boolean {
+  const normalize = (s: string | null) => (s ?? "").replace(/[\s()+-]/g, "").toLowerCase();
+  const typed = normalize(interest.contact);
+  if (!typed) return false;
+  return typed === normalize(interest.brand.phone) || typed === normalize(interest.brand.email);
+}
+
 /** "5-20M" → "5,000,000 – 20,000,000 AMD" (admin panel stays English-only). */
 function budgetLabel(value: string): string {
   return BUDGET_RANGES.find((b) => b.value === value)?.label ?? value;
@@ -154,8 +168,12 @@ export default async function InterestsAdminPage() {
                     ) : null}
                     {/* interest.contact is what the brand typed in the application
                         form itself, kept distinct from their profile contact above
-                        (it may be a different phone/email/messenger). */}
-                    {interest.contact ? (
+                        (it may be a different phone/email/messenger) — but the
+                        dialog pre-fills it from the profile, so most of the time
+                        it is the same number, and staff saw the phone printed
+                        twice in a row with nothing to tell the copies apart
+                        (QA pass, 2026-08-14). Hidden when it adds nothing. */}
+                    {interest.contact && !sameAsProfileContact(interest) ? (
                       <p className="text-muted-foreground">{interest.contact}</p>
                     ) : null}
                   </div>

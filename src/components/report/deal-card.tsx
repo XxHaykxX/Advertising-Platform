@@ -59,7 +59,14 @@ export function DealCard({
    *  not given) — null when the creator never set a release date. */
   meta: {
     genres: string[];
+    /** The runtime ("1 hr 40 min", "8 ep × 12 min") — NOT what the project is.
+     *  See formatCategory below. */
     format: string;
+    /** The marketing bucket (FEATURE / SERIES / …). Until 2026-08-14 this card
+     *  showed only `format`, so the "Format" row on a feature film read
+     *  "1 hr 40 min" and the page never said whether it was a film or a
+     *  series — while the catalogue card and the compare table both did. */
+    formatCategory: string;
     studio: string;
     countries: string;
     release: string | null;
@@ -94,22 +101,40 @@ export function DealCard({
   // Each fact carries its own label, so an unfamiliar studio name no longer
   // reads as a word with no explanation. Empty ones drop out entirely — a
   // label above nothing is worse than a missing row.
+  const genreLabels = meta.genres.map((g) => localizeValue(locale, "genre", g));
+  // "Animation" is both a genre and a format bucket and localizes to the same
+  // word, so the type is dropped when the genre row already says it — the same
+  // rule the catalogue card applies (project-card.tsx).
+  const typeLabel = localizeValue(locale, "formatCategory", meta.formatCategory);
+  const formatValue = [genreLabels.includes(typeLabel) ? "" : typeLabel, meta.format]
+    .filter(Boolean)
+    .join(" · ");
+
   const metaItems = [
     // IA-40: list EVERY genre the project carries, not just the first —
     // same comma-joined, per-value localization as the countries fact below.
     {
       icon: Film,
       label: t("keyFacts.genre"),
-      value: meta.genres.map((g) => localizeValue(locale, "genre", g)).join(", "),
+      value: genreLabels.join(", "),
     },
-    { icon: Clapperboard, label: t("keyFacts.format"), value: meta.format },
+    { icon: Clapperboard, label: t("keyFacts.format"), value: formatValue },
     { icon: Building2, label: t("keyFacts.studio"), value: meta.studio },
     { icon: MapPin, label: t("keyFacts.countries"), value: splitCountries(meta.countries).join(", ") },
     { icon: CalendarDays, label: t("keyFacts.release"), value: meta.release ?? "" },
   ].filter((m) => Boolean(m.value));
   // Chip rows, each dropping out on its own when the creator filled neither.
   const chipRows = [
-    { icon: MonitorPlay, label: t("keyFacts.platforms"), values: where.platforms },
+    // The three generic buckets (TV / Cinema / Festivals) carry a dictionary
+    // entry; brand names like "Kinodaran" fall through untranslated, which is
+    // the whole contract of localizeValue. Until 2026-08-14 nothing localized
+    // them here at all, so the Russian page said "Cinema" while the catalogue
+    // card two clicks earlier said "Кинотеатры".
+    {
+      icon: MonitorPlay,
+      label: t("keyFacts.platforms"),
+      values: where.platforms.map((p) => localizeValue(locale, "platformCategory", p)),
+    },
     { icon: Popcorn, label: t("keyFacts.cinemas"), values: where.cinemas },
   ].filter((row) => row.values.length > 0);
   // A project with no budget, no priced offer, no deadline and no facts has

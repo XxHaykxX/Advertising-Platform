@@ -4,6 +4,11 @@ import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
 import { ResetForm } from "./reset-form";
 
+export const metadata = {
+  title: "Set a new password — iGovazd",
+  alternates: { canonical: "/reset-password" },
+};
+
 export default async function ResetPasswordPage({
   searchParams,
 }: {

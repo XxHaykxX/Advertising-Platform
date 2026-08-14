@@ -4,6 +4,11 @@ import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
 import { ForgotForm } from "./forgot-form";
 
+export const metadata = {
+  title: "Reset your password — iGovazd",
+  alternates: { canonical: "/forgot" },
+};
+
 export default async function ForgotPasswordPage() {
   const locale = await getLocale();
   const t = makeUI(locale);
