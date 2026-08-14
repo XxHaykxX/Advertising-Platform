@@ -1,10 +1,11 @@
 Release v3.3 — August 14, 2026
 
-Everything shipped on igovazd.am since v3.2 (August 12). The headline is that the
-catalogue and the advertising section became one thing: a single listing with one
-page per channel, filtered by what that channel actually sells. The rest is a
-production QA pass — twenty-four findings read off the live site, most of them on
-pages a visitor sees first.
+What's new and what's fixed on igovazd.am since v3.2.
+
+The headline is that the catalogue and the advertising section became one thing: a
+single listing with one page per channel, filtered by what that channel actually
+sells. The rest comes out of a review of the live site — twenty-four findings, most
+of them on the pages a visitor sees first.
 
 — Advertising and the catalogue —
 1. The catalogue now lives inside Advertising. The header used to carry "Catalogue"
@@ -118,15 +119,14 @@ pages a visitor sees first.
 25. An application no longer prints the brand's phone number twice in a row.
 
 — Under the hood —
-26. A channel's attributes are stored in one place, so adding a tenth filter is a
-    change to a single file with no database work. The filter set itself comes from
-    a survey of what outdoor, broadcast, digital, placement and sponsorship
-    marketplaces offer elsewhere.
-27. Four browser tests now run against the live site itself, without a database and
-    without touching any data, and cover exactly the findings above that are
-    invisible until they break: the project page's own link preview, the home page
-    making no claim the Armenian one doesn't, and a 404 that still has the site
-    around it.
+26. Adding a new filter to a channel is now a small, safe change rather than a
+    rebuild, so the filter set can keep growing as media owners ask for it. The set
+    shipped here comes from a survey of what outdoor, broadcast, digital, placement
+    and sponsorship marketplaces offer elsewhere.
+27. Four automated checks now run against the live site itself, without touching any
+    data, and cover exactly the findings above that stay invisible until they break:
+    a project link's preview, the Russian and English home pages making no claim the
+    Armenian one doesn't, and a 404 that still has the site around it.
 28. Deliberately left for later: a map with radius search, numeric ranges, an
     event-date filter and audience segments. Seven of the nine channels carry no
     listings in production yet, so most of those filters would have nothing to act
