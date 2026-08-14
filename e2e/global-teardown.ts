@@ -6,6 +6,9 @@ import { PrismaClient } from "@prisma/client";
 // display name "E2E Brand"/"E2E Creator"; interest notifications carry the
 // brand name in their JSON `data`, so we sweep those too.
 export default async function globalTeardown() {
+  // Nothing was created — and against a deployed environment there is no
+  // local DB to sweep. See READ_ONLY in global-setup.ts.
+  if (process.env.E2E_READONLY === "1") return;
   const prisma = new PrismaClient();
   try {
     const users = await prisma.user.findMany({
