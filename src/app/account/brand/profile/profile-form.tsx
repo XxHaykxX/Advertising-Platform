@@ -156,6 +156,7 @@ export function ProfileForm({ profile, locale }: { profile: BrandProfileDTO; loc
               dropTitle={t("media.dropTitleOne")}
               dropLabel={t("media.dropHereOne")}
               errTooLargeLabel={t("media.errTooLargeShort")}
+              errTooSmallLabel={t("media.errTooSmall")}
               replaceLabel={t("media.replace")}
               removeLabel={t("ui.remove")}
               dropReplaceLabel={t("media.dropToReplace")}

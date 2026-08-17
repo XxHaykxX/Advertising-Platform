@@ -10,7 +10,13 @@ import { holdProgress, uploadViaXhr } from "@/lib/upload-xhr";
 import { captureVideoPoster, posterPathFor } from "@/lib/video-poster";
 import { Dropzone, DropzoneEmptyState, DropzonePreview } from "@/components/ui/dropzone";
 import type { Locale } from "@/lib/i18n-client";
-import { cropAspectForDir, imageSizeHint } from "@/lib/images/size-hint";
+import {
+  cropAspectForDir,
+  formatRequiredSize,
+  imageBelowRequired,
+  imageSizeHint,
+} from "@/lib/images/size-hint";
+import { readImageSize } from "@/lib/images/read-size";
 
 /** react-easy-crop (~37 KB) is only needed by fields with `cropAspect`, and
  *  only once a file actually needs cropping — loaded on demand instead of
@@ -47,6 +53,7 @@ export function MediaField({
   dropTitle = "Upload a file",
   dropLabel = "Drag and drop or click to upload",
   errTooLargeLabel = "File is too large",
+  errTooSmallLabel = "The picture is smaller than the required {size}",
   errUploadFailedLabel = "Upload failed",
   cancelLabel = "Cancel upload",
   replaceLabel = "Replace",
@@ -79,6 +86,9 @@ export function MediaField({
   dropTitle?: string;
   dropLabel?: string;
   errTooLargeLabel?: string;
+  /** Shown when a dropped picture is smaller than `uploadDir` requires
+   *  (IA-62). `{size}` in it is replaced with that folder's target. */
+  errTooSmallLabel?: string;
   /** Shown when the upload never came back with an answer (offline, the host
    *  cutting the request, a 502) — localized by the caller. */
   errUploadFailedLabel?: string;
@@ -226,6 +236,20 @@ export function MediaField({
     // trailer slot: the field decides what it accepts, not the file.
     if (accept === "video" && !isVideo) return;
     if (accept === "image" && isVideo) return;
+
+    // IA-62: a picture smaller than what this folder is resized to never gets
+    // sharper on the way in (optimize.ts never upscales), so it is refused
+    // before the crop dialog rather than stored blurry.
+    if (!isVideo) {
+      const size = await readImageSize(file);
+      if (size && imageBelowRequired(size, uploadDir)) {
+        setDropError(
+          `${errTooSmallLabel.replace("{size}", formatRequiredSize(uploadDir))} (${size.w}×${size.h})`,
+        );
+        return;
+      }
+      setDropError(null);
+    }
 
     // A fresh upload on a cropAspect field goes through the crop dialog first
     // — uploadFile only runs once MediaCropDialog hands back the result.

@@ -18,6 +18,36 @@ export function shapeForDir(dir: string): UploadShape {
   return "wide";
 }
 
+/** What optimize.ts would produce from a large enough source, per shape — and
+ *  therefore the smallest source worth accepting (IA-62, 2026-08-17). The
+ *  server never upscales: a 640×360 drop is stored as 640×360 and shows up
+ *  blurry on the catalog card, with nothing in the form saying so. A source
+ *  BIGGER than this is fine — the crop dialog frames it and the server scales
+ *  it down to exactly these numbers. */
+export const REQUIRED_SIZE: Record<UploadShape, { w: number; h: number }> = {
+  avatar: { w: 512, h: 512 },
+  cast: { w: 800, h: 800 },
+  wide: { w: 1600, h: 900 },
+};
+
+export function requiredSizeForDir(dir: string): { w: number; h: number } {
+  return REQUIRED_SIZE[shapeForDir(dir)];
+}
+
+/** "1600×900" — the size named in the warning Мариам asked for (IA-62). */
+export function formatRequiredSize(dir: string): string {
+  const { w, h } = requiredSizeForDir(dir);
+  return `${w}×${h}`;
+}
+
+/** True when a picked file is too small for its destination folder. Either
+ *  side short of the target counts: cropping to 16:9 takes pixels away, it
+ *  never adds them. */
+export function imageBelowRequired(size: { w: number; h: number }, dir: string): boolean {
+  const req = requiredSizeForDir(dir);
+  return size.w < req.w || size.h < req.h;
+}
+
 export function imageSizeHint(dir: string): string {
   switch (shapeForDir(dir)) {
     case "avatar":

@@ -128,7 +128,12 @@ export const AD_CHANNEL_ATTRS: Record<string, readonly AttrDef[]> = {
 
   VIDEO: [
     {
-      key: "platform",
+      // Not "platform": the catalog already has a hand-written `platform`
+      // facet over Project.platforms (where you can watch the film), and a
+      // facet key is also its query-string name — two facets under one key
+      // meant one URL parameter driving both and a duplicate React key
+      // (2026-08-14). facets.test.ts guards the collision now.
+      key: "videoPlatform",
       type: "select",
       values: ["YOUTUBE", "INSTAGRAM", "TIKTOK", "FACEBOOK", "WEBSITE", "OTT"],
     },

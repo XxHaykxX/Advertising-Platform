@@ -2265,6 +2265,14 @@ export const UI: Record<string, Dict> = {
     en: "File is too large",
     hy: "Ֆայլը չափազանց մեծ է",
   },
+  // IA-62. {size} is filled in by the field from its own upload folder
+  // ("1600×900" for a poster or a still, "800×800" for a cast photo), so one
+  // key covers every image field instead of one per shape.
+  "media.errTooSmall": {
+    ru: "Размер фото не соответствует необходимому {size}",
+    en: "The photo size does not match the required {size}",
+    hy: "Լուսանկարի չափը չի համապատասխանում անհրաժեշտ {size} չափին",
+  },
   // Names the zone instead of describing the action: two adjacent "Upload a
   // file" rectangles (poster and gallery) gave no clue which was which.
   "media.dropTitlePoster": { ru: "Загрузить постер", en: "Upload a poster", hy: "Վերբեռնել պաստառ" },
@@ -3231,13 +3239,6 @@ export const UI: Record<string, Dict> = {
   "attr.mediaType": { ru: "Тип медиа", en: "Media type", hy: "Մեդիայի տեսակ" },
   "attrValue.mediaType.BOARD": { ru: "Щит", en: "Board", hy: "Վահանակ" },
   "attrValue.mediaType.SCREEN": { ru: "Экран", en: "Screen", hy: "Էկրան" },
-  "attr.platform": { ru: "Платформа", en: "Platform", hy: "Հարթակ" },
-  "attrValue.platform.FACEBOOK": { ru: "Facebook", en: "Facebook", hy: "Facebook" },
-  "attrValue.platform.INSTAGRAM": { ru: "Instagram", en: "Instagram", hy: "Instagram" },
-  "attrValue.platform.OTT": { ru: "OTT", en: "OTT", hy: "OTT" },
-  "attrValue.platform.TIKTOK": { ru: "TikTok", en: "TikTok", hy: "TikTok" },
-  "attrValue.platform.WEBSITE": { ru: "Сайт", en: "Website", hy: "Կայք" },
-  "attrValue.platform.YOUTUBE": { ru: "YouTube", en: "YouTube", hy: "YouTube" },
   "attr.position": { ru: "Расположение", en: "Position", hy: "Դիրք" },
   "attrValue.position.FOOTER": { ru: "Подвал", en: "Footer", hy: "Ստորին մաս" },
   "attrValue.position.HEADER": { ru: "Шапка", en: "Header", hy: "Վերին մաս" },
@@ -3344,6 +3345,13 @@ export const UI: Record<string, Dict> = {
   "attr.vehicleSide": { ru: "Часть транспорта", en: "Vehicle side", hy: "Տրանսպորտի մասը" },
   "attrValue.vehicleSide.EXTERIOR": { ru: "Снаружи", en: "Exterior", hy: "Դրսում" },
   "attrValue.vehicleSide.INTERIOR": { ru: "В салоне", en: "Interior", hy: "Սրահում" },
+  "attr.videoPlatform": { ru: "Платформа", en: "Platform", hy: "Հարթակ" },
+  "attrValue.videoPlatform.FACEBOOK": { ru: "Facebook", en: "Facebook", hy: "Facebook" },
+  "attrValue.videoPlatform.INSTAGRAM": { ru: "Instagram", en: "Instagram", hy: "Instagram" },
+  "attrValue.videoPlatform.OTT": { ru: "OTT", en: "OTT", hy: "OTT" },
+  "attrValue.videoPlatform.TIKTOK": { ru: "TikTok", en: "TikTok", hy: "TikTok" },
+  "attrValue.videoPlatform.WEBSITE": { ru: "Сайт", en: "Website", hy: "Կայք" },
+  "attrValue.videoPlatform.YOUTUBE": { ru: "YouTube", en: "YouTube", hy: "YouTube" },
   "attr.weekPart": { ru: "Часть недели", en: "Week part", hy: "Շաբաթվա հատված" },
   "attrValue.weekPart.WEEKDAYS": { ru: "Будни", en: "Weekdays", hy: "Աշխատանքային օրեր" },
   "attrValue.weekPart.WEEKEND": { ru: "Выходные", en: "Weekend", hy: "Հանգստյան օրեր" },

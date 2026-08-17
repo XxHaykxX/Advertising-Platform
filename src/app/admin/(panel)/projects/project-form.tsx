@@ -1657,6 +1657,7 @@ export function ProjectForm({
                   dropTitle={t("media.dropTitlePoster")}
                   dropLabel={t("media.dropHereOne")}
                   errTooLargeLabel={t("media.errTooLargeShort")}
+                  errTooSmallLabel={t("media.errTooSmall")}
                   replaceLabel={t("media.replace")}
                   dropReplaceLabel={t("media.dropToReplace")}
                   initial={posterInitial}
@@ -1717,6 +1718,7 @@ export function ProjectForm({
                   dropTitle={t("media.dropTitleMany")}
                   dropLabel={t("media.dropHere")}
                   errTooLargeLabel={t("media.errTooLargeShort")}
+                  errTooSmallLabel={t("media.errTooSmall")}
                   addLabel={t("media.addImage")}
                   dropReplaceLabel={t("media.dropToReplace")}
                   initial={galleryInitial}
@@ -1778,6 +1780,7 @@ export function ProjectForm({
                       dropTitle={t("media.dropTitleOne")}
                       dropLabel={t("media.dropHereOne")}
                       errTooLargeLabel={t("media.errTooLargeShort")}
+                      errTooSmallLabel={t("media.errTooSmall")}
                       replaceLabel={t("media.replace")}
                       removeLabel={t("ui.remove")}
                       dropReplaceLabel={t("media.dropToReplace")}

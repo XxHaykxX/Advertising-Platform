@@ -31,7 +31,13 @@ import {
 import { UploadProgress } from "@/components/ui/upload-progress";
 import { holdProgress, uploadViaXhr } from "@/lib/upload-xhr";
 import type { Locale } from "@/lib/i18n-client";
-import { cropAspectForDir, imageSizeHint } from "@/lib/images/size-hint";
+import {
+  cropAspectForDir,
+  formatRequiredSize,
+  imageBelowRequired,
+  imageSizeHint,
+} from "@/lib/images/size-hint";
+import { readImageSize } from "@/lib/images/read-size";
 
 /** Same lazy-load reasoning as media-field.tsx: react-easy-crop only ships to
  *  a page that actually crops. */
@@ -74,6 +80,9 @@ export const ImageUploader = forwardRef<ImageUploaderHandle, {
   dropTitle?: string; // headline inside the drop zone, localized by the caller
   dropLabel?: string; // second line inside the drop zone, localized by the caller
   errTooLargeLabel?: string; // shown when a dropped file exceeds the size cap
+  /** Shown when a dropped file is smaller than `dir` requires (IA-62).
+   *  `{size}` in it is replaced with the folder's target ("1600×900"). */
+  errTooSmallLabel?: string;
   errUploadFailedLabel?: string; // shown when the upload never came back (offline, 502)
   cancelLabel?: string; // aria-label of the cancel control on the progress block
   replaceLabel?: string; // overlay action on the filled single-image preview
@@ -103,6 +112,7 @@ export const ImageUploader = forwardRef<ImageUploaderHandle, {
   dropTitle = "Upload files",
   dropLabel = "Drag and drop or click to upload",
   errTooLargeLabel = "File is too large",
+  errTooSmallLabel = "The picture is smaller than the required {size}",
   errUploadFailedLabel = "Upload failed",
   cancelLabel = "Cancel upload",
   replaceLabel = "Replace",
@@ -174,8 +184,21 @@ export const ImageUploader = forwardRef<ImageUploaderHandle, {
     const queue = multiple ? files : files.slice(-1);
     const ok: File[] = [];
     for (const file of queue) {
-      if (file.size > MAX_IMAGE_MB * 1024 * 1024) setDropError(`${errTooLargeLabel}: ${file.name}`);
-      else ok.push(file);
+      if (file.size > MAX_IMAGE_MB * 1024 * 1024) {
+        setDropError(`${errTooLargeLabel}: ${file.name}`);
+        continue;
+      }
+      // IA-62: too small for this folder is refused here, next to the byte
+      // cap — the server never upscales, so letting it through would store a
+      // blurry poster with nothing in the form saying why.
+      const size = await readImageSize(file);
+      if (size && imageBelowRequired(size, dir)) {
+        setDropError(
+          `${errTooSmallLabel.replace("{size}", formatRequiredSize(dir))}: ${file.name} (${size.w}×${size.h})`,
+        );
+        continue;
+      }
+      ok.push(file);
     }
     if (!ok.length) return;
 

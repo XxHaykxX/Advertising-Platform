@@ -241,6 +241,7 @@ export const CLIENT_KEYS: readonly string[] = [
   "media.emptyVideos",
   "media.errTooLarge",
   "media.errTooLargeShort",
+  "media.errTooSmall",
   "media.errUploadFailed",
   "media.loadError",
   "media.replace",

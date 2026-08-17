@@ -444,6 +444,7 @@ export function AdSpaceForm({
                   dropTitle={t("media.dropTitleOne")}
                   dropLabel={t("media.dropHereOne")}
                   errTooLargeLabel={t("media.errTooLargeShort")}
+                  errTooSmallLabel={t("media.errTooSmall")}
                   replaceLabel={t("media.replace")}
                   removeLabel={t("ui.remove")}
                   dropReplaceLabel={t("media.dropToReplace")}
@@ -474,6 +475,7 @@ export function AdSpaceForm({
                   dropTitle={t("media.dropTitleMany")}
                   dropLabel={t("media.dropHere")}
                   errTooLargeLabel={t("media.errTooLargeShort")}
+                  errTooSmallLabel={t("media.errTooSmall")}
                   addLabel={t("media.addImage")}
                   dropReplaceLabel={t("media.dropToReplace")}
                   removeLabel={t("ui.remove")}

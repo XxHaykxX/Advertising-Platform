@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { FACETS, type FacetContext } from "./facets";
+import { FACETS, FACET_KEYS, type FacetContext } from "./facets";
 import type { CatalogRow } from "@/app/ads/ads-view";
 import type { ProjectListDTO, AdSpaceListDTO } from "@/lib/types";
 
@@ -38,6 +38,15 @@ describe("ATTR_FACETS — generated from AD_CHANNEL_ATTRS", () => {
 
   it("skips number attributes (no range control yet) rather than a checkbox per distinct number", () => {
     expect(FACETS.find((f) => f.key === "entrances")).toBeUndefined();
+  });
+
+  it("gives every facet its own key — a key is also its query parameter", () => {
+    // VIDEO once declared `platform`, the same token the hand-written
+    // Project.platforms facet uses: one URL parameter drove both filters and
+    // React rendered two children under one key (2026-08-14). Renaming the
+    // attribute is the fix; this catches the next such clash.
+    const dupes = FACET_KEYS.filter((k, i) => FACET_KEYS.indexOf(k) !== i);
+    expect(dupes, `facet keys used twice: ${dupes.join(", ")}`).toEqual([]);
   });
 
   it("offers a boolean attribute as a single 'on' checkbox", () => {
