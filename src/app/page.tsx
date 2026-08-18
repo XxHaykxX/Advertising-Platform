@@ -5,6 +5,7 @@ import { AdTypes } from "@/components/ad-types";
 import { WhyUs } from "@/components/why-us";
 import { HomePartners } from "@/components/home-partners";
 import { HomeTestimonials } from "@/components/home-testimonials";
+import { HomeGoals } from "@/components/home-goals";
 import { HomeCta } from "@/components/home-cta";
 import { Footer } from "@/components/footer";
 import { getPartners } from "@/lib/data/partners";
@@ -59,6 +60,9 @@ export default async function Home() {
             page closes on the CTA either way rather than on an empty frame. */}
         <HomePartners partners={partners} locale={locale} />
         <HomeTestimonials items={testimonials} locale={locale} />
+        {/* The goals and the CTA are one section of the brief: name the task,
+            then send the brief. The CTA's heading covers both. */}
+        <HomeGoals locale={locale} />
         <HomeCta locale={locale} />
       </main>
       <Footer locale={locale} currency={currency} />

@@ -3230,6 +3230,67 @@ export const UI: Record<string, Dict> = {
   "adGroup.MEDIA.goal": { ru: "Для узнаваемости бренда", en: "For brand awareness", hy: "Բրենդի ճանաչելիության համար" },
   "adGroup.SPONSORSHIP.goal": { ru: "Для доверия и партнёрств", en: "For trust and partnerships", hy: "Վստահության և գործընկերության համար" },
 
+  // ── Homepage: advertiser goals (src/lib/ad-goals.ts, home-goals.tsx) ──
+  // The seven goals from the brief. Wording is ours, not the reference site's,
+  // and it is deliberate on the four that ride on untracked channels: outdoor,
+  // radio and TV cannot retarget, cannot attribute an install and cannot count
+  // a sale. Each line says what this inventory does TOWARDS the goal — warms
+  // the audience, drives the search, supports the push — and claims no
+  // measurement it can't produce.
+  "adGoal.title": {
+    ru: "Выберите по задаче",
+    en: "Pick by goal",
+    hy: "Ընտրեք ըստ նպատակի",
+  },
+  "adGoal.subtitle": {
+    ru: "Скажите, чего нужно добиться, — покажем, какая реклама на это работает.",
+    en: "Tell us what you need to achieve and we'll show which advertising works towards it.",
+    hy: "Ասեք, թե ինչի եք ուզում հասնել՝ ցույց կտանք, թե որ գովազդն է դրա համար։",
+  },
+  "adGoal.AWARENESS": { ru: "Узнаваемость бренда", en: "Build awareness", hy: "Բրենդի ճանաչելիություն" },
+  "adGoal.AWARENESS.sub": {
+    ru: "Быть на виду там, где город проходит каждый день",
+    en: "Stay in sight where the city passes every day",
+    hy: "Լինել տեսադաշտում այնտեղ, որտեղով քաղաքն անցնում է ամեն օր",
+  },
+  "adGoal.TRAFFIC": { ru: "Трафик на сайт", en: "Attract traffic", hy: "Տրաֆիկ դեպի կայք" },
+  "adGoal.TRAFFIC.sub": {
+    ru: "Баннеры и видео с переходом на вашу страницу",
+    en: "Banners and video that click through to your page",
+    hy: "Բաններներ և վիդեո՝ ձեր էջ տանող անցումով",
+  },
+  "adGoal.LEADS": { ru: "Заявки и лиды", en: "Generate leads", hy: "Հայտեր և լիդեր" },
+  "adGoal.LEADS.sub": {
+    ru: "Превратить зрителя в обращение — форма, звонок, сообщение",
+    en: "Turn a viewer into an enquiry — a form, a call, a message",
+    hy: "Դիտողին վերածել դիմումի՝ ձև, զանգ, հաղորդագրություն",
+  },
+  "adGoal.SALES": { ru: "Поддержка продаж", en: "Support a sales push", hy: "Վաճառքի աջակցություն" },
+  "adGoal.SALES.sub": {
+    ru: "Ролик на ТВ и радио под акцию, сезон или открытие",
+    en: "A TV and radio spot behind a promotion, a season or an opening",
+    hy: "Հոլովակ հեռուստատեսությամբ և ռադիոյով՝ ակցիայի, սեզոնի կամ բացման համար",
+  },
+  "adGoal.RETARGET": { ru: "Прогрев аудитории", en: "Warm the audience", hy: "Լսարանի նախապատրաստում" },
+  "adGoal.RETARGET.sub": {
+    ru: "Наружная и медийная реклама узнают бренд до того, как его догонит ретаргетинг",
+    en: "Outdoor and media make the brand familiar before retargeting catches it up",
+    hy: "Արտաքին և մեդիա գովազդը ծանոթացնում է բրենդին՝ մինչև ռետարգեթինգը կհասնի",
+  },
+  "adGoal.APP": { ru: "Продвижение приложения", en: "Promote your app", hy: "Հավելվածի առաջխաղացում" },
+  "adGoal.APP.sub": {
+    ru: "Показать приложение там, где его будут искать по названию",
+    en: "Put the app where people will go looking for it by name",
+    hy: "Ցույց տալ հավելվածը այնտեղ, որտեղ այն կփնտրեն անունով",
+  },
+  "adGoal.ABM": { ru: "Работа с ключевыми клиентами", en: "Win your target accounts", hy: "Աշխատանք առանցքային հաճախորդների հետ" },
+  "adGoal.ABM.sub": {
+    ru: "События и интеграции, где нужные люди — в зале",
+    en: "Events and integrations where the people you need are in the room",
+    hy: "Միջոցառումներ և ինտեգրումներ, որտեղ պետք մարդիկ դահլիճում են",
+  },
+  "adGoal.cta": { ru: "Смотреть", en: "Browse", hy: "Դիտել" },
+
   // ── the nine channels (see src/lib/ad-channels.ts for the key contract) ──
   "adChannel.PLACEMENT": { ru: "Продакт-плейсмент", en: "Product placement", hy: "Փրոդաքթ փլեյսմենթ" },
   "adChannel.PLACEMENT.desc": {

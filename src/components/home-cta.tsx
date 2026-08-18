@@ -12,8 +12,10 @@ import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
 export function HomeCta({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
   const t = makeUI(locale);
 
+  // `muted` keeps the light/tinted alternation running now that the goals
+  // section sits above on the plain background.
   return (
-    <Section id="callback">
+    <Section id="callback" muted>
       <Container>
         <div className="overflow-hidden rounded-3xl border border-border bg-[#0b0b14] px-6 py-14 sm:px-12 md:py-16">
           {/* Same indigo glow the hero opens on — the page closes on the note
