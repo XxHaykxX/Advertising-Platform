@@ -1,5 +1,7 @@
 /* Demo inventory for the AD_SPACE channels that would otherwise show an empty
-   state locally (VIDEO / RADIO / TV / BANNER / TRANSIT — 2026-08-14). One
+   state (VIDEO / RADIO / TV / BANNER / TRANSIT — 2026-08-14; BILLBOARD and
+   LIFTS added 2026-08-18, when four of the seven channels turned out to be
+   empty on prod too and "outdoor" was down to one transit listing). One
    approved listing per channel with a couple of offers, so every /ads/<slug>
    page has something to render and the per-channel facets have data to build
    from.
@@ -308,6 +310,109 @@ const SPACES: SeedSpace[] = [
         ru: "Боковой баннер",
         en: "Side banner",
         priceAmd: 320000,
+        periodHy: "ամիս",
+        periodRu: "месяц",
+        periodEn: "month",
+      },
+    ],
+  },
+  {
+    code: "#AS-2026-0106",
+    channel: "BILLBOARD",
+    titleHy: "Բիլբորդ՝ Բաղրամյան պող., 3×6",
+    titleRu: "Билборд на проспекте Баграмяна, 3×6",
+    titleEn: "Billboard on Baghramyan Ave, 3×6",
+    descHy: [
+      "Երթևեկության խիտ հատված՝ կենտրոնի մուտքին",
+      "Գիշերային լուսավորություն",
+      "Փակցումը՝ պատվերից 3 օր հետո",
+    ],
+    descRu: [
+      "Плотный трафик на въезде в центр",
+      "Ночная подсветка",
+      "Оклейка — через 3 дня после заказа",
+    ],
+    descEn: ["Heavy traffic at the entrance to the centre", "Night lighting", "Posted 3 days after the order"],
+    city: "Yerevan",
+    address: "Բաղրամյան պող. 24",
+    sizeFormat: "3×6 м",
+    reachPerDay: 42000,
+    sides: 2,
+    attrs: {
+      structureType: "BILLBOARD_3X6",
+      surfaceKind: "STATIC",
+      lighting: true,
+      trafficSide: "BOTH",
+      surfaceSize: "S3X6",
+    },
+    offers: [
+      {
+        hy: "Մեկ կողմ",
+        ru: "Одна сторона",
+        en: "One side",
+        priceAmd: 420000,
+        periodHy: "ամիս",
+        periodRu: "месяц",
+        periodEn: "month",
+        totalSlots: 2,
+        availableSlots: 1,
+      },
+      {
+        hy: "Երկու կողմ",
+        ru: "Обе стороны",
+        en: "Both sides",
+        priceAmd: 750000,
+        periodHy: "ամիս",
+        periodRu: "месяц",
+        periodEn: "month",
+      },
+    ],
+  },
+  {
+    code: "#AS-2026-0107",
+    channel: "LIFTS",
+    titleHy: "Վերելակների էկրաններ՝ բիզնես կենտրոն",
+    titleRu: "Экраны в лифтах бизнес-центра",
+    titleEn: "Lift screens in a business centre",
+    descHy: [
+      "8 վերելակ՝ A դասի բիզնես կենտրոնում",
+      "Հոլովակը պտտվում է 10 րոպեն մեկ",
+      "Լսարանը՝ գրասենյակների աշխատակիցներ և այցելուներ",
+    ],
+    descRu: [
+      "8 лифтов в бизнес-центре класса A",
+      "Ролик в ротации каждые 10 минут",
+      "Аудитория — сотрудники офисов и посетители",
+    ],
+    descEn: ["8 lifts in a class A business centre", "Creative rotates every 10 minutes", "Office staff and visitors"],
+    city: "Yerevan",
+    address: "Հյուսիսային պող. 1",
+    sizeFormat: "21″ экран",
+    reachPerDay: 9000,
+    attrs: {
+      buildingType: "OFFICE",
+      buildingSpot: "CABIN",
+      mediaType: "SCREEN",
+      buildingClass: "BUSINESS",
+      entrances: 3,
+    },
+    offers: [
+      {
+        hy: "Հոլովակ բոլոր վերելակներում",
+        ru: "Ролик во всех лифтах",
+        en: "Creative in every lift",
+        priceAmd: 260000,
+        periodHy: "ամիս",
+        periodRu: "месяц",
+        periodEn: "month",
+        totalSlots: 8,
+        availableSlots: 5,
+      },
+      {
+        hy: "Ստատիկ վահանակ խցիկում",
+        ru: "Статичный борд в кабине",
+        en: "Static board in the cabin",
+        priceAmd: 90000,
         periodHy: "ամիս",
         periodRu: "месяц",
         periodEn: "month",
