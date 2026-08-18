@@ -102,7 +102,7 @@ export function BroadcastTabs({
             </label>
             <label className="block">
               <span className={labelClass}>Ссылка (необязательно)</span>
-              <input name="link" type="text" placeholder="/ads" className={fieldClass} />
+              <input name="link" type="text" placeholder="/ads/outdoor" className={fieldClass} />
             </label>
 
             {pushState.error && (

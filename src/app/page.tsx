@@ -1,42 +1,65 @@
 import { SiteHeader } from "@/components/site-header";
 import { OrganizationJsonLd } from "@/components/organization-json-ld";
 import { Hero } from "@/components/hero";
-import { Featured } from "@/components/featured";
-import { Trust } from "@/components/trust";
-import HowItWorks from "@/components/how-it-works";
-import GetStarted from "@/components/get-started";
-import Faq from "@/components/faq";
+import { AdTypes } from "@/components/ad-types";
+import { WhyUs } from "@/components/why-us";
+import { HomePartners } from "@/components/home-partners";
+import { HomeTestimonials } from "@/components/home-testimonials";
+import { HomeCta } from "@/components/home-cta";
 import { Footer } from "@/components/footer";
-import { getProjects } from "@/lib/data/projects";
+import { getPartners } from "@/lib/data/partners";
+import { getTestimonials } from "@/lib/data/testimonials";
 import { getLocale } from "@/lib/data/locale";
 import { getCurrency } from "@/lib/data/currency";
+import { signupCtaHref } from "@/lib/auth/signup-cta";
 
+/* The homepage, rebuilt 2026-08-18 to the brief: say what the site is for,
+ * show the four ways to advertise, argue why here, prove it with the channels
+ * and the campaigns that ran, then ask.
+ *
+ * What left, and where it went — none of it was deleted, all of it has a page:
+ *   Trust (two stat tiles)  — the brief has no numbers section, and the claims
+ *                             ("50+ partners") sat directly above a logo strip
+ *                             that shows the real count.
+ *   HowItWorks              — /how-it-works
+ *   Featured (six projects) — the four type cards are the way into inventory
+ *                             now; a films-only shelf on a page selling
+ *                             billboards was answering a question nobody asked
+ *                             here.
+ *   GetStarted              — the hero's own sign-up button, and the closing
+ *                             CTA below, both did this already.
+ *   Faq                     — /faq, which the footer already links to.
+ *   HomeCases (3 cases)     — replaced by the video testimonials below it
+ *                             (2026-08-18): two proof blocks back to back read
+ *                             as one long shelf, and a client saying it beats a
+ *                             metric tile. The cases themselves live on
+ *                             /portfolio and keep their admin section.
+ */
 export default async function Home() {
   const locale = await getLocale();
   const currency = await getCurrency();
-  const projects = await getProjects(locale, currency);
+  // Both are small tables staff edits by hand; neither is cached, same as
+  // /about and /portfolio, which read them the same way. The page is dynamic
+  // regardless — it reads the locale cookie.
+  const [partners, testimonials, signupHref] = await Promise.all([
+    getPartners(),
+    getTestimonials(locale),
+    signupCtaHref("brand"),
+  ]);
 
   return (
     <>
       <OrganizationJsonLd />
       <SiteHeader />
       <main>
-        {/* IA-48 §3: the two trust numbers open the page now, directly under the
-            hero, instead of sitting between Featured and GetStarted where they
-            read as filler in the middle of a long grey band.
-            IA-48 §2: the lead form used to close the page. It is gone — the
-            footer already carries the contacts and /contact is a page of its
-            own, so the homepage was asking for the same thing twice. */}
-        <Hero locale={locale} />
-        <Trust locale={locale} />
-        <HowItWorks locale={locale} />
-        <Featured projects={projects.slice(0, 6)} locale={locale} />
-        {/* IA-48 §4: Featured ends on a row of cards and this section opens on a
-            heading, so the two full section paddings stacked into ~190px of
-            nothing. Halving this one's top closes the hole without touching the
-            spacing rhythm every other section on the site keeps. */}
-        <GetStarted locale={locale} className="pt-10 md:pt-12" />
-        <Faq locale={locale} />
+        <Hero locale={locale} signupHref={signupHref} />
+        <AdTypes locale={locale} />
+        <WhyUs locale={locale} />
+        {/* Both of these render nothing until staff has filled them in, so the
+            page closes on the CTA either way rather than on an empty frame. */}
+        <HomePartners partners={partners} locale={locale} />
+        <HomeTestimonials items={testimonials} locale={locale} />
+        <HomeCta locale={locale} />
       </main>
       <Footer locale={locale} currency={currency} />
     </>

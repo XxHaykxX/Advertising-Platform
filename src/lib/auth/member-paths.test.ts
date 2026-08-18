@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { AD_CHANNELS } from "@/lib/ad-channels";
+import { AD_CHANNELS, AD_CHANNEL_GROUPS, AD_GROUP_SLUGS } from "@/lib/ad-channels";
 import { isMemberReachablePath } from "./member-paths";
 
 /* The confinement in proxy.ts sends a signed-in member back to their cabinet
@@ -10,8 +10,12 @@ import { isMemberReachablePath } from "./member-paths";
    who cannot open it. /ads is footer-linked and aimed at brands, so it is
    pinned here rather than only in the allow-list array. */
 describe("member confinement — the /ads section stays reachable", () => {
-  it("lets a member open the overview and every channel page", () => {
-    const paths = ["/ads", ...AD_CHANNELS.map((c) => `/ads/${c.slug}`)];
+  it("lets a member open every group page and every channel page", () => {
+    const paths = [
+      "/ads",
+      ...AD_CHANNEL_GROUPS.map((g) => `/ads/${AD_GROUP_SLUGS[g]}`),
+      ...AD_CHANNELS.map((c) => `/ads/${c.slug}`),
+    ];
     const blocked = paths.filter((p) => !isMemberReachablePath(p));
     expect(blocked, `участника выкинет в кабинет с:\n${blocked.join("\n")}`).toEqual([]);
   });

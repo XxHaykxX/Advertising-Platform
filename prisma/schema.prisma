@@ -596,6 +596,48 @@ model Portfolio {
   createdAt     DateTime @default(now())
 }
 
+/// A "request a call" lead from the homepage (stage 4b, 2026-08-18) — name +
+/// phone + an optional comment, no account needed. `locale` is the language
+/// the visitor was on when they submitted, kept so staff calls back in the
+/// language the lead actually arrived in rather than whatever the admin panel
+/// happens to show. `handledAt` replaces an enum status: NULL is "not handled
+/// yet", a timestamp is both "done" and "when" in one column.
+model CallRequest {
+  id        Int       @id @default(autoincrement())
+  name      String
+  phone     String    @db.VarChar(24) // E.164
+  comment   String?   @db.Text
+  locale    String    @default("hy") @db.VarChar(2) // hy | ru | en — on which to call back
+  createdAt DateTime  @default(now())
+  handledAt DateTime? // null = not handled yet
+
+  @@index([handledAt, createdAt])
+}
+
+/// A video testimonial from a client, shown in the homepage carousel
+/// (2026-08-18). Deliberately not a flag on Portfolio: a case study is a
+/// campaign with numbers, a testimonial is a person on camera — different
+/// fields, different section, and merging them would make both forms half
+/// empty. `video` is the clip; the previews loop it muted, the modal plays it
+/// with sound. `image` is only its poster/fallback. The quote is per-locale
+/// like Portfolio.descriptionHy/Ru/En (nullable @db.Text — MySQL forbids
+/// literal defaults on TEXT, and translated copy outgrows VarChar(191)).
+/// Name, role and company are proper nouns and stay untranslated.
+model Testimonial {
+  id         Int      @id @default(autoincrement())
+  video      String? // "/uploads/…" — looped muted as the preview, with sound in the modal
+  image      String? // poster while the video loads, and the fallback when there is none
+  quoteHy    String?  @db.Text
+  quoteRu    String?  @db.Text
+  quoteEn    String?  @db.Text
+  authorName String
+  authorRole String? // job title
+  company    String? // shown as the overlay caption on the video
+  avatar     String?
+  sortOrder  Int      @default(0)
+  createdAt  DateTime @default(now())
+}
+
 /// A studio/platform partner logo shown in the trust/partners strip
 model Partner {
   id        Int     @id @default(autoincrement())

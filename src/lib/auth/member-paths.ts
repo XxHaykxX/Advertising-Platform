@@ -17,7 +17,6 @@
    app/faq/page.tsx) that reuses the same accordion component, and the footer
    link now points there for everyone instead of "/#faq". */
 export const MEMBER_ALLOWED_PUBLIC_PREFIXES = [
-  "/catalog",
   "/contact",
   "/terms",
   "/privacy",
@@ -31,11 +30,16 @@ export const MEMBER_ALLOWED_PUBLIC_PREFIXES = [
   // likely to click both bounced them straight back to /account — the reader it
   // is written for was the one reader who could not open it.
   "/for-creators",
-  // /ads (2026-08-10): the advertising-channel section — the overview plus the
-  // nine per-channel pages, all of which the footer links to. Its whole point
-  // is showing a brand what else it can buy, and a BRAND member is exactly the
-  // reader for that; without this prefix the footer link would bounce them
-  // back to their cabinet. The prefix covers /ads/<channel> too (hasPrefix).
+  // /ads (2026-08-10): the advertising section — four group pages and nine
+  // per-channel pages, all of which the footer and the header menu link to.
+  // Its whole point is showing a brand what else it can buy, and a BRAND
+  // member is exactly the reader for that; without this prefix those links
+  // would bounce them back to their cabinet. The prefix covers /ads/<group>
+  // and /ads/<channel>/<code> too (hasPrefix).
+  //
+  // "/catalog" used to sit at the top of this list. It was dropped 2026-08-18:
+  // the route only redirects now, and to a homepage anchor a member can't stay
+  // on anyway — allowing it just bought them a second hop before the bounce.
   "/ads",
 ];
 

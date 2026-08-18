@@ -56,7 +56,7 @@ export default async function BrandInterestsPage() {
           <p className="text-lg font-semibold text-foreground">{t("account.brand.noInterestsTitle")}</p>
           <p className="max-w-sm text-sm text-muted-foreground">{t("account.brand.noInterestsPageBody")}</p>
           <Button asChild variant="primary" size="md">
-            <Link href="/ads">{t("nav.browseProjects")}</Link>
+            <Link href="/account/brand/browse">{t("nav.browseProjects")}</Link>
           </Button>
         </div>
       ) : (

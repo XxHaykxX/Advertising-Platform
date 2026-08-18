@@ -11,6 +11,7 @@ import {
   Images,
   Megaphone,
   Handshake,
+  MessageSquareQuote,
   FolderOpen,
   ShieldCheck,
   Bell,
@@ -18,6 +19,7 @@ import {
   Languages,
   Inbox,
   History,
+  PhoneCall,
 } from "lucide-react";
 import type { Role } from "@prisma/client";
 import {
@@ -30,6 +32,7 @@ import {
 } from "@/lib/auth/permissions";
 import { getPendingModerationCount } from "./moderation/actions";
 import { getPendingOfferCount } from "./interests/actions";
+import { getPendingCallRequestCount } from "./call-requests/actions";
 import { getUnreadNotificationCount } from "@/lib/actions/notifications";
 
 // Per-role nav visibility. Dashboard is universal (except for TRANSLATOR,
@@ -37,9 +40,9 @@ import { getUnreadNotificationCount } from "@/lib/actions/notifications";
 // allowed to do:
 //  - SUPERADMIN sees everything.
 //  - PUBLISHER (content editor) sees Projects/Media, not the super-admin-only
-//    platform-wide views (Interests, Portfolio, Partners, Users — Portfolio/
-//    Partners have no ownerId to scope by Publisher, and Users now also hosts
-//    the Members/registrations tab).
+//    platform-wide views (Interests, Portfolio, Testimonials, Partners, Users —
+//    those three have no ownerId to scope by Publisher, and Users now also
+//    hosts the Members/registrations tab).
 //  - MODERATOR (project moderation only) sees Dashboard + Moderation — no
 //    content-edit tools, no user/settings management.
 //  - TRANSLATOR (content writer) sees only "Translations" (/admin/i18n) — no
@@ -75,6 +78,10 @@ const NAV_GROUPS: {
       // Audit 2.1: the applications section was deleted in July, which left a
       // brand's message and contact stored but readable by nobody.
       { href: "/admin/interests", label: "Offers", icon: Inbox, show: canHandleInterests },
+      // Stage 4b: the homepage "order a call" lead, same audience and guard
+      // as Offers — a call request is the same kind of lead as a brand's
+      // application, just without a project attached.
+      { href: "/admin/call-requests", label: "Call requests", icon: PhoneCall, show: canHandleInterests },
       { href: "/admin/projects", label: "Projects", icon: Film, show: canEditContent },
       // Inventory that isn't sold through a film — billboards, lifts, transit,
       // radio, TV, video, banners (stage 3 of the multichannel plan).
@@ -93,6 +100,7 @@ const NAV_GROUPS: {
     label: "Platform",
     items: [
       { href: "/admin/portfolio", label: "Portfolio", icon: Images, show: canManageUsers },
+      { href: "/admin/testimonials", label: "Testimonials", icon: MessageSquareQuote, show: canManageUsers },
       { href: "/admin/partners", label: "Partners", icon: Handshake, show: canManageUsers },
       { href: "/admin/users", label: "Users", icon: Users, show: canManageUsers },
       { href: "/admin/i18n", label: "Translations", icon: Languages, show: canEditTranslations },
@@ -127,6 +135,7 @@ export function AdminNav({ role, collapsed = false }: { role: Role; collapsed?: 
   // anything had arrived — a brand's offer sat unanswered until somebody
   // happened to open the page.
   const [pendingOfferCount, setPendingOfferCount] = useState(0);
+  const [pendingCallRequestCount, setPendingCallRequestCount] = useState(0);
   useEffect(() => {
     let alive = true;
     getPendingModerationCount()
@@ -139,6 +148,11 @@ export function AdminNav({ role, collapsed = false }: { role: Role; collapsed?: 
         if (alive) setPendingOfferCount(n);
       })
       .catch(() => {});
+    getPendingCallRequestCount()
+      .then((n) => {
+        if (alive) setPendingCallRequestCount(n);
+      })
+      .catch(() => {});
     // Refetch when the tab regains focus too. Route changes alone meant a
     // count could sit stale for as long as the panel stayed on one page,
     // which is exactly how someone watching the section misses an arrival.
@@ -149,6 +163,9 @@ export function AdminNav({ role, collapsed = false }: { role: Role; collapsed?: 
         .catch(() => {});
       getPendingOfferCount()
         .then((n) => alive && setPendingOfferCount(n))
+        .catch(() => {});
+      getPendingCallRequestCount()
+        .then((n) => alive && setPendingCallRequestCount(n))
         .catch(() => {});
       getUnreadNotificationCount("staff")
         .then((n) => alive && setUnreadCount(n))
@@ -205,7 +222,9 @@ export function AdminNav({ role, collapsed = false }: { role: Role; collapsed?: 
                     ? unreadCount
                     : item.href === "/admin/interests"
                       ? pendingOfferCount
-                      : 0;
+                      : item.href === "/admin/call-requests"
+                        ? pendingCallRequestCount
+                        : 0;
 
               return (
                 <Link

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { isValidPhone } from "@/components/report/application-dialog";
+import { isValidPhone } from "@/lib/phone";
 
 /* The application's phone field (2026-07-26). Armenian numbers are exactly
    8 digits after +374 — one digit short or long is a typo, and a typo'd

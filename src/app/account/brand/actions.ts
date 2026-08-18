@@ -14,6 +14,7 @@ import { notifyRoles } from "@/lib/data/notifications";
 import { notifyNewInterestToStaff } from "@/lib/mail";
 import { OFFER_NAME_SELECT, pickPlacementTitle, pickTierName } from "@/lib/data/pick-locale";
 import { offerKeyOf } from "@/lib/offer-value";
+import { isValidPhone } from "@/lib/phone";
 import { parseWebsiteUrl } from "@/lib/website-url";
 
 /* #23 — BRAND-cabinet server actions. Every action re-checks requireMember()
@@ -22,11 +23,10 @@ import { parseWebsiteUrl } from "@/lib/website-url";
 
 function revalidateBrandPaths() {
   revalidatePath("/account/brand");
-  // The grid a brand applies from is the public marketplace list now (the
-  // cabinet's own copy at /account/brand/browse redirects here) — its cards
-  // carry the free-slot counts an interest can move. /catalog merged into
-  // /ads on 2026-08-14.
-  revalidatePath("/ads");
+  // The listings a brand applies from carry the free-slot counts an interest
+  // can move. "layout" covers the whole section in one call — the four group
+  // pages, the nine channel pages and every ad-space card under them.
+  revalidatePath("/ads", "layout");
   revalidatePath("/account/brand/interests");
   revalidatePath("/account/brand/profile");
 }
@@ -139,20 +139,6 @@ export type ApplicationBrief = {
  *  be ambiguous. */
 export type ApplicationOfferRef = { kind: "PLACEMENT" | "TIER"; id: number };
 
-/** Exact national-number lengths per dial code — Armenia is always 8 digits
- *  after +374 (+37499105115), so one digit off is a typo, and a typo'd number
- *  is a lead nobody can call back. Mirrors PHONE_RULES in
- *  application-dialog; kept as its own copy because that module is
- *  client-side and this check must hold against a direct POST. */
-const PHONE_RULES: Array<{ code: string; digits: number }> = [{ code: "+374", digits: 8 }];
-
-function isValidPhone(value: string): boolean {
-  const cleaned = value.replace(/[\s()-]/g, "");
-  if (!/^\+[1-9]\d{6,15}$/.test(cleaned)) return false;
-  const rule = PHONE_RULES.find((r) => cleaned.startsWith(r.code));
-  if (rule) return cleaned.length === rule.code.length + rule.digits;
-  return cleaned.length >= 8 && cleaned.length <= 16;
-}
 /** Shortest application accepted. Mirrors MIN_MESSAGE in application-dialog —
  *  the popup disables submit below this, and this rejects a direct POST. */
 const MIN_MESSAGE = 20;

@@ -1,21 +1,21 @@
 import { redirect } from "next/navigation";
+import { findAdChannelByCode } from "@/lib/ad-channels";
 
-/** /catalog merged into /ads (2026-08-14, stage 1 of the ads/catalog merge) —
- *  every project and ad space now lives in one list under /ads, alongside the
- *  nine advertising channels. Kept as a redirect rather than deleted so old
- *  links, bookmarks and shares (e.g. "/catalog?channel=BILLBOARD") keep
- *  resolving — the query string carries straight through. */
+/** /catalog merged into /ads (2026-08-14), and /ads itself became four
+ *  advertising types on the homepage (2026-08-18). Kept as a redirect rather
+ *  than deleted so old links, bookmarks and shares keep resolving.
+ *
+ *  "/catalog?channel=BILLBOARD" names one channel, and that names exactly one
+ *  page now — so it lands there directly instead of being handed to /ads to
+ *  redirect a second time. */
 export default async function CatalogRedirectPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const params = await searchParams;
-  const qs = new URLSearchParams();
-  for (const [key, value] of Object.entries(params)) {
-    if (value === undefined) continue;
-    for (const v of Array.isArray(value) ? value : [value]) qs.append(key, v);
-  }
-  const query = qs.toString();
-  redirect(query ? `/ads?${query}` : "/ads");
+  const raw = params.channel;
+  const code = Array.isArray(raw) ? raw[0] : raw;
+  const picked = code ? findAdChannelByCode(code) : undefined;
+  redirect(picked ? `/ads/${picked.slug}` : "/#ad-types");
 }

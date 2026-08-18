@@ -8,6 +8,7 @@ import { useModalDialog } from "@/lib/use-modal-dialog";
 import { submitApplication } from "@/app/account/brand/actions";
 import { DEFAULT_LOCALE, labelSep, type Locale, type useUI } from "@/lib/i18n-client";
 import { NO_OFFER_KEY, offerValue, parseOfferValue } from "@/lib/offer-value";
+import { DEFAULT_DIAL_CODE, isValidPhone } from "@/lib/phone";
 import { RequiredMark } from "@/components/ui/field";
 
 /** Application popup (#23) for the report page's Express Interest button —
@@ -43,26 +44,6 @@ export type ApplicationOffer = {
  *  drives the hint and the disabled submit button. */
 const MIN_MESSAGE = 20;
 
-/** Armenia — the marketplace's home country, so an empty phone field starts
- *  here. A brand from elsewhere just types its own code over it. */
-const DEFAULT_DIAL_CODE = "+374";
-
-/** Exact national-number lengths per dial code. Armenia is always 8 digits
- *  after +374 (+37499105115), so a number one digit short or long is a typo,
- *  not a variant — and a typo'd number is a lead the seller can't call back.
- *  Codes not listed fall back to the loose international range. */
-const PHONE_RULES: Array<{ code: string; digits: number }> = [{ code: "+374", digits: 8 }];
-
-/** Accepts an international number: a "+", a country code, then the national
- *  part. Separators (spaces, dashes, parens) are ignored. Mirrored
- *  server-side — this copy only drives the hint and the disabled button. */
-export function isValidPhone(value: string): boolean {
-  const cleaned = value.replace(/[\s()-]/g, "");
-  if (!/^\+[1-9]\d{6,15}$/.test(cleaned)) return false;
-  const rule = PHONE_RULES.find((r) => cleaned.startsWith(r.code));
-  if (rule) return cleaned.length === rule.code.length + rule.digits;
-  return cleaned.length >= 8 && cleaned.length <= 16;
-}
 
 export function ApplicationDialog({
   projectId,

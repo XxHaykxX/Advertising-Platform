@@ -9,7 +9,7 @@ import {
   useReducedMotion,
   type MotionValue,
 } from "framer-motion";
-import { ArrowRight, Play, ChevronDown } from "lucide-react";
+import { ArrowRight, Phone, ChevronDown } from "lucide-react";
 import { DEFAULT_LOCALE, useUI, type Locale } from "@/lib/i18n-client";
 
 /* Cinematic poster wall — real stills scraped from kinodaran.com, served
@@ -74,7 +74,16 @@ function ParallaxColumn({
   );
 }
 
-export function Hero({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
+export function Hero({
+  locale = DEFAULT_LOCALE,
+  signupHref,
+}: {
+  locale?: Locale;
+  /** Where the primary button goes — computed by the page via signupCtaHref(),
+   *  which is server-only (it reads the session) and can't be called from this
+   *  client component. A guest gets the sign-up form, a member their cabinet. */
+  signupHref: string;
+}) {
   const ref = useRef<HTMLElement>(null);
   const reduce = useReducedMotion();
   const t = useUI(locale);
@@ -178,20 +187,25 @@ export function Hero({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
           transition={{ duration: 0.7, ease: "easeOut", delay: 0.24 }}
           className="mt-9 flex flex-col items-center justify-center gap-4 sm:flex-row"
         >
+          {/* Sign up, or — for someone not ready to go it alone — ask us to
+              call. The pair replaced "Get started"/"Browse projects" on
+              2026-08-18: the second one pointed at the everything-at-once /ads
+              list that no longer exists, and choosing a channel is what the
+              four cards right below the fold are for. */}
           <Link
-            href="/contact"
+            href={signupHref}
             className="group inline-flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-7 py-3.5 text-sm font-semibold text-primary-foreground shadow-[0_8px_30px_-8px_rgba(79,70,229,0.7)] transition-all duration-200 hover:scale-[1.03] hover:bg-[var(--primary-hover)] sm:w-auto"
           >
-            {t("btn.getStarted")}
+            {t("btn.signUp")}
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
           </Link>
-          <Link
-            href="/ads"
+          <a
+            href="#callback"
             className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-white/15 bg-white/5 px-7 py-3.5 text-sm font-semibold text-white backdrop-blur transition-all duration-200 hover:border-white/30 hover:bg-white/10 sm:w-auto"
           >
-            <Play className="h-4 w-4 fill-current" />
-            {t("btn.browseProjects")}
-          </Link>
+            <Phone className="h-4 w-4" />
+            {t("btn.requestCall")}
+          </a>
         </motion.div>
 
         {/* The price disclaimer ("placements from $5000, fee only on closed
@@ -201,7 +215,7 @@ export function Hero({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
 
       {/* ── Scroll indicator ─────────────────────────────────── */}
       <motion.a
-        href="#trust"
+        href="#ad-types"
         aria-label={t("hero.scrollDown")}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

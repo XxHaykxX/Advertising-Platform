@@ -36,6 +36,7 @@ const HISTORY_LABEL: Record<HistoryEntity, string> = {
   AdSpace: "Ad space",
   Person: "Cast & Crew directory",
   Portfolio: "Portfolio",
+  Testimonial: "Testimonial",
   Partner: "Partner",
 };
 
@@ -47,6 +48,8 @@ function historyHref(entity: HistoryEntity, id: number): string {
       return `/admin/ad-spaces/${id}/edit`;
     case "Portfolio":
       return `/admin/portfolio/${id}/edit`;
+    case "Testimonial":
+      return `/admin/testimonials/${id}/edit`;
     case "Partner":
       return `/admin/partners/${id}/edit`;
     case "Person":
@@ -61,6 +64,7 @@ async function liveTitle(entity: HistoryEntity, id: number): Promise<string | nu
   if (entity === "AdSpace") return (await prisma.adSpace.findUnique({ where: { id }, select: { title: true } }))?.title ?? null;
   if (entity === "Person") return (await prisma.person.findUnique({ where: { id }, select: { name: true } }))?.name ?? null;
   if (entity === "Portfolio") return (await prisma.portfolio.findUnique({ where: { id }, select: { title: true } }))?.title ?? null;
+  if (entity === "Testimonial") return (await prisma.testimonial.findUnique({ where: { id }, select: { authorName: true } }))?.authorName ?? null;
   return (await prisma.partner.findUnique({ where: { id }, select: { name: true } }))?.name ?? null;
 }
 
@@ -69,7 +73,8 @@ async function liveTitle(entity: HistoryEntity, id: number): Promise<string | nu
 function titleFromSnapshot(entity: HistoryEntity, snapshotJson: string): string {
   try {
     const data = JSON.parse(snapshotJson) as Record<string, unknown>;
-    const value = entity === "Person" || entity === "Partner" ? data.name : data.title;
+    const value =
+      entity === "Person" || entity === "Partner" ? data.name : entity === "Testimonial" ? data.authorName : data.title;
     return typeof value === "string" && value ? value : "deleted record";
   } catch {
     return "deleted record";
@@ -163,6 +168,18 @@ export async function findUploadUsage(publicPath: string): Promise<UploadUsage> 
   for (const s of adSpaces) {
     current.push({ label: `Ad space: ${s.title}`, href: `/admin/ad-spaces/${s.id}/edit` });
     liveKeys.add(`AdSpace:${s.id}`);
+  }
+
+  // A testimonial can point the same file from three fields (poster, clip,
+  // avatar) — checked as one OR, same shape as the ad space image/gallery pair.
+  const testimonials = await prisma.testimonial.findMany({
+    where: { OR: [{ image: publicPath }, { video: publicPath }, { avatar: publicPath }] },
+    select: { id: true, authorName: true },
+    take: 25,
+  });
+  for (const te of testimonials) {
+    current.push({ label: `Testimonial: ${te.authorName}`, href: `/admin/testimonials/${te.id}/edit` });
+    liveKeys.add(`Testimonial:${te.id}`);
   }
 
   const partners = await prisma.partner.findMany({ where: { logo: publicPath }, select: { id: true, name: true }, take: 25 });

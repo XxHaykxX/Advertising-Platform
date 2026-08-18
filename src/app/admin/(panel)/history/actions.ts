@@ -18,8 +18,9 @@ export type HistoryActionResult = { ok: true; redirect?: string } | { ok: false;
 /** Cache/page invalidation after a restore. Mirrors revalidateProjectPaths in
  *  admin/projects/actions.ts (that helper is private to that file, hence this
  *  copy) — only Project and AdSpace reads go through unstable_cache (the
- *  "projects" and "ad-spaces" tags in lib/data/); Person, Portfolio and Partner
- *  are plain per-request reads, so revalidating their pages is enough. */
+ *  "projects" and "ad-spaces" tags in lib/data/); Person, Portfolio,
+ *  Testimonial and Partner are plain per-request reads, so revalidating
+ *  their pages is enough. */
 function revalidateAfterRestore(entity: string, entityId: number) {
   switch (entity) {
     case "Project":
@@ -29,7 +30,7 @@ function revalidateAfterRestore(entity: string, entityId: number) {
       // /ads renders its own cached list (the former /catalog merged into it
       // 2026-08-14); without this a restored title keeps showing the damaged
       // one to visitors for up to five minutes.
-      revalidatePath("/ads");
+      revalidatePath("/ads", "layout");
       break;
     case "AdSpace":
       // updateTag("ad-spaces") + the whole /ads route tree — the same helper
@@ -44,6 +45,10 @@ function revalidateAfterRestore(entity: string, entityId: number) {
     case "Portfolio":
       revalidatePath("/admin/portfolio");
       revalidatePath("/portfolio");
+      break;
+    case "Testimonial":
+      revalidatePath("/admin/testimonials");
+      revalidatePath("/");
       break;
     case "Partner":
       revalidatePath("/admin/partners");

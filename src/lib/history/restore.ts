@@ -1,4 +1,5 @@
 import "server-only";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { recordVersion, type Author } from "./record";
 import type { Db, HistoryEntity } from "./snapshot";
@@ -18,6 +19,22 @@ type Snapshot = Record<string, unknown>;
 /** Columns that must never be written back from a snapshot: identity and
  *  creation facts belong to the row, not to the version. */
 const IMMUTABLE = new Set(["id", "createdAt"]);
+
+/** Which models carry an `updatedById` editor stamp — read off the schema
+ *  rather than hand-listed, because getting it wrong is silent until someone
+ *  clicks Restore.
+ *
+ *  A restore used to set `updatedById` on every entity. Only Project and
+ *  AdSpace have that column: on Portfolio, Partner and Person, Prisma rejected
+ *  the whole update with "Unknown argument `updatedById`", the transaction
+ *  rolled back, and the panel showed the generic "Could not restore that
+ *  version." — so restore had never worked for those three, on prod included.
+ *  Found 2026-08-18 while wiring Testimonial in, which failed the same way. */
+const EDITOR_STAMPED: ReadonlySet<string> = new Set(
+  Prisma.dmmf.datamodel.models
+    .filter((m) => m.fields.some((f) => f.name === "updatedById"))
+    .map((m) => m.name),
+);
 
 /** Nested collections of a Project snapshot, in the order they are recreated. */
 const PROJECT_CHILDREN = ["actors", "tiers", "placements", "milestones"] as const;
@@ -155,7 +172,7 @@ export async function restoreToVersion(
     await prisma.$transaction(
       async (tx) => {
         const data = coerce(scalarFields(snapshot));
-        data.updatedById = author.id;
+        if (EDITOR_STAMPED.has(entity)) data.updatedById = author.id;
 
         if (entity === "Project") {
           await tx.project.update({ where: { id: entityId }, data: normalizeProjectRestore(data) as never });
@@ -167,6 +184,8 @@ export async function restoreToVersion(
           await tx.person.update({ where: { id: entityId }, data: data as never });
         } else if (entity === "Portfolio") {
           await tx.portfolio.update({ where: { id: entityId }, data: data as never });
+        } else if (entity === "Testimonial") {
+          await tx.testimonial.update({ where: { id: entityId }, data: data as never });
         } else {
           await tx.partner.update({ where: { id: entityId }, data: data as never });
         }
@@ -202,7 +221,7 @@ export async function restoreDeletedRecord(
   const snapshot = JSON.parse(latest.snapshot) as Snapshot;
   const data = coerce(scalarFields(snapshot));
   data.id = entityId; // keep the original id; fails loudly if it was taken
-  data.updatedById = author.id;
+  if (EDITOR_STAMPED.has(entity)) data.updatedById = author.id;
 
   let newId = entityId;
   try {
@@ -219,6 +238,8 @@ export async function restoreDeletedRecord(
           newId = (await tx.person.create({ data: data as never })).id;
         } else if (entity === "Portfolio") {
           newId = (await tx.portfolio.create({ data: data as never })).id;
+        } else if (entity === "Testimonial") {
+          newId = (await tx.testimonial.create({ data: data as never })).id;
         } else {
           newId = (await tx.partner.create({ data: data as never })).id;
         }

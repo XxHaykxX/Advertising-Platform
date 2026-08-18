@@ -78,8 +78,9 @@ export async function getHistoryAuthors(): Promise<{ id: number; name: string }[
 }
 
 /** Every version of one record, newest first — feeds the "History" tab
- *  embedded in that record's own edit page (Project/AdSpace/Portfolio/Partner; Person
- *  has no dedicated page, see entityHref). Capped the same defensive way as
+ *  embedded in that record's own edit page (Project/AdSpace/Portfolio/
+ *  Testimonial/Partner; Person has no dedicated page, see entityHref).
+ *  Capped the same defensive way as
  *  getDeletedEntities: one record's own history is expected to stay well
  *  under this in practice. */
 export async function getEntityHistory(entity: HistoryEntity, entityId: number): Promise<ContentVersion[]> {
@@ -181,6 +182,8 @@ export function entityLabel(entity: string, snapshot: Record<string, unknown>): 
       return firstString(snapshot.nameHy, snapshot.nameRu, snapshot.nameEn, snapshot.name) || "Unnamed person";
     case "Portfolio":
       return firstString(snapshot.titleHy, snapshot.titleRu, snapshot.titleEn, snapshot.title) || "Untitled case";
+    case "Testimonial":
+      return firstString(snapshot.authorName) || "Unnamed testimonial";
     case "Partner":
       return firstString(snapshot.name) || "Unnamed partner";
     default:
@@ -193,6 +196,7 @@ export const ENTITY_TYPE_LABEL: Record<string, string> = {
   AdSpace: "Ad space",
   Person: "Person",
   Portfolio: "Portfolio",
+  Testimonial: "Testimonial",
   Partner: "Partner",
 };
 
@@ -207,6 +211,8 @@ export function entityHref(entity: string, entityId: number): string {
       return `/admin/ad-spaces/${entityId}/edit`;
     case "Portfolio":
       return `/admin/portfolio/${entityId}/edit`;
+    case "Testimonial":
+      return `/admin/testimonials/${entityId}/edit`;
     case "Partner":
       return `/admin/partners/${entityId}/edit`;
     case "Person":

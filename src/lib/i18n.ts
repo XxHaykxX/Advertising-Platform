@@ -146,6 +146,11 @@ export const UI: Record<string, Dict> = {
 
   // ── buttons / CTAs ──────────────────────────
   "btn.getStarted": { ru: "Начать", en: "Get Started", hy: "Սկսել" },
+  // The homepage hero's pair (2026-08-18). btn.listProject also reads
+  // "Գրանցվել" in hy, but it means "list your project" everywhere else and
+  // reusing it here would tie two unrelated buttons to one string.
+  "btn.signUp": { ru: "Зарегистрироваться", en: "Sign up", hy: "Գրանցվել" },
+  "btn.requestCall": { ru: "Заказать звонок", en: "Request a call", hy: "Պատվիրել զանգ" },
   "btn.viewReport": { ru: "Подробнее", en: "Learn More", hy: "Տեսնել ավելին" },
   "btn.removeInterest": { ru: "Убрать из интересов", en: "Remove from Interests", hy: "Հանել հետաքրքրություններից" },
   "btn.removeFavorite": { ru: "Убрать", en: "Remove", hy: "Հեռացնել" },
@@ -649,6 +654,23 @@ export const UI: Record<string, Dict> = {
     ru: "Монетизируйте свой проект, сохраняйте творческий контроль, получите бесплатный отчёт о плейсменте.",
     en: "Monetize your production, keep creative control, free placement report.",
     hy: "Ձեր հաջորդ նախագիծը կգտնի իր կատարյալ գործընկերոջը հենց այստեղ։",
+  },
+
+  // ── homepage "order a call" lead (stage 4b, 2026-08-18) ──
+  "callForm.name": { ru: "Ваше имя", en: "Your name", hy: "Ձեր անունը" },
+  "callForm.namePlaceholder": { ru: "Как к вам обращаться", en: "How should we address you", hy: "Ինչպես դիմենք ձեզ" },
+  "callForm.phone": { ru: "Телефон", en: "Phone", hy: "Հեռախոս" },
+  "callForm.comment": { ru: "Комментарий", en: "Comment", hy: "Մեկնաբանություն" },
+  "callForm.commentPlaceholder": {
+    ru: "Что вас интересует? (необязательно)",
+    en: "What are you interested in? (optional)",
+    hy: "Ի՞նչն է ձեզ հետաքրքրում (ցանկության դեպքում)",
+  },
+  "callForm.thanksTitle": { ru: "Спасибо! Заявка отправлена.", en: "Thank you! Your request has been sent.", hy: "Շնորհակալություն։ Հայտն ուղարկվել է։" },
+  "callForm.thanksSubtitle": {
+    ru: "Мы перезвоним вам в ближайшее время.",
+    en: "We'll call you back shortly.",
+    hy: "Մենք շուտով կզանգահարենք ձեզ։",
   },
 
   // ── why we built this ─────────────────────────
@@ -1190,6 +1212,7 @@ export const UI: Record<string, Dict> = {
   "formErr.message": { ru: "Введите сообщение.", en: "Please enter a message.", hy: "Մուտքագրեք հաղորդագրությունը։" },
   "formErr.messageLong": { ru: "Сообщение слишком длинное.", en: "Message is too long.", hy: "Հաղորդագրությունը չափազանց երկար է։" },
   "formErr.company": { ru: "Введите название.", en: "Please enter a name.", hy: "Մուտքագրեք անվանումը։" },
+  "formErr.phone": { ru: "Укажите номер с кодом страны, например +374 XX XXX XXX", en: "Enter the number with its country code, for example +374 XX XXX XXX", hy: "Նշեք համարը երկրի կոդով, օրինակ՝ +374 XX XXX XXX" },
   "formErr.metricsNotObject": { ru: "Метрики должны быть JSON-объектом.", en: "Metrics must be a JSON object.", hy: "Մետրիկաները պետք է լինեն JSON օբյեկտ։" },
   "formErr.metricsNotJson": { ru: "Метрики: некорректный JSON.", en: "Metrics: invalid JSON.", hy: "Մետրիկաներ՝ անվավեր JSON։" },
 
@@ -2964,6 +2987,12 @@ export const UI: Record<string, Dict> = {
   },
   "ads.channelCta": { ru: "Подробнее о канале", en: "About this channel", hy: "Ալիքի մասին" },
   "ads.backToAll": { ru: "Все каналы", en: "All channels", hy: "Բոլոր ալիքները" },
+  // Step out of a group, back to the four cards on the homepage — a group has
+  // no parent page of its own to return to.
+  "ads.backToTypes": { ru: "Все виды рекламы", en: "All advertising types", hy: "Գովազդի բոլոր տեսակները" },
+  // Channel switcher on a group page — the group's channels as chips above the
+  // results, so it works on mobile too (the facets there live in a sheet).
+  "ads.allChannels": { ru: "Все", en: "All", hy: "Բոլորը" },
   // Header dropdown's top row and the channel page's secondary hero CTA
   // (2026-08-14, stage 1: /catalog merged into /ads) — "all channels" reads
   // wrong once the target is the whole marketplace list, not a tile grid.
@@ -3062,12 +3091,144 @@ export const UI: Record<string, Dict> = {
   // contact form, not a button that would go nowhere.
   "adSpacePublic.contactCta": { ru: "Узнать об этом месте", en: "Ask about this space", hy: "Հարցնել այս տարածքի մասին" },
 
-  // Channel groups (the second badge on the Placement card is adGroup.SPONSORSHIP).
+  // ── Homepage: why us (src/components/why-us.tsx) ──
+  "whyUs.title": {
+    ru: "Почему с нами",
+    en: "Why work with us",
+    hy: "Ինչու՞ մեզ հետ",
+  },
+  "whyUs.network.title": { ru: "Вся сеть каналов", en: "Every channel in one place", hy: "Ալիքների լիարժեք ցանց" },
+  "whyUs.network.body": {
+    ru: "Наружная реклама, ТВ, радио, интернет и продакт-плейсмент — в одном месте, без десяти отдельных переговоров.",
+    en: "Outdoor, TV, radio, online and product placement in one place — instead of ten separate negotiations.",
+    hy: "Արտաքին գովազդ, հեռուստատեսություն, ռադիո, ինտերնետ և product placement՝ մեկ տեղում, առանց տասը առանձին բանակցության։",
+  },
+  "whyUs.fast.title": { ru: "Быстрое подтверждение", en: "Fast confirmation", hy: "Արագ հաստատում" },
+  "whyUs.fast.body": {
+    ru: "Отвечаем на заявку в течение суток и сразу говорим, свободно ли место и когда можно выходить.",
+    en: "We answer within a day and tell you straight away whether the slot is free and when you can go live.",
+    hy: "Պատասխանում ենք մեկ օրվա ընթացքում և անմիջապես ասում՝ ազատ է տեղը և երբ կարող եք մեկնարկել։",
+  },
+  "whyUs.pricing.title": { ru: "Прозрачные цены", en: "Transparent pricing", hy: "Թափանցիկ գներ" },
+  "whyUs.pricing.body": {
+    ru: "Цена указана у каждого предложения. Никаких скрытых наценок и «уточним позже».",
+    en: "Every listing carries its price. No hidden markups, no “we'll get back to you on that”.",
+    hy: "Յուրաքանչյուր առաջարկ ունի իր գինը։ Ոչ մի թաքնված հավելավճար և ոչ մի «կճշտենք հետո»։",
+  },
+  "whyUs.reporting.title": { ru: "Отчётность", en: "Accountability", hy: "Հաշվետվողականություն" },
+  "whyUs.reporting.body": {
+    ru: "После размещения присылаем подтверждение выхода: фотоотчёт, эфирную справку или статистику показов.",
+    en: "After the campaign runs you get proof: photo reports, broadcast logs or impression stats.",
+    hy: "Տեղաբաշխումից հետո ուղարկում ենք հաստատում՝ լուսանկարային հաշվետվություն, եթերային տեղեկանք կամ ցուցադրումների վիճակագրություն։",
+  },
+
+  // ── Homepage: partner channels (src/components/home-partners.tsx) ──
+  "homePartners.title": {
+    ru: "Каналы, с которыми работаем",
+    en: "The channels we work with",
+    hy: "Ալիքները, որոնց հետ աշխատում ենք",
+  },
+  "homePartners.subtitle": {
+    ru: "Телеканалы, радиостанции и сети наружной рекламы — прямые партнёры площадки.",
+    en: "TV channels, radio stations and outdoor networks — direct partners of the platform.",
+    hy: "Հեռուստաալիքներ, ռադիոկայաններ և արտաքին գովազդի ցանցեր՝ հարթակի ուղիղ գործընկերները։",
+  },
+
+  // ── Dead since 2026-08-18: the homepage cases block was replaced by the
+  //    video testimonials above. Dropped in a separate pass AFTER the deploy —
+  //    a translator draft on a removed key blocks publishing. ──
+  "homeCases.title": {
+    ru: "Уже сделанные кампании",
+    en: "Campaigns we have already run",
+    hy: "Արդեն իրականացված արշավները",
+  },
+  "homeCases.subtitle": {
+    ru: "Реальные размещения и цифры, которые они принесли.",
+    en: "Real placements, and the numbers they produced.",
+    hy: "Իրական տեղաբաշխումներ և թվերը, որ դրանք բերեցին։",
+  },
+  "homeCases.all": { ru: "Все кейсы", en: "All cases", hy: "Բոլոր քեյսերը" },
+
+  // ── Homepage: video testimonials (src/components/home-testimonials.tsx) ──
+  "testimonials.title": {
+    ru: "Что говорят рекламодатели",
+    en: "What advertisers say",
+    hy: "Ինչ են ասում գովազդատուները",
+  },
+  "testimonials.subtitle": {
+    ru: "Бренды и агентства, которые уже размещались через площадку.",
+    en: "Brands and agencies that have already booked through the platform.",
+    hy: "Բրենդեր և գործակալություններ, որոնք արդեն տեղաբաշխվել են հարթակի միջոցով։",
+  },
+  "testimonials.play": {
+    ru: "Смотреть видео",
+    en: "Watch the video",
+    hy: "Դիտել տեսանյութը",
+  },
+  "testimonials.prev": {
+    ru: "Предыдущий отзыв",
+    en: "Previous testimonial",
+    hy: "Նախորդ կարծիքը",
+  },
+  "testimonials.next": {
+    ru: "Следующий отзыв",
+    en: "Next testimonial",
+    hy: "Հաջորդ կարծիքը",
+  },
+  "testimonials.goTo": {
+    ru: "Отзыв {n}",
+    en: "Testimonial {n}",
+    hy: "Կարծիք {n}",
+  },
+
+  // ── Homepage: closing call to action (src/components/home-cta.tsx) ──
+  "homeCta.title": {
+    ru: "Достигайте бизнес-целей",
+    en: "Achieve your business goals",
+    hy: "Հասիր քո բիզնես նպատակներին",
+  },
+  "homeCta.body": {
+    ru: "Расскажите, что и кому нужно продвинуть, — подберём каналы и вернёмся с расчётом.",
+    en: "Tell us what you want to promote and to whom — we'll pick the channels and come back with a quote.",
+    hy: "Պատմեք, թե ինչ և ում համար է պետք առաջ մղել՝ մենք կընտրենք ալիքները և կվերադառնանք հաշվարկով։",
+  },
+  "homeCta.within24h": {
+    ru: "Индивидуальное предложение за 24 часа",
+    en: "A tailored proposal within 24 hours",
+    hy: "Անհատական առաջարկ 24 ժամում",
+  },
+
+  // ── Homepage: the four advertising types (src/components/ad-types.tsx) ──
+  "adTypes.title": { ru: "Виды рекламы", en: "Ways to advertise", hy: "Գովազդի տեսակները" },
+  "adTypes.subtitle": {
+    ru: "Выберите, где показать бренд — и посмотрите свободные места с ценами.",
+    en: "Pick where your brand should appear — then see what is available and what it costs.",
+    hy: "Ընտրեք, թե որտեղ ցուցադրել բրենդը, և տեսեք ազատ տեղերն ու գները։",
+  },
+  "adTypes.cta": { ru: "Смотреть", en: "Browse", hy: "Դիտել" },
+
+  // The four channel groups — a card on the homepage, a section in the
+  // mega-menu and a page of their own at /ads/<group-slug>. adGroup.CONTENT is
+  // dead since the 2026-08-18 regroup and is dropped after that deploy, not
+  // before: a translator draft sitting on a removed key blocks publishing.
   "adGroup.CONTENT": { ru: "Интеграция в контент", en: "Content integration", hy: "Ինտեգրում բովանդակության մեջ" },
-  "adGroup.SPONSORSHIP": { ru: "Спонсорство", en: "Sponsorship", hy: "Հովանավորություն" },
-  "adGroup.MEDIA": { ru: "Медиа", en: "Media", hy: "Մեդիա" },
-  "adGroup.DIGITAL": { ru: "Диджитал", en: "Digital", hy: "Թվային" },
-  "adGroup.OUTDOOR": { ru: "Наружная реклама", en: "Outdoor", hy: "Բացօթյա գովազդ" },
+  "adGroup.SPONSORSHIP": { ru: "Спонсорство и product placement", en: "Sponsorship & product placement", hy: "Հովանավորություն և product placement" },
+  "adGroup.MEDIA": { ru: "Вещание и стриминг", en: "Broadcast & streaming", hy: "Հեռարձակում և սթրիմինգ" },
+  "adGroup.DIGITAL": { ru: "Цифровая реклама", en: "Digital advertising", hy: "Թվային գովազդ" },
+  "adGroup.OUTDOOR": { ru: "Наружная реклама", en: "Outdoor advertising", hy: "Արտաքին գովազդ" },
+  "adGroup.SPONSORSHIP.desc": { ru: "Интеграция бренда в фильмы, сериалы и события", en: "Your brand inside films, series and events", hy: "Բրենդի ինտեգրում ֆիլմերում, սերիալներում և միջոցառումներում" },
+  "adGroup.MEDIA.desc": { ru: "Ролики на телевидении и радио", en: "Spots on television and radio", hy: "Հոլովակներ հեռուստատեսությամբ և ռադիոյով" },
+  "adGroup.DIGITAL.desc": { ru: "Баннеры и видеореклама в интернете", en: "Banners and video ads online", hy: "Բաններներ և վիդեոգովազդ ինտերնետում" },
+  "adGroup.OUTDOOR.desc": { ru: "Билборды, лифты и транспорт", en: "Billboards, lifts and transit", hy: "Բիլբորդներ, վերելակներ և տրանսպորտ" },
+  // What each group is bought FOR — the goal in a media buyer's words, on the
+  // homepage card. Only goals this inventory can actually deliver: no
+  // retargeting, no app installs, no "measurable sales" — a billboard carries
+  // no pixel, and promising it next to the "accountability" argument would be
+  // a claim we can't back.
+  "adGroup.OUTDOOR.goal": { ru: "Для локального охвата", en: "For local reach", hy: "Տեղական հասանելիության համար" },
+  "adGroup.DIGITAL.goal": { ru: "Для заявок и лидов", en: "For leads and enquiries", hy: "Հայտերի և լիդերի համար" },
+  "adGroup.MEDIA.goal": { ru: "Для узнаваемости бренда", en: "For brand awareness", hy: "Բրենդի ճանաչելիության համար" },
+  "adGroup.SPONSORSHIP.goal": { ru: "Для доверия и партнёрств", en: "For trust and partnerships", hy: "Վստահության և գործընկերության համար" },
 
   // ── the nine channels (see src/lib/ad-channels.ts for the key contract) ──
   "adChannel.PLACEMENT": { ru: "Продакт-плейсмент", en: "Product placement", hy: "Փրոդաքթ փլեյսմենթ" },

@@ -76,6 +76,15 @@ const FIELD_LABELS: Record<string, string> = {
   logo: "logo",
   url: "link",
   title: "title",
+  // Testimonial
+  video: "video",
+  quoteHy: "quote (hy)",
+  quoteRu: "quote (ru)",
+  quoteEn: "quote (en)",
+  authorName: "author name",
+  authorRole: "author role",
+  company: "company",
+  avatar: "avatar",
 };
 
 function label(field: string): string {

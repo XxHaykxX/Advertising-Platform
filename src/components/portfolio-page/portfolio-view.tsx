@@ -68,7 +68,8 @@ export function PortfolioView({
               {t("portfolio.ctaBody")}
             </p>
             <Button asChild variant="primary" size="lg">
-              <Link href="/ads">{t("btn.browseCurrentProjects")}</Link>
+              {/* The group that sells projects — see about-hero.tsx. */}
+              <Link href="/ads/sponsorship">{t("btn.browseCurrentProjects")}</Link>
             </Button>
           </Container>
         </div>

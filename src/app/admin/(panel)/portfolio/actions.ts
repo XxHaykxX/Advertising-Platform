@@ -27,6 +27,7 @@ export type PortfolioFormValues = {
   description: string;
   brand: string;
   image: string;
+  /** Optional case clip; the still above doubles as its poster. */
   metrics: string; // JSON object, built by the MetricsEditor's hidden input
   // ── Per-locale translations (#41) — mirror Project's titleHy/synopsisHy set ──
   titleHy: string;
@@ -104,6 +105,11 @@ function validate(data: PortfolioFormValues): string | null {
 function revalidatePortfolioPaths() {
   revalidatePath("/admin/portfolio");
   revalidatePath("/portfolio");
+  // The homepage shows the three most recent cases since 2026-08-18. Same
+  // reasoning as revalidatePartnerPaths: a literal path (no `type`), so only
+  // this page is marked, and without it an edited case stays stale exactly
+  // where most visitors see it.
+  revalidatePath("/");
 }
 
 export async function createPortfolio(

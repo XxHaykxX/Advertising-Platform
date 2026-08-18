@@ -13,7 +13,13 @@ import { LogoutButton } from "@/components/logout-button";
 import { DEFAULT_LOCALE, useUI, type Locale } from "@/lib/i18n-client";
 import { DEFAULT_CURRENCY, type CurrencyCode } from "@/lib/currency";
 import { ADS_ENABLED, PORTFOLIO_ENABLED } from "@/lib/feature-flags";
-import { AD_CHANNELS, adChannelsByGroup, type AdChannelGroup } from "@/lib/ad-channels";
+import {
+  AD_CHANNELS,
+  AD_CHANNEL_GROUPS,
+  AD_GROUP_SLUGS,
+  adChannelsByGroup,
+  type AdChannelGroup,
+} from "@/lib/ad-channels";
 import { canSell } from "@/lib/auth/capabilities";
 import { useDismissable } from "@/lib/use-dismissable";
 import { useBodyScrollLock } from "@/lib/body-scroll-lock";
@@ -76,9 +82,10 @@ const DARK_HERO_PATHS = new Set([
   "/for-creators",
   "/privacy",
   "/terms",
-  // /ads and its nine per-channel pages (src/lib/ad-channels.ts) — spread from
-  // the directory so a tenth channel doesn't need remembering here.
-  "/ads",
+  // The four group pages and the nine per-channel pages (src/lib/ad-channels.ts)
+  // — spread from the directory so a tenth channel doesn't need remembering
+  // here. /ads itself is a redirect and never renders a hero.
+  ...AD_CHANNEL_GROUPS.map((g) => `/ads/${AD_GROUP_SLUGS[g]}`),
   ...AD_CHANNELS.map((c) => `/ads/${c.slug}`),
 ]);
 
@@ -89,6 +96,9 @@ const DARK_HERO_PATHS = new Set([
 export type NavChildGroup = {
   group: AdChannelGroup;
   groupLabel: string;
+  /** The group's own page — the heading is a link, not just a caption, since
+   *  a group lists all of its channels' inventory at once (2026-08-18). */
+  groupHref: string;
   channels: { code: string; label: string; href: string }[];
 };
 
@@ -96,24 +106,25 @@ export type NavItem = { label: string; href: string; children?: NavChildGroup[] 
 
 function useNav(t: ReturnType<typeof useUI>): NavItem[] {
   return [
-    // /catalog merged into /ads (2026-08-14, stage 1) — the standalone
-    // "Catalog" nav item is gone, /ads (below) is the whole marketplace now.
-    // Which is why the item itself is NOT behind ADS_ENABLED any more: the flag
-    // guards the nine per-channel pages (those still notFound() when it is
-    // off), but /ads is the listing every visitor needs, and gating it would
-    // leave the site with no link to its own catalogue at all.
-    // `children` feeds the desktop dropdown (AdsNavDropdown below) and the
-    // mobile panel's indented sublist — nine channels, already grouped by
-    // adChannelsByGroup(), zero new dictionary keys (adGroup.*/adChannel.*
-    // already exist for the /ads pages).
+    // Sections and sub-sections (2026-08-18): the four groups are the headings
+    // and each one's channels sit under it, in both the desktop dropdown
+    // (AdsNavDropdown below) and the mobile panel. Both levels are real pages,
+    // so both are links.
+    //
+    // `href` is where the item points with the dropdown unavailable — with
+    // ADS_ENABLED off there are no channel pages to open, and /ads redirects to
+    // the homepage section holding the four type cards. The item itself is NOT
+    // behind the flag: gating it would leave the site with no link to its own
+    // inventory at all.
     {
       label: t("nav.ads"),
-      href: "/ads",
+      href: "/#ad-types",
       ...(ADS_ENABLED
         ? {
             children: adChannelsByGroup().map(({ group, channels }) => ({
               group,
               groupLabel: t(`adGroup.${group}`),
+              groupHref: `/ads/${AD_GROUP_SLUGS[group]}`,
               channels: channels.map((c) => ({
                 code: c.code,
                 label: t(`adChannel.${c.code}`),
@@ -185,23 +196,19 @@ function AdsNavDropdown({
         // panel, sat below the fold. Side by side it's ~330 and fits every
         // screen; max-h stays as the backstop.
         <ul className="absolute left-0 top-full z-50 mt-2 grid max-h-[70vh] w-[30rem] grid-cols-2 gap-x-2 overflow-y-auto rounded-xl border border-border bg-card py-1 shadow-lg shadow-black/10">
-          <li className="col-span-2 border-b border-border">
-            <Link
-              href={item.href}
-              onClick={() => setOpen(false)}
-              className="block px-4 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-            >
-              {/* /catalog merged into /ads (2026-08-14, stage 1) — this row
-                  used to say "All channels" and lead to the tile overview;
-                  /ads is the whole marketplace list now, so it says so. */}
-              {t("ads.allListings")}
-            </Link>
-          </li>
+          {/* The full-width "everything at once" row that used to open this
+              panel is gone with the /ads list it led to (2026-08-18). The four
+              group headings below are the top level now — and they are links,
+              because a group is a page listing all of its channels. */}
           {item.children.map((g) => (
             <li key={g.group}>
-              <p className="px-4 pt-2.5 pb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <Link
+                href={g.groupHref}
+                onClick={() => setOpen(false)}
+                className="block px-4 pt-2.5 pb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground transition-colors hover:text-primary"
+              >
                 {g.groupLabel}
-              </p>
+              </Link>
               <ul>
                 {g.channels.map((c) => (
                   <li key={c.code}>

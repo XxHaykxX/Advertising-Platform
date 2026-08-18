@@ -253,10 +253,11 @@ type AdSpaceMailInput = { title: string; channel: string; code: string };
 /** Absolute URL of a space's public card. The path comes from adSpacePath —
    the code carries a leading "#", which cannot go into a path segment as-is
    (see src/lib/ad-space-url.ts). A channel token that isn't in the directory
-   falls back to the /ads overview rather than to a broken link. */
+   falls back to the homepage rather than to a broken link; there is no
+   everything-at-once listing to fall back to since 2026-08-18. */
 function adSpaceUrl(space: AdSpaceMailInput, base: string): string {
   const channel = findAdChannelByCode(space.channel);
-  return channel ? `${base}${adSpacePath(channel.slug, space.code)}` : `${base}/ads`;
+  return channel ? `${base}${adSpacePath(channel.slug, space.code)}` : `${base}/`;
 }
 
 export function adSpaceApprovedTemplate(space: AdSpaceMailInput, base: string = siteUrl()) {
@@ -546,5 +547,41 @@ export async function notifyContactMessage(input: ContactMessageInput) {
     return { ok: false };
   }
   const { subject, html, text } = contactMessageTemplate(input);
+  return sendMail({ to: adminEmail, subject, html, text });
+}
+
+type CallRequestMailInput = { name: string; phone: string; comment?: string };
+
+/** The homepage "order a call" form (stage 4b) — same admin-notification
+   shape as contactMessageTemplate above, but the CTA dials the number
+   straight away instead of opening a reply-by-email compose window. */
+export function callRequestTemplate(input: CallRequestMailInput) {
+  const subject = `Հետզանգի հայտ / Заказ звонка — ${input.name}`;
+  const commentLine = input.comment ? `<br/>${escapeHtml(input.comment)}` : "";
+  const html = layout(
+    `
+    <p><strong>Հետզանգի նոր հայտ</strong><br/>
+    ${escapeHtml(input.name)} · ${escapeHtml(input.phone)}${commentLine}</p>
+    <p><strong>Новый заказ обратного звонка</strong><br/>
+    ${escapeHtml(input.name)} · ${escapeHtml(input.phone)}${commentLine}</p>
+    <p><strong>New call-back request</strong><br/>
+    ${escapeHtml(input.name)} · ${escapeHtml(input.phone)}${commentLine}</p>
+    `,
+    "Զանգահարել / Позвонить / Call",
+    `tel:${input.phone}`,
+  );
+  const text = [
+    `${input.name} <${input.phone}>${input.comment ? `\n${input.comment}` : ""}`,
+  ].join("\n\n");
+  return { subject, html, text };
+}
+
+export async function notifyCallRequest(input: CallRequestMailInput) {
+  const adminEmail = await resolveAdminEmail();
+  if (!adminEmail) {
+    console.warn("[mail] no admin email available — skipping call request notice");
+    return { ok: false };
+  }
+  const { subject, html, text } = callRequestTemplate(input);
   return sendMail({ to: adminEmail, subject, html, text });
 }

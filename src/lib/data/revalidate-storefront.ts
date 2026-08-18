@@ -16,7 +16,7 @@ import { revalidatePath } from "next/cache";
 export function revalidateStorefront() {
   revalidatePath("/");
   // /catalog merged into /ads on 2026-08-14.
-  revalidatePath("/ads");
+  revalidatePath("/ads", "layout");
   revalidatePath("/account/brand");
   revalidatePath("/account/brand/favorites");
 }

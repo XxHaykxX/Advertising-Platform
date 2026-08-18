@@ -99,47 +99,16 @@ export function toListDTO(
   };
 }
 
-const getAdSpacesByChannelCached = unstable_cache(
-  async (
-    channel: string,
-    locale: Locale,
-    currency: CurrencyCode,
-    activeOnly: boolean,
-  ): Promise<AdSpaceListDTO[]> => {
-    // Same gate as the project catalog: the public showcase only ever shows
-    // inventory that cleared moderation. Admin call sites pass activeOnly=false
-    // and see every status. Note the default here is DRAFT, not APPROVED — an
-    // ad space is created by its owner, so unlike the pre-existing projects
-    // there is no legacy row that must stay visible without review.
-    const rows = await prisma.adSpace.findMany({
-      where: activeOnly
-        ? { channel, isActive: true, moderationStatus: "APPROVED" }
-        : { channel },
-      orderBy: { sortOrder: "asc" },
-      select: LIST_SELECT,
-    });
-    const rates = await getRates();
-    return rows.map((row) => toListDTO(locale, currency, rates, row));
-  },
-  ["ad-spaces-by-channel"],
-  { revalidate: REVALIDATE_SECONDS, tags: ["ad-spaces"] },
-);
-
-export function getAdSpacesByChannel(
-  channel: string,
-  locale: Locale,
-  currency: CurrencyCode,
-  activeOnly = true,
-): Promise<AdSpaceListDTO[]> {
-  return getAdSpacesByChannelCached(channel, locale, currency, activeOnly);
-}
-
 /** Every approved, visible ad space across all channels (2026-08-10) — the
- *  catalog's half of its unified inventory. Public-only, deliberately: unlike
- *  getAdSpacesByChannel this takes no `activeOnly` — /ads has no admin
- *  call site, and exporting a gate-off mode here would just be a trap for the
- *  next caller. Tagged "ad-spaces", same family as the by-channel query, so
- *  approving/editing a space invalidates both without a second write path. */
+ *  public inventory, filtered down to a channel or a group by the page that
+ *  asks (ads/rows.ts). There used to be a per-channel query beside this one;
+ *  it went away with the everything-at-once /ads list (2026-08-18), because a
+ *  group page would have fired one per channel while this single warm entry
+ *  already holds the lot.
+ *
+ *  Public-only, deliberately: this takes no `activeOnly`, since /ads has no
+ *  admin call site and exporting a gate-off mode here would just be a trap for
+ *  the next caller. */
 const getAllAdSpacesCached = unstable_cache(
   async (locale: Locale, currency: CurrencyCode): Promise<AdSpaceListDTO[]> => {
     const rows = await prisma.adSpace.findMany({

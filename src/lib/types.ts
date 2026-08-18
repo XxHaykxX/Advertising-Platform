@@ -226,6 +226,20 @@ export interface PortfolioDTO {
   metrics: string; // JSON object; parse on demand
 }
 
+export interface TestimonialDTO {
+  id: number;
+  /** The clip: looped muted as the carousel preview, played with sound in the
+   *  modal. `image` is its poster, and takes over entirely when this is null. */
+  video: string | null;
+  image: string | null;
+  /** Already resolved for the requested locale (see getTestimonials). */
+  quote: string;
+  authorName: string;
+  authorRole: string | null;
+  company: string | null;
+  avatar: string | null;
+}
+
 export interface PartnerDTO {
   id: number;
   name: string;

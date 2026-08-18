@@ -17,7 +17,15 @@ type ButtonVariantProps = VariantProps<typeof buttonVariants>;
 // "back", and next to it sat "Հետ Կատալոգ", two words for one action. `label`
 // becomes the accessible name instead of visible text, so the control keeps
 // telling a screen reader what it does.
-export function BackButton({ label, fallbackHref = "/ads" }: { label: string; fallbackHref?: string }) {
+// The fallback lands where the project came from — the group selling placement
+// and event sponsorship, since this button sits on a project page.
+export function BackButton({
+  label,
+  fallbackHref = "/ads/sponsorship",
+}: {
+  label: string;
+  fallbackHref?: string;
+}) {
   const router = useRouter();
   return (
     <button

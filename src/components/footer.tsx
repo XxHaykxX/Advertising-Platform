@@ -7,6 +7,7 @@ import { CurrencySwitcher } from "@/components/currency-switcher";
 import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
 import { DEFAULT_CURRENCY, type CurrencyCode } from "@/lib/currency";
 import { PORTFOLIO_ENABLED } from "@/lib/feature-flags";
+import { AD_CHANNEL_GROUPS, AD_GROUP_SLUGS } from "@/lib/ad-channels";
 
 const CONTACTS = [
   { icon: Mail, label: "hello@igovazd.am", href: "mailto:hello@igovazd.am" },
@@ -80,19 +81,21 @@ export function Footer({
                 {t("footer.product")}
               </h3>
               <ul className="space-y-3">
-                {/* One row, not two: "Browse projects" pointed at /catalog and
-                    "Advertising" at /ads until the two merged (2026-08-14).
-                    Both now resolve to the same page, and the same destination
-                    twice under two names in one six-item column reads as a
-                    mistake. Kept the wording that names the section. */}
-                <li>
-                  <Link
-                    href="/ads"
-                    className="text-sm text-muted-foreground transition-colors hover:text-primary"
-                  >
-                    {t("footer.ads")}
-                  </Link>
-                </li>
+                {/* The four advertising types, not one "Advertising" row: the
+                    single row pointed at the everything-at-once /ads list, and
+                    with that gone (2026-08-18) a footer link has to name where
+                    it lands. Four rows is what this column can carry — the
+                    nine channels underneath them stay in the header menu. */}
+                {AD_CHANNEL_GROUPS.map((group) => (
+                  <li key={group}>
+                    <Link
+                      href={`/ads/${AD_GROUP_SLUGS[group]}`}
+                      className="text-sm text-muted-foreground transition-colors hover:text-primary"
+                    >
+                      {t(`adGroup.${group}`)}
+                    </Link>
+                  </li>
+                ))}
                 <li>
                   <Link
                     href="/how-it-works"

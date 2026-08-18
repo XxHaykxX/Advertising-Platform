@@ -9,7 +9,10 @@ test.describe("guest — public catalog", () => {
     const pageErrors: string[] = [];
     page.on("pageerror", (e) => pageErrors.push(e.message));
 
-    await page.goto("/ads");
+    // /ads itself is a redirect since the 2026-08-18 restructure (no
+    // everything-at-once list) — the sponsorship group is the one page
+    // guaranteed to carry project rows in every local seed.
+    await page.goto("/ads/sponsorship");
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 
     // Format filter (V2) exists. The parenthesised-country rule it used to

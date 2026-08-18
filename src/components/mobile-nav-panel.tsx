@@ -103,17 +103,35 @@ export function MobileNavPanel({
                   >
                     {item.label}
                   </Link>
+                  {/* Sections and their sub-sections, same two levels the
+                      desktop dropdown shows (2026-08-18). This used to flatten
+                      the groups away and list all nine channels in a row,
+                      which was defensible while a group was only a label —
+                      now each one is a page of its own. Still no accordion:
+                      four headings and nine links fit, and a closed accordion
+                      hides the thing the panel exists to show. */}
                   {item.children && (
                     <div className="ml-3 flex flex-col gap-1 border-l border-border pl-3">
-                      {item.children.flatMap((g) => g.channels).map((c) => (
-                        <Link
-                          key={c.code}
-                          href={c.href}
-                          onClick={onNavigate}
-                          className="rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-                        >
-                          {c.label}
-                        </Link>
+                      {item.children.map((g) => (
+                        <div key={g.group} className="flex flex-col gap-1">
+                          <Link
+                            href={g.groupHref}
+                            onClick={onNavigate}
+                            className="rounded-lg px-3 pt-2 pb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground transition-colors hover:text-primary"
+                          >
+                            {g.groupLabel}
+                          </Link>
+                          {g.channels.map((c) => (
+                            <Link
+                              key={c.code}
+                              href={c.href}
+                              onClick={onNavigate}
+                              className="rounded-lg px-3 py-2 pl-5 text-sm text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+                            >
+                              {c.label}
+                            </Link>
+                          ))}
+                        </div>
                       ))}
                     </div>
                   )}

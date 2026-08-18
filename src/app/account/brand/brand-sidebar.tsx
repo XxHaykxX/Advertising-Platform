@@ -50,11 +50,10 @@ export function BrandSidebar({
   // (creator-sidebar.tsx); both sides now follow the same rule.
   const items: NavItem[] = [
     { href: "/account/brand", label: labels.dashboard, icon: LayoutDashboard, exact: true },
-    // Points at the public marketplace list, not the cabinet's own copy:
-    // /account/brand/browse was a 238-line reimplementation of the same grid
-    // off the same getProjects() with a smaller filter set, and it now
-    // redirects here. /catalog merged into /ads on 2026-08-14.
-    { href: "/ads", label: labels.browse, icon: Search },
+    // Back to the cabinet's own page (2026-08-18): it is no longer a second
+    // copy of the catalogue — the four advertising types are on the homepage,
+    // and a signed-in member is redirected off "/" before they can see them.
+    { href: "/account/brand/browse", label: labels.browse, icon: Search },
     { href: "/account/brand/favorites", label: labels.favorites, icon: Heart },
     // Audit 4.2: the interests/applications page existed but had no sidebar
     // entry — a brand could only reach it via a dashboard card link.

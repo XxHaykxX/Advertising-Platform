@@ -11,7 +11,7 @@ import type { Prisma } from "@prisma/client";
 //
 // The other three entities are single rows and snapshot as-is.
 
-export const HISTORY_ENTITIES = ["Project", "AdSpace", "Person", "Portfolio", "Partner"] as const;
+export const HISTORY_ENTITIES = ["Project", "AdSpace", "Person", "Portfolio", "Testimonial", "Partner"] as const;
 export type HistoryEntity = (typeof HISTORY_ENTITIES)[number];
 
 export const HISTORY_ACTIONS = [
@@ -70,6 +70,11 @@ export async function buildSnapshot(
 
   if (entity === "Portfolio") {
     const row = await db.portfolio.findUnique({ where: { id } });
+    return row ? strip(row) : null;
+  }
+
+  if (entity === "Testimonial") {
+    const row = await db.testimonial.findUnique({ where: { id } });
     return row ? strip(row) : null;
   }
 

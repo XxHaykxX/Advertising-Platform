@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   filtersFromQuery,
   filtersToQuery,
@@ -25,17 +25,17 @@ import {
 } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
-import { PageHero } from "@/components/ui/page-hero";
 import { GenreBadge, AccentBadge } from "@/components/ui/badge";
 import { ProjectCard } from "@/components/project-card";
 import { AdSpaceCard } from "@/components/ad-space-card";
 import { FavoriteHeart } from "@/components/favorite-heart";
-import { Header, type SiteHeaderUser } from "@/components/header";
+// Type-only: the ProjectCard/ProjectRow below need the shape, and an
+// `import type` is erased — the header itself never reaches this bundle.
+import type { SiteHeaderUser } from "@/components/header";
 import { compareDeadline, daysUntil, formatFullDate, splitCountries } from "@/lib/data/format";
 import { cn } from "@/lib/utils";
 import { useBodyScrollLock } from "@/lib/body-scroll-lock";
 import { DEFAULT_LOCALE, intlLocale, useUI, useLocalizer, type Locale } from "@/lib/i18n-client";
-import { DEFAULT_CURRENCY, type CurrencyCode } from "@/lib/currency";
 import { NO_OFFER_KEY } from "@/lib/offer-value";
 import { findAdChannel } from "@/lib/ad-channels";
 import { adSpacePath } from "@/lib/ad-space-url";
@@ -323,24 +323,23 @@ const CHANNEL_FACET = FACETS.find((f) => f.key === "channel")!;
 
 export function AdsView({
   rows,
+  channelCodes,
   locale = DEFAULT_LOCALE,
-  currency = DEFAULT_CURRENCY,
   user = null,
   favorites = new Set(),
   ownIds = new Set(),
   signedIn = false,
   isBrand = false,
-  initialChannel,
-  mode = "full",
-  channelCode,
-  footer,
 }: {
-  /** Every project and ad space in the marketplace, one flat list (2026-08-10,
-   *  stage B) — see CatalogRow above. On a channel page (mode="channel") this
-   *  is pre-filtered to that one channel's rows already, not the whole list. */
+  /** This page's inventory, already narrowed to `channelCodes` by the server
+   *  page — see CatalogRow above. Never the whole marketplace: the one page
+   *  that listed everything at once (/ads) was removed 2026-08-18. */
   rows: CatalogRow[];
+  /** The channels this render covers: one on a channel page, two or three on a
+   *  group page. Drives which facets are offered (facetsFor) and whether the
+   *  Channel facet appears at all — see renderableFacets below. */
+  channelCodes: readonly string[];
   locale?: Locale;
-  currency?: CurrencyCode;
   user?: SiteHeaderUser | null;
   /** projectIds the current BRAND visitor has favorited (#22) — empty for
    *  guests/non-brand members, which renders every heart outline/inert. */
@@ -352,34 +351,6 @@ export function AdsView({
   ownIds?: Set<number>;
   signedIn?: boolean;
   isBrand?: boolean;
-  /** AD_CHANNELS code from `?channel=` (2026-08-10) — set when a visitor
-   *  arrived with a channel already picked (e.g. an old /catalog?channel=
-   *  bookmark). Only seeds the channel facet's initial value; a full
-   *  filter↔URL sync is out of scope (see the plan). Ignored in
-   *  mode="channel", which has no channel facet to seed. */
-  initialChannel?: string;
-  /** "full" (default) is the top-level /ads page — renders its own Header and
-   *  PageHero, and offers every facet including Channel. "channel" is
-   *  /ads/[channel], which already has its own Header (SiteHeader) and
-   *  PageHero (the channel's name) above this component; every row already
-   *  belongs to that one channel, so the Channel facet would be a single
-   *  redundant checkbox and is hidden too (2026-08-14, stage 1 of the
-   *  ads/catalog merge). */
-  mode?: "full" | "channel";
-  /** AD_CHANNELS code of the /ads/[channel] page this render is for — only
-   *  meaningful (and only passed) in mode="channel". Feeds facetsFor() below
-   *  so a channel-scoped facet (stage 3, ad-channel-attrs.ts) shows up on the
-   *  right channel's page without this component special-casing it. */
-  channelCode?: string;
-  /** <Footer/>, rendered by the server page and passed down instead of
-   *  imported here — Footer is a plain Server Component used by many
-   *  pure-server pages (bundle audit 2026-07-31); importing it directly into
-   *  this Client Component would force it into every page's client bundle,
-   *  not just this one. Optional: /ads/[channel]/page.tsx renders its own
-   *  <Footer/> after this component instead of threading it through, since
-   *  this component isn't always the last thing on that page (the "coming
-   *  soon" empty state is a sibling, not a child, of it). */
-  footer?: ReactNode;
 }) {
   // ponytail: the whole catalog is serialized to the client and filtered/sorted
   // there — fine at a few hundred rows, move to searchParams-driven server
@@ -397,7 +368,6 @@ export function AdsView({
   const [selected, setSelected] = useState<Record<string, string[]>>(() => {
     const init: Record<string, string[]> = {};
     for (const f of FACETS) init[f.key] = [];
-    if (initialChannel) init.channel = [initialChannel];
     return init;
   });
   const [search, setSearch] = useState("");
@@ -410,10 +380,63 @@ export function AdsView({
   // are none), but picking Comedy must not make BILLBOARD itself disappear
   // from the channel checkboxes. (The channel facet's own options opt out of
   // this via optionsScope: "rows" — see facets.ts.)
-  const channelFiltered = useMemo(() => {
-    const sel = selected.channel ?? [];
-    return sel.length === 0 ? rows : rows.filter((r) => CHANNEL_FACET.matches(r, sel));
-  }, [rows, selected.channel]);
+  // Which channels this page can actually switch between, and which of them the
+  // visitor has picked. The selection is section-wide (sessionStorage), so it
+  // routinely carries codes from another page — those are dropped here rather
+  // than filtering everything away, see offeredFacets.
+  const channelValues = useMemo(
+    () => (channelCodes.length > 1 ? ((CHANNEL_FACET.options?.(rows, ctx) ?? []) as string[]) : []),
+    // ctx is rebuilt every render; only the locale inside it matters here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [rows, channelCodes, locale],
+  );
+  const pickedChannels = useMemo(
+    () => (selected.channel ?? []).filter((c) => channelValues.includes(c)),
+    [selected.channel, channelValues],
+  );
+
+  const channelFiltered = useMemo(
+    () => (pickedChannels.length === 0 ? rows : rows.filter((r) => CHANNEL_FACET.matches(r, pickedChannels))),
+    [rows, pickedChannels],
+  );
+
+  // The facets this page actually puts in front of the visitor: the ALL ones
+  // plus whatever is scoped to these channels (facetsFor), the Channel switcher
+  // on a group page, and only those with something to offer — "no data, no
+  // facet" is the rule every facet in facets.ts already follows when it builds
+  // options from the rows on hand. Each entry carries its option list and the
+  // part of the selection that is actually IN that list (`picked`).
+  //
+  // Both narrowings exist for the same reason. The selection is section-wide
+  // (sessionStorage), so it arrives here holding whatever was picked on some
+  // other page:
+  //   - a facet this page doesn't offer at all (Channel on a single-channel
+  //     page) would filter invisibly;
+  //   - a value this page's facet doesn't list (BILLBOARD on /ads/sponsorship)
+  //     would filter everything away while every chip reads unselected.
+  // Both used to leave the visitor on an empty page with nothing on screen to
+  // undo. A filter that can't be seen is a filter that can't be cleared, so it
+  // doesn't get to filter.
+  //
+  // `hidden` facets (country) stay in this list — they filter, they just never
+  // render; renderableFacets below drops them for display only.
+  const offeredFacets = useMemo(() => {
+    const applicable = [
+      ...(channelCodes.length > 1 ? [CHANNEL_FACET] : []),
+      ...facetsFor(channelCodes),
+    ];
+    return applicable.flatMap((f) => {
+      const source = f.optionsScope === "rows" ? rows : channelFiltered;
+      const values = (f.options?.(source, ctx) ?? []) as string[];
+      if (values.length === 0) return [];
+      const picked = (selected[f.key] ?? []).filter((v) => values.includes(v));
+      return [{ facet: f, values, picked }];
+    });
+    // ctx is rebuilt every render (it closes over t/localize) — depending on it
+    // would defeat the memo, and its contents only change with the locale,
+    // which remounts the page anyway.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rows, channelFiltered, channelCodes, locale, selected]);
 
   // How many of the filtered+sorted results are currently rendered — the
   // "Show more" button below the list grows this by PAGE_SIZE at a time.
@@ -459,12 +482,8 @@ export function AdsView({
     if (f.facets && typeof f.facets === "object") {
       const next: Record<string, string[]> = {};
       for (const fct of FACETS) next[fct.key] = [];
-      if (initialChannel) next.channel = [initialChannel];
       for (const [key, values] of Object.entries(f.facets)) {
         if (!Array.isArray(values) || !(key in next)) continue;
-        // A `?channel=` arrival wins over a stored channel selection (B5) —
-        // the rest of the blob still restores normally underneath it.
-        if (key === "channel" && initialChannel) continue;
         next[key] = values;
       }
       setSelected(next);
@@ -472,7 +491,7 @@ export function AdsView({
     if (typeof f.search === "string") setSearch(f.search);
     if (f.view === "grid" || f.view === "list") setView(f.view);
     if (f.sortBy && ["default", "newest", "deadline", "title"].includes(f.sortBy)) setSortBy(f.sortBy);
-  }, [initialChannel]);
+  }, []);
 
   useEffect(() => {
     // Skip the very first render so we don't clobber stored filters with the
@@ -491,12 +510,21 @@ export function AdsView({
   // scroll the page — it only rewrites what the address bar shows.
   useEffect(() => {
     if (!restoredRef.current) return;
-    const query = filtersToQuery({ facets: selected, search, view, sortBy });
+    // Only the facets this page offers reach the address bar. The selection
+    // itself is section-wide (sessionStorage), so a channel picked on
+    // /ads/outdoor is still in state when /ads/lifts renders — writing it into
+    // that page's URL produced "/ads/lifts?channel=BILLBOARD", a link that
+    // advertises a filter the page neither shows nor applies.
+    const shown: Record<string, string[]> = {};
+    for (const { facet, picked } of offeredFacets) {
+      if (picked.length > 0) shown[facet.key] = picked;
+    }
+    const query = filtersToQuery({ facets: shown, search, view, sortBy });
     const next = `${window.location.pathname}${query}`;
     if (next !== `${window.location.pathname}${window.location.search}`) {
       window.history.replaceState(null, "", next);
     }
-  }, [selected, search, view, sortBy]);
+  }, [selected, search, view, sortBy, offeredFacets]);
 
   // Pagination resets to the first page whenever the result set could change
   // shape — any filter facet, the search term, or the sort order. Skipped on
@@ -513,8 +541,12 @@ export function AdsView({
   }
 
   // Count of active filter facets (excluding free-text search, which has its
-  // own always-visible box) — shown as a badge on the mobile "Filters" button.
-  const activeFilterCount = Object.values(selected).reduce((sum, values) => sum + values.length, 0);
+  // own always-visible box) — shown as a badge on the mobile "Filters" button
+  // and what enables "Clear all". Counts only what this page offers, for the
+  // same reason `filtered` applies only those: a stored selection for a facet
+  // that isn't on screen is neither filtering nor clearable, and counting it
+  // would put a number on the badge with nothing behind it.
+  const activeFilterCount = offeredFacets.reduce((sum, { picked }) => sum + picked.length, 0);
 
   // Lock the page scroll behind the open filter sheet — through the shared
   // counter, so closing this sheet doesn't unlock the page while the burger
@@ -542,19 +574,26 @@ export function AdsView({
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
-    // A row that fails ANY active facet drops out — including a facet the
-    // row's own kind can never carry (a genre on an ad space, a city on a
-    // project), which is what makes picking a genre also clear the
-    // billboards out of the list without a separate "kind" control anywhere
-    // in the UI (plan B3). See each facet's matches() in facets.ts.
+    // A row that fails any facet THIS PAGE OFFERS drops out — including a
+    // facet the row's own kind can never carry (a genre on an ad space, a city
+    // on a project), which is what makes picking a genre also clear the
+    // billboards out of a mixed list without a separate "kind" control
+    // anywhere in the UI (plan B3). See each facet's matches() in facets.ts.
+    //
+    // "offers" and not "has a value for" is the load-bearing part: the
+    // selection is shared across the whole section via sessionStorage, so
+    // picking Billboards on /ads/outdoor and then opening /ads/radio used to
+    // hand the radio page a channel filter it never rendered — every row
+    // failed it and the page came up empty with nothing on screen to explain
+    // why, only an enabled "Clear all". A filter the visitor cannot see is a
+    // filter they cannot undo.
     return rows.filter((row) => {
-      for (const f of FACETS) {
-        const sel = selected[f.key];
-        if (sel && sel.length > 0 && !f.matches(row, sel)) return false;
+      for (const { facet, picked } of offeredFacets) {
+        if (picked.length > 0 && !facet.matches(row, picked)) return false;
       }
       return !term || row.haystack.includes(term);
     });
-  }, [rows, selected, search]);
+  }, [rows, search, offeredFacets]);
 
   // Only offer "Deadline soonest" when there's at least one project in the
   // visible set — same "no data, no control" rule as the facets. An
@@ -650,51 +689,46 @@ export function AdsView({
     );
   }
 
-  // Which facets this render offers: every one on the general /ads page,
-  // only the ones scoped to this channel (plus the ALL ones) on /ads/[channel]
-  // — see facetsFor(). `hidden` facets (country) filter but never render.
-  const renderableFacets = facetsFor(mode === "channel" ? channelCode : undefined).filter((f) => !f.hidden);
+  // Which facets this render offers: the ALL ones plus whatever is scoped to
+  // the channels on this page — see facetsFor(). The Channel facet is added
+  // back on top only for a group page, where it works as a switcher between
+  // the group's channels; on a single channel it would be one always-checked
+  // box. `hidden` facets (country) filter but never render.
+  // `hidden` facets (country) filter but never render. Channel is dropped from
+  // the sidebar too when the chips above the results are showing it: the two
+  // drove the same selection, so a group page carried the same control twice,
+  // once as chips and once as checkboxes a scroll away.
+  const renderableFacets = offeredFacets.filter(
+    ({ facet }) => !facet.hidden && !(facet.key === "channel" && channelValues.length > 1),
+  );
+
+  // The chips above the results (group pages only). Built from the rows on
+  // hand, not from channelCodes: a group whose third channel has nothing
+  // listed shouldn't offer a chip that filters everything away. Same "no data,
+  // no control" rule the facets follow.
+  const channelChips = channelValues;
 
   // Shared filter controls — rendered in the desktop sidebar AND the mobile
-  // bottom-sheet, so the two never drift out of sync. "No data, no facet":
-  // an empty option list renders nothing, same rule every facet in facets.ts
-  // already applies when it builds its options from the rows on hand.
+  // bottom-sheet, so the two never drift out of sync. The option lists are
+  // already built (offeredFacets), and an empty one never got that far.
   const filterGroups = (
     <>
-      {renderableFacets.map((f) => {
-        const source = f.optionsScope === "rows" ? rows : channelFiltered;
-        const values = f.options?.(source, ctx) ?? [];
-        if (values.length === 0) return null;
-        return (
-          <CheckboxFilter
-            key={f.key}
-            label={f.label ? f.label(ctx) : f.key}
-            options={values.map((v) => ({ value: v, label: f.optionLabel ? f.optionLabel(v, ctx) : v }))}
-            selected={selected[f.key] ?? []}
-            onToggle={(value) => toggle(f.key, value)}
-          />
-        );
-      })}
+      {/* `picked`, not the raw selection: the boxes must tick exactly what is
+          filtering, and the raw one can hold values this page doesn't list. */}
+      {renderableFacets.map(({ facet: f, values, picked }) => (
+        <CheckboxFilter
+          key={f.key}
+          label={f.label ? f.label(ctx) : f.key}
+          options={values.map((v) => ({ value: v, label: f.optionLabel ? f.optionLabel(v, ctx) : v }))}
+          selected={picked}
+          onToggle={(value) => toggle(f.key, value)}
+        />
+      ))}
     </>
   );
 
   return (
     <>
-      {mode === "full" ? <Header user={user} locale={locale} currency={currency} /> : null}
-
-      {mode === "full" ? (
-        <PageHero
-          // No eyebrow here: it used to read "Catalogue" above the title, and
-          // once the title became "Advertising" any nav-level word above it
-          // just repeated itself ("ADVERTISING / Advertising"). The channel
-          // pages still use one — there it names the group the channel sits in,
-          // which the title doesn't say.
-          title={t("ads.heroTitle")}
-          subtitle={t("ads.heroSubtitle")}
-          locale={locale}
-        />
-      ) : null}
-
       <Container className="pt-8 pb-20">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-[240px_1fr]">
           {/* Desktop sidebar — on mobile the filters move into a bottom-sheet */}
@@ -718,6 +752,50 @@ export function AdsView({
 
           {/* Main content */}
           <div>
+            {/* Channel switcher — a group page only. The Channel facet in the
+                sidebar drives the same selection, but on mobile that sidebar
+                is a sheet behind a button, and switching between a group's own
+                channels is the one filter worth reaching without opening it.
+                Chips over tabs: the selection is a multi-select (the facet
+                below can hold two of three), and tabs that allow two actives
+                read as broken. */}
+            {channelChips.length > 1 ? (
+              <div className="mb-6 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelected((s) => ({ ...s, channel: [] }))}
+                  aria-pressed={pickedChannels.length === 0}
+                  className={cn(
+                    "rounded-xl border px-3.5 py-2 text-sm font-medium transition-colors",
+                    pickedChannels.length === 0
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border bg-card text-foreground hover:border-primary",
+                  )}
+                >
+                  {t("ads.allChannels")}
+                </button>
+                {channelChips.map((code) => {
+                  const active = pickedChannels.includes(code);
+                  return (
+                    <button
+                      key={code}
+                      type="button"
+                      onClick={() => toggle("channel", code)}
+                      aria-pressed={active}
+                      className={cn(
+                        "rounded-xl border px-3.5 py-2 text-sm font-medium transition-colors",
+                        active
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border bg-card text-foreground hover:border-primary",
+                      )}
+                    >
+                      {t(`adChannel.${code}`)}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : null}
+
             <div className="mb-6 flex flex-wrap items-center gap-3">
               {/* Mobile "Filters" trigger — opens the bottom-sheet. Hidden on lg
                   where the sidebar is always visible. */}
@@ -895,8 +973,6 @@ export function AdsView({
           </div>
         </div>
       ) : null}
-
-      {footer ?? null}
     </>
   );
 }

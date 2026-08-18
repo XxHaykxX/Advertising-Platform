@@ -13,7 +13,9 @@ test.describe("project page metadata", () => {
     await page.goto("/");
     const homeTitle = await page.title();
 
-    await page.goto("/ads");
+    // /ads itself only redirects since the 2026-08-18 restructure; sponsorship
+    // is the group with project rows.
+    await page.goto("/ads/sponsorship");
     const firstReport = page.locator('a[href^="/reports/"]').first();
     await expect(firstReport).toBeVisible();
     const href = await firstReport.getAttribute("href");
@@ -57,10 +59,16 @@ test.describe("home page copy per locale", () => {
       await page.goto("/");
       const body = await page.locator("body").innerText();
       expect(body).not.toContain(banned);
-      // hy says "100% secure deal" + "50+ trusted partners"; the other two
-      // locales have to say the same thing.
-      expect(body).toContain("100%");
-      expect(body).toContain("50+");
+
+      // The other half of the same rule — every locale gets the same page, not
+      // a thinner one. This used to assert the two trust figures ("100%",
+      // "50+"); that section was removed from the home page on 2026-08-18, so
+      // pinning its copy would only pin one owner's wording of the week.
+      // Structure is what has to match: four ways to advertise, and the form
+      // that closes the page. Copy stays free to change in /admin/i18n without
+      // turning this red.
+      await expect(page.locator("#ad-types a[href^='/ads/']")).toHaveCount(4);
+      await expect(page.locator("#callback form")).toBeVisible();
     });
   }
 });
@@ -73,6 +81,8 @@ test.describe("404", () => {
     // Next's built-in 404 has none of this: no header, no footer, no links.
     await expect(page.getByRole("link", { name: "iGovazd" }).first()).toBeVisible();
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-    await expect(page.locator('a[href="/ads"]').first()).toBeVisible();
+    // "browse projects" points at the sponsorship group (the one that sells
+    // projects), not the redirect-only /ads (see not-found.tsx).
+    await expect(page.locator('a[href="/ads/sponsorship"]').first()).toBeVisible();
   });
 });

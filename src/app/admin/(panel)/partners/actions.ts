@@ -49,18 +49,26 @@ function validate(data: PartnerFormValues, t: ReturnType<typeof makeUI>): string
 
 function revalidatePartnerPaths() {
   revalidatePath("/admin/partners");
-  // /about is the only page that renders partners (PartnersMarquee — the card
-  // grid was dropped 2026-07-30). This used to revalidate "/partners" — a route that does not
-  // exist — and "/", which renders no partners at all. Revalidating "/" is the
-  // expensive, blast-radius-everything option: per the Next docs it "causes all
-  // previously visited pages to refresh when navigated to again", and forcing a
-  // reseed from the root layout down while a Server Action response is in
-  // flight is exactly what broke the project form on 2026-07-15 (see the
-  // comment on revalidateProjectPaths in ../projects/actions.ts). /about still
-  // lives under the PUBLIC root layout while this action runs under the admin
-  // panel layout, and revalidating across that boundary is what makes the
-  // redirect contract below mandatory.
+  // Two public pages render partners: /about (PartnersMarquee — the card grid
+  // was dropped 2026-07-30) and, since 2026-08-18, the homepage, which shows
+  // the same marquee as its "channels we work with" section. "/" was dropped
+  // from this list once for rendering no partners at all; it does now, and
+  // without it staff edits a logo, sees the homepage unchanged and reads that
+  // as the save having failed.
+  //
+  // Both are literal paths, so `type` stays omitted and only those two pages
+  // are marked — NOT revalidatePath("/", "layout"), which reseeds the whole
+  // tree from the root layout down and is what broke the project form on
+  // 2026-07-15 (see revalidateProjectPaths in ../projects/actions.ts).
+  //
+  // Note that any revalidatePath from a Server Function currently also
+  // refreshes previously visited pages on next navigation (Next docs, "Good to
+  // know") — that cost is already paid by the /about call and does not grow by
+  // adding a second literal path. Both pages live under the PUBLIC root layout
+  // while this action runs under the admin panel layout, and revalidating
+  // across that boundary is what makes the redirect contract below mandatory.
   revalidatePath("/about");
+  revalidatePath("/");
 }
 
 /* Why these actions return { ok, redirect } instead of calling redirect():

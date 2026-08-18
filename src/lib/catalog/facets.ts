@@ -391,11 +391,18 @@ export const FACETS: readonly Facet[] = [...BASE_FACETS, ...ATTR_FACETS, ...EVEN
  *  facet's query param is picked up without a second list to keep in sync. */
 export const FACET_KEYS: readonly string[] = FACETS.map((f) => f.key);
 
-/** Without a channel code: the general /ads page, every facet. With one: the
- *  facets that apply everywhere plus the ones scoped to that channel — used
- *  by /ads/[channel] (stage 3 fills ATTR_FACETS above in, so a channel page
- *  now offers its own attributes alongside the shared ones). */
-export function facetsFor(channelCode?: string): readonly Facet[] {
-  if (!channelCode) return FACETS;
-  return FACETS.filter((f) => f.channels === "ALL" || f.channels.includes(channelCode));
+/** The facets that apply everywhere plus the ones scoped to any of the given
+ *  channels. One code is a channel page; several are a group page, which shows
+ *  the union — a group's billboard attributes and its transit attributes both
+ *  belong there, and each facet already renders nothing when the rows on hand
+ *  carry no values for it ("no data, no facet").
+ *
+ *  The `channel` facet itself is scoped to nothing (`channels: []`) and never
+ *  comes back from here — AdsView adds it separately, only when a page spans
+ *  more than one channel and it works as a switcher rather than a single
+ *  always-checked box. */
+export function facetsFor(channelCodes: readonly string[]): readonly Facet[] {
+  return FACETS.filter(
+    (f) => f.channels === "ALL" || channelCodes.some((c) => f.channels.includes(c)),
+  );
 }

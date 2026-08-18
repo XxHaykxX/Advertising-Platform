@@ -6,13 +6,16 @@ import { PageHero } from "@/components/ui/page-hero";
 export function AboutHero({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
   const t = useUI(locale);
 
+  // "Browse projects" means the group that sells them — placement and event
+  // sponsorship. It pointed at the everything-at-once /ads list until that was
+  // removed (2026-08-18).
   return (
     <PageHero
       size="hero"
       eyebrow={t("about.heroEyebrow")}
       title={t("about.heroTitle")}
       subtitle={t("about.heroSubtitle")}
-      primaryCta={{ label: t("btn.browseProjects"), href: "/ads" }}
+      primaryCta={{ label: t("btn.browseProjects"), href: "/ads/sponsorship" }}
       secondaryCta={{ label: t("about.registerCta"), href: "/register" }}
     />
   );

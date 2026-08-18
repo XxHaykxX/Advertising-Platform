@@ -17,8 +17,8 @@ describe("adSpaceApprovedTemplate", () => {
     expect(html).not.toContain("/ads/billboard/#AS");
   });
 
-  it("falls back to the /ads overview for a channel that isn't in the directory", () => {
+  it("falls back to the homepage for a channel that isn't in the directory", () => {
     const { html } = adSpaceApprovedTemplate({ ...space, channel: "BILBOARD" }, "https://igovazd.am");
-    expect(html).toContain('href="https://igovazd.am/ads"');
+    expect(html).toContain('href="https://igovazd.am/"');
   });
 });
