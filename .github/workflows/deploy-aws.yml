@@ -49,6 +49,15 @@ jobs:
       - id: ecr
         uses: aws-actions/amazon-ecr-login@v2
 
+      # GitHub's hosted runners are x86, so building the ARM64 image below needs
+      # an emulator registered first. Measured locally: it costs roughly three
+      # minutes on the `next build` step, which is the price of the ~20% Fargate
+      # discount. Swap both this and `platforms` out if the deploy ever moves to
+      # an ARM64 runner.
+      - uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
       - uses: docker/setup-buildx-action@v3
 
       - name: Build and push image
@@ -56,6 +65,14 @@ jobs:
         with:
           context: .
           push: true
+          # 🔴 This MUST match the ECS task definition's runtimePlatform. They
+          # are set in two different places by two different people, and a
+          # mismatch is not a subtle failure — the task never starts, with an
+          # exec-format error that reads like a corrupt image. `message for
+          # Adam.md` asks for ARM64/Graviton on the task definition; if that
+          # request was not honoured, change this line rather than leaving them
+          # disagreeing.
+          platforms: linux/arm64
           # Two tags on purpose: the immutable one identifies exactly what ran,
           # the environment one is what the ECS task definition points at (see
           # the rollback note below).

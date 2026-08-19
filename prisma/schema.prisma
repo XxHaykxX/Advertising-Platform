@@ -1,6 +1,15 @@
+// The ARM64 entry is not decorative. On x86 both Debian engines are named
+// explicitly, so whichever one "native" happens to resolve to during the build
+// stage, the other still ships and the runtime picks the match. ARM64 had no
+// such pair — "native" was its only cover, and it resolves inside the deps
+// stage, which has no `openssl` binary yet (it is installed in the runtime
+// stage), so generate quietly settled on openssl-1.1.x. The image then boots,
+// serves every static page, passes /api/health, and 500s on the first database
+// query with "could not locate the Query Engine". Verified 2026-08-19 by
+// building and running the image under arm64 emulation.
 generator client {
   provider      = "prisma-client-js"
-  binaryTargets = ["native", "debian-openssl-1.1.x", "debian-openssl-3.0.x"]
+  binaryTargets = ["native", "debian-openssl-1.1.x", "debian-openssl-3.0.x", "linux-arm64-openssl-3.0.x"]
 }
 
 datasource db {
