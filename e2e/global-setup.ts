@@ -14,6 +14,19 @@ import bcrypt from "bcryptjs";
 const EMAIL = "brand@test.com";
 const PASSWORD = "brand1234";
 
+/* The upload spec needs two more fixtures, and needs them created here rather
+   than registered through the UI: one has to be STAFF, and there is no
+   self-service route to a staff account by design.
+
+   Staff row conventions taken from the schema: role carries the staff
+   discriminator, isCreator/isBrand stay false, isActive gates sign-in. The
+   creator row is the mirror image — a member role with isCreator set, which is
+   what opens the member upload door. */
+export const STAFF_EMAIL = "e2e-staff@test.local";
+export const STAFF_PASSWORD = "e2e-staff-1234";
+export const CREATOR_EMAIL = "e2e-uploader@test.local";
+export const CREATOR_PASSWORD = "e2e-creator-1234";
+
 /* The read-only specs (metadata-404) need no fixture and no database at all,
    so they can be pointed at a deployed environment:
 
@@ -45,6 +58,36 @@ export default async function globalSetup() {
       },
     });
     console.log(`[e2e setup] ${EMAIL} ready`);
+
+    const staffHash = await bcrypt.hash(STAFF_PASSWORD, 10);
+    await prisma.user.upsert({
+      where: { email: STAFF_EMAIL },
+      update: { passwordHash: staffHash, role: "SUPERADMIN", status: "APPROVED", isActive: true },
+      create: {
+        email: STAFF_EMAIL,
+        name: "E2E Staff",
+        role: "SUPERADMIN",
+        status: "APPROVED",
+        isActive: true,
+        passwordHash: staffHash,
+      },
+    });
+
+    const creatorHash = await bcrypt.hash(CREATOR_PASSWORD, 10);
+    await prisma.user.upsert({
+      where: { email: CREATOR_EMAIL },
+      update: { passwordHash: creatorHash, status: "APPROVED", isCreator: true, isActive: true },
+      create: {
+        email: CREATOR_EMAIL,
+        name: "E2E Uploader",
+        role: "CREATOR",
+        status: "APPROVED",
+        isCreator: true,
+        isActive: true,
+        passwordHash: creatorHash,
+      },
+    });
+    console.log(`[e2e setup] ${STAFF_EMAIL} + ${CREATOR_EMAIL} ready`);
   } finally {
     await prisma.$disconnect();
   }
