@@ -650,8 +650,13 @@ export function Header({
       {/* Scrim under the open menu. The page is scroll-locked while the panel
           is open but was still fully tappable through it, so a stray tap
           opened a card or a dialog on a page that couldn't be scrolled. Also
-          gives the expected tap-outside-to-close. Sits before the panel in the
-          DOM so the panel paints over it. */}
+          gives the expected tap-outside-to-close.
+
+          🔴 Coming before the panel in the DOM is NOT what keeps it underneath
+          — this scrim is `fixed`, so it paints above any static sibling no
+          matter the order, and for a while it ate every tap on the menu's own
+          links. The panel carries `relative z-10` for that (mobile-nav-panel
+          .tsx); do not drop it, and do not give this scrim a z-index above it. */}
       {menuOpen && (
         <div
           onClick={() => setMenuOpen(false)}
