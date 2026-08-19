@@ -73,6 +73,54 @@ test.describe("home page copy per locale", () => {
   }
 });
 
+test.describe("mobile menu (375px)", () => {
+  test.use({ viewport: { width: 375, height: 812 } });
+
+  // Reported by the owner, 19.08: the menu opened, looked right, and swallowed
+  // every tap on its own links — only the close button (which sits in the
+  // header bar, above the scrim) responded. The scrim is `fixed`, so it painted
+  // over the static panel whatever the DOM order said.
+  //
+  // 🔴 `locator.click()` does NOT catch this and passed against the broken
+  // build: Playwright resolves the target itself and delivers the event there,
+  // so a link buried under a full-screen overlay still "clicks". Only a raw
+  // page.mouse.click() at the coordinates goes through the browser's own hit
+  // testing the way a finger does. Any future test of "is this thing actually
+  // tappable" has to use the mouse, not the locator.
+  test("a tap on a menu link navigates instead of hitting the scrim", async ({ page }) => {
+    await page.goto("/");
+
+    // The only visible aria-expanded control at this width — the desktop
+    // dropdown's trigger is inside a `hidden lg:flex` nav. Not matched by
+    // label: every string here comes from the dictionary and moves.
+    await page.locator("header button[aria-expanded]:visible").click();
+
+    const about = page.locator("header a[href='/about']:visible");
+    await expect(about).toBeVisible();
+    // The panel expands over 250ms (framer, mobile-nav-panel.tsx) and the link
+    // slides down with it — coordinates read mid-animation land wherever the
+    // link used to be. `locator.click()` waits for that on its own; a raw mouse
+    // click is the price of testing the browser's real hit testing.
+    await page.waitForTimeout(500);
+    const box = await about.boundingBox();
+    expect(box).not.toBeNull();
+    await page.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2);
+
+    await expect(page).toHaveURL(/\/about$/);
+  });
+
+  test("the scrim still closes the menu when tapped outside it", async ({ page }) => {
+    await page.goto("/");
+    const toggle = page.locator("header button[aria-expanded]:visible");
+    await toggle.click();
+    await expect(toggle).toHaveAttribute("aria-expanded", "true");
+
+    // Bottom of the viewport: below the panel, on the scrim itself.
+    await page.mouse.click(187, 780);
+    await expect(toggle).toHaveAttribute("aria-expanded", "false");
+  });
+});
+
 test.describe("404", () => {
   test("an unknown address keeps the site chrome and offers a way back", async ({ page }) => {
     const res = await page.goto("/definitely-not-a-page-2026");

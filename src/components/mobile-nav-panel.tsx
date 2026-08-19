@@ -81,7 +81,14 @@ export function MobileNavPanel({
           animate={{ height: "auto", opacity: 1 }}
           exit={{ height: 0, opacity: 0 }}
           transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-          className="overflow-hidden border-b border-border bg-background lg:hidden"
+          // 🔴 `relative z-10` is what makes this panel usable, not decoration.
+          // The scrim behind it (header.tsx) is `fixed`, i.e. positioned, and a
+          // positioned element paints above a static one whatever the DOM order
+          // — so the scrim covered the panel's own links and swallowed every tap
+          // on them, leaving only the close button (which sits in the header bar
+          // above the scrim) working. Positioning the panel puts both in the
+          // same paint step, where being later in the DOM finally wins.
+          className="relative z-10 overflow-hidden border-b border-border bg-background lg:hidden"
         >
           {/* Capped and scrollable on its own: the page behind is locked while
               the menu is open (header.tsx), so a list taller than the viewport
