@@ -2,6 +2,7 @@ import "server-only";
 import nodemailer from "nodemailer";
 import { findAdChannelByCode } from "@/lib/ad-channels";
 import { adSpacePath } from "@/lib/ad-space-url";
+import { siteUrl } from "@/lib/site-url";
 
 /* Hostinger SMTP email notifications (#22). Reads SMTP_HOST / SMTP_PORT /
    SMTP_SECURE / SMTP_USER / SMTP_PASS / MAIL_FROM from the environment; when
@@ -51,9 +52,7 @@ export async function sendMail(payload: MailPayload): Promise<{ ok: boolean }> {
   }
 }
 
-export function siteUrl(): string {
-  return process.env.NEXT_PUBLIC_SITE_URL || "https://igovazd.am";
-}
+export { siteUrl };
 
 /** Best-effort admin recipient: env override, else the first SUPERADMIN in the
    DB, else the SMTP mailbox itself (noreply@…) as a last resort. Callers that
