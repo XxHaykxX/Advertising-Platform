@@ -3150,15 +3150,20 @@ export const UI: Record<string, Dict> = {
   "homeCases.all": { ru: "Все кейсы", en: "All cases", hy: "Բոլոր քեյսերը" },
 
   // ── Homepage: video testimonials (src/components/home-testimonials.tsx) ──
+  // Was "What advertisers say" / "Brands and agencies that have already booked
+  // through the platform" until 2026-08-19. Changed because the carousel holds
+  // sample clips alongside the real one, and that heading asserted every clip
+  // in it came from a paying client — a claim about people who never said it.
+  // Restore the old wording once the carousel is genuinely all customers.
   "testimonials.title": {
-    ru: "Что говорят рекламодатели",
-    en: "What advertisers say",
-    hy: "Ինչ են ասում գովազդատուները",
+    ru: "Примеры видеорекламы",
+    en: "Video ad examples",
+    hy: "Վիդեոգովազդի օրինակներ",
   },
   "testimonials.subtitle": {
-    ru: "Бренды и агентства, которые уже размещались через площадку.",
-    en: "Brands and agencies that have already booked through the platform.",
-    hy: "Բրենդեր և գործակալություններ, որոնք արդեն տեղաբաշխվել են հարթակի միջոցով։",
+    ru: "Как выглядит видеоформат на площадке.",
+    en: "What the video format looks like on the platform.",
+    hy: "Ինչպիսին է վիդեոֆորմատը հարթակում։",
   },
   "testimonials.play": {
     ru: "Смотреть видео",
