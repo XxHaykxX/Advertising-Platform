@@ -7,6 +7,7 @@ import { FileVideo, ImageIcon, UserRound } from "lucide-react";
 import { MediaPicker, isVideoPath, type MediaPickerAccept, type MediaPickerScope } from "@/components/media-picker";
 import { UploadProgress } from "@/components/ui/upload-progress";
 import { holdProgress, uploadViaXhr } from "@/lib/upload-xhr";
+import { uploadVideoDirect } from "@/lib/upload-video";
 import { captureVideoPoster, posterPathFor } from "@/lib/video-poster";
 import { mediaUrl } from "@/lib/media-url";
 import { Dropzone, DropzoneEmptyState, DropzonePreview } from "@/components/ui/dropzone";
@@ -184,11 +185,9 @@ export function MediaField({
     fd.append("file", file);
     fd.append("dir", uploadDir);
     fd.append("kind", kind);
-    if (kind === "video") {
-      // Grab the still here, while the file is in memory — see lib/video-poster.
-      const poster = await captureVideoPoster(file);
-      if (poster) fd.append("poster", poster);
-    }
+    // Grab the still here, while the file is in memory — see lib/video-poster.
+    const poster = kind === "video" ? await captureVideoPoster(file) : null;
+    if (poster) fd.append("poster", poster);
     if (controller.signal.aborted) {
       abortRef.current = null;
       setJob(null);
@@ -196,13 +195,35 @@ export function MediaField({
     }
 
     const startedAt = Date.now();
-    const res = await uploadViaXhr(fd, {
-      scope,
-      signal: controller.signal,
-      errorLabel: errUploadFailedLabel,
-      onProgress: ({ loaded, total }) =>
-        setJob((current) => (current?.file === file ? { ...current, loaded, total } : current)),
-    });
+    const onProgress = ({ loaded, total }: { loaded: number; total: number }) =>
+      setJob((current) => (current?.file === file ? { ...current, loaded, total } : current));
+
+    // A clip goes straight to the bucket when storage can sign for it — the
+    // app never sees the bytes, because a single large upload buffered here
+    // costs several times its own size in memory and is enough on its own to
+    // take the one task down. `null` back means storage said "direct" (local
+    // disk: dev and Hostinger), and this falls through to the path it has
+    // always taken.
+    const direct =
+      kind === "video"
+        ? await uploadVideoDirect(file, {
+            scope,
+            dir: uploadDir,
+            poster,
+            signal: controller.signal,
+            errorLabel: errUploadFailedLabel,
+            onProgress,
+          })
+        : null;
+
+    const res =
+      direct ??
+      (await uploadViaXhr(fd, {
+        scope,
+        signal: controller.signal,
+        errorLabel: errUploadFailedLabel,
+        onProgress,
+      }));
 
     abortRef.current = null;
     if (res.canceled) {

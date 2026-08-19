@@ -19,6 +19,7 @@ import {
   X,
 } from "lucide-react";
 import { deleteUpload, saveVideoPoster, uploadImage, type MediaFile } from "@/lib/actions/uploads";
+import { uploadVideoDirect } from "@/lib/upload-video";
 import type { UploadUsage } from "@/lib/uploads-usage";
 import { captureVideoPoster, isPosterPath, posterPathFor } from "@/lib/video-poster";
 import { mediaUrl } from "@/lib/media-url";
@@ -259,12 +260,18 @@ export function MediaManager({ files }: { files: MediaFile[] }) {
         fd.append("dir", dir);
         // The library's own uploader takes videos too (the Videos folder), so
         // it captures a poster frame here just like the picker does.
+        let poster: Blob | null = null;
         if (looksVideo) {
           fd.append("kind", "video");
-          const poster = await captureVideoPoster(file);
+          poster = await captureVideoPoster(file);
           if (poster) fd.append("poster", poster);
         }
-        const res = await uploadImage(fd);
+        // Same reasoning as the picker and the media field: a clip goes
+        // straight to the bucket when storage can sign for it, because
+        // buffering one here costs several times its size in memory. `null`
+        // back means local disk — fall through to the action unchanged.
+        const direct = looksVideo ? await uploadVideoDirect(file, { scope: "staff", dir, poster }) : null;
+        const res = direct ?? (await uploadImage(fd));
         if (res.error) {
           setError(res.error);
           setUploadQueue((q) => q.map((it, idx) => (idx === i ? { ...it, status: "error", error: res.error } : it)));

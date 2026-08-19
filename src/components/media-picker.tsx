@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Download, Loader2, X } from "lucide-react";
 import { listUploads, uploadImage, type MediaFile } from "@/lib/actions/uploads";
 import { listMemberUploads, uploadMemberImage } from "@/lib/actions/member-uploads";
+import { uploadVideoDirect } from "@/lib/upload-video";
 import { useUI, type Locale } from "@/lib/i18n-client";
 import { captureVideoPoster, isPosterPath, posterPathFor } from "@/lib/video-poster";
 import { cropAspectForDir } from "@/lib/images/size-hint";
@@ -198,11 +199,27 @@ export function MediaPicker({
         fd.append("file", file);
         fd.append("dir", uploadDir);
         fd.append("kind", kind);
-        if (kind === "video") {
-          // Grab a frame here, while the file is already in memory — see
-          // lib/video-poster.ts for why the server can't do it.
-          const poster = await captureVideoPoster(file);
-          if (poster) fd.append("poster", poster);
+        // Grab a frame here, while the file is already in memory — see
+        // lib/video-poster.ts for why the server can't do it.
+        const poster = kind === "video" ? await captureVideoPoster(file) : null;
+        if (poster) fd.append("poster", poster);
+
+        // A clip goes straight to the bucket when storage can sign for it, so
+        // the app never buffers it — one large upload costs several times its
+        // own size in memory here, which is enough on its own to take the
+        // single task down. `null` means storage said "direct" (local disk:
+        // dev and Hostinger), and this falls through to the action below.
+        const direct =
+          kind === "video"
+            ? await uploadVideoDirect(file, { scope, dir: uploadDir, poster })
+            : null;
+        if (direct) {
+          if (direct.error) {
+            setError(direct.error);
+            continue;
+          }
+          if (direct.path) added.push({ path: direct.path, size: file.size, mtime: Date.now() });
+          continue;
         }
         // A rejected action (framework 413 when the body exceeds
         // serverActions.bodySizeLimit, a proxy cutting the request, a network

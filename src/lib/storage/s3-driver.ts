@@ -160,4 +160,40 @@ export const s3Driver: StorageDriver = {
     if (!base) return null;
     return `${base.replace(/\/+$/, "")}/uploads/${key}`;
   },
+
+  async presignPut(key: string, contentType: string): Promise<string | null> {
+    const { mod, client } = await s3();
+    // Second lazy import, same reason as the client itself: the presigner is
+    // another few hundred kilobytes that Hostinger must never load, and this
+    // driver is not selected there.
+    const { getSignedUrl } = await import("@aws-sdk/s3-request-presigner");
+    return getSignedUrl(
+      client,
+      new mod.PutObjectCommand({
+        Bucket: bucket(),
+        Key: objectKey(key),
+        ContentType: contentType,
+        CacheControl: CACHE_CONTROL,
+      }),
+      {
+        // Long enough for the browser to start a big upload on a slow link,
+        // short enough that a leaked URL is not a standing write grant. It
+        // bounds when the PUT may *begin*, not how long it may run.
+        expiresIn: 900,
+        // ⚠️ Not optional, and not obvious. Setting ContentType on the command
+        // above only states an intent — by default the presigner signs `host`
+        // and nothing else, so the browser may send any Content-Type it likes
+        // and the object is stored under that one instead. Measured against a
+        // real S3-compatible server on 2026-08-19: without this line a clip
+        // uploaded as `text/html` is stored as text/html and then served as
+        // text/html. That is the IA-44 shape all over again — a file the site
+        // vouches for, executing as markup in the origin that serves it.
+        //
+        // Naming it here makes the type part of the signature, so a mismatched
+        // header fails the request. It is what keeps the server's MIME
+        // allowlist meaningful after the server stops seeing the bytes.
+        signableHeaders: new Set(["content-type"]),
+      },
+    );
+  },
 };

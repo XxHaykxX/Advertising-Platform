@@ -152,17 +152,68 @@ export type StoreUploadOptions = {
  *  (right now: an mp4 that couldn't be compressed server-side). */
 export type StoredUpload = { path?: string; error?: string; warning?: string };
 
+/** The one place a stored name is built, so no branch and no front door can
+ *  drift on the naming convention. */
+function keyFor(keyPrefix: string, dir: string, ext: string) {
+  return joinKey(keyPrefix, dir, `${Date.now()}-${randomUUID().slice(0, 8)}.${ext}`);
+}
+
+/** The folder/type rule, stated once. "videos" holds clips and nothing else;
+ *  everything else holds stills, except "references", which legitimately takes
+ *  both — a past project may be shown as a still OR as a clip (2026-07-26).
+ *  Documents get the mirror of the same rule: exactly one folder, and that
+ *  folder takes nothing else, or a PDF could land among the posters where
+ *  every reader expects an image. */
+const MIXED_DIRS = new Set(["references"]);
+function folderKindError(dir: string, kind: string, messages: UploadMessages): string | null {
+  if (dir === "videos" && kind !== "video") return messages.notAVideo;
+  if (dir !== "videos" && kind === "video" && !MIXED_DIRS.has(dir)) return messages.notAnImage;
+  if ((dir === DOC_DIR) !== (kind === "doc")) return messages.notADoc;
+  return null;
+}
+
+/** Trust the declared type first; some browsers and phones send a blank or
+ *  non-standard MIME for .mp4 (often "application/octet-stream"), so fall back
+ *  to the filename extension — whitelisted to the same two — before rejecting. */
+function videoExt(contentType: string, filename: string): string | undefined {
+  return EXT_BY_TYPE_VIDEO[contentType] || filename.toLowerCase().match(/\.(mp4|webm)$/)?.[1];
+}
+
+export type VideoUploadPlan = { key: string; ext: string } | { error: string };
+
+/** Decide where a clip is allowed to land, without seeing a single byte of it.
+ *
+ *  Split out of storeUpload so that a presigned upload — where the bytes go
+ *  straight to the bucket and the app never sees them — is gated by the SAME
+ *  code rather than by a second hand-written copy of the rules. That is the
+ *  failure this module's header warns about, and it gets sharper here: with
+ *  presigning, whatever this function decides is signed into a URL and cannot
+ *  be re-checked afterwards, because there is no afterwards.
+ *
+ *  `keyPrefix` comes from the caller's session, never from the request — that
+ *  is the whole of the member namespace guarantee. A client may propose `dir`
+ *  and its own file's type; it can propose nothing else, and `dir` is passed
+ *  through safeSegment() exactly as it is on the multipart path. */
+export function planVideoUpload(
+  input: { dir: string; contentType: string; filename: string },
+  opts: StoreUploadOptions,
+): VideoUploadPlan {
+  const dir = safeSegment(input.dir || "misc");
+  const folderError = folderKindError(dir, "video", opts.messages);
+  if (folderError) return { error: folderError };
+
+  const ext = videoExt(input.contentType, input.filename);
+  if (!ext) return { error: opts.messages.unsupportedVideo };
+
+  return { key: keyFor(opts.keyPrefix, dir, ext), ext };
+}
+
 /** Validate a multipart upload and write it. Identical rules whichever front
  *  door called: the folder/type rule, the per-kind size cap, the MIME/extension
  *  allowlist, the sharp pass for stills and the poster frame for clips. */
 export async function storeUpload(fd: FormData, opts: StoreUploadOptions): Promise<StoredUpload> {
   const { keyPrefix, messages } = opts;
   const store = storage();
-
-  /** The one place a stored name is built, so the three branches below cannot
-   *  drift on the naming convention. */
-  const keyFor = (dir: string, ext: string) =>
-    joinKey(keyPrefix, dir, `${Date.now()}-${randomUUID().slice(0, 8)}.${ext}`);
 
   const file = fd.get("file");
   if (!(file instanceof File) || file.size === 0) return { error: messages.noFile };
@@ -183,20 +234,11 @@ export async function storeUpload(fd: FormData, opts: StoreUploadOptions): Promi
   // it as though it were one.
   const poster = fd.get("poster");
 
-  // The Videos folder holds clips, everything else holds stills (user request
-  // 2026-07-26). The client already filters, but a direct call must not be able
-  // to drop a JPEG into /uploads/videos or a clip among the posters.
-  // "references" is the one folder that legitimately takes both: a past project
-  // may be shown as a still OR as a clip.
-  const MIXED_DIRS = new Set(["references"]);
-  if (dir === "videos" && kind !== "video") return { error: messages.notAVideo };
-  if (dir !== "videos" && kind === "video" && !MIXED_DIRS.has(dir)) {
-    return { error: messages.notAnImage };
-  }
-  // Documents get the same treatment as clips: exactly one folder, and that
-  // folder takes nothing else. Without the second half of the rule a PDF could
-  // be dropped among the posters, where every reader expects an image.
-  if ((dir === DOC_DIR) !== (kind === "doc")) return { error: messages.notADoc };
+  // The client already filters, but a direct call must not be able to drop a
+  // JPEG into /uploads/videos or a clip among the posters. Shared with the
+  // presign path so the two cannot diverge.
+  const folderError = folderKindError(dir, kind, messages);
+  if (folderError) return { error: folderError };
 
   if (kind === "doc") {
     if (file.size > MAX_BYTES_DOC) return { error: messages.tooLargeDoc };
@@ -213,7 +255,7 @@ export async function storeUpload(fd: FormData, opts: StoreUploadOptions): Promi
       return { error: messages.unsupportedDoc };
     }
 
-    const key = keyFor(dir, ext);
+    const key = keyFor(keyPrefix, dir, ext);
     await store.put(key, rawBuffer, {
       contentType: contentTypeForKey(key),
       // Forced attachment, the reason the magic-number check above exists.
@@ -229,14 +271,11 @@ export async function storeUpload(fd: FormData, opts: StoreUploadOptions): Promi
     if (MAX_BYTES_VIDEO !== null && file.size > MAX_BYTES_VIDEO) {
       return { error: messages.tooLargeVideo };
     }
-    // Trust file.type first; some browsers/OSes send a blank or non-standard MIME
-    // for .mp4 (e.g. "application/octet-stream"), so fall back to the filename
-    // extension (whitelisted to mp4/webm) before rejecting.
-    const ext = EXT_BY_TYPE_VIDEO[file.type] || file.name.toLowerCase().match(/\.(mp4|webm)$/)?.[1];
+    const ext = videoExt(file.type, file.name);
     if (!ext) return { error: messages.unsupportedVideo };
 
     const rawBuffer = Buffer.from(await file.arrayBuffer());
-    const key = keyFor(dir, ext);
+    const key = keyFor(keyPrefix, dir, ext);
 
     const { buffer: outBuffer, warning } = await prepareVideo(rawBuffer, ext, file.size);
     await store.put(key, outBuffer, { contentType: contentTypeForKey(key) });
@@ -273,7 +312,7 @@ export async function storeUpload(fd: FormData, opts: StoreUploadOptions): Promi
     }
   }
 
-  const key = keyFor(dir, outExt);
+  const key = keyFor(keyPrefix, dir, outExt);
   await store.put(key, outBuffer, { contentType: contentTypeForKey(key) });
 
   return { path: keyToPublicPath(key) };

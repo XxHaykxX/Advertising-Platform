@@ -99,4 +99,11 @@ export const fsDriver: StorageDriver = {
     // The app serves these itself — see app/uploads/[...path]/route.ts.
     return null;
   },
+
+  async presignPut(): Promise<string | null> {
+    // A local directory has no URL to sign. Null tells the caller to post the
+    // bytes through the app, which is what Hostinger has always done — and
+    // keeping that path alive and unchanged is the first rule of the AWS move.
+    return null;
+  },
 };

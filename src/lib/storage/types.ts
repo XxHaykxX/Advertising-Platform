@@ -36,4 +36,19 @@ export interface StorageDriver {
   /** Absolute URL a browser should fetch this key from, or null when the app
    *  has to serve the bytes itself (the fs driver — local dev and Hostinger). */
   publicUrl(key: string): string | null;
+
+  /** A URL the browser may PUT this exact key to, or null when the driver has
+   *  no such concept — the fs driver, i.e. local dev and Hostinger, where the
+   *  caller must fall back to posting the bytes through the app.
+   *
+   *  Same null-means-fall-back shape as publicUrl() above, and for the same
+   *  reason: which mode is live is decided here, on the server, so no client
+   *  has to know or guess which storage it is talking to.
+   *
+   *  Exists because uploads are the one place where passing bytes through the
+   *  app is not merely wasteful but fatal — a single 500 MB clip peaks at four
+   *  to five times its own size in resident memory, which is more than the
+   *  whole task. The signed URL is scoped to one key, one method and one
+   *  content type, and expires; that scoping is the containment, not CORS. */
+  presignPut(key: string, contentType: string): Promise<string | null>;
 }

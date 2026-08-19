@@ -11,8 +11,8 @@ import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
 import { joinKey, keyToPublicPath, publicPathToKey, storage } from "@/lib/storage";
 import { findUploadUsage, type UploadUsage } from "@/lib/uploads-usage";
-import { memberUploadMessages, storeUpload } from "@/lib/uploads-store";
-import type { MediaFile } from "@/lib/actions/uploads";
+import { memberUploadMessages, planVideoUpload, storeUpload } from "@/lib/uploads-store";
+import type { MediaFile, VideoUploadTicket } from "@/lib/actions/uploads";
 
 /** The one expression of "this member's own corner of storage". Everything
  *  below derives from it, so scoping cannot be right in one action and wrong in
@@ -66,5 +66,60 @@ export async function deleteMemberUpload(
   }
 
   await storage().remove(key);
+  return { ok: true };
+}
+
+/** The member twin of presignVideoUpload. Same shape, same shared rules; what
+ *  makes this the member door is the gate plus the prefix — the key is minted
+ *  under `members/<id>/`, so `dir` can only ever choose a subfolder of the
+ *  caller's own namespace and there is no field in which a client could name
+ *  someone else's. */
+export async function presignMemberVideoUpload(input: {
+  dir: string;
+  contentType: string;
+  filename: string;
+}): Promise<VideoUploadTicket> {
+  const me = await requireMember();
+  const t = makeUI(await getLocale());
+
+  const plan = planVideoUpload(input, {
+    keyPrefix: memberPrefix(me.id),
+    messages: memberUploadMessages(t),
+  });
+  if ("error" in plan) return { error: plan.error };
+
+  const url = await storage().presignPut(plan.key, `video/${plan.ext}`);
+  if (!url) return { mode: "direct" };
+  return { mode: "presigned", url, path: keyToPublicPath(plan.key) };
+}
+
+/** The member twin of saveVideoPoster — and, as there, the step that doubles as
+ *  proof the clip actually landed: it head-checks the object before writing.
+ *  Members had no equivalent before, because their poster was written inside
+ *  storeUpload() while the app still saw the bytes. */
+export async function saveMemberVideoPoster(fd: FormData): Promise<{ ok?: boolean; error?: string }> {
+  const me = await requireMember();
+  const t = makeUI(await getLocale());
+
+  const videoPath = String(fd.get("videoPath") || "");
+  const key = /^\/uploads\/[\w./-]+\.(mp4|webm)$/i.test(videoPath) ? publicPathToKey(videoPath) : null;
+  // Hard-scope, exactly as deleteMemberUpload does it: the key is already known
+  // to be traversal-free, so the prefix test cannot be walked around.
+  if (!key || !key.startsWith(`${memberPrefix(me.id)}/`)) return { error: t("media.errNoFile") };
+
+  const store = storage();
+  if (!(await store.head(key))) return { error: t("media.errNoFile") };
+
+  const poster = fd.get("poster");
+  if (!(poster instanceof File) || poster.size === 0) return { error: t("media.errNoFile") };
+  if (poster.size > 2 * 1024 * 1024) return { error: t("media.errTooLargeServer", { limit: "2" }) };
+
+  try {
+    await store.put(`${key}.jpg`, Buffer.from(await poster.arrayBuffer()), {
+      contentType: "image/jpeg",
+    });
+  } catch {
+    return { error: t("media.loadError") };
+  }
   return { ok: true };
 }
