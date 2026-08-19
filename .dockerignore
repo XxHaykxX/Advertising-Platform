@@ -1,0 +1,29 @@
+.git
+.github
+node_modules
+.next
+
+# Secrets never enter the image — the task gets its env from ECS/SSM.
+.env
+.env.*
+
+# Local dev uploads. On prod these live outside the repo (UPLOADS_DIR); baking
+# the local copy in would ship someone's test videos in every image.
+public/uploads
+
+# Tests and tooling: not needed to run the server.
+e2e
+test
+playwright.config.ts
+vitest*.config.ts
+.playwright-mcp
+.claude
+.gstack
+
+# Docs, notes and scratch files.
+docs
+*.md
+*.csv
+*.log
+*.png
+filmustage-ref

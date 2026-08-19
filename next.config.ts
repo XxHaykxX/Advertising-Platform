@@ -11,9 +11,14 @@ const nextConfig: NextConfig = {
   devIndicators: {
     position: "top-left",
   },
-  // No `output: standalone` — Hostinger's managed Next runner serves the app with
-  // `next start` (which errors out against a standalone build). It keeps
-  // node_modules + .next around at runtime, so plain `next start` is what works.
+  // Standalone output is OPT-IN, never the default. Hostinger's managed Next
+  // runner serves the app with `next start`, which errors out against a
+  // standalone build; it keeps node_modules + .next around at runtime, so the
+  // plain layout is what works there. The Docker build for ECS Fargate wants the
+  // opposite (a self-contained server.js and no node_modules to ship), and sets
+  // NEXT_OUTPUT=standalone to say so. One config file, two deploy targets —
+  // which is what lets Hostinger stay live through the AWS migration.
+  output: process.env.NEXT_OUTPUT === "standalone" ? "standalone" : undefined,
   // Poster/gallery/headshots are uploaded in the panel and served from
   // /uploads. The optimizer was off (`unoptimized: true`) until 2026-07-31 —
   // which meant every `sizes` prop in the app did nothing and a 24px cast

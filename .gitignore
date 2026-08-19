@@ -44,6 +44,11 @@ next-env.d.ts
 /public/uploads/*
 !/public/uploads/.gitkeep
 
+# AWS migration staging: database dumps and the local mirror of the uploads
+# tree (scripts/aws/*.sh). Gigabytes of user content plus a full DB dump —
+# never in git.
+/.migration/
+
 # local dev artifacts
 /prisma/dev.db
 .next-dev.log
