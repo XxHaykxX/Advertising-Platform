@@ -117,10 +117,22 @@ test.describe("public pages render", () => {
     expect(res?.status()).toBe(200);
     await expect(page.getByText("ԲԱՑԱՀԱՅՏԵ՛Ք ՆՈՐ ՀՆԱՐԱՎՈՐՈՒԹՅՈՒՆՆԵՐ")).toBeVisible();
     // Structure over copy for the rest, same reasoning as
-    // public-regressions.spec.ts: the four ways to advertise and the closing
-    // form, free to reword without turning this red.
+    // public-regressions.spec.ts: the four ways to advertise and the seven
+    // goals that close the page, free to reword without turning this red. The
+    // `#callback` form this used to assert left the homepage on 2026-08-19 —
+    // the hero's second button opens /contact instead.
     await expect(page.locator("#ad-types a[href^='/ads/']")).toHaveCount(4);
-    await expect(page.locator("#callback form")).toBeVisible();
+    await expect(page.locator("#goals a[href^='/ads/']")).toHaveCount(7);
+  });
+
+  test("the contact page collects a phone number, not an address", async ({ page }) => {
+    const res = await page.goto("/contact");
+    expect(res?.status()).toBe(200);
+    // The form is the only place a call-back request lands since the homepage
+    // block came off, so what it asks for is worth pinning: a phone field with
+    // its dial code prefilled, and no email input anywhere.
+    await expect(page.locator("form input[name='phone']")).toHaveValue(/^\+\d/);
+    await expect(page.locator("form input[type='email']")).toHaveCount(0);
   });
 });
 
