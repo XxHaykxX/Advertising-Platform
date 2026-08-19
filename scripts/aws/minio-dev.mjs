@@ -14,7 +14,18 @@
  * Then run the app with:
  *   STORAGE_DRIVER=s3 S3_BUCKET=igovazd-uploads S3_ENDPOINT=http://127.0.0.1:9100 \
  *   AWS_ACCESS_KEY_ID=minioadmin AWS_SECRET_ACCESS_KEY=minioadmin \
- *   CDN_BASE_URL=http://127.0.0.1:9100/igovazd-uploads npx next dev -p 3012
+ *   CDN_BASE_URL=http://127.0.0.1:9100/igovazd-uploads \
+ *   NEXT_PUBLIC_MEDIA_ORIGIN=http://127.0.0.1:9100/igovazd-uploads npx next dev -p 3012
+ *
+ * ⚠️ One thing this setup CANNOT exercise as-is: `/_next/image`. Next refuses to
+ * fetch an upstream image that resolves to a private or loopback address —
+ * "resolved to private ip" from its SSRF guard — and MinIO is on 127.0.0.1, so
+ * the optimizer answers 400 no matter how correct images.remotePatterns is. It
+ * is an artifact of testing locally, not a finding: a real CloudFront hostname
+ * resolves to public addresses and passes. To check the optimizer here, add
+ * `dangerouslyAllowLocalIP: true` to next.config.ts for the run and take it out
+ * again — it must never be committed. Measured 2026-08-19: with the flag, 200
+ * and a real image/webp body.
  */
 import {
   S3Client,
