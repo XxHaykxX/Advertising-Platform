@@ -169,6 +169,19 @@ export async function storeUpload(fd: FormData, opts: StoreUploadOptions): Promi
 
   const dir = safeSegment(String(fd.get("dir") || "misc"));
   const kind = String(fd.get("kind") || "image");
+  // Pulled out up front so `fd` is unreachable from here down. writePosterFrame
+  // only ever wanted this one entry, and taking the whole FormData to get it
+  // kept every other entry — including the video's own multi-hundred-MB Blob —
+  // reachable to the end of the function.
+  //
+  // Measured 2026-08-19, and it did NOT move peak RSS: 200 MB improved ~11%,
+  // 500 MB got ~11% worse, which is noise. A request finishes in under two
+  // seconds, and dropping a reachability edge only pays off if a GC pass
+  // happens to run inside that window. The real 4-5x cost of an upload lives
+  // inside Next/undici's own body and multipart handling, not here — so this
+  // is a narrower contract, not a memory fix, and nothing should be built on
+  // it as though it were one.
+  const poster = fd.get("poster");
 
   // The Videos folder holds clips, everything else holds stills (user request
   // 2026-07-26). The client already filters, but a direct call must not be able
@@ -227,7 +240,7 @@ export async function storeUpload(fd: FormData, opts: StoreUploadOptions): Promi
 
     const { buffer: outBuffer, warning } = await prepareVideo(rawBuffer, ext, file.size);
     await store.put(key, outBuffer, { contentType: contentTypeForKey(key) });
-    await writePosterFrame(fd, key);
+    await writePosterFrame(poster, key);
 
     return { path: keyToPublicPath(key), warning };
   }
@@ -306,8 +319,7 @@ async function prepareVideo(
  *  decoded the file to show a preview, so it hands over a small JPEG instead.
  *  Best-effort: a missing or broken poster just means the tile falls back to
  *  the <video> element. */
-async function writePosterFrame(fd: FormData, videoKey: string) {
-  const poster = fd.get("poster");
+async function writePosterFrame(poster: FormDataEntryValue | null, videoKey: string) {
   if (!(poster instanceof File) || poster.size === 0) return;
   if (poster.size > 2 * 1024 * 1024) return; // a frame is tens of KB; ignore junk
   try {
