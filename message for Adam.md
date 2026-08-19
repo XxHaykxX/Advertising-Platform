@@ -111,16 +111,57 @@ memory cost, and it's wrong.
 
 ## What to send us
 
-1. AWS account access, or an IAM user with permissions for ECS, ECR, RDS, S3, CloudFront,
-   SES, SSM and IAM
-2. RDS endpoint, port, both database names, users and passwords
-   ⚠️ No `#` `@` `/` `?` `:` in the passwords — they break the connection string. Letters,
-   digits, hyphen and underscore only.
-3. Bucket name and CloudFront domain
-4. The account id and region for the SSM parameter ARNs (we have the task definitions written
-   and checked into the repo, with the account id as the only placeholder left)
-5. Confirmation that SES is out of sandbox
-6. Who controls DNS for `igovazd.am`
+Split into two, because they fail differently: missing **values** stop us at a known point,
+missing **access** stops us silently and we come back to you for every small thing.
+
+### A. Values — our deploy pipeline literally will not run without these
+
+Our GitHub Actions workflow is already written and reads exactly these. Names as we need
+them:
+
+| What | Why we need it |
+|---|---|
+| **OIDC role ARN** for GitHub Actions | This is how the pipeline authenticates. Without it nothing deploys at all. Trust policy scoped to our repo. |
+| **ECR repository name** | Where the image is pushed |
+| **ECS cluster name** | |
+| **ECS service name** | The deploy rolls this service |
+| **ALB DNS name** (or the health URL) | The pipeline polls it after deploying and fails the run if it doesn't come back healthy |
+| **AWS account id** + region | The task definitions are already written and checked into our repo; the account id is the only placeholder left in them |
+| **RDS endpoint, port, both database names, users, passwords** | ⚠️ No `#` `@` `/` `?` `:` in the passwords — they break the connection string. Letters, digits, hyphen and underscore only. |
+| **Bucket name** and **CloudFront domain** | |
+| **CloudWatch log group name** | |
+| Confirmation **SES is out of sandbox** | |
+| Who controls **DNS for `igovazd.am`** | |
+
+Same set again for dev, where they differ.
+
+### B. Access — so we can work without pinging you
+
+Two separate roles, and the second one is the one people forget:
+
+**1. For us (a user or role we can assume).** Enough to do our own work without a round trip
+to you each time:
+- ECR: push images
+- ECS: `UpdateService`, `DescribeServices`, `RegisterTaskDefinition`
+- SSM Parameter Store: read **and write** under `/igovazd/*` — we need to put the secret
+  values in ourselves; you should not be handling our SMTP password, session secret or API
+  keys
+- S3: read/write on the bucket
+- CloudWatch Logs: read. Without this we cannot tell you *why* something failed, only that
+  it did.
+- Read-only on RDS and the load balancer is enough — we don't need to change either
+
+**2. For the ECS task itself (the execution role).** This one is not about us, it is what
+lets the container start, and when it is wrong the task fails **before your app runs**, with
+an error that reads like a broken image:
+- pull from ECR
+- `ssm:GetParameters` on `/igovazd/*` **and `kms:Decrypt`** on the key those SecureStrings
+  use — the KMS half is the one that gets missed, and the symptom is "unable to retrieve
+  secret" with no clue which secret
+- `logs:CreateLogStream` + `logs:PutLogEvents` on the log group
+
+If it's easier for you: give us the account with enough permission to create these two roles
+ourselves, and we'll set them up correctly and send you back exactly what we made.
 
 Everything else — deploy pipeline, containers, migration of the existing data — we handle.
 
