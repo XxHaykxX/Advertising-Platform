@@ -23,6 +23,7 @@ import { ChevronDown, ChevronUp, GripVertical, Loader2 } from "lucide-react";
 import type { ModerationStatus } from "@prisma/client";
 import { RowActions } from "./row-actions";
 import { reorderAdSpaces } from "./actions";
+import { mediaUrl } from "@/lib/media-url";
 
 export type AdSpaceRow = {
   id: number;
@@ -252,7 +253,7 @@ function SortableRow({
         <div className="h-10 w-16 overflow-hidden rounded bg-muted">
           {s.image && (
             /* eslint-disable-next-line @next/next/no-img-element */
-            <img src={s.image} alt="" className="h-full w-full object-cover" />
+            <img src={mediaUrl(s.image)} alt="" className="h-full w-full object-cover" />
           )}
         </div>
       </td>

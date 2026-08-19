@@ -10,6 +10,7 @@ import { compareDeadline, daysUntil, formatFullDate, isArchived } from "@/lib/da
 import { cn } from "@/lib/utils";
 import { intlLocale, useUI, useLocalizer, type Locale } from "@/lib/i18n-client";
 import type { BrandFavoriteDTO } from "@/lib/data/brand-favorites";
+import { mediaUrl } from "@/lib/media-url";
 import { RemoveFavoriteButton } from "./remove-favorite-button";
 
 type SortKey = "added" | "price" | "deadline";
@@ -165,7 +166,7 @@ export function FavoritesView({ favorites, locale }: { favorites: BrandFavoriteD
             <div className="relative aspect-video w-full shrink-0 overflow-hidden rounded-lg sm:w-40">
               {favorite.project.poster ? (
                 <Image
-                  src={favorite.project.poster}
+                  src={mediaUrl(favorite.project.poster)}
                   alt={favorite.project.title}
                   fill
                   className="object-cover"

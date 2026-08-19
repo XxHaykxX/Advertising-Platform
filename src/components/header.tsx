@@ -23,6 +23,7 @@ import {
 import { canSell } from "@/lib/auth/capabilities";
 import { useDismissable } from "@/lib/use-dismissable";
 import { useBodyScrollLock } from "@/lib/body-scroll-lock";
+import { mediaUrl } from "@/lib/media-url";
 import { cn } from "@/lib/utils";
 import { logout as staffLogout } from "@/app/admin/actions";
 import {
@@ -247,7 +248,7 @@ export function Avatar({ user, onDark }: { user: SiteHeaderUser; onDark: boolean
     return (
       // eslint-disable-next-line @next/next/no-img-element -- small avatar, arbitrary user-uploaded URL
       <img
-        src={user.avatar}
+        src={mediaUrl(user.avatar)}
         alt=""
         className={cn("h-9 w-9 rounded-full object-cover", ring)}
       />

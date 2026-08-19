@@ -23,6 +23,7 @@ import { ChevronDown, ChevronUp, GripVertical, Loader2, Plus, Search, X } from "
 import { useUI } from "@/lib/i18n-client";
 import { ActiveToggle, DeleteButton } from "./row-actions";
 import { reorderProjects } from "./actions";
+import { mediaUrl } from "@/lib/media-url";
 
 export type ProjectRow = {
   id: number;
@@ -482,7 +483,7 @@ function SortableRow({
         <div className="h-10 w-16 overflow-hidden rounded bg-muted">
           {p.poster && (
             /* eslint-disable-next-line @next/next/no-img-element */
-            <img src={p.poster} alt="" className="h-full w-full object-cover" />
+            <img src={mediaUrl(p.poster)} alt="" className="h-full w-full object-cover" />
           )}
         </div>
       </td>
@@ -566,7 +567,7 @@ export function PlainProjectsTable({
                     <div className="h-10 w-16 overflow-hidden rounded bg-muted">
                       {p.poster && (
                         /* eslint-disable-next-line @next/next/no-img-element */
-                        <img src={p.poster} alt="" className="h-full w-full object-cover" />
+                        <img src={mediaUrl(p.poster)} alt="" className="h-full w-full object-cover" />
                       )}
                     </div>
                   </td>

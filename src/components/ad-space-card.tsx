@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { AccentBadge } from "@/components/ui/badge";
 import { adSpacePath } from "@/lib/ad-space-url";
 import { findAdChannel } from "@/lib/ad-channels";
+import { mediaUrl } from "@/lib/media-url";
 import { DEFAULT_LOCALE, intlLocale, useUI, type Locale } from "@/lib/i18n-client";
 import type { AdSpaceListDTO } from "@/lib/types";
 
@@ -47,7 +48,7 @@ export function AdSpaceCard({
       <div className="relative aspect-video shrink-0">
         {space.image ? (
           <Image
-            src={space.image}
+            src={mediaUrl(space.image)}
             alt={space.title}
             fill
             className="object-cover"

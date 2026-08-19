@@ -8,6 +8,7 @@ import { getLocale } from "@/lib/data/locale";
 import { isArchived } from "@/lib/data/format";
 import { labelSep, makeUI } from "@/lib/i18n";
 import { missingCount, projectCompleteness } from "@/lib/project-completeness";
+import { mediaUrl } from "@/lib/media-url";
 import type { ModerationStatus } from "@prisma/client";
 
 /* CREATOR cabinet home — and the project list, which used to be a separate
@@ -181,7 +182,7 @@ export default async function AccountPage() {
                 <div className="aspect-video w-full bg-muted">
                   {p.poster && (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={p.poster} alt="" className="h-full w-full object-cover" />
+                    <img src={mediaUrl(p.poster)} alt="" className="h-full w-full object-cover" />
                   )}
                 </div>
               </div>

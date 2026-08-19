@@ -26,6 +26,7 @@ import type { PersonSuggestion } from "@/lib/data/actors";
 import { allSpellings, pickPersonName } from "@/lib/person-name";
 import { matchesAnyNameQuery } from "@/lib/translit";
 import { cn } from "@/lib/utils";
+import { mediaUrl } from "@/lib/media-url";
 import { DEFAULT_LOCALE, type useUI, type Locale } from "@/lib/i18n-client";
 
 // Controlled cast/crew section (#20²). Rows are owned by the parent ProjectForm —
@@ -406,7 +407,7 @@ function PersonNameField({
               >
                 <span className="relative h-6 w-6 shrink-0 overflow-hidden rounded-full border border-border bg-muted">
                   {p.photo ? (
-                    <Image src={p.photo} alt="" fill className="object-cover" sizes="24px" unoptimized />
+                    <Image src={mediaUrl(p.photo)} alt="" fill className="object-cover" sizes="24px" unoptimized />
                   ) : (
                     <span className="grid h-full w-full place-items-center text-muted-foreground">
                       <User className="h-3.5 w-3.5" />
@@ -507,7 +508,7 @@ function ActorTableRow({
             title={t("projectForm.cast.directoryOwned")}
           >
             {r.photo ? (
-              <Image src={r.photo} alt="" fill className="object-cover" sizes="36px" unoptimized />
+              <Image src={mediaUrl(r.photo)} alt="" fill className="object-cover" sizes="36px" unoptimized />
             ) : (
               <span className="grid h-full w-full place-items-center text-muted-foreground">
                 <User className="h-4 w-4" />
@@ -523,7 +524,7 @@ function ActorTableRow({
               aria-label={r.photo ? t("projectForm.cast.replacePhoto") : t("projectForm.cast.uploadPhoto")}
             >
               {r.photo ? (
-                <Image src={r.photo} alt="" fill className="object-cover" sizes="36px" unoptimized />
+                <Image src={mediaUrl(r.photo)} alt="" fill className="object-cover" sizes="36px" unoptimized />
               ) : (
                 <span className="grid h-full w-full place-items-center text-muted-foreground">
                   <User className="h-4 w-4" />

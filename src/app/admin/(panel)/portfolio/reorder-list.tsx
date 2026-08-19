@@ -21,6 +21,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { ChevronDown, ChevronUp, GripVertical, Loader2, Search, X } from "lucide-react";
 import { DeleteButton } from "./row-actions";
 import { reorderPortfolio } from "./actions";
+import { mediaUrl } from "@/lib/media-url";
 
 export type PortfolioRow = {
   id: number;
@@ -280,7 +281,7 @@ function SortableRow({
         <div className="h-10 w-16 overflow-hidden rounded bg-muted">
           {p.image && (
             /* eslint-disable-next-line @next/next/no-img-element */
-            <img src={p.image} alt="" className="h-full w-full object-cover" />
+            <img src={mediaUrl(p.image)} alt="" className="h-full w-full object-cover" />
           )}
         </div>
       </td>

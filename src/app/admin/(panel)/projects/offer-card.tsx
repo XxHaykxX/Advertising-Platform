@@ -20,6 +20,7 @@ import { ConfirmDialog } from "@/components/confirm-dialog";
 import { MediaField } from "@/components/media-field";
 import { BulletListEditor } from "@/components/ui/bullet-list-editor";
 import type { MediaPickerScope } from "@/components/media-picker";
+import { mediaUrl } from "@/lib/media-url";
 import type { useUI, Locale } from "@/lib/i18n-client";
 
 /**
@@ -227,7 +228,7 @@ export function OfferCard({
                 }`}
               >
                 {summary.image ? (
-                  <Image src={summary.image} alt="" fill className="object-cover" sizes="96px" unoptimized />
+                  <Image src={mediaUrl(summary.image)} alt="" fill className="object-cover" sizes="96px" unoptimized />
                 ) : (
                   <span
                     className="grid h-full w-full place-items-center text-muted-foreground"
@@ -668,7 +669,7 @@ export function OfferPreviewDialog({
             <div key={i} className="flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card">
               {item.image ? (
                 <div className="relative aspect-video w-full bg-muted">
-                  <Image src={item.image} alt="" fill className="object-cover" sizes="33vw" unoptimized />
+                  <Image src={mediaUrl(item.image)} alt="" fill className="object-cover" sizes="33vw" unoptimized />
                 </div>
               ) : null}
               <div className="flex flex-1 flex-col p-6">

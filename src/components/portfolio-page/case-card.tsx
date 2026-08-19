@@ -6,6 +6,7 @@ import { Film, TrendingUp } from "lucide-react";
 import { AccentBadge } from "@/components/ui/badge";
 import type { PortfolioDTO } from "@/lib/types";
 import { DEFAULT_LOCALE, type Locale } from "@/lib/i18n-client";
+import { mediaUrl } from "@/lib/media-url";
 import { useMetricLabeler, parseMetrics } from "./metrics";
 
 // Explicitly "use client" (bundle audit 2026-07-31): already uses
@@ -40,7 +41,7 @@ export function CaseCard({
       <div className="relative aspect-video shrink-0">
         {c.image ? (
           <Image
-            src={c.image}
+            src={mediaUrl(c.image)}
             alt={`${c.brand} — ${c.title}`}
             fill
             className="object-cover"

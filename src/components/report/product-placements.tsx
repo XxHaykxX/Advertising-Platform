@@ -3,6 +3,7 @@ import { Reveal } from "@/components/ui/reveal";
 import { DEFAULT_LOCALE, localizeValue, makeUI, type Locale } from "@/lib/i18n";
 import { OfferApplyButton } from "@/components/report/offer-apply-button";
 import { offerValue } from "@/lib/offer-value";
+import { mediaUrl } from "@/lib/media-url";
 import type { ProjectDetailDTO } from "@/lib/types";
 
 /**
@@ -48,7 +49,7 @@ export function ProductPlacements({
                 {p.image ? (
                   <div className="relative aspect-video w-full bg-muted">
                     <Image
-                      src={p.image}
+                      src={mediaUrl(p.image)}
                       alt=""
                       fill
                       className="object-cover"

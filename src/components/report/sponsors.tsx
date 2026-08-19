@@ -3,6 +3,7 @@ import { Reveal } from "@/components/ui/reveal";
 import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
 import { OfferApplyButton } from "@/components/report/offer-apply-button";
 import { offerValue } from "@/lib/offer-value";
+import { mediaUrl } from "@/lib/media-url";
 import type { ProjectDetailDTO } from "@/lib/types";
 
 // Sponsorship packages — priced tiers a brand can buy into. Each package shows
@@ -49,7 +50,7 @@ export function Sponsors({
                 {tier.image ? (
                   <div className="relative aspect-video w-full bg-muted">
                     <Image
-                      src={tier.image}
+                      src={mediaUrl(tier.image)}
                       alt=""
                       fill
                       className="object-cover"

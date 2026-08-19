@@ -8,6 +8,7 @@ import { DEFAULT_LOCALE, useUI, type Locale } from "@/lib/i18n-client";
 import { lockBodyScroll } from "@/lib/body-scroll-lock";
 import type { PortfolioDTO } from "@/lib/types";
 import { useMetricLabeler, parseMetrics } from "./metrics";
+import { mediaUrl } from "@/lib/media-url";
 
 export function CaseLightbox({
   cases,
@@ -93,7 +94,7 @@ export function CaseLightbox({
                   {active.image ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={active.image}
+                      src={mediaUrl(active.image)}
                       alt={`${active.brand} — ${active.title}`}
                       className="h-full w-full object-cover"
                     />

@@ -25,6 +25,7 @@ import { MediaPicker } from "@/components/media-picker";
 import type { PersonRow } from "@/lib/data/persons";
 import { allSpellings } from "@/lib/person-name";
 import { matchesAnyNameQuery } from "@/lib/translit";
+import { mediaUrl } from "@/lib/media-url";
 import { ROLE_VALUES, kindForRole } from "@/app/admin/(panel)/projects/form-shared";
 import { createPerson, deletePerson, reorderPersons, spellPersonName, updatePerson } from "./person-actions";
 
@@ -375,7 +376,7 @@ function SortableRow({
           aria-label="Change photo"
         >
           {r.photo ? (
-            <Image src={r.photo} alt="" fill className="object-cover" sizes="36px" unoptimized />
+            <Image src={mediaUrl(r.photo)} alt="" fill className="object-cover" sizes="36px" unoptimized />
           ) : (
             <span className="grid h-full w-full place-items-center text-muted-foreground">
               <User className="h-4 w-4" />

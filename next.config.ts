@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { mediaOriginRemotePattern } from "./src/lib/media-url";
 
 const nextConfig: NextConfig = {
   // Dev-only route indicator, default `bottom-left` — sat over the catalog's
@@ -25,8 +26,9 @@ const nextConfig: NextConfig = {
   // thumbnail downloaded the full-size original. Perf audit measured ~300 KB of
   // needlessly large images per page, so it is on now, with the blast radius
   // kept small:
-  //   * no `remotePatterns` → only same-origin paths can be optimized, so the
-  //     SSRF surface the old comment worried about stays closed;
+  //   * no `remotePatterns` (beyond the media origin below) → only same-origin
+  //     paths and that one host can be optimized, so the SSRF surface the old
+  //     comment worried about stays mostly closed;
   //   * `/uploads/**` lives outside public_html on prod and is served by the
   //     Node route in src/app/uploads/[...path]/route.ts — the optimizer reaches
   //     it through Next's *internal* request handler (fetchInternalImage, no
@@ -45,6 +47,12 @@ const nextConfig: NextConfig = {
     deviceSizes: [640, 828, 1080, 1920],
     imageSizes: [32, 64, 96, 128, 256, 384],
     minimumCacheTTL: 2678400,
+    // Empty on Hostinger (fs driver, same-origin /uploads) — see mediaUrl() in
+    // src/lib/media-url.ts for why the s3 driver needs this at all: the
+    // optimizer only fetches a remote `src` when its host is allow-listed here.
+    remotePatterns: process.env.NEXT_PUBLIC_MEDIA_ORIGIN
+      ? [mediaOriginRemotePattern(process.env.NEXT_PUBLIC_MEDIA_ORIGIN)]
+      : [],
   },
   experimental: {
     // Server Actions cap request bodies at 1 MB by default; uploads (uploadImage)

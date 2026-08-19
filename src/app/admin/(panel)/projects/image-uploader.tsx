@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/dropzone";
 import { UploadProgress } from "@/components/ui/upload-progress";
 import { holdProgress, uploadViaXhr } from "@/lib/upload-xhr";
+import { mediaUrl } from "@/lib/media-url";
 import type { Locale } from "@/lib/i18n-client";
 import {
   cropAspectForDir,
@@ -323,7 +324,7 @@ export const ImageUploader = forwardRef<ImageUploaderHandle, {
       : paths.length
         ? <DropzonePreview replaceLabel={replaceLabel} removeLabel={removeLabel} onRemove={() => removeAt(0)}>
             <div className="relative aspect-video w-72 max-w-full overflow-hidden bg-muted">
-              <Image src={paths[0]} alt="" fill className="object-cover" sizes="288px" unoptimized />
+              <Image src={mediaUrl(paths[0])} alt="" fill className="object-cover" sizes="288px" unoptimized />
             </div>
           </DropzonePreview>
         : undefined;
@@ -472,7 +473,7 @@ function AddTile({ label }: { label: string }) {
 function Thumbnail({ src, onRemove, removeLabel }: { src: string; onRemove: () => void; removeLabel: string }) {
   return (
     <div className="group relative aspect-video w-56 overflow-hidden rounded-lg border border-border bg-muted">
-      <Image src={src} alt="" fill className="object-cover" sizes="224px" unoptimized />
+      <Image src={mediaUrl(src)} alt="" fill className="object-cover" sizes="224px" unoptimized />
       <button
         type="button"
         onClick={onRemove}
@@ -517,7 +518,7 @@ function SortableThumbnail({
       {...listeners}
       className="group relative aspect-video w-56 cursor-grab touch-none overflow-hidden rounded-lg border border-border bg-muted active:cursor-grabbing"
     >
-      <Image src={src} alt="" fill className="object-cover" sizes="224px" unoptimized />
+      <Image src={mediaUrl(src)} alt="" fill className="object-cover" sizes="224px" unoptimized />
       <button
         type="button"
         onClick={onRemove}

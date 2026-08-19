@@ -1,4 +1,5 @@
 import type { PartnerDTO } from "@/lib/types";
+import { mediaUrl } from "@/lib/media-url";
 
 function initials(name: string): string {
   const words = name.trim().split(/\s+/).filter(Boolean);
@@ -13,7 +14,7 @@ export function PartnerMark({ p, size = "md" }: { p: PartnerDTO; size?: "sm" | "
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img
-        src={p.logo}
+        src={mediaUrl(p.logo)}
         alt={p.name}
         className={size === "sm" ? "h-7 w-auto object-contain" : "h-10 w-auto object-contain"}
       />

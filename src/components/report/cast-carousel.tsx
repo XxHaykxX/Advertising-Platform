@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DEFAULT_LOCALE, useLocalizer, type Locale } from "@/lib/i18n-client";
 import { cn } from "@/lib/utils";
 import { useDragScroll } from "@/lib/use-drag-scroll";
+import { mediaUrl } from "@/lib/media-url";
 import type { ActorDTO } from "@/lib/types";
 
 function initials(name: string): string {
@@ -27,7 +28,7 @@ function ActorCard({ actor, locale }: { actor: ActorDTO; locale: Locale }) {
           {/* `unoptimized` dropped 2026-07-31: headshots are stored at 800×800,
               and this circle is 48px. Letting the optimizer honour `sizes` is
               the whole point of having it back on. */}
-          <Image src={actor.photo} alt={actor.name} fill className="object-cover" sizes="48px" />
+          <Image src={mediaUrl(actor.photo)} alt={actor.name} fill className="object-cover" sizes="48px" />
         </div>
       ) : (
         <div

@@ -9,6 +9,7 @@ import { prisma } from "@/lib/prisma";
 import { getLocale } from "@/lib/data/locale";
 import { localizeCity } from "@/lib/cities";
 import { labelSep, makeUI } from "@/lib/i18n";
+import { mediaUrl } from "@/lib/media-url";
 import type { ModerationStatus } from "@prisma/client";
 
 /* "Мои рекламные места" — the creator's own inventory outside a film, the
@@ -82,7 +83,7 @@ export default async function MyAdSpacesPage() {
                 <div className="aspect-video w-full bg-muted">
                   {s.image && (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={s.image} alt="" className="h-full w-full object-cover" />
+                    <img src={mediaUrl(s.image)} alt="" className="h-full w-full object-cover" />
                   )}
                 </div>
                 <div className="p-4">

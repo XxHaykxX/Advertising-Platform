@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, Film, Play } from "lucide-react";
 import { VideoPlayer } from "./video-player";
+import { mediaUrl } from "@/lib/media-url";
 
 /** Optional leading video slide (#10 / user 2026-07-25): the report hero slider
  *  shows the video FIRST when present, then the poster + gallery images. Either
@@ -98,7 +99,7 @@ export function PosterSlider({
           <div className="absolute inset-0 bg-black">{videoMedia()}</div>
         ) : (
           <Image
-            src={images[0]}
+            src={mediaUrl(images[0])}
             alt={alt}
             fill
             className="object-cover"
@@ -149,7 +150,7 @@ export function PosterSlider({
           {images.map((src, idx) => (
             <div key={idx} className="relative h-full w-full shrink-0 snap-center">
               <Image
-                src={src}
+                src={mediaUrl(src)}
                 alt={`${alt} ${idx + 1}`}
                 fill
                 className="object-cover"
@@ -213,7 +214,7 @@ export function PosterSlider({
                   : "border-transparent opacity-60 hover:opacity-100"
               }`}
             >
-              <Image src={src} alt="" fill sizes="96px" className="object-cover" />
+              <Image src={mediaUrl(src)} alt="" fill sizes="96px" className="object-cover" />
             </button>
           );
         })}

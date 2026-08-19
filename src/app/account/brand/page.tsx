@@ -12,6 +12,7 @@ import { getBrandInterests } from "@/lib/data/brand-interests";
 import { getRecommendedProjects, getRecentProjects, type DashboardProjectDTO } from "@/lib/data/brand-dashboard";
 import { formatFullDate } from "@/lib/data/format";
 import { intlLocale, localizeValue, makeUI, type Locale } from "@/lib/i18n";
+import { mediaUrl } from "@/lib/media-url";
 
 function MiniProjectRow({ project, genreLabel }: { project: DashboardProjectDTO; genreLabel: string }) {
   return (
@@ -21,7 +22,7 @@ function MiniProjectRow({ project, genreLabel }: { project: DashboardProjectDTO;
     >
       <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-muted">
         {project.poster ? (
-          <Image src={project.poster} alt={project.title} fill className="object-cover" sizes="48px" />
+          <Image src={mediaUrl(project.poster)} alt={project.title} fill className="object-cover" sizes="48px" />
         ) : (
           <div className="grid h-full w-full place-items-center">
             <Film className="h-4 w-4 text-muted-foreground" />
@@ -49,7 +50,7 @@ function RecentCard({ project, locale }: { project: DashboardProjectDTO; locale:
       <div className="aspect-video w-full bg-muted">
         {project.poster ? (
           <Image
-            src={project.poster}
+            src={mediaUrl(project.poster)}
             alt=""
             width={320}
             height={200}

@@ -11,6 +11,7 @@ import { getBrandInterests } from "@/lib/data/brand-interests";
 import { formatFullDate } from "@/lib/data/format";
 import { intlLocale, labelSep, localizeValue, makeUI } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { mediaUrl } from "@/lib/media-url";
 import type { InterestStatus } from "@prisma/client";
 import { RemoveInterestButton } from "./remove-interest-button";
 
@@ -69,7 +70,7 @@ export default async function BrandInterestsPage() {
               <div className="relative aspect-video w-full shrink-0 overflow-hidden rounded-lg sm:w-40">
                 {interest.project.poster ? (
                   <Image
-                    src={interest.project.poster}
+                    src={mediaUrl(interest.project.poster)}
                     alt={interest.project.title}
                     fill
                     className="object-cover"

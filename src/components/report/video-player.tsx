@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Maximize, Minimize, Pause, Play, Volume2, VolumeX } from "lucide-react";
+import { mediaUrl } from "@/lib/media-url";
 
 // Self-hosted MP4 player with our own controls (no native <video controls>,
 // so no browser/YouTube-style chrome) — used for the uploaded-file branch of
@@ -157,8 +158,8 @@ export function VideoPlayer({
     >
       <video
         ref={videoRef}
-        src={src}
-        poster={poster}
+        src={mediaUrl(src)}
+        poster={poster ? mediaUrl(poster) : poster}
         preload="metadata"
         playsInline
         className="absolute inset-0 h-full w-full object-contain bg-black"

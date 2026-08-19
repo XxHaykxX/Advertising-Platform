@@ -16,6 +16,7 @@ import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
 import { Images, Loader2, Sparkles, Upload, X } from "lucide-react";
 import { MediaPicker, type MediaPickerScope } from "@/components/media-picker";
+import { mediaUrl } from "@/lib/media-url";
 import type { Locale } from "@/lib/i18n-client";
 
 export type PosterGenerateInput = {
@@ -265,7 +266,7 @@ export function PosterGenerator({
           {(pending || resultPath) && (
             <div className="relative aspect-video w-full overflow-hidden rounded-lg border border-border bg-muted">
               {resultPath && !pending && (
-                <Image src={resultPath} alt="" fill className="object-cover" sizes="400px" unoptimized />
+                <Image src={mediaUrl(resultPath)} alt="" fill className="object-cover" sizes="400px" unoptimized />
               )}
               {pending && (
                 <div className="absolute inset-0 flex items-center justify-center overflow-hidden">

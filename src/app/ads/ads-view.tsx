@@ -37,6 +37,7 @@ import { cn } from "@/lib/utils";
 import { useBodyScrollLock } from "@/lib/body-scroll-lock";
 import { DEFAULT_LOCALE, intlLocale, useUI, useLocalizer, type Locale } from "@/lib/i18n-client";
 import { NO_OFFER_KEY } from "@/lib/offer-value";
+import { mediaUrl } from "@/lib/media-url";
 import { findAdChannel } from "@/lib/ad-channels";
 import { adSpacePath } from "@/lib/ad-space-url";
 import { pluralForm } from "@/lib/plural";
@@ -108,7 +109,7 @@ function ProjectRow({
       <div className="relative aspect-video w-full shrink-0 overflow-hidden rounded-lg sm:w-48">
         {project.poster ? (
           <Image
-            src={project.poster}
+            src={mediaUrl(project.poster)}
             alt={project.title}
             fill
             className="object-cover"
@@ -214,7 +215,7 @@ function AdSpaceRow({
     <div className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 card-lift sm:flex-row sm:items-center">
       <div className="relative aspect-video w-full shrink-0 overflow-hidden rounded-lg sm:w-48">
         {space.image ? (
-          <Image src={space.image} alt={space.title} fill className="object-cover" sizes="192px" />
+          <Image src={mediaUrl(space.image)} alt={space.title} fill className="object-cover" sizes="192px" />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
             <Megaphone className="h-8 w-8 text-primary/40" />

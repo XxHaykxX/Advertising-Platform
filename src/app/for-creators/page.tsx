@@ -18,6 +18,7 @@ import { getCurrency } from "@/lib/data/currency";
 import { getProject } from "@/lib/data/projects";
 import { prisma } from "@/lib/prisma";
 import { labelSep, makeUI } from "@/lib/i18n";
+import { mediaUrl } from "@/lib/media-url";
 
 export const metadata: Metadata = {
   title: "For Creators — iGovazd",
@@ -261,7 +262,7 @@ export default async function ForCreatorsPage() {
                 <div className="relative aspect-video w-full shrink-0 overflow-hidden rounded-lg sm:w-64">
                   {exampleProject.poster ? (
                     <Image
-                      src={exampleProject.poster}
+                      src={mediaUrl(exampleProject.poster)}
                       alt={exampleProject.title}
                       fill
                       className="object-cover"

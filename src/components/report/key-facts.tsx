@@ -1,6 +1,7 @@
 import { Film } from "lucide-react";
 import { Reveal } from "@/components/ui/reveal";
 import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
+import { mediaUrl } from "@/lib/media-url";
 import type { ProjectDetailDTO } from "@/lib/types";
 
 /** Deliberately a local copy of media-picker's isVideoPath: that module is
@@ -67,7 +68,7 @@ export function KeyFacts({
                           {r.media ? (
                             isVideoFile(r.media) ? (
                               <video
-                                src={r.media}
+                                src={mediaUrl(r.media)}
                                 className="h-full w-full object-cover"
                                 muted
                                 playsInline
@@ -75,7 +76,7 @@ export function KeyFacts({
                               />
                             ) : (
                               // eslint-disable-next-line @next/next/no-img-element
-                              <img src={r.media} alt="" className="h-full w-full object-cover" />
+                              <img src={mediaUrl(r.media)} alt="" className="h-full w-full object-cover" />
                             )
                           ) : (
                             <div className="grid h-full w-full place-items-center text-muted-foreground">

@@ -21,6 +21,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { ChevronDown, ChevronUp, ExternalLink, GripVertical, Loader2 } from "lucide-react";
 import { DeleteButton } from "./row-actions";
 import { reorderPartners } from "./actions";
+import { mediaUrl } from "@/lib/media-url";
 
 export type PartnerRow = {
   id: number;
@@ -213,7 +214,7 @@ function SortableRow({
         <div className="grid h-10 w-20 place-items-center overflow-hidden rounded bg-muted p-1">
           {p.logo ? (
             /* eslint-disable-next-line @next/next/no-img-element */
-            <img src={p.logo} alt="" className="h-full w-full object-contain" />
+            <img src={mediaUrl(p.logo)} alt="" className="h-full w-full object-contain" />
           ) : (
             <span className="text-[10px] text-muted-foreground">no logo</span>
           )}

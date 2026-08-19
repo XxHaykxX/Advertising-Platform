@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { DEFAULT_LOCALE, intlLocale, useUI, useLocalizer, type Locale } from "@/lib/i18n-client";
 import { NO_OFFER_KEY } from "@/lib/offer-value";
 import { pluralForm } from "@/lib/plural";
+import { mediaUrl } from "@/lib/media-url";
 import type { SiteHeaderUser } from "@/components/header";
 import type { ProjectListDTO } from "@/lib/types";
 
@@ -199,7 +200,7 @@ export function ProjectCard({
       <div className="relative aspect-video shrink-0">
         {project.poster ? (
           <Image
-            src={project.poster}
+            src={mediaUrl(project.poster)}
             alt={project.title}
             fill
             className="object-cover"

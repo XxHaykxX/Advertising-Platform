@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { FileVideo, ImageIcon, Plus, Trash2, X } from "lucide-react";
 import { MediaPicker, isVideoPath, type MediaPickerScope } from "@/components/media-picker";
+import { mediaUrl } from "@/lib/media-url";
 import type { Locale, useUI } from "@/lib/i18n-client";
 import type { ReferenceRow } from "./form-shared";
 
@@ -100,7 +101,7 @@ export function ReferencesSection({
                             <FileVideo className="h-4 w-4" />
                           </span>
                         ) : (
-                          <Image src={r.media} alt="" fill className="object-cover" sizes="56px" unoptimized />
+                          <Image src={mediaUrl(r.media)} alt="" fill className="object-cover" sizes="56px" unoptimized />
                         )}
                       </span>
                       <button

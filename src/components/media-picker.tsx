@@ -9,6 +9,7 @@ import { listMemberUploads, uploadMemberImage } from "@/lib/actions/member-uploa
 import { useUI, type Locale } from "@/lib/i18n-client";
 import { captureVideoPoster, isPosterPath, posterPathFor } from "@/lib/video-poster";
 import { cropAspectForDir } from "@/lib/images/size-hint";
+import { mediaUrl } from "@/lib/media-url";
 import { Dropzone, DropzoneEmptyState } from "@/components/ui/dropzone";
 
 // react-easy-crop is ~37 KB and most opens of this dialog only pick an existing
@@ -338,10 +339,10 @@ export function MediaPicker({
                       // seeks a hair in so the frame isn't the opening black.
                       posters.has(posterPathFor(f.path)) ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={posterPathFor(f.path)} alt="" className="h-full w-full object-cover" />
+                      <img src={mediaUrl(posterPathFor(f.path))} alt="" className="h-full w-full object-cover" />
                     ) : (
                       <video
-                        src={`${f.path}#t=0.1`}
+                        src={`${mediaUrl(f.path)}#t=0.1`}
                         className="h-full w-full object-cover"
                         muted
                         playsInline
@@ -361,7 +362,7 @@ export function MediaPicker({
                       />
                       )
                     ) : (
-                      <Image src={f.path} alt="" fill className="object-cover" sizes="200px" unoptimized />
+                      <Image src={mediaUrl(f.path)} alt="" fill className="object-cover" sizes="200px" unoptimized />
                     )}
                   </button>
                   <a

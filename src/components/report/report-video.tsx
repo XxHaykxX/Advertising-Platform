@@ -1,4 +1,5 @@
 import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
+import { mediaUrl } from "@/lib/media-url";
 
 /** Normalize a YouTube/Vimeo watch URL into its embeddable form. Recognized
  *  providers are rewritten to their /embed player; any other http(s) URL is
@@ -67,7 +68,7 @@ export function ReportVideo({
             <video
               controls
               preload="metadata"
-              src={file}
+              src={mediaUrl(file)}
               className="absolute inset-0 h-full w-full"
             />
           )}

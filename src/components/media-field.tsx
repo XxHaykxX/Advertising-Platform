@@ -8,6 +8,7 @@ import { MediaPicker, isVideoPath, type MediaPickerAccept, type MediaPickerScope
 import { UploadProgress } from "@/components/ui/upload-progress";
 import { holdProgress, uploadViaXhr } from "@/lib/upload-xhr";
 import { captureVideoPoster, posterPathFor } from "@/lib/video-poster";
+import { mediaUrl } from "@/lib/media-url";
 import { Dropzone, DropzoneEmptyState, DropzonePreview } from "@/components/ui/dropzone";
 import type { Locale } from "@/lib/i18n-client";
 import {
@@ -298,7 +299,7 @@ export function MediaField({
           <VideoThumbnail key={value} path={value} />
         ) : (
           <Image
-            src={value}
+            src={mediaUrl(value)}
             alt=""
             fill
             className={fit === "contain" ? "object-contain p-2" : "object-cover"}
@@ -480,7 +481,7 @@ function VideoThumbnail({ path }: { path: string }) {
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
-      src={posterPathFor(path)}
+      src={mediaUrl(posterPathFor(path))}
       alt=""
       className="h-full w-full object-cover"
       onError={() => setNoPoster(true)}

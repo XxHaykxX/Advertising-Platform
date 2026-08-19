@@ -9,6 +9,7 @@ import { Container } from "@/components/ui/container";
 import { Reveal } from "@/components/ui/reveal";
 import { useModalDialog } from "@/lib/use-modal-dialog";
 import { DEFAULT_LOCALE, useUI, type Locale } from "@/lib/i18n-client";
+import { mediaUrl } from "@/lib/media-url";
 import type { TestimonialDTO } from "@/lib/types";
 
 /* Clients on camera, between the channel logos and the closing CTA. Replaced
@@ -242,7 +243,7 @@ export function HomeTestimonials({
                     {current.avatar ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
-                        src={current.avatar}
+                        src={mediaUrl(current.avatar)}
                         alt=""
                         className="h-11 w-11 rounded-full object-cover"
                       />
@@ -328,8 +329,8 @@ function Preview({
     return (
       <video
         ref={report}
-        src={item.video}
-        poster={item.image ?? undefined}
+        src={mediaUrl(item.video)}
+        poster={item.image ? mediaUrl(item.image) : undefined}
         muted
         playsInline
         onLoadedMetadata={(e) => report(e.currentTarget)}
@@ -348,7 +349,7 @@ function Preview({
   }
   if (item.image) {
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={item.image} alt="" className="h-full w-full object-cover" />;
+    return <img src={mediaUrl(item.image)} alt="" className="h-full w-full object-cover" />;
   }
   return (
     <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
@@ -448,8 +449,8 @@ function PlayerDialog({
         </button>
         {item.video ? (
           <video
-            src={item.video}
-            poster={item.image ?? undefined}
+            src={mediaUrl(item.video)}
+            poster={item.image ? mediaUrl(item.image) : undefined}
             controls
             autoPlay
             playsInline

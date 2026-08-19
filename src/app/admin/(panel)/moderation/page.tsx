@@ -5,6 +5,7 @@ import { canEditContent } from "@/lib/auth/permissions";
 import type { ModerationStatus } from "@prisma/client";
 import { findAdChannelByCode } from "@/lib/ad-channels";
 import { makeUI } from "@/lib/i18n";
+import { mediaUrl } from "@/lib/media-url";
 import { AdSpaceRowActions, RowActions } from "./row-actions";
 
 /* #13: project-level moderation queue. Accounts self-approve (see
@@ -150,7 +151,7 @@ export default async function ModerationAdminPage({
                     <div className="h-10 w-16 overflow-hidden rounded bg-muted">
                       {p.poster && (
                         /* eslint-disable-next-line @next/next/no-img-element */
-                        <img src={p.poster} alt="" className="h-full w-full object-cover" />
+                        <img src={mediaUrl(p.poster)} alt="" className="h-full w-full object-cover" />
                       )}
                     </div>
                   </td>
@@ -241,7 +242,7 @@ export default async function ModerationAdminPage({
                         <div className="h-10 w-16 overflow-hidden rounded bg-muted">
                           {s.image && (
                             /* eslint-disable-next-line @next/next/no-img-element */
-                            <img src={s.image} alt="" className="h-full w-full object-cover" />
+                            <img src={mediaUrl(s.image)} alt="" className="h-full w-full object-cover" />
                           )}
                         </div>
                       </td>

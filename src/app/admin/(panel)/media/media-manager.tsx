@@ -21,6 +21,7 @@ import {
 import { deleteUpload, saveVideoPoster, uploadImage, type MediaFile } from "@/lib/actions/uploads";
 import type { UploadUsage } from "@/lib/uploads-usage";
 import { captureVideoPoster, isPosterPath, posterPathFor } from "@/lib/video-poster";
+import { mediaUrl } from "@/lib/media-url";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Dropzone, DropzoneEmptyState } from "@/components/ui/dropzone";
 
@@ -95,11 +96,11 @@ function Thumb({ path, poster, sizes = "200px" }: { path: string; poster?: strin
     // existed.
     if (poster) {
       // eslint-disable-next-line @next/next/no-img-element
-      return <img src={poster} alt="" className="h-full w-full object-cover" />;
+      return <img src={mediaUrl(poster)} alt="" className="h-full w-full object-cover" />;
     }
     return (
       <video
-        src={`${path}#t=0.1`}
+        src={`${mediaUrl(path)}#t=0.1`}
         className="h-full w-full object-cover"
         muted
         playsInline
@@ -119,7 +120,7 @@ function Thumb({ path, poster, sizes = "200px" }: { path: string; poster?: strin
       />
     );
   }
-  return <Image src={path} alt="" fill className="object-cover" sizes={sizes} unoptimized />;
+  return <Image src={mediaUrl(path)} alt="" fill className="object-cover" sizes={sizes} unoptimized />;
 }
 
 const ALL = "__all__";
@@ -713,14 +714,14 @@ export function MediaManager({ files }: { files: MediaFile[] }) {
             {/* A video opens as a real player, not a broken <Image>. */}
             {isVideoFile(activeFile.path) ? (
               <video
-                src={activeFile.path}
+                src={mediaUrl(activeFile.path)}
                 className="h-full w-full object-contain"
                 controls
                 autoPlay
                 playsInline
               />
             ) : (
-              <Image src={activeFile.path} alt="" fill className="object-contain" sizes="80vw" unoptimized />
+              <Image src={mediaUrl(activeFile.path)} alt="" fill className="object-contain" sizes="80vw" unoptimized />
             )}
           </div>
           {shown.length > 1 && (
