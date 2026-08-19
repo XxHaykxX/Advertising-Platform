@@ -68,3 +68,12 @@ i18n-export.csv
 # i18n round-trip artifacts (regenerated; keys live in src/lib/i18n.ts)
 i18n-new-keys.csv
 i18n-sheet-merged.csv
+
+# Agent tooling, not the product. `.mcp.json` names Windows-only commands
+# (npx.cmd) and this machine's server list, and .claude/agents holds prompt
+# definitions — neither builds, ships or runs anything here, and both were
+# tracked from the initial commit rather than by decision. Checked before
+# removing: no literal credentials, only ${VAR} placeholders.
+.claude/
+.mcp.json
+
