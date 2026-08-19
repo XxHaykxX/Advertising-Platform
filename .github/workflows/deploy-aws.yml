@@ -64,6 +64,7 @@ jobs:
             ${{ steps.ecr.outputs.registry }}/${{ vars.ECR_REPOSITORY }}:${{ inputs.environment }}
           build-args: |
             NEXT_PUBLIC_SITE_URL=${{ vars.NEXT_PUBLIC_SITE_URL }}
+            NEXT_PUBLIC_MEDIA_ORIGIN=${{ vars.NEXT_PUBLIC_MEDIA_ORIGIN }}
           # No database credentials here — the build only needs DATABASE_URL to
           # be *defined*, never reachable, so the Dockerfile sets a placeholder.
           cache-from: type=gha
@@ -107,5 +108,5 @@ jobs:
 # REQUIRED CONFIGURATION
 #
 # Repository variables: ECR_REPOSITORY, ECS_CLUSTER, ECS_SERVICE,
-#   NEXT_PUBLIC_SITE_URL, HEALTH_URL   (per environment: dev / prod)
+#   NEXT_PUBLIC_SITE_URL, NEXT_PUBLIC_MEDIA_ORIGIN, HEALTH_URL   (per environment: dev / prod)
 # Secrets: AWS_DEPLOY_ROLE_ARN

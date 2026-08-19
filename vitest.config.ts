@@ -18,7 +18,7 @@ export default defineConfig({
     // Unit/integration tests run in Node (no DOM needed for data-layer logic).
     environment: "node",
     globals: true,
-    include: ["src/**/*.test.ts", "test/**/*.test.ts"],
+    include: ["src/**/*.test.ts", "test/**/*.test.ts", "scripts/**/*.test.ts"],
     // Playwright specs live under e2e/ and use their own runner — keep them out.
     // Integration tests need the docker DB — run via `npm run test:int`.
     exclude: ["e2e/**", "node_modules/**", ".next/**", "**/*.integration.test.ts"],

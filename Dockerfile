@@ -33,6 +33,11 @@ COPY . .
 # correct here rather than at runtime.
 ARG NEXT_PUBLIC_SITE_URL
 ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
+# Empty is a valid value here, not a missing one — it's what keeps the fs-driver
+# build (Hostinger) rendering plain /uploads/... paths. Only the s3-driver build
+# sets it, to the CDN host. See src/lib/media-url.ts.
+ARG NEXT_PUBLIC_MEDIA_ORIGIN
+ENV NEXT_PUBLIC_MEDIA_ORIGIN=$NEXT_PUBLIC_MEDIA_ORIGIN
 
 # A placeholder, not a credential. Two facts, both verified by building this
 # image on 2026-08-19:
@@ -57,6 +62,16 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
+# The standalone server.js reads this and sets server.keepAliveTimeout
+# (node_modules/next/dist/build/utils.js's generated template). Set above the
+# ~900s ALB idle timeout this app is deployed behind, +10s buffer — the same
+# relationship Next's own docs use for their 60s-ALB/70s-keepAlive example
+# (node_modules/next/dist/docs/01-app/03-api-reference/06-cli/next.md) —
+# otherwise Node closes a kept-alive connection without telling the ALB, and
+# the ALB's next reused request on it gets a 502. HEADERS_TIMEOUT and
+# REQUEST_TIMEOUT (default 910000, same reasoning) are set by
+# scripts/aws/server-timeouts.js below; Next has no hook for those two.
+ENV KEEP_ALIVE_TIMEOUT=910000
 
 # node:22-bookworm-slim ships without the `openssl` binary, and Prisma probes it
 # to pick a query engine. Without it Prisma logs "failed to detect the
@@ -78,7 +93,11 @@ COPY --from=build --chown=nextjs:nextjs /app/.next/static ./.next/static
 # build-time warning. Copying it explicitly costs a layer and removes the class
 # of failure.
 COPY --from=build --chown=nextjs:nextjs /app/node_modules/.prisma ./node_modules/.prisma
+# Standalone output tracing only follows what server.js itself requires, so
+# this preload script needs its own explicit COPY — it's loaded by `node -r`
+# below, before server.js runs, not required from inside it.
+COPY --chown=nextjs:nextjs scripts/aws/server-timeouts.js ./server-timeouts.js
 
 USER nextjs
 EXPOSE 3000
-CMD ["node", "server.js"]
+CMD ["node", "-r", "./server-timeouts.js", "server.js"]
