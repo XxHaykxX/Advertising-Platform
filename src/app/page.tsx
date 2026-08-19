@@ -6,7 +6,6 @@ import { WhyUs } from "@/components/why-us";
 import { HomePartners } from "@/components/home-partners";
 import { HomeTestimonials } from "@/components/home-testimonials";
 import { HomeGoals } from "@/components/home-goals";
-import { HomeCta } from "@/components/home-cta";
 import { Footer } from "@/components/footer";
 import { getPartners } from "@/lib/data/partners";
 import { getTestimonials } from "@/lib/data/testimonials";
@@ -60,10 +59,12 @@ export default async function Home() {
             page closes on the CTA either way rather than on an empty frame. */}
         <HomePartners partners={partners} locale={locale} />
         <HomeTestimonials items={testimonials} locale={locale} />
-        {/* The goals and the CTA are one section of the brief: name the task,
-            then send the brief. The CTA's heading covers both. */}
+        {/* The goals close the page now. The callback block that used to sit
+            under them (HomeCta, `#callback`) came off on 2026-08-19 — owner:
+            one form, on /contact, which the hero's second button opens. The
+            component still exists and is wired to CallRequest + the admin
+            queue, so putting it back is one line if that decision reverses. */}
         <HomeGoals locale={locale} />
-        <HomeCta locale={locale} />
       </main>
       <Footer locale={locale} currency={currency} />
     </>

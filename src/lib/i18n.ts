@@ -829,10 +829,14 @@ export const UI: Record<string, Dict> = {
     en: "Thanks — we'll get back to you shortly.",
     hy: "Շնորհակալություն։ Մենք շուտով կապ կհաստատենք Ձեզ հետ։",
   },
+  // The form collects a phone, not an address (19.08), so both of these had to
+  // stop promising email. "Check your email for confirmation" was never true
+  // even before that — nothing was ever sent to the visitor; only the admin got
+  // a notice.
   "contactPage.thanksSubtitle": {
-    ru: "Проверьте почту для подтверждения.",
-    en: "Check your email for confirmation.",
-    hy: "Ստուգեք Ձեր էլփոստը հաստատման համար։",
+    ru: "Мы перезвоним на указанный номер.",
+    en: "We'll call you on the number you left.",
+    hy: "Կզանգահարենք Ձեր թողած համարին։",
   },
   "contactPage.projectOptional": { ru: "Проект (необязательно)", en: "Project (Optional)", hy: "Նախագծեր" },
   "contactPage.selectProject": { ru: "Выберите проект…", en: "Select a project...", hy: "Ընտրել" },
@@ -842,9 +846,9 @@ export const UI: Record<string, Dict> = {
     hy: "Պատմեք Ձեր նախագծի կամ բրենդի մասին, կամ պարզապես հարցրեք այն, ինչ հետաքրքրում է։",
   },
   "contactPage.respondNote": {
-    ru: "Мы рассмотрим ваше сообщение и ответим на вашу почту в течение 24 часов.",
-    en: "We'll review your message and respond to your email within 24 hours.",
-    hy: "Սովորաբար պատասխանում ենք մեկ աշխատանքային օրվա ընթացքում։",
+    ru: "Мы рассмотрим ваше сообщение и перезвоним в течение одного рабочего дня.",
+    en: "We'll review your message and call you back within one business day.",
+    hy: "Կուսումնասիրենք հաղորդագրությունը և կզանգահարենք մեկ աշխատանքային օրվա ընթացքում։",
   },
 
   // ── how it works (full page) ──────────────────

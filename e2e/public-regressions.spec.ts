@@ -64,11 +64,16 @@ test.describe("home page copy per locale", () => {
       // a thinner one. This used to assert the two trust figures ("100%",
       // "50+"); that section was removed from the home page on 2026-08-18, so
       // pinning its copy would only pin one owner's wording of the week.
-      // Structure is what has to match: four ways to advertise, and the form
-      // that closes the page. Copy stays free to change in /admin/i18n without
-      // turning this red.
+      // Structure is what has to match: four ways to advertise, seven goals,
+      // and a way to ask for a call. Copy stays free to change in /admin/i18n
+      // without turning this red.
+      //
+      // The form itself left the homepage on 2026-08-19 (owner) — the hero's
+      // second button opens /contact instead, so what this pins now is that the
+      // route out still exists rather than that a `#callback` block does.
       await expect(page.locator("#ad-types a[href^='/ads/']")).toHaveCount(4);
-      await expect(page.locator("#callback form")).toBeVisible();
+      await expect(page.locator("#goals a[href^='/ads/']")).toHaveCount(7);
+      await expect(page.locator("a[href='/contact']").first()).toBeVisible();
     });
   }
 });

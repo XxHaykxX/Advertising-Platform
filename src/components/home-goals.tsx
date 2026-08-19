@@ -15,17 +15,14 @@ import { DEFAULT_LOCALE, makeUI, type Locale } from "@/lib/i18n";
    lead to the same room.
 
    Tiles, not the seven full-width rows this shipped as on 2026-08-18 (owner,
-   19.08): seven stacked rows of identical weight read as a wall to scroll
-   past, and at one row per line the block was taller than the viewport on
-   every phone. Four columns turn it into two rows on a desktop, and the first
-   goal — awareness, which is what most of this inventory actually sells —
-   takes two of them in solid primary, so the eye has somewhere to start
-   instead of scanning seven equals.
+   19.08): seven stacked rows read as a wall to scroll past, and four columns
+   turn the block into two rows on a desktop.
 
-   7 = 1 double-wide + 6, i.e. 8 cells: that fills 4 columns exactly, and 2
-   columns exactly, with no orphan tile in either. A fifth or sixth column
-   would leave a hole; an eighth goal would too — if the list grows, re-check
-   this arithmetic rather than assuming the grid absorbs it.
+   All seven tiles are identical — owner, 19.08. The first shipped double-wide
+   and filled with the brand colour, to give the eye somewhere to start; the
+   owner's call is that nothing here should stand out, so the emphasis is gone.
+   The cost is arithmetic: 7 tiles leave one empty cell in a 4-column row and an
+   orphan in a 2-column one. Do not "fix" that by promoting a tile again.
 
    Deliberately denser than the four type cards two sections up (ad-types.tsx),
    which have a boxed icon chip, a paragraph and their own CTA row: seven cards
@@ -61,46 +58,26 @@ export function HomeGoals({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
           </div>
         </Reveal>
 
-        {/* One column on a phone, not two. Two fits 7 tiles in 1287px against
-            this layout's 1462 — and clips the copy: "նախապատրաստում",
+        {/* One column on a phone, not two. Two fits the seven tiles into 1287px
+            against this layout's ~1460 — and clips the copy: "նախապատրաստում",
             "առաջխաղացում" and the sponsorship group name are single Armenian
-            words wider than a 160px tile, and they ran straight off the edge.
-            The old seven-row list was 1395px here, so the phone keeps roughly
-            the height it had; the saving this redesign buys is on the desktop,
-            where 1027px became 696. */}
+            words wider than a 160px tile, and they ran straight off the edge. */}
         <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {AD_GOALS.map((goal, i) => {
             const Icon = AD_GOAL_ICONS[goal.code];
-            // The first goal only. Not a flag on AD_GOALS: which tile leads is
-            // a layout decision about this grid, and the list is ordered — the
-            // data has no business carrying "render me bigger".
-            const accent = i === 0;
             return (
-              <Reveal key={goal.code} delay={0.05 * i} className={accent ? "sm:col-span-2" : undefined}>
+              <Reveal key={goal.code} delay={0.05 * i}>
                 <Link
                   href={`/ads/${AD_GROUP_SLUGS[goal.group]}`}
-                  className={[
-                    "card-lift group flex h-full flex-col rounded-2xl border p-4 outline-none sm:p-5",
-                    accent
-                      ? "border-primary bg-primary text-white focus-visible:border-white"
-                      : "border-border bg-card focus-visible:border-primary",
-                  ].join(" ")}
+                  className="card-lift group flex h-full flex-col rounded-2xl border border-border bg-card p-4 outline-none focus-visible:border-primary sm:p-5"
                 >
                   {/* Icon on the title's line, not stacked above it. Stacked
                       cost ~44px per tile, which on a phone — where the grid is
                       one column and every tile is a row anyway — made this
                       section taller than the seven-row list it replaced. */}
                   <span className="flex items-center gap-2.5">
-                    <Icon
-                      className={accent ? "h-6 w-6 shrink-0 text-white" : "h-5 w-5 shrink-0 text-primary"}
-                      strokeWidth={1.75}
-                    />
-                    <span
-                      className={[
-                        "font-semibold",
-                        accent ? "text-lg text-white" : "text-base text-foreground",
-                      ].join(" ")}
-                    >
+                    <Icon className="h-5 w-5 shrink-0 text-primary" strokeWidth={1.75} />
+                    <span className="text-base font-semibold text-foreground">
                       {t(`adGoal.${goal.code}`)}
                     </span>
                   </span>
@@ -108,12 +85,7 @@ export function HomeGoals({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
                   {/* flex-1 so the group caption below sits on the tile floor —
                       goal descriptions run one to three lines and the captions
                       would otherwise land at a different height in every tile. */}
-                  <span
-                    className={[
-                      "mt-2 block flex-1 text-sm leading-relaxed",
-                      accent ? "text-white/80" : "text-muted-foreground",
-                    ].join(" ")}
-                  >
+                  <span className="mt-2 block flex-1 text-sm leading-relaxed text-muted-foreground">
                     {t(`adGoal.${goal.code}.sub`)}
                   </span>
 
@@ -128,12 +100,7 @@ export function HomeGoals({ locale = DEFAULT_LOCALE }: { locale?: Locale }) {
                       arrow parked against the tile's right edge, floating
                       beside two lines it no longer belongs to. Inline, it
                       simply follows the last word. */}
-                  <span
-                    className={[
-                      "mt-3 block text-xs font-semibold uppercase tracking-wide",
-                      accent ? "text-white" : "text-primary",
-                    ].join(" ")}
-                  >
+                  <span className="mt-3 block text-xs font-semibold uppercase tracking-wide text-primary">
                     {t(`adGroup.${goal.group}`)}{" "}
                     <ArrowRight className="inline h-3.5 w-3.5 align-[-2px] transition-transform duration-300 group-hover:translate-x-1" />
                   </span>

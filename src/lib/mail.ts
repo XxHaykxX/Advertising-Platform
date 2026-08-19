@@ -512,30 +512,41 @@ export async function sendPasswordResetEmail(email: string, resetUrl: string): P
   }
 }
 
-type ContactMessageInput = { name: string; email: string; message?: string; projectTitle?: string };
+/** A phone number, not an email, since 2026-08-19 (owner): the contact form
+ *  asks for the number people actually answer on. Everything downstream — the
+ *  CTA, the plain-text line — dials instead of composing a reply. */
+type ContactMessageInput = { name: string; phone: string; message?: string; projectTitle?: string };
 
 /** The public /contact form (#37) notifies the admin by email instead of
-   writing to the (now removed) Applications inbox — CTA replies straight to
-   the sender's address since there's no admin page to open. */
+   writing to the (now removed) Applications inbox — there is no admin page to
+   open, so the CTA has to carry the whole reply path. Since the form collects
+   a phone rather than an address (19.08), that CTA dials, exactly like
+   callRequestTemplate below; this form absorbed the homepage callback block
+   the same day. */
 export function contactMessageTemplate(input: ContactMessageInput) {
   const subject = `Նոր հաղորդագրություն կայքից / Новое сообщение с сайта — ${input.name}`;
-  const projectLine = input.projectTitle
-    ? `<br/>${input.projectTitle}`
-    : "";
+  // Escaped, like callRequestTemplate below already does: every one of these
+  // values is typed by an anonymous visitor and lands in an HTML email we send
+  // ourselves. Interpolating them raw let a name containing markup rewrite the
+  // notice.
+  const name = escapeHtml(input.name);
+  const phone = escapeHtml(input.phone);
+  const message = input.message ? `<br/>${escapeHtml(input.message)}` : "";
+  const projectLine = input.projectTitle ? `<br/>${escapeHtml(input.projectTitle)}` : "";
   const html = layout(
     `
     <p><strong>Նոր հաղորդագրություն կոնտակտային ձևից</strong><br/>
-    ${input.name} · ${input.email}${projectLine}${input.message ? `<br/>${input.message}` : ""}</p>
+    ${name} · ${phone}${projectLine}${message}</p>
     <p><strong>Новое сообщение с контактной формы</strong><br/>
-    ${input.name} · ${input.email}${projectLine}${input.message ? `<br/>${input.message}` : ""}</p>
+    ${name} · ${phone}${projectLine}${message}</p>
     <p><strong>New contact form message</strong><br/>
-    ${input.name} · ${input.email}${projectLine}${input.message ? `<br/>${input.message}` : ""}</p>
+    ${name} · ${phone}${projectLine}${message}</p>
     `,
-    "Պատասխանել / Ответить / Reply",
-    `mailto:${input.email}`,
+    "Զանգահարել / Позвонить / Call",
+    `tel:${input.phone}`,
   );
   const text = [
-    `${input.name} <${input.email}>${input.projectTitle ? ` — ${input.projectTitle}` : ""}${input.message ? `\n${input.message}` : ""}`,
+    `${input.name} · ${input.phone}${input.projectTitle ? ` — ${input.projectTitle}` : ""}${input.message ? `\n${input.message}` : ""}`,
   ].join("\n\n");
   return { subject, html, text };
 }
