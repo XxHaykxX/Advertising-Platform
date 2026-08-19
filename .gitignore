@@ -77,3 +77,12 @@ i18n-sheet-merged.csv
 .claude/
 .mcp.json
 
+# Owner's working documents, not the codebase: the original brief, the running
+# backlog and the current-refactor notes. They live on the owner's machine and
+# change on a different clock from the code — tracking them meant every edit to
+# a private note became a repository commit, and anyone given read access to
+# the repo got the business brief with it.
+/fix.md
+/tasks.md
+/ТЗ — Advertising Platform (product placement).md
+
