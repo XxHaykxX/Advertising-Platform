@@ -48,8 +48,21 @@ function s3() {
     const mod = await import("@aws-sdk/client-s3");
     // No explicit credentials: on Fargate the task role is picked up from the
     // container credentials endpoint by the default provider chain. Handing the
-    // SDK static keys here would mean keys to rotate and keys to leak.
-    const client = new mod.S3Client({ region: process.env.AWS_REGION || "eu-central-1" });
+    // SDK static keys here would mean keys to rotate and keys to leak. The same
+    // chain reads AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY when they are set,
+    // which is how the local MinIO run below authenticates.
+    //
+    // S3_ENDPOINT points the client at something other than AWS. Its reason to
+    // exist is that this driver is otherwise unverifiable until somebody has
+    // provisioned a real bucket: with an endpoint it runs against MinIO in
+    // Docker, and e2e/uploads.spec.ts passes over it unchanged. Path-style
+    // addressing comes with it — virtual-host style needs wildcard DNS, which
+    // localhost does not have.
+    const endpoint = process.env.S3_ENDPOINT;
+    const client = new mod.S3Client({
+      region: process.env.AWS_REGION || "eu-central-1",
+      ...(endpoint ? { endpoint, forcePathStyle: true } : {}),
+    });
     return { mod, client };
   })();
   return loaded;
