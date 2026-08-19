@@ -29,8 +29,9 @@ const MediaCropDialog = dynamic(
 
 /** Mirror of MAX_BYTES / MAX_BYTES_VIDEO in lib/uploads-store.ts. Checked before
  *  the round trip: past the framework body limit the request is cut off
- *  mid-flight and the server's own "too large" message never runs. */
-const MAX_MB = { image: 8, video: 50 };
+ *  mid-flight and the server's own "too large" message never runs.
+ *  `null` = no cap, which is where video landed on 2026-08-19. */
+const MAX_MB: Record<"image" | "video", number | null> = { image: 8, video: null };
 
 /** The file currently going out, with its byte counters. */
 type UploadJob = { file: File; loaded: number; total: number };
@@ -166,7 +167,7 @@ export function MediaField({
     setDropError(null);
     setDropWarning(null);
     const max = MAX_MB[kind];
-    if (file.size > max * 1024 * 1024) {
+    if (max !== null && file.size > max * 1024 * 1024) {
       const mb = Math.round((file.size / (1024 * 1024)) * 10) / 10;
       setDropError(`${errTooLargeLabel}: ${file.name} (${mb} MB > ${max} MB)`);
       return;
@@ -340,7 +341,13 @@ export function MediaField({
       <Dropzone
         accept={acceptMap}
         maxFiles={1}
-        maxSize={(accept === "video" ? MAX_MB.video : MAX_MB.image) * 1024 * 1024}
+        // undefined = the dropzone imposes no size limit of its own; on the
+        // video field that is now the case (MAX_MB.video is null).
+        maxSize={
+          (accept === "video" ? MAX_MB.video : MAX_MB.image) === null
+            ? undefined
+            : (accept === "video" ? MAX_MB.video! : MAX_MB.image!) * 1024 * 1024
+        }
         disabled={uploading}
         onDrop={(files) => handleDrop(files[0])}
         onError={(e) => setDropError(e.message)}

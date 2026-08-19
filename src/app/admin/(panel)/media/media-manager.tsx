@@ -32,7 +32,7 @@ function formatDate(ms: number): string {
  *  before the round trip: past the framework body limit the request is cut
  *  off mid-flight and the server's own "too large" message never runs — the
  *  same pre-check the picker and the form fields already do. */
-const MAX_MB = { image: 8, video: 50 };
+const MAX_MB: Record<"image" | "video", number | null> = { image: 8, video: null };
 
 // Folders that always appear (even when empty) so you can open one and upload
 // into it. `slug` is the on-disk subfolder under /uploads/ (uploadImage `dir`).
@@ -246,7 +246,7 @@ export function MediaManager({ files }: { files: MediaFile[] }) {
         // `maxSize`, but a file dropped anywhere else on the page (the
         // page-level target further down) skips that gate — check again here.
         const maxMb = looksVideo ? MAX_MB.video : MAX_MB.image;
-        if (file.size > maxMb * 1024 * 1024) {
+        if (maxMb !== null && file.size > maxMb * 1024 * 1024) {
           const mb = Math.round((file.size / (1024 * 1024)) * 10) / 10;
           const message = `“${file.name}” is ${mb} MB — the limit is ${maxMb} MB.`;
           setError(message);
@@ -548,7 +548,15 @@ export function MediaManager({ files }: { files: MediaFile[] }) {
             accept={folderTakesVideo(open) ? { "video/mp4": [".mp4"], "video/webm": [".webm"] } : { "image/*": [] }}
             multiple
             maxFiles={0}
-            maxSize={(folderTakesVideo(open) ? MAX_MB.video : MAX_MB.image) * 1024 * 1024}
+            // undefined = no size limit from the dropzone, which is the video
+            // folder's case now that MAX_MB.video is null.
+            maxSize={
+              folderTakesVideo(open)
+                ? MAX_MB.video === null
+                  ? undefined
+                  : MAX_MB.video * 1024 * 1024
+                : MAX_MB.image! * 1024 * 1024
+            }
             disabled={pending}
             // Otherwise a drop landing on the zone would also bubble to the
             // page-level onDrop above and upload every file twice.

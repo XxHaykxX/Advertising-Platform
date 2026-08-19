@@ -5,7 +5,6 @@ import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
 import { UPLOADS_DIR } from "@/lib/uploads-dir";
 import {
-  MAX_BODY_BYTES,
   STAFF_UPLOAD_MESSAGES,
   memberUploadMessages,
   storeUpload,
@@ -52,25 +51,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Bad origin." }, { status: 403 });
   }
 
-  // Refuse an oversized body BEFORE formData() reads it. The store's caps run on
-  // the parsed file, which means the whole request has already been buffered
-  // into this process by then — hand it 500 MB and that is 500 MB of resident
-  // memory before the 50 MB check ever fires, i.e. an OOM on shared hosting
-  // that anyone who can log in could trigger.
+  // There was a content-length early-out here, sized as "the video cap plus the
+  // poster frame". The owner removed the video cap on 2026-08-19 (see
+  // MAX_BYTES_VIDEO), and this check could not survive it: the route cannot
+  // tell a clip from a still until formData() has parsed the body, so any
+  // ceiling it kept would cap video uploads under a different name.
   //
-  // Content-Length is client-supplied, so this is an early-out and NOT the
-  // limit: MAX_BYTES / MAX_BYTES_VIDEO inside storeUpload are what actually
-  // decide, and removing them because of this check would leave the endpoint
-  // trusting a header. The endpoint serves 8 MB stills and 50 MB clips through
-  // the same door, so all this can do is bound the body by the larger of the
-  // two and let the store apply the per-kind cap.
-  //
-  // (Message stays English: the client checks the size itself before sending,
-  // so this is only reachable by a hand-built request, never by the cabinet.)
-  const declared = Number(req.headers.get("content-length"));
-  if (!Number.isFinite(declared) || declared <= 0 || declared > MAX_BODY_BYTES) {
-    return NextResponse.json({ error: "Request body too large." }, { status: 413 });
-  }
+  // What that costs: the body is buffered into this process before storeUpload
+  // sees it, so a very large POST is that much resident memory on shared
+  // hosting. The gate below still means only a signed-in editor or member can
+  // reach it, and Passenger's own request-body limit applies in front.
 
   let userId: number;
   try {

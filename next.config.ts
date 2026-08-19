@@ -43,12 +43,17 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     // Server Actions cap request bodies at 1 MB by default; uploads (uploadImage)
-    // need headroom. Must clear the LARGEST per-file cap in uploads.ts —
-    // MAX_BYTES_VIDEO = 50 MB (trailer .mp4/.webm). At 8mb every video >8 MB was
-    // silently rejected by the framework before uploadImage even ran (that was
-    // the "mp4 upload doesn't work" bug). 52mb leaves margin for multipart overhead.
+    // need headroom. At 8mb every video >8 MB was silently rejected by the
+    // framework before uploadImage even ran (that was the "mp4 upload doesn't
+    // work" bug), and a framework rejection never reaches our own message.
+    //
+    // MAX_BYTES_VIDEO went to null on 2026-08-19 (no cap on clips), and these
+    // two numbers have to clear it or they become the cap instead. Neither
+    // setting accepts "unlimited", so 1024mb stands in for it — well past any
+    // clip a client will send, and the request never gets that far anyway:
+    // Passenger's own body limit sits in front of both.
     serverActions: {
-      bodySizeLimit: "52mb",
+      bodySizeLimit: "1024mb",
     },
     // The REAL mp4-upload blocker (found 2026-07-26 by uploading 10/12/14 MB
     // clips locally): because this app has a proxy (src/proxy.ts), Next clones
@@ -56,10 +61,10 @@ const nextConfig: NextConfig = {
     // body is silently TRUNCATED, so the multipart parser inside the upload
     // action died with "Unexpected end of form" → 500, and the picker showed
     // nothing at all. serverActions.bodySizeLimit above is necessary but not
-    // sufficient — both caps must clear MAX_BYTES_VIDEO (50 MB) in
-    // src/lib/actions/uploads.ts. Cost: a 50 MB upload is buffered in memory,
-    // hence the deliberately tight per-file cap on the action side.
-    proxyClientMaxBodySize: "52mb",
+    // sufficient — both caps must clear the per-file cap. Cost: the upload is
+    // buffered in memory, and with no per-file cap left that cost is bounded by
+    // the host rather than by us.
+    proxyClientMaxBodySize: "1024mb",
   },
 };
 

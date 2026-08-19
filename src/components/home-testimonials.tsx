@@ -28,8 +28,16 @@ import type { TestimonialDTO } from "@/lib/types";
 /** How far a side card sits from the centre, as a share of the stage width.
     Tuned so that at 1440 the neighbours run past the edges of the screen: a
     side card that fits entirely on screen reads as a third small card, not as
-    "there is more of this". */
-const SIDE_OFFSET = 70;
+    "there is more of this". A portrait stage is a fraction of the width of a
+    landscape one, so the same percentage would leave its neighbours parked
+    politely on screen — hence two numbers. */
+const SIDE_OFFSET_LANDSCAPE = 70;
+const SIDE_OFFSET_PORTRAIT = 115;
+
+/** Stage shape before any clip has reported its own. 16:9 because that is what
+    a camera-shot testimonial is; a phone-shot one corrects it on
+    loadedmetadata, within a frame of the video appearing. */
+const DEFAULT_RATIO = 16 / 9;
 
 export function HomeTestimonials({
   items,
@@ -43,6 +51,16 @@ export function HomeTestimonials({
   const [active, setActive] = useState(0);
   const [playing, setPlaying] = useState<TestimonialDTO | null>(null);
   const touchStartX = useRef<number | null>(null);
+  /** width/height per testimonial, learned from the clip itself. Clients send
+      what their phone recorded — portrait far more often than not — and a
+      portrait clip in a 16:9 frame is cropped to a horizontal band across the
+      speaker's chest. Measuring beats asking staff to tag each upload. */
+  const [ratios, setRatios] = useState<Record<number, number>>({});
+  const onRatio = useCallback(
+    (id: number, ratio: number) =>
+      setRatios((r) => (r[id] === ratio || !Number.isFinite(ratio) || ratio <= 0 ? r : { ...r, [id]: ratio })),
+    [],
+  );
 
   const count = items.length;
   const go = useCallback(
@@ -62,6 +80,17 @@ export function HomeTestimonials({
   }
 
   const current = items[active];
+
+  /** Whether ANY slide carries text, not just the active one: computed across
+      the carousel so switching from a captioned clip to a bare one doesn't make
+      the whole block appear and vanish under the video. */
+  const anyText = items.some((i) => i.quote || i.authorName || i.authorRole || i.company);
+
+  // One stage for the whole carousel, shaped by the clip in the middle — the
+  // cards are stacked in the same box, so they cannot each have their own.
+  const stageRatio = ratios[current.id] ?? DEFAULT_RATIO;
+  const portrait = stageRatio < 1;
+  const sideOffset = portrait ? SIDE_OFFSET_PORTRAIT : SIDE_OFFSET_LANDSCAPE;
 
   return (
     <Section id="testimonials" muted>
@@ -103,10 +132,19 @@ export function HomeTestimonials({
           if (Math.abs(dx) > 40) go(dx < 0 ? 1 : -1);
         }}
       >
-        {/* The wider inset from `sm` up is the room the arrows stand in: on a
-            narrow tablet a full-width stage would put them back on top of the
-            video. */}
-        <div className="relative mx-auto aspect-video w-[min(100%-2rem,640px)] sm:w-[min(100%-10rem,640px)]">
+        {/* Landscape is sized by width — the wider inset from `sm` up is the
+            room the arrows stand in, since on a narrow tablet a full-width
+            stage would put them back on top of the video. Portrait is sized by
+            HEIGHT instead (width follows from the ratio), because a portrait
+            card as wide as a landscape one would be taller than the screen. */}
+        <div
+          className={`relative mx-auto transition-[width,height] duration-300 ease-out ${
+            portrait
+              ? "h-[min(30rem,68vh)] w-auto"
+              : "w-[min(100%-2rem,640px)] sm:w-[min(100%-10rem,640px)]"
+          }`}
+          style={{ aspectRatio: String(stageRatio) }}
+        >
           {items.map((item, i) => {
             const off = offset(i);
             if (Math.abs(off) > 1) return null;
@@ -119,7 +157,7 @@ export function HomeTestimonials({
                 }`}
                 style={{ zIndex: isActive ? 2 : 1 }}
                 animate={{
-                  x: `${off * SIDE_OFFSET}%`,
+                  x: `${off * sideOffset}%`,
                   scale: isActive ? 1 : 0.82,
                   opacity: isActive ? 1 : 0.5,
                 }}
@@ -128,7 +166,7 @@ export function HomeTestimonials({
                 onClick={isActive ? undefined : () => setActive(i)}
                 aria-hidden={!isActive}
               >
-                <Preview item={item} still={Boolean(reducedMotion)} />
+                <Preview item={item} still={Boolean(reducedMotion)} onRatio={onRatio} />
 
                 {item.company ? (
                   <span className="pointer-events-none absolute bottom-3 left-4 text-sm font-semibold uppercase tracking-wide text-white drop-shadow-md">
@@ -140,7 +178,12 @@ export function HomeTestimonials({
                   <button
                     type="button"
                     onClick={() => setPlaying(item)}
-                    aria-label={`${t("testimonials.play")} — ${item.authorName}`}
+                    // The name is a qualifier, not the label: staff may leave it
+                    // empty, and "Play — " with nothing after it is worse than
+                    // "Play" on its own.
+                    aria-label={
+                      item.authorName ? `${t("testimonials.play")} — ${item.authorName}` : t("testimonials.play")
+                    }
                     className="absolute inset-0 grid place-items-center"
                   >
                     <span className="grid h-16 w-16 place-items-center rounded-full bg-white/90 text-foreground shadow-lg transition-transform duration-200 hover:scale-105">
@@ -166,48 +209,63 @@ export function HomeTestimonials({
       </div>
 
       <Container>
-        {/* Fixed minimum height: quotes differ in length, and without it every
-            switch nudges the dots and the section below by a line. */}
-        <div className="mx-auto mt-10 min-h-[11rem] max-w-2xl text-center">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={current.id}
-              initial={reducedMotion ? false : { opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={reducedMotion ? { opacity: 1 } : { opacity: 0, y: -8 }}
-              transition={{ duration: 0.2 }}
-            >
-              {current.quote ? (
-                <blockquote className="text-lg leading-relaxed text-foreground md:text-xl">
-                  <Quote className="mx-auto mb-4 h-6 w-6 text-primary/40" aria-hidden />
-                  {current.quote}
-                </blockquote>
-              ) : null}
-
-              <div className="mt-6 flex items-center justify-center gap-3">
-                {current.avatar ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={current.avatar}
-                    alt=""
-                    className="h-11 w-11 rounded-full object-cover"
-                  />
+        {/* Nothing filled in, nothing rendered — not an empty frame under the
+            video, and not the reserved height either. A clip on its own is a
+            complete testimonial; the quote and the byline are what staff adds
+            when they have it. */}
+        {anyText ? (
+          // Fixed minimum height while there IS text: quotes differ in length,
+          // and without it every switch nudges the dots and the section below
+          // by a line. Sized off the longest block, so it is reserved for the
+          // whole carousel rather than per slide.
+          <div className="mx-auto mt-10 min-h-[11rem] max-w-2xl text-center">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={current.id}
+                initial={reducedMotion ? false : { opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={reducedMotion ? { opacity: 1 } : { opacity: 0, y: -8 }}
+                transition={{ duration: 0.2 }}
+              >
+                {current.quote ? (
+                  <blockquote className="text-lg leading-relaxed text-foreground md:text-xl">
+                    <Quote className="mx-auto mb-4 h-6 w-6 text-primary/40" aria-hidden />
+                    {current.quote}
+                  </blockquote>
                 ) : null}
-                {/* Left-aligned beside an avatar, centred without one —
-                    otherwise a name shorter than its job title sits visibly
-                    off the axis everything else on this section is on. */}
-                <div className={current.avatar ? "text-left" : "text-center"}>
-                  <p className="text-sm font-semibold text-foreground">{current.authorName}</p>
-                  {current.authorRole || current.company ? (
-                    <p className="text-sm text-muted-foreground">
-                      {[current.authorRole, current.company].filter(Boolean).join(", ")}
-                    </p>
-                  ) : null}
-                </div>
-              </div>
-            </motion.div>
-          </AnimatePresence>
-        </div>
+
+                {/* The byline needs a name or a job to be a byline. An avatar on
+                    its own is a face with no caption, so it rides with them
+                    rather than standing in for them. */}
+                {current.authorName || current.authorRole || current.company ? (
+                  <div className={`flex items-center justify-center gap-3 ${current.quote ? "mt-6" : ""}`}>
+                    {current.avatar ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={current.avatar}
+                        alt=""
+                        className="h-11 w-11 rounded-full object-cover"
+                      />
+                    ) : null}
+                    {/* Left-aligned beside an avatar, centred without one —
+                        otherwise a name shorter than its job title sits visibly
+                        off the axis everything else on this section is on. */}
+                    <div className={current.avatar ? "text-left" : "text-center"}>
+                      {current.authorName ? (
+                        <p className="text-sm font-semibold text-foreground">{current.authorName}</p>
+                      ) : null}
+                      {current.authorRole || current.company ? (
+                        <p className="text-sm text-muted-foreground">
+                          {[current.authorRole, current.company].filter(Boolean).join(", ")}
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : null}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+        ) : null}
 
         {count > 1 ? (
           <div className="mt-6 flex justify-center gap-2">
@@ -233,7 +291,12 @@ export function HomeTestimonials({
       </Container>
 
       {playing ? (
-        <PlayerDialog item={playing} onClose={() => setPlaying(null)} closeLabel={t("btn.close")} />
+        <PlayerDialog
+          item={playing}
+          onClose={() => setPlaying(null)}
+          closeLabel={t("btn.close")}
+          label={playing.authorName || t("testimonials.title")}
+        />
       ) : null}
     </Section>
   );
@@ -242,14 +305,34 @@ export function HomeTestimonials({
 /** The looping preview, or the still when there is no clip (and when the
     visitor asked for less motion — a video that loops forever is exactly what
     prefers-reduced-motion is about). */
-function Preview({ item, still }: { item: TestimonialDTO; still: boolean }) {
+function Preview({
+  item,
+  still,
+  onRatio,
+}: {
+  item: TestimonialDTO;
+  still: boolean;
+  /** Reports the clip's own width/height so the stage can take its shape. */
+  onRatio: (id: number, ratio: number) => void;
+}) {
+  // Read the size off the element, whenever it becomes known. The event alone
+  // is not enough: the browser starts loading from the server-rendered markup,
+  // so a cached clip can reach HAVE_METADATA before React attaches a listener,
+  // and loadedmetadata then never fires for us. The ref runs at that later
+  // point and finds videoWidth already filled in.
+  const report = (el: HTMLVideoElement | null) => {
+    if (el && el.videoWidth) onRatio(item.id, el.videoWidth / el.videoHeight);
+  };
+
   if (item.video) {
     return (
       <video
+        ref={report}
         src={item.video}
         poster={item.image ?? undefined}
         muted
         playsInline
+        onLoadedMetadata={(e) => report(e.currentTarget)}
         // Reduced motion stops the looping, not the picture: a paused clip still
         // shows its first frame, which beats falling through to the empty
         // placeholder when staff uploaded a video but no poster.
@@ -308,10 +391,15 @@ function PlayerDialog({
   item,
   onClose,
   closeLabel,
+  label,
 }: {
   item: TestimonialDTO;
   onClose: () => void;
   closeLabel: string;
+  /** What a screen reader announces on open. The author's name when there is
+   *  one, the section's own title when staff left it blank — an aria-label of
+   *  "" is an unnamed dialog, which is worse than a generic name. */
+  label: string;
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
@@ -340,12 +428,15 @@ function PlayerDialog({
         tabIndex={-1}
         role="dialog"
         aria-modal="true"
-        aria-label={item.authorName}
+        aria-label={label}
         onClick={(e) => e.stopPropagation()}
         // Lenis owns the wheel on public pages; without this the scroll goes
         // to the page behind the dialog.
         data-lenis-prevent
-        className="relative w-full max-w-3xl overflow-hidden rounded-2xl bg-black shadow-2xl"
+        // Hugs the clip rather than forcing 16:9 on it: a phone-shot portrait
+        // testimonial in a fixed landscape panel is two black bars and a
+        // letterbox.
+        className="relative w-auto max-w-3xl overflow-hidden rounded-2xl bg-black shadow-2xl"
       >
         <button
           type="button"
@@ -362,7 +453,7 @@ function PlayerDialog({
             controls
             autoPlay
             playsInline
-            className="aspect-video w-full"
+            className="max-h-[85vh] w-auto max-w-full"
           />
         ) : null}
       </div>

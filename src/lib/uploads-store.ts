@@ -17,22 +17,30 @@ import { optimizeImage, kindForDir } from "@/lib/images/optimize";
 import { ffmpegAvailable, transcodeMp4 } from "@/lib/video/optimize";
 
 export const MAX_BYTES = 8 * 1024 * 1024; // 8 MB
-// Video branch (project trailer upload, #10). Kept small since this runs on
-// Hostinger shared hosting. #16 (2026-07-31): mp4 now gets an ffmpeg pass when
-// the host has one — see prepareVideo() below.
-export const MAX_BYTES_VIDEO = 50 * 1024 * 1024; // 50 MB
+// Video branch (project trailer upload, #10). Capped at 50 MB until
+// 2026-08-19, when the owner asked for no cap at all: the clips clients
+// actually send are phone recordings, and a 4K minute is past 50 MB before
+// anyone has done anything wrong.
+//
+// null = no cap. Two things this does NOT remove, so don't read it as "any
+// file will now go through":
+//   • the whole body is buffered into this process before the file is written,
+//     so a very large upload is that much resident memory on shared hosting —
+//     the ceiling is now the host's RAM rather than a number we chose;
+//   • Passenger/nginx in front of the app has its own request-body limit that
+//     no change here can lift.
+// #16 (2026-07-31): mp4 still gets an ffmpeg pass when the host has one — see
+// prepareVideo() below.
+export const MAX_BYTES_VIDEO: number | null = null;
 /** A sales deck (IA-44). Well above a realistic slide deck, well below the
    video cap — a PDF is stored byte-for-byte, so nothing shrinks it afterwards. */
 export const MAX_BYTES_DOC = 20 * 1024 * 1024; // 20 MB
 
-/** Ceiling for a whole multipart body, for a front door that wants to reject a
- *  hostile request before reading it. Deliberately the LARGEST thing this
- *  endpoint legitimately carries plus room for what rides along with it: a 50 MB
- *  clip is posted together with its captured poster frame (up to 2 MB, see
- *  writePosterFrame) and the multipart boundaries/headers of four parts. It is
- *  not a substitute for the per-kind caps above — those decide what is actually
- *  accepted, and they run on the parsed file, not on a client-supplied header. */
-export const MAX_BODY_BYTES = MAX_BYTES_VIDEO + 4 * 1024 * 1024;
+// (There used to be a MAX_BODY_BYTES here — a content-length early-out on the
+// route, sized as "the video cap plus room for the poster frame". With no video
+// cap there is nothing to size it against: the route cannot tell a clip from a
+// still before parsing the body, so any ceiling it kept would be a ceiling on
+// video uploads under another name.)
 
 const EXT_BY_TYPE: Record<string, string> = {
   "image/jpeg": "jpg",
@@ -130,7 +138,11 @@ export function memberUploadMessages(
     notAnImage: t("media.errUnsupportedImage"),
     notADoc: t("media.errUnsupportedDoc"),
     tooLargeImage: t("media.errTooLargeServer", { limit: String(MAX_BYTES / (1024 * 1024)) }),
-    tooLargeVideo: t("media.errTooLargeServer", { limit: String(MAX_BYTES_VIDEO / (1024 * 1024)) }),
+    // Unreachable while MAX_BYTES_VIDEO is null; kept so re-introducing a cap
+    // is a one-line change rather than a message hunt.
+    tooLargeVideo: t("media.errTooLargeServer", {
+      limit: String((MAX_BYTES_VIDEO ?? 0) / (1024 * 1024)),
+    }),
     tooLargeDoc: t("media.errTooLargeServer", { limit: String(MAX_BYTES_DOC / (1024 * 1024)) }),
     unsupportedImage: t("media.errUnsupportedImage"),
     unsupportedVideo: t("media.errUnsupportedVideo"),
@@ -207,7 +219,9 @@ export async function storeUpload(fd: FormData, opts: StoreUploadOptions): Promi
   }
 
   if (kind === "video") {
-    if (file.size > MAX_BYTES_VIDEO) return { error: messages.tooLargeVideo };
+    if (MAX_BYTES_VIDEO !== null && file.size > MAX_BYTES_VIDEO) {
+      return { error: messages.tooLargeVideo };
+    }
     // Trust file.type first; some browsers/OSes send a blank or non-standard MIME
     // for .mp4 (e.g. "application/octet-stream"), so fall back to the filename
     // extension (whitelisted to mp4/webm) before rejecting.

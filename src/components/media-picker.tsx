@@ -183,11 +183,12 @@ export function MediaPicker({
       for (const file of picked) {
         const kind = accept === "any" ? (file.type.startsWith("video/") ? "video" : "image") : accept;
         // Size-check before the round trip: past the framework body limit the
-        // request is cut off mid-flight and the server-side "max 50 MB" message
+        // request is cut off mid-flight and the server-side "too large" message
         // never gets a chance to run, so the user would only see a generic
-        // failure. Mirrors MAX_BYTES / MAX_BYTES_VIDEO in lib/uploads-store.ts.
-        const maxMb = kind === "video" ? 50 : 8;
-        if (file.size > maxMb * 1024 * 1024) {
+        // failure. Mirrors MAX_BYTES / MAX_BYTES_VIDEO in lib/uploads-store.ts —
+        // null there and here means clips have no cap (2026-08-19).
+        const maxMb = kind === "video" ? null : 8;
+        if (maxMb !== null && file.size > maxMb * 1024 * 1024) {
           const mb = Math.round((file.size / (1024 * 1024)) * 10) / 10;
           setError(t("media.errTooLarge", { name: file.name, size: String(mb), limit: String(maxMb) }));
           continue;
