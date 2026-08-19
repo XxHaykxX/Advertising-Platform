@@ -1,10 +1,12 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { CheckCircle, Loader2, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { submitLead, type LeadState } from "@/lib/actions/leads";
 import { DEFAULT_LOCALE, useUI, type Locale } from "@/lib/i18n-client";
+import { DEFAULT_DIAL_CODE, isValidPhone } from "@/lib/phone";
 import type { ProjectListDTO } from "@/lib/types";
 import {
   FIELD_ERROR_CLASS,
@@ -18,7 +20,10 @@ import { cn } from "@/lib/utils";
 
 const initialState: LeadState = { ok: false };
 
-const REQUIRED = ["name", "email", "message"] as const;
+// Phone is checked separately (isValidPhone) rather than through this list,
+// exactly as the callback form does it: a hidden input carries the value into
+// the submit, but "non-empty" alone would wave the untouched "+374" through.
+const REQUIRED = ["name", "message"] as const;
 
 const fieldClass =
   "w-full rounded-xl border border-border bg-card px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/20";
@@ -37,6 +42,8 @@ export function ContactForm({
     initialState,
   );
   const { errors, check, clear, fieldProps } = useRequiredFields(t("form.required"));
+  const [phone, setPhone] = useState(DEFAULT_DIAL_CODE);
+  const [phoneError, setPhoneError] = useState(false);
 
   return (
     <div className="flex flex-col gap-6">
@@ -64,13 +71,20 @@ export function ContactForm({
           noValidate
           onSubmit={(e) => {
             const form = e.currentTarget;
-            if (!check(new FormData(form), REQUIRED)) {
+            const fieldsOk = check(new FormData(form), REQUIRED);
+            const phoneOk = isValidPhone(phone);
+            setPhoneError(!phoneOk);
+            if (!fieldsOk || !phoneOk) {
               e.preventDefault();
-              focusFirstError(form, REQUIRED);
+              if (!fieldsOk) focusFirstError(form, REQUIRED);
             }
           }}
           className="space-y-5 rounded-2xl border border-border bg-card p-8 card-lift"
         >
+          {/* PhoneInput has no name of its own (see phone-input.tsx) — this is
+              what actually reaches submitLead's FormData. */}
+          <input type="hidden" name="phone" value={phone} />
+
           <div>
             <label className="block">
               <span className={labelClass}>
@@ -97,24 +111,22 @@ export function ContactForm({
           <div>
             <label className="block">
               <span className={labelClass}>
-                {t("form.email")}
+                {t("callForm.phone")}
                 <RequiredMark />
               </span>
-              <div className="relative">
-                <input
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  defaultValue={state.values?.email}
-                  placeholder="you@example.com"
-                  onInput={() => clear("email")}
-                  {...fieldProps("email")}
-                  className={cn(fieldClass, errors.email && FIELD_ERROR_CLASS)}
+              {/* Same "whole frame lights up" treatment the callback form uses
+                  — the library gives us no hook to redden its own border. */}
+              <div className={cn("rounded-lg", phoneError && "ring-2 ring-danger/50")}>
+                <PhoneInput
+                  value={phone}
+                  onChange={(next) => {
+                    setPhone(next);
+                    setPhoneError(false);
+                  }}
                 />
-                {errors.email && <FieldErrorIcon />}
               </div>
             </label>
-            <FieldError id="email-error" message={errors.email} />
+            <FieldError id="phone-error" message={phoneError ? t("formErr.phone") : undefined} />
           </div>
 
           <label className="block">

@@ -2,11 +2,13 @@
 
 import { notifyContactMessage } from "@/lib/mail";
 import { getLocale } from "@/lib/data/locale";
+import { isValidPhone } from "@/lib/phone";
 import { makeUI } from "@/lib/i18n";
 
 export interface LeadValues {
   name: string;
-  email: string;
+  /** E.164, the same shape the callback form collected — see phone.ts. */
+  phone: string;
   message: string;
 }
 
@@ -16,27 +18,23 @@ export interface LeadState {
   values?: LeadValues;
 }
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 export async function submitLead(
   _prev: LeadState,
   formData: FormData,
 ): Promise<LeadState> {
   const name = String(formData.get("name") || "").trim();
-  const email = String(formData.get("email") || "").trim();
+  const phone = String(formData.get("phone") || "").trim();
   const message = String(formData.get("message") || "").trim();
-  const values: LeadValues = { name, email, message };
+  const values: LeadValues = { name, phone, message };
 
   const t = makeUI(await getLocale());
 
   if (!name) return { ok: false, error: t("formErr.name"), values };
   if (name.length > 200) return { ok: false, error: t("formErr.nameLong"), values };
 
-  if (!email) return { ok: false, error: t("formErr.email"), values };
-  if (email.length > 200) return { ok: false, error: t("formErr.emailLong"), values };
-  if (!EMAIL_RE.test(email)) {
-    return { ok: false, error: t("formErr.emailInvalid"), values };
-  }
+  // A number, not an address, since 2026-08-19 (owner). isValidPhone is the
+  // same predicate the field disables the button with — one rule, not two.
+  if (!isValidPhone(phone)) return { ok: false, error: t("formErr.phone"), values };
 
   // Both contact forms mark this mandatory (the contact page always did, the
   // landing form joined it on 2026-08-03), so the action agrees rather than
@@ -51,7 +49,7 @@ export async function submitLead(
   // but just notifies the admin by email instead. Best-effort: a flaky SMTP
   // hop must not turn into a broken "message sent" screen for the visitor.
   try {
-    await notifyContactMessage({ name, email, message, projectTitle });
+    await notifyContactMessage({ name, phone, message, projectTitle });
   } catch (err) {
     console.error("[leads] failed to notify admin of contact message:", err);
   }

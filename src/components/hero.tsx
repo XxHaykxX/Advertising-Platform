@@ -199,13 +199,17 @@ export function Hero({
             {t("btn.signUp")}
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
           </Link>
-          <a
-            href="#callback"
+          {/* /contact, not the "#callback" anchor it pointed at until 19.08:
+              the homepage's closing callback block is gone (owner), and the
+              contact form — which now asks for a phone number rather than an
+              address — is the one place that request lands. */}
+          <Link
+            href="/contact"
             className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-white/15 bg-white/5 px-7 py-3.5 text-sm font-semibold text-white backdrop-blur transition-all duration-200 hover:border-white/30 hover:bg-white/10 sm:w-auto"
           >
             <Phone className="h-4 w-4" />
             {t("btn.requestCall")}
-          </a>
+          </Link>
         </motion.div>
 
         {/* The price disclaimer ("placements from $5000, fee only on closed
