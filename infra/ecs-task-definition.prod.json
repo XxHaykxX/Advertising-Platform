@@ -1,0 +1,59 @@
+{
+  "family": "igovazd-prod",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "4096",
+  "runtimePlatform": {
+    "cpuArchitecture": "ARM64",
+    "operatingSystemFamily": "LINUX"
+  },
+  "executionRoleArn": "arn:aws:iam::<ACCOUNT_ID>:role/igovazd-ecs-execution",
+  "taskRoleArn": "arn:aws:iam::<ACCOUNT_ID>:role/igovazd-ecs-task",
+  "containerDefinitions": [
+    {
+      "name": "igovazd",
+      "image": "<ACCOUNT_ID>.dkr.ecr.eu-central-1.amazonaws.com/<ECR_REPOSITORY>:prod",
+      "essential": true,
+      "portMappings": [{ "containerPort": 3000, "protocol": "tcp" }],
+      "environment": [
+        { "name": "AWS_REGION", "value": "eu-central-1" },
+        { "name": "STORAGE_DRIVER", "value": "s3" },
+        { "name": "S3_BUCKET", "value": "igovazd-uploads" },
+        { "name": "S3_PREFIX", "value": "uploads" },
+        { "name": "CDN_BASE_URL", "value": "https://cdn.igovazd.am" },
+        { "name": "GITHUB_SYNC_REPO", "value": "XxHaykxX/Advertising-Platform" },
+        { "name": "GITHUB_SYNC_BRANCH", "value": "main" },
+        { "name": "GOOGLE_AI_MODEL", "value": "gemini-flash-latest" },
+        { "name": "GOOGLE_IMAGE_MODEL", "value": "gemini-2.5-flash-image" },
+        { "name": "MAIL_FROM", "value": "noreply@igovazd.am" },
+        { "name": "VAPID_SUBJECT", "value": "mailto:hello@igovazd.am" },
+        { "name": "SMTP_HOST", "value": "email-smtp.eu-central-1.amazonaws.com" },
+        { "name": "SMTP_PORT", "value": "587" },
+        { "name": "SMTP_SECURE", "value": "false" }
+      ],
+      "secrets": [
+        { "name": "DATABASE_URL", "valueFrom": "arn:aws:ssm:eu-central-1:<ACCOUNT_ID>:parameter/igovazd/prod/DATABASE_URL" },
+        { "name": "SESSION_SECRET", "valueFrom": "arn:aws:ssm:eu-central-1:<ACCOUNT_ID>:parameter/igovazd/prod/SESSION_SECRET" },
+        { "name": "GITHUB_SYNC_TOKEN", "valueFrom": "arn:aws:ssm:eu-central-1:<ACCOUNT_ID>:parameter/igovazd/prod/GITHUB_SYNC_TOKEN" },
+        { "name": "GOOGLE_CLIENT_ID", "valueFrom": "arn:aws:ssm:eu-central-1:<ACCOUNT_ID>:parameter/igovazd/prod/GOOGLE_CLIENT_ID" },
+        { "name": "GOOGLE_CLIENT_SECRET", "valueFrom": "arn:aws:ssm:eu-central-1:<ACCOUNT_ID>:parameter/igovazd/prod/GOOGLE_CLIENT_SECRET" },
+        { "name": "GOOGLE_AI_API_KEY", "valueFrom": "arn:aws:ssm:eu-central-1:<ACCOUNT_ID>:parameter/igovazd/prod/GOOGLE_AI_API_KEY" },
+        { "name": "GOOGLE_IMAGE_API_KEY", "valueFrom": "arn:aws:ssm:eu-central-1:<ACCOUNT_ID>:parameter/igovazd/prod/GOOGLE_IMAGE_API_KEY" },
+        { "name": "VAPID_PUBLIC_KEY", "valueFrom": "arn:aws:ssm:eu-central-1:<ACCOUNT_ID>:parameter/igovazd/prod/VAPID_PUBLIC_KEY" },
+        { "name": "VAPID_PRIVATE_KEY", "valueFrom": "arn:aws:ssm:eu-central-1:<ACCOUNT_ID>:parameter/igovazd/prod/VAPID_PRIVATE_KEY" },
+        { "name": "SMTP_USER", "valueFrom": "arn:aws:ssm:eu-central-1:<ACCOUNT_ID>:parameter/igovazd/prod/SMTP_USER" },
+        { "name": "SMTP_PASS", "valueFrom": "arn:aws:ssm:eu-central-1:<ACCOUNT_ID>:parameter/igovazd/prod/SMTP_PASS" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/igovazd-prod",
+          "awslogs-region": "eu-central-1",
+          "awslogs-stream-prefix": "igovazd",
+          "awslogs-create-group": "true"
+        }
+      }
+    }
+  ]
+}

@@ -17,7 +17,8 @@ private database, which costs more than the compute it replaces. We're using Far
 Region: **eu-central-1 (Frankfurt)**.
 
 **Compute**
-- ECS Fargate, **exactly 1 task**, 0.5 vCPU / **2 GB**, in a **public subnet with a public IP**
+- ECS Fargate, **exactly 1 task**, 0.5 vCPU / **4 GB** (see the last section — this was 2 GB
+  until we measured what an upload costs), in a **public subnet with a public IP**
   (the public subnet is deliberate — it avoids the NAT Gateway)
 - **Autoscaling explicitly disabled.** The app keeps some state in process memory
   (login rate limits, a paid-API spend cap, page cache), so a second task would
@@ -170,3 +171,35 @@ you a number — worth checking in the console once the account exists and usage
 Nothing in the provisioning list except the two corrections above. Fargate, one task,
 autoscaling off, public subnet, ALB, RDS MariaDB, S3 + CloudFront — all as originally
 requested, with ARM64 on the task and a 1-year reservation on the database.
+
+---
+
+# One more, and it partly reverses the last message
+
+Sorry for the churn — this one came out of a measurement, and it changes an answer I gave
+you an hour ago. Better now than on provisioning day.
+
+We measured what an upload actually costs the app in memory. A 500 MB clip peaks at about
+**2.5 GB of RSS** — four to five times the file, because the body is buffered and copied
+on its way through. That is more than the whole 2 GB task, from **one** upload. Not two
+concurrent ones. One phone.
+
+So the owner has decided to move video uploads **off the app entirely**: the browser will
+PUT the clip straight to the bucket with a presigned URL, and the app never touches the
+bytes. Images keep going through the app — they are capped at 8 MB and have to be
+re-encoded server-side anyway.
+
+Two consequences for your side:
+
+1. **The bucket CORS rule is back on.** The previous message told you to scratch it. Please
+   put it back: allow `PUT` from `https://igovazd.am` (and from the dev origin for the dev
+   bucket prefix). That message was written on the assumption uploads would keep flowing
+   through the app; that assumption is what the measurement killed.
+
+2. **Please make the task 4 GB, not 2.** Direct-to-bucket uploads take a few days to build,
+   and until they ship every upload still goes through the app with the memory profile
+   above. 4 GB is roughly $8/month more and it is the difference between a large upload
+   being slow and a large upload taking the site down. Once presigned uploads are live we
+   can drop it back to 2 GB and take that money back.
+
+Everything else stands.
