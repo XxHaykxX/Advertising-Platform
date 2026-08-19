@@ -237,7 +237,10 @@ AGENTS.md — не рантайм приложения. Единственное
 
 Не входят в этот чек-лист намеренно — не рантайм-переменные приложения, а параметры
 одноразовых инструментов, которые кто-то запускает со своей машины против Hostinger/RDS/S3
-напрямую: `SOURCE_DATABASE_URL`, `TARGET_DATABASE_URL` (`migrate-db.sh`, `verify-parity.mts`),
+напрямую: `SRC_HOST`/`SRC_DB`/`SRC_USER`/`SRC_PASS` и `DST_*` (`migrate-db.sh` — восемь
+отдельных переменных, а **не** строка подключения), `SOURCE_DATABASE_URL`/`TARGET_DATABASE_URL`
+(`verify-parity.mts` — вот здесь как раз строки подключения; два соседних инструмента
+принимают одно и то же разными способами, и перепутать их легко),
 `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY`/`S3_ENDPOINT` (только локальный MinIO,
 `minio-dev.mjs`), `LOCAL_DIR`/`BUCKET` (`verify-uploads-parity.mjs`), `I18N_SHEET_CSV_URL` (архивный
 импорт из Google Sheet, `i18n-import.ts`).
