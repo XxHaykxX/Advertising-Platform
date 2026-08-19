@@ -17,9 +17,7 @@
 // override via GOOGLE_IMAGE_MODEL if this one is ever retired.
 import "server-only";
 import sharp from "sharp";
-import { readFile } from "node:fs/promises";
-import path from "node:path";
-import { UPLOADS_DIR } from "@/lib/uploads-dir";
+import { publicPathToKey, storage } from "@/lib/storage";
 
 export type GeneratePosterInput = {
   /** Dynamic prompt base — the caller (UI) prefills this from
@@ -134,9 +132,9 @@ async function callGemini(parts: GeminiPart[], aspectRatio: string): Promise<Gen
 }
 
 /** Loads a User.avatar value into a Buffer for compositing. Accepts a data
- *  URL, a "/uploads/…" path (read straight off disk), or an http(s) URL.
- *  Returns null on any failure — the logo overlay is a nice-to-have and
- *  should never fail the whole poster generation. */
+ *  URL, a "/uploads/…" path (read back through the storage driver), or an
+ *  http(s) URL. Returns null on any failure — the logo overlay is a
+ *  nice-to-have and should never fail the whole poster generation. */
 async function loadAvatarBuffer(avatarUrl: string): Promise<Buffer | null> {
   try {
     if (avatarUrl.startsWith("data:")) {
@@ -144,8 +142,12 @@ async function loadAvatarBuffer(avatarUrl: string): Promise<Buffer | null> {
       return b64 ? Buffer.from(b64, "base64") : null;
     }
     if (avatarUrl.startsWith("/uploads/")) {
-      const abs = path.join(UPLOADS_DIR, avatarUrl.slice("/uploads/".length));
-      return await readFile(abs);
+      // Read through the driver, not off disk: on S3 there is no path to join.
+      // publicPathToKey() also refuses a traversal, which the old path.join()
+      // would have happily normalised — an avatar value is a database string,
+      // and the /uploads/ branch has to be as unforgiving as the http one.
+      const key = publicPathToKey(avatarUrl);
+      return key ? await storage().get(key) : null;
     }
     if (/^https?:\/\//.test(avatarUrl)) {
       const r = await fetch(avatarUrl);

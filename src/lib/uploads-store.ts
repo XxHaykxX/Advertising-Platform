@@ -11,9 +11,15 @@
 // part cannot live there — hence a plain module.
 import "server-only";
 import { randomUUID } from "node:crypto";
-import { mkdir, writeFile } from "node:fs/promises";
-import path from "node:path";
 import { optimizeImage, kindForDir } from "@/lib/images/optimize";
+import {
+  contentDispositionForKey,
+  contentTypeForKey,
+  joinKey,
+  keyToPublicPath,
+  safeSegment,
+  storage,
+} from "@/lib/storage";
 import { ffmpegAvailable, transcodeMp4 } from "@/lib/video/optimize";
 
 export const MAX_BYTES = 8 * 1024 * 1024; // 8 MB
@@ -63,33 +69,10 @@ const EXT_BY_TYPE_DOC: Record<string, string> = {
  *  document may land — see the folder/kind rule in storeUpload. */
 export const DOC_DIR = "presentations";
 
-/** Keep only a safe folder segment (project code etc.) — strip anything that
-   could escape the uploads root.
-
-   The dot is deliberately in the allowlist (folder names like "v1.2" are fine),
-   and that used to be the hole: ".." survived the filter untouched, and
-   path.join() normalises it, so `dir=".."` climbed exactly one level out of the
-   root. For a member that landed in uploads/members/ — served over HTTP, and
-   the opposite of what this function's contract promises — and in local dev,
-   where the root is public/uploads, it landed in public/ itself. A segment made
-   only of dots is never a real folder name, so it collapses to the fallback.
-   Found in review 2026-07-30; the flaw predates the /api/uploads route and was
-   equally reachable through the upload Server Actions. */
-export function safeSegment(input: string): string {
-  const cleaned = input.replace(/[^a-zA-Z0-9._-]/g, "").slice(0, 64);
-  if (/^\.+$/.test(cleaned)) return "misc";
-  return cleaned || "misc";
-}
-
-/** Belt and braces for the above: resolve the final directory and refuse it if
-   it is not inside the root we were handed. safeSegment() is the fix; this is
-   the check that catches the NEXT way somebody finds to smuggle a separator or
-   a traversal through it, instead of trusting one regex forever. */
-function assertInside(root: string, candidate: string): boolean {
-  const resolvedRoot = path.resolve(root);
-  const resolved = path.resolve(candidate);
-  return resolved === resolvedRoot || resolved.startsWith(resolvedRoot + path.sep);
-}
+// safeSegment() and the "is it still inside the root" check both moved to
+// src/lib/storage/keys.ts when storage stopped necessarily being a filesystem.
+// The rules did not change — see the comments there, including why the dot is
+// in the allowlist and why a dots-only segment collapses.
 
 /** Every rejection the store can produce. Passed in rather than hardcoded: the
  *  admin panel is pinned to English while a member sees their cabinet in their
@@ -152,13 +135,15 @@ export function memberUploadMessages(
 }
 
 export type StoreUploadOptions = {
-  /** Absolute directory the file is written under. Staff: the uploads root.
-   *  Member: that member's own namespace, so `dir` can never reach anyone
-   *  else's files even before safeSegment() gets involved. */
-  root: string;
-  /** Public prefix the returned path is built from — "/uploads" for staff,
-   *  "/uploads/members/<id>" for a member. */
-  publicPrefix: string;
+  /** Key prefix everything lands under. Staff: "" — they own the whole tree.
+   *  Member: "members/<id>", so `dir` can never reach anyone else's files even
+   *  before safeSegment() gets involved.
+   *
+   *  Was a pair (absolute root + public prefix) until the storage driver
+   *  landed. One value now, because the two could disagree: the root decided
+   *  where bytes went and the prefix decided what path was handed back, and
+   *  nothing checked that they described the same place. */
+  keyPrefix: string;
   messages: UploadMessages;
 };
 
@@ -171,7 +156,13 @@ export type StoredUpload = { path?: string; error?: string; warning?: string };
  *  door called: the folder/type rule, the per-kind size cap, the MIME/extension
  *  allowlist, the sharp pass for stills and the poster frame for clips. */
 export async function storeUpload(fd: FormData, opts: StoreUploadOptions): Promise<StoredUpload> {
-  const { root, publicPrefix, messages } = opts;
+  const { keyPrefix, messages } = opts;
+  const store = storage();
+
+  /** The one place a stored name is built, so the three branches below cannot
+   *  drift on the naming convention. */
+  const keyFor = (dir: string, ext: string) =>
+    joinKey(keyPrefix, dir, `${Date.now()}-${randomUUID().slice(0, 8)}.${ext}`);
 
   const file = fd.get("file");
   if (!(file instanceof File) || file.size === 0) return { error: messages.noFile };
@@ -209,13 +200,16 @@ export async function storeUpload(fd: FormData, opts: StoreUploadOptions): Promi
       return { error: messages.unsupportedDoc };
     }
 
-    const name = `${Date.now()}-${randomUUID().slice(0, 8)}.${ext}`;
-    const destDir = path.join(root, dir);
-    if (!assertInside(root, destDir)) return { error: messages.noFile };
-    await mkdir(destDir, { recursive: true });
-    await writeFile(path.join(destDir, name), rawBuffer);
+    const key = keyFor(dir, ext);
+    await store.put(key, rawBuffer, {
+      contentType: contentTypeForKey(key),
+      // Forced attachment, the reason the magic-number check above exists.
+      // Under S3 this rides on the object, because CloudFront serves the bytes
+      // with none of our code in the path to add a response header.
+      contentDisposition: contentDispositionForKey(key),
+    });
 
-    return { path: `${publicPrefix}/${dir}/${name}` };
+    return { path: keyToPublicPath(key) };
   }
 
   if (kind === "video") {
@@ -229,16 +223,13 @@ export async function storeUpload(fd: FormData, opts: StoreUploadOptions): Promi
     if (!ext) return { error: messages.unsupportedVideo };
 
     const rawBuffer = Buffer.from(await file.arrayBuffer());
-    const name = `${Date.now()}-${randomUUID().slice(0, 8)}.${ext}`;
-    const destDir = path.join(root, dir);
-    if (!assertInside(root, destDir)) return { error: messages.noFile };
-    await mkdir(destDir, { recursive: true });
+    const key = keyFor(dir, ext);
 
     const { buffer: outBuffer, warning } = await prepareVideo(rawBuffer, ext, file.size);
-    await writeFile(path.join(destDir, name), outBuffer);
-    await writePosterFrame(fd, destDir, name);
+    await store.put(key, outBuffer, { contentType: contentTypeForKey(key) });
+    await writePosterFrame(fd, key);
 
-    return { path: `${publicPrefix}/${dir}/${name}`, warning };
+    return { path: keyToPublicPath(key), warning };
   }
 
   if (file.size > MAX_BYTES) return { error: messages.tooLargeImage };
@@ -269,13 +260,10 @@ export async function storeUpload(fd: FormData, opts: StoreUploadOptions): Promi
     }
   }
 
-  const name = `${Date.now()}-${randomUUID().slice(0, 8)}.${outExt}`;
-  const destDir = path.join(root, dir);
-  if (!assertInside(root, destDir)) return { error: messages.noFile };
-  await mkdir(destDir, { recursive: true });
-  await writeFile(path.join(destDir, name), outBuffer);
+  const key = keyFor(dir, outExt);
+  await store.put(key, outBuffer, { contentType: contentTypeForKey(key) });
 
-  return { path: `${publicPrefix}/${dir}/${name}` };
+  return { path: keyToPublicPath(key) };
 }
 
 /** #16 (2026-07-31): re-encode mp4 uploads when the host has ffmpeg on PATH;
@@ -318,12 +306,17 @@ async function prepareVideo(
  *  decoded the file to show a preview, so it hands over a small JPEG instead.
  *  Best-effort: a missing or broken poster just means the tile falls back to
  *  the <video> element. */
-async function writePosterFrame(fd: FormData, destDir: string, videoName: string) {
+async function writePosterFrame(fd: FormData, videoKey: string) {
   const poster = fd.get("poster");
   if (!(poster instanceof File) || poster.size === 0) return;
   if (poster.size > 2 * 1024 * 1024) return; // a frame is tens of KB; ignore junk
   try {
-    await writeFile(path.join(destDir, `${videoName}.jpg`), Buffer.from(await poster.arrayBuffer()));
+    // "<video-key>.jpg" — the sidecar convention the video tiles look for. It
+    // survives the move to S3 unchanged: it was never a filesystem feature,
+    // just a name derived from another name.
+    await storage().put(`${videoKey}.jpg`, Buffer.from(await poster.arrayBuffer()), {
+      contentType: "image/jpeg",
+    });
   } catch {
     /* poster is a nicety, never fail the upload over it */
   }

@@ -1,9 +1,8 @@
-import path from "node:path";
 import { NextResponse, type NextRequest } from "next/server";
 import { requireContentEditor, requireMember } from "@/lib/auth/require";
 import { getLocale } from "@/lib/data/locale";
 import { makeUI } from "@/lib/i18n";
-import { UPLOADS_DIR } from "@/lib/uploads-dir";
+import { joinKey } from "@/lib/storage";
 import {
   STAFF_UPLOAD_MESSAGES,
   memberUploadMessages,
@@ -82,14 +81,13 @@ export async function POST(req: NextRequest) {
     // Hard-scoped to the caller's own namespace, exactly like
     // uploadMemberImage: the `dir` field can only ever pick a subfolder of it.
     result = await storeUpload(fd, {
-      root: path.join(UPLOADS_DIR, "members", String(userId)),
-      publicPrefix: `/uploads/members/${userId}`,
+      keyPrefix: joinKey("members", String(userId)),
       messages: memberUploadMessages(makeUI(await getLocale())),
     });
   } else {
     result = await storeUpload(fd, {
-      root: UPLOADS_DIR,
-      publicPrefix: "/uploads",
+      // No prefix: staff own the whole tree, members/* included.
+      keyPrefix: "",
       messages: STAFF_UPLOAD_MESSAGES,
     });
   }
