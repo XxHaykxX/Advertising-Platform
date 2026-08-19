@@ -98,6 +98,20 @@ COPY --from=build --chown=nextjs:nextjs /app/node_modules/.prisma ./node_modules
 # below, before server.js runs, not required from inside it.
 COPY --chown=nextjs:nextjs scripts/aws/server-timeouts.js ./server-timeouts.js
 
+# The container runs as a non-root user, which cannot create a directory at the
+# filesystem root — so an UPLOADS_DIR pointing anywhere outside the app is a
+# path the app can read the name of and never write to. Found by running it:
+# every upload answered 500, and in a production build the reason is masked as
+# "an error occurred in the Server Components render", which names nothing.
+#
+# This matters in phase 1 of the AWS move specifically, where the app runs with
+# STORAGE_DRIVER unset (i.e. `fs`) on the task's own ephemeral disk before S3 is
+# switched on. Creating the directory here, owned by the runtime user, means
+# that phase works instead of failing on the first upload with an unreadable
+# error.
+RUN mkdir -p /data/uploads && chown -R nextjs:nextjs /data
+ENV UPLOADS_DIR=/data/uploads
+
 USER nextjs
 EXPOSE 3000
 CMD ["node", "-r", "./server-timeouts.js", "server.js"]

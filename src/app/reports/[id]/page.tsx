@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getProject, getProjectIds } from "@/lib/data/projects";
+import { getProject } from "@/lib/data/projects";
 import { getLocale } from "@/lib/data/locale";
 import { getCurrency } from "@/lib/data/currency";
 import { daysUntil, isArchived } from "@/lib/data/format";
@@ -27,12 +27,27 @@ import { ViewPing } from "@/components/report/view-ping";
 import { DEFAULT_LOCALE, makeUI } from "@/lib/i18n";
 import { slotsLabelKey } from "@/lib/plural";
 
-export async function generateStaticParams() {
-  const ids = await getProjectIds();
-  return ids.map((id) => ({ id: String(id) }));
-}
+/* 🔴 There used to be a generateStaticParams() here listing every project id
+   from the database, plus `dynamicParams = true`. It never bought anything —
+   this page reads the locale cookie, the currency cookie and the session, so
+   Next always fell back to rendering it per request; a normal build reports it
+   as ƒ (dynamic), not ●.
 
-export const dynamicParams = true;
+   What it did buy was a way to take every project page down. In the container
+   the build deliberately has no reachable database (see the Dockerfile: the
+   variable must exist, and is never connected to), so getProjectIds() came back
+   empty. With zero params there is nothing for Next to attempt-and-bail on, so
+   it marked the route ● prerendered — and then every live request rendered a
+   static shell, hit cookies(), and threw DYNAMIC_SERVER_USAGE. 500 on every
+   project page, and in a production build the reason is masked as "an error
+   occurred in the Server Components render", which names nothing.
+
+   Found 2026-08-19 by running the built image and opening a project page. It
+   passes /api/health and the home page first, so nothing shallower catches it.
+
+   force-dynamic states outright what was always true, so no future
+   generateStaticParams can put the route back into that state. */
+export const dynamic = "force-dynamic";
 
 /* Without this the whole route inherited the root layout's metadata: every
    project tab read "iGovazd — Brand Placement Marketplace", every canonical
