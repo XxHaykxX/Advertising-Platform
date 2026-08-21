@@ -1,11 +1,12 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useState, useTransition } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { AlertTriangle, Languages, Loader2 } from "lucide-react";
 import { MediaField } from "@/components/media-field";
 import { FormSectionNav } from "@/components/form-section-nav";
 import { BulletListEditor } from "@/components/ui/bullet-list-editor";
+import { FormError } from "@/components/ui/field";
 import { MultiSelect } from "@/components/ui/multi-select";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { ImageUploader } from "@/app/admin/(panel)/projects/image-uploader";
@@ -179,6 +180,14 @@ export function AdSpaceForm({
   useEffect(() => {
     if (state.ok && state.redirect) window.location.assign(state.redirect);
   }, [state]);
+
+  // IA-60 — a rejection lands at the bottom of a form several screens tall,
+  // and the Save that produced it is in the sticky bar at the top, so without
+  // this the press reads as "nothing happened".
+  const errorRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (state.error) errorRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [state.error]);
 
   const data: AdSpaceFormValues = state.values ?? initial ?? EMPTY_AD_SPACE;
 
@@ -626,10 +635,16 @@ export function AdSpaceForm({
         </div>
       </div>
 
+      {/* IA-60 — the rejection used to be a purple `border-primary/10` banner
+          at the very bottom of a long form, so pressing Save from the sticky
+          bar looked like nothing happened at all ("the Save button is not
+          visible or available"). Same FormError and same scroll-into-view the
+          project form already had; the div only carries the scroll anchor,
+          since FormError renders its own <p role="alert">. */}
       {state.error && (
-        <p className="rounded-lg border border-primary/40 bg-primary/10 px-4 py-2.5 text-sm text-primary">
-          {state.error}
-        </p>
+        <div ref={errorRef}>
+          <FormError message={state.error} />
+        </div>
       )}
 
       {/* Bottom pair, for the natural end-of-form flow — the sticky bar above

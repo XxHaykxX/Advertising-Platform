@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
 import { Check, ChevronDown, Globe } from "lucide-react";
 import { LOCALES, type Locale } from "@/lib/i18n-client";
 import { setLocale } from "@/lib/actions/locale";
@@ -44,7 +43,6 @@ export function LocaleSwitcher({
   const [pending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  const router = useRouter();
 
   // Close on outside click or Escape.
   useEffect(() => {
@@ -68,7 +66,17 @@ export function LocaleSwitcher({
     if (l === current) return;
     startTransition(async () => {
       await setLocale(l);
-      router.refresh();
+      // 🔴 IA-61: a full document load, NOT router.refresh(). The language a
+      // server component renders in is baked into that segment's RSC payload,
+      // and refresh() only re-renders the route that is open — every OTHER
+      // segment the client router holds (prefetched links, history entries)
+      // keeps the payload it was fetched with. Navigating to one of those then
+      // splices a page rendered in the old language under a layout rendered in
+      // the new one: the cabinet's sidebar came out English while the page
+      // title, the submit button and the Channel/City option labels stayed
+      // Russian. Reloading throws that whole cache away, which is the only way
+      // to guarantee layout and page agree.
+      window.location.reload();
     });
   }
 

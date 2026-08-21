@@ -27,6 +27,16 @@
 
 export type WebsiteParseResult = { ok: true; value: string | null } | { ok: false };
 
+/** A host that could actually resolve on the public internet. `new URL()` is
+ *  happy with any non-empty hostname, so the bare word "Kinodaran" parsed as
+ *  `https://kinodaran/` and was stored as a link nobody can follow (IA-58 —
+ *  the same hole the website field had). A dot is the cheap test that says
+ *  "domain" and not "word someone typed"; intranet names like `localhost` are
+ *  out by the same rule, which is correct for a public marketplace. */
+function looksLikeDomain(hostname: string): boolean {
+  return hostname.includes(".") && !hostname.startsWith(".") && !hostname.endsWith(".");
+}
+
 export function parseWebsiteUrl(raw: string): WebsiteParseResult {
   const trimmed = raw.trim();
   if (!trimmed) return { ok: true, value: null };
@@ -35,7 +45,8 @@ export function parseWebsiteUrl(raw: string): WebsiteParseResult {
 
   try {
     const url = new URL(slashed);
-    return url.protocol === "http:" || url.protocol === "https:" ? { ok: true, value: url.toString() } : { ok: false };
+    if (url.protocol !== "http:" && url.protocol !== "https:") return { ok: false };
+    return looksLikeDomain(url.hostname) ? { ok: true, value: url.toString() } : { ok: false };
   } catch {
     // Not an absolute URL on its own — most likely a bare domain
     // (`example.com`), which `new URL` refuses without a scheme. Retried
@@ -45,8 +56,18 @@ export function parseWebsiteUrl(raw: string): WebsiteParseResult {
 
   try {
     const url = new URL(`https://${slashed}`);
-    return { ok: true, value: url.toString() };
+    return looksLikeDomain(url.hostname) ? { ok: true, value: url.toString() } : { ok: false };
   } catch {
     return { ok: false };
   }
+}
+
+/** Normalised when it parses, left verbatim when it doesn't. Used by the
+ *  project form's video-link field, where the parse happens while building the
+ *  values and the refusal happens in validate() a moment later: keeping the
+ *  unparseable text means the author gets their own words back in the field
+ *  next to the error, instead of the value silently vanishing. */
+export function normalizeLinkOrRaw(raw: string): string {
+  const parsed = parseWebsiteUrl(raw);
+  return parsed.ok ? (parsed.value ?? "") : raw;
 }

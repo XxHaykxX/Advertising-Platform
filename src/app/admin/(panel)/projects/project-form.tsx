@@ -1604,7 +1604,15 @@ export function ProjectForm({
                       rows={2}
                       maxLength={TAGLINE_MAX}
                       onInput={(e) => {
-                        setTaglineLen((prev) => ({ ...prev, [l]: e.currentTarget.value.length }));
+                        // Read the length HERE, not inside the updater: React
+                        // nulls `currentTarget` once the handler returns, and an
+                        // updater is only run eagerly while the queue is empty.
+                        // From the second keystroke on it runs during render
+                        // instead, where `currentTarget` is already null — which
+                        // threw and took the whole form into the error boundary
+                        // (IA-57).
+                        const len = e.currentTarget.value.length;
+                        setTaglineLen((prev) => ({ ...prev, [l]: len }));
                         recomputeAboutFilled(l);
                       }}
                       placeholder={t("projectForm.about.shortDescriptionPlaceholder")}

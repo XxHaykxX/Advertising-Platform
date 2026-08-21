@@ -56,4 +56,22 @@ describe("parseWebsiteUrl", () => {
   it("rejects other schemes too (only http/https may be stored)", () => {
     expect(parseWebsiteUrl("ftp://example.com")).toEqual({ ok: false });
   });
+
+  /* IA-58 — a bare word used to parse as a hostname and be stored as a link
+     nobody can follow: "Kinodaran" became https://kinodaran/. */
+  it("rejects a bare word — that is not a domain", () => {
+    expect(parseWebsiteUrl("Kinodaran")).toEqual({ ok: false });
+    expect(parseWebsiteUrl("https://Kinodaran")).toEqual({ ok: false });
+  });
+
+  it("still accepts a subdomain, and a port on an explicit scheme", () => {
+    expect(parseWebsiteUrl("www.example.com")).toEqual({
+      ok: true,
+      value: "https://www.example.com/",
+    });
+    expect(parseWebsiteUrl("https://example.com:8080")).toEqual({
+      ok: true,
+      value: "https://example.com:8080/",
+    });
+  });
 });

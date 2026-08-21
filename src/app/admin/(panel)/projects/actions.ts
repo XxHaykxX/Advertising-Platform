@@ -32,6 +32,7 @@ import {
 import { revalidateStorefront } from "@/lib/data/revalidate-storefront";
 import { safeUploadPath } from "@/lib/uploads-path";
 import { attrsFor, normalizeAttrs } from "@/lib/ad-channel-attrs";
+import { normalizeLinkOrRaw, parseWebsiteUrl } from "@/lib/website-url";
 
 export type ProjectFormValues = {
   title: string;
@@ -289,7 +290,7 @@ function buildData(fd: FormData): ProjectFormValues {
     taglineEn,
     references: str(fd, "references"),
     cinemas: jsonArray<string>(fd, "cinemas").join(", "),
-    videoEmbedUrl: str(fd, "videoEmbedUrl", VARCHAR_MAX),
+    videoEmbedUrl: normalizeLinkOrRaw(str(fd, "videoEmbedUrl", VARCHAR_MAX)),
     videoFile: safeUploadPath(str(fd, "videoFile", VARCHAR_MAX)),
     eventCity: str(fd, "eventCity", VARCHAR_MAX),
     eventDate: str(fd, "eventDate"),
@@ -305,6 +306,11 @@ function validate(data: ProjectFormValues): string | null {
   if (!data.title) return "Enter a title in at least one language.";
   if (data.genres.length === 0) return "Genre is required.";
   if (!data.synopsis) return "Enter a synopsis in at least one language.";
+  // IA-58 — buildData normalised what it could; anything still unparseable is
+  // refused here rather than stored as a dead link.
+  if (data.videoEmbedUrl && !parseWebsiteUrl(data.videoEmbedUrl).ok) {
+    return "The video link has to be an address — for example https://youtube.com/watch?v=…";
+  }
   // Release date's shape must match the precision it claims (review finding,
   // 2026-08-02) — a <input type="month"> that degraded to free text (desktop
   // Firefox/Safari don't implement it) would otherwise reach dateOrNull

@@ -1654,6 +1654,13 @@ export const UI: Record<string, Dict> = {
     en: "Enter a synopsis in at least one language.",
     hy: "Մուտքագրեք սինոպսիսը գոնե մեկ լեզվով։",
   },
+  // IA-58 — the video field took any text at all, so a bare word was stored
+  // and rendered as a link that goes nowhere.
+  "account.form.errVideoUrl": {
+    ru: "Ссылка на видео должна быть адресом — например https://youtube.com/watch?v=…",
+    en: "The video link has to be an address — for example https://youtube.com/watch?v=…",
+    hy: "Տեսանյութի հղումը պետք է լինի հասցե՝ օրինակ https://youtube.com/watch?v=…",
+  },
   // Release date shape/range checks (IA-42 review finding, 2026-08-02) — a
   // <input type="month"> that degraded to free text (desktop Firefox/Safari
   // don't implement it), or a crafted request, could otherwise reach the DB

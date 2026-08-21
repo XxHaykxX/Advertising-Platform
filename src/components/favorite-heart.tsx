@@ -20,11 +20,9 @@ export function FavoriteHeart({
   projectId,
   initialFavorite,
   canFavorite,
-  isOwn = false,
   signedIn,
   addAria,
   removeAria,
-  ownAria,
   variant = "overlay",
 }: {
   projectId: number;
@@ -74,19 +72,13 @@ export function FavoriteHeart({
     );
   }
 
-  if (!canFavorite) {
-    return (
-      <button
-        type="button"
-        disabled
-        aria-label={isOwn ? ownAria : addAria}
-        className={cn(shellClass, "cursor-not-allowed opacity-50")}
-      >
-        <Heart className={cn("h-4 w-4", iconTone)} />
-        {caption(isOwn ? ownAria : addAria)}
-      </button>
-    );
-  }
+  // IA-59: nothing at all, rather than a greyed-out heart. A shortlist belongs
+  // to a buyer; a creator — and a dual member looking at their own listing —
+  // can never add to one, so the control had no reachable state and QA filed
+  // the dead affordance as "Heart button inactive". `isOwn`/`ownAria` stay in
+  // the props so the call sites don't have to change, but nothing reads them
+  // now: they only ever labelled this disabled button.
+  if (!canFavorite) return null;
 
   return (
     <button

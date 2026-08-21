@@ -12,6 +12,7 @@ import { makeUI, type Locale } from "@/lib/i18n";
 import { seedNames } from "@/lib/person-name";
 import { notifyNewProjectForModeration } from "@/lib/mail";
 import { notifyRoles } from "@/lib/data/notifications";
+import { normalizeLinkOrRaw, parseWebsiteUrl } from "@/lib/website-url";
 import {
   KIND_VALUES,
   RELEASE_PRECISION_VALUES,
@@ -187,7 +188,7 @@ function buildData(fd: FormData): ProjectFormValues {
     taglineEn,
     references: str(fd, "references"),
     cinemas: jsonArray<string>(fd, "cinemas").join(", "),
-    videoEmbedUrl: str(fd, "videoEmbedUrl", VARCHAR_MAX),
+    videoEmbedUrl: normalizeLinkOrRaw(str(fd, "videoEmbedUrl", VARCHAR_MAX)),
     videoFile: safeUploadPath(str(fd, "videoFile", VARCHAR_MAX)),
     eventCity: str(fd, "eventCity", VARCHAR_MAX),
     eventDate: str(fd, "eventDate"),
@@ -200,6 +201,9 @@ function validate(data: ProjectFormValues, t: ReturnType<typeof makeUI>): string
   if (!data.title) return t("account.form.errTitleRequired");
   if (data.genres.length === 0) return t("account.form.errGenreRequired");
   if (!data.synopsis) return t("account.form.errSynopsisRequired");
+  // IA-58 — buildData normalised what it could; anything still unparseable is
+  // refused here rather than stored as a dead link.
+  if (data.videoEmbedUrl && !parseWebsiteUrl(data.videoEmbedUrl).ok) return t("account.form.errVideoUrl");
   // Mirrors the admin action's validate() — see its comment (review finding,
   // 2026-08-02).
   const releaseDateError = validateReleaseDateValue(data.releaseDate, data.releasePrecision);
