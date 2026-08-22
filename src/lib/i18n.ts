@@ -3228,23 +3228,59 @@ export const UI: Record<string, Dict> = {
   // dead since the 2026-08-18 regroup and is dropped after that deploy, not
   // before: a translator draft sitting on a removed key blocks publishing.
   "adGroup.CONTENT": { ru: "Интеграция в контент", en: "Content integration", hy: "Ինտեգրում բովանդակության մեջ" },
-  "adGroup.SPONSORSHIP": { ru: "Спонсорство и product placement", en: "Sponsorship & product placement", hy: "Հովանավորություն և product placement" },
-  "adGroup.MEDIA": { ru: "Вещание и стриминг", en: "Broadcast & streaming", hy: "Հեռարձակում և սթրիմինգ" },
-  "adGroup.DIGITAL": { ru: "Цифровая реклама", en: "Digital advertising", hy: "Թվային գովազդ" },
-  "adGroup.OUTDOOR": { ru: "Наружная реклама", en: "Outdoor advertising", hy: "Արտաքին գովազդ" },
-  "adGroup.SPONSORSHIP.desc": { ru: "Интеграция бренда в фильмы, сериалы и события", en: "Your brand inside films, series and events", hy: "Բրենդի ինտեգրում ֆիլմերում, սերիալներում և միջոցառումներում" },
-  "adGroup.MEDIA.desc": { ru: "Ролики на телевидении и радио", en: "Spots on television and radio", hy: "Հոլովակներ հեռուստատեսությամբ և ռադիոյով" },
-  "adGroup.DIGITAL.desc": { ru: "Баннеры и видеореклама в интернете", en: "Banners and video ads online", hy: "Բաններներ և վիդեոգովազդ ինտերնետում" },
-  "adGroup.OUTDOOR.desc": { ru: "Билборды, лифты и транспорт", en: "Billboards, lifts and transit", hy: "Բիլբորդներ, վերելակներ և տրանսպորտ" },
+  "adGroup.SPONSORSHIP": {
+    ru: "Спонсорство и product placement",
+    en: "Sponsorship & product placement",
+    hy: "ՀՈՎԱՆԱՎՈՐՉՈՒԹՅՈՒՆ և ՓՐՈԴԱՔԹ ՓԼԵՅՍՄԵՆԹ",
+  },
+  "adGroup.MEDIA": { ru: "Вещание и стриминг", en: "Broadcast & streaming", hy: "ՀԵՌԱՐՁԱԿՈՒՄ" },
+  "adGroup.DIGITAL": { ru: "Цифровая реклама", en: "Digital advertising", hy: "ԹՎԱՅԻՆ" },
+  "adGroup.OUTDOOR": { ru: "Наружная реклама", en: "Outdoor advertising", hy: "ԱՐՏԱՔԻՆ ԳՈՎԱԶԴ" },
+  "adGroup.SPONSORSHIP.desc": {
+    ru: "Интеграция бренда в фильмы, сериалы и события",
+    en: "Your brand inside films, series and events",
+    hy: "Նախագծերի հովանավորում և բնական ինտեգրացիա",
+  },
+  "adGroup.MEDIA.desc": {
+    ru: "Ролики на телевидении и радио",
+    en: "Spots on television and radio",
+    hy: "TV, ռադիո և օնլայն հարթակներ",
+  },
+  "adGroup.DIGITAL.desc": {
+    ru: "Баннеры и видеореклама в интернете",
+    en: "Banners and video ads online",
+    hy: "Բաններներ, վիդեո գովազդ և թիրախավորված արշավներ",
+  },
+  "adGroup.OUTDOOR.desc": {
+    ru: "Билборды, лифты и транспорт",
+    en: "Billboards, lifts and transit",
+    hy: "Բիլբորդներ, լեդ էկրաններ և ներտարածքային գովազդ",
+  },
   // What each group is bought FOR — the goal in a media buyer's words, on the
   // homepage card. Only goals this inventory can actually deliver: no
   // retargeting, no app installs, no "measurable sales" — a billboard carries
   // no pixel, and promising it next to the "accountability" argument would be
   // a claim we can't back.
-  "adGroup.OUTDOOR.goal": { ru: "Для локального охвата", en: "For local reach", hy: "Տեղական հասանելիության համար" },
-  "adGroup.DIGITAL.goal": { ru: "Для заявок и лидов", en: "For leads and enquiries", hy: "Հայտերի և լիդերի համար" },
-  "adGroup.MEDIA.goal": { ru: "Для узнаваемости бренда", en: "For brand awareness", hy: "Բրենդի ճանաչելիության համար" },
-  "adGroup.SPONSORSHIP.goal": { ru: "Для доверия и партнёрств", en: "For trust and partnerships", hy: "Վստահության և գործընկերության համար" },
+  "adGroup.OUTDOOR.goal": {
+    ru: "Для локального охвата",
+    en: "For local reach",
+    hy: "Մաքսիմալ տեսանելիություն քաղաքային միջավայրում",
+  },
+  "adGroup.DIGITAL.goal": {
+    ru: "Для заявок и лидов",
+    en: "For leads and enquiries",
+    hy: "Ճշգրիտ թիրախավորում և հայտերի աճ",
+  },
+  "adGroup.MEDIA.goal": {
+    ru: "Для узнаваемости бренда",
+    en: "For brand awareness",
+    hy: "Լայն ծածկույթ և բարձր ներգրավվածություն",
+  },
+  "adGroup.SPONSORSHIP.goal": {
+    ru: "Для доверия и партнёрств",
+    en: "For trust and partnerships",
+    hy: "Էմոցիոնալ կապ և բրենդի հանդեպ վստահություն",
+  },
 
   // ── Homepage: advertiser goals (src/lib/ad-goals.ts, home-goals.tsx) ──
   // The seven goals from the brief. Wording is ours, not the reference site's,
