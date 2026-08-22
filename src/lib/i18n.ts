@@ -3114,19 +3114,19 @@ export const UI: Record<string, Dict> = {
   "whyUs.fast.body": {
     ru: "Отвечаем на заявку в течение суток и сразу говорим, свободно ли место и когда можно выходить.",
     en: "We answer within a day and tell you straight away whether the slot is free and when you can go live.",
-    hy: "Ստացեք հայտի հաստատում և համապատասխան առաջարկներ աշխատանքային 1 օրվա ընթացքում։",
+    hy: "Հայտի հաստատում և անհատական առաջարկ՝ ընդամենը 1 աշխատանքային օրում։",
   },
-  "whyUs.pricing.title": { ru: "Прозрачные цены", en: "Transparent pricing", hy: "Ճշգրիտ բյուջետավորում" },
+  "whyUs.pricing.title": { ru: "Прозрачные цены", en: "Transparent pricing", hy: "Անկեղծ պայմաններ" },
   "whyUs.pricing.body": {
     ru: "Цена указана у каждого предложения. Никаких скрытых наценок и «уточним позже».",
     en: "Every listing carries its price. No hidden markups, no “we'll get back to you on that”.",
-    hy: "Ֆիքսված արժեքներ յուրաքանչյուր ինտեգրման համար՝ առանց թաքնված պայմանների։",
+    hy: "Թափանցիկ գներ յուրաքանչյուր ձևաչափի համար՝ առանց անակնկալ հավելավճարների։",
   },
-  "whyUs.reporting.title": { ru: "Отчётность", en: "Accountability", hy: "Թափանցիկ վերլուծություն" },
+  "whyUs.reporting.title": { ru: "Отчётность", en: "Accountability", hy: "Իրական ցուցանիշներ" },
   "whyUs.reporting.body": {
     ru: "После размещения присылаем подтверждение выхода: фотоотчёт, эфирную справку или статистику показов.",
     en: "After the campaign runs you get proof: photo reports, broadcast logs or impression stats.",
-    hy: "Վերահսկեք ձեր ներդրումների արդյունավետությունը և ստացեք ռեալ ցուցանիշներ։",
+    hy: "Ներդրումների արդյունավետություն և ճշգրիտ վիճակագրություն։",
   },
 
   // ── Homepage: partner channels (src/components/home-partners.tsx) ──
