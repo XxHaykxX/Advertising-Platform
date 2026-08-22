@@ -3108,7 +3108,7 @@ export const UI: Record<string, Dict> = {
   "whyUs.network.body": {
     ru: "Наружная реклама, ТВ, радио, интернет и продакт-плейсмент — в одном месте, без десяти отдельных переговоров.",
     en: "Outdoor, TV, radio, online and product placement in one place — instead of ten separate negotiations.",
-    hy: "Բոլոր ֆորմատները մեկ տեղում՝\nբիլբորդներից մինչև թվային էկրաններ։",
+    hy: "Բոլոր ֆորմատները մեկ տեղում՝ բիլբորդից մինչև թվային էկրան։",
   },
   "whyUs.fast.title": { ru: "Быстрое подтверждение", en: "Fast confirmation", hy: "Արագ արձագանքում" },
   "whyUs.fast.body": {
