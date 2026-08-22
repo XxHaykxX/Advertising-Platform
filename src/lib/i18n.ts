@@ -93,7 +93,7 @@ export const UI: Record<string, Dict> = {
   "about.ctaBody": {
     ru: "Изучите активные проекты или зарегистрируйтесь, чтобы разместить свой.",
     en: "Explore active projects or register to list your own.",
-    hy: "Լավագույն բրենդներն ու ստեղծագործողներն արդեն հարթակում են: Գրանցվե՛ք մի քանի վայրկյանում։",
+    hy: "Լավագույն բրենդներն ու ստեղծագործողներն արդեն հարթակում են: Դուք էլ գրանցվեք մի քանի վայրկյանում։",
   },
   "about.registerCta": { ru: "Зарегистрироваться", en: "Register", hy: "Գրանցվել" },
   "about.heroEyebrow": { ru: "Маркетплейс product placement", en: "Product-placement marketplace", hy: "Մեր մասին" },
@@ -128,18 +128,18 @@ export const UI: Record<string, Dict> = {
      QA pass on 2026-08-14 found the Russian home page still promising
      "scene-level placement reports". ru/en now say what hy says. */
   "hero.eyebrow": {
-    ru: "Откройте новые возможности",
-    en: "Discover new opportunities",
+    ru: "Маркетплейс продакт-плейсмента",
+    en: "Product placement marketplace",
     hy: "ԲԱՑԱՀԱՅՏԵ՛Ք ՆՈՐ ՀՆԱՐԱՎՈՐՈՒԹՅՈՒՆՆԵՐ",
   },
   "hero.titleHighlight": {
-    ru: "Для брендов и авторов медиапроектов",
-    en: "For brands and media project creators",
+    ru: "Брендированный плейсмент",
+    en: "Brand Placement",
     hy: "Բրենդների և մեդիա արտադրողների համար",
   },
   "hero.subtitle": {
-    ru: "Площадка, где бренды и авторы медиапроектов находят друг друга на прозрачных и взаимовыгодных условиях.",
-    en: "A platform where brands and media project creators find each other on transparent, mutually beneficial terms.",
+    ru: "Соединяем бренды с кино- и сериальными продакшенами через посценовые отчёты о плейсменте.",
+    en: "Connect brands with film & series productions through scene-level placement reports.",
     hy: "Հարթակ, որտեղ բրենդներն ու մեդիա նախագծերի հեղինակները գտնում են իրար՝ թափանցիկ և փոխշահավետ պայմաններով։",
   },
   "hero.scrollDown": { ru: "Прокрутить вниз", en: "Scroll down", hy: "Ոլորել ներքև" },
@@ -1292,9 +1292,9 @@ export const UI: Record<string, Dict> = {
   // becomes an oracle for staff emails (see createMember/createGoogleMember —
   // neither branches on that).
   "register.errEmailTaken": {
-    ru: "На этот адрес уже есть аккаунт. Войдите — вторую сторону можно включить в профиле.",
-    en: "There's already an account for this address. Sign in — you can turn on the other side from your profile.",
-    hy: "Այս հասցեին արդեն կա հաշիվ։ Մուտք գործեք․ երկրորդ կողմը կարող եք միացնել պրոֆիլում։",
+    ru: "Этот email уже зарегистрирован.",
+    en: "This email is already registered.",
+    hy: "Այս էլփոստն արդեն գրանցված է։",
   },
   "register.errFields": { ru: "Заполните все обязательные поля.", en: "Please fill in all required fields.", hy: "Լրացրեք բոլոր պարտադիր դաշտերը։" },
   "register.errPasswordShort": { ru: "Пароль должен быть не короче 8 символов.", en: "Password must be at least 8 characters.", hy: "Գաղտնաբառը պետք է լինի առնվազն 8 նիշ։" },
@@ -3103,41 +3103,37 @@ export const UI: Record<string, Dict> = {
   "adSpacePublic.contactCta": { ru: "Узнать об этом месте", en: "Ask about this space", hy: "Հարցնել այս տարածքի մասին" },
 
   // ── Homepage: why us (src/components/why-us.tsx) ──
-  "whyUs.title": {
-    ru: "Почему с нами",
-    en: "Why work with us",
-    hy: "Ինչու՞ մեզ հետ",
-  },
-  "whyUs.network.title": { ru: "Вся сеть каналов", en: "Every channel in one place", hy: "Ալիքների լիարժեք ցանց" },
+  "whyUs.title": { ru: "Почему с нами", en: "Why work with us", hy: "Ինչո՞ւ մեզ հետ" },
+  "whyUs.network.title": { ru: "Вся сеть каналов", en: "Every channel in one place", hy: "Լիարժեք մեդիա գործիքակազմ" },
   "whyUs.network.body": {
     ru: "Наружная реклама, ТВ, радио, интернет и продакт-плейсмент — в одном месте, без десяти отдельных переговоров.",
     en: "Outdoor, TV, radio, online and product placement in one place — instead of ten separate negotiations.",
-    hy: "Արտաքին գովազդ, հեռուստատեսություն, ռադիո, ինտերնետ և product placement՝ մեկ տեղում, առանց տասը առանձին բանակցության։",
+    hy: "Գովազդի բոլոր տարբերակները մեկ հարթակում՝ բիլբորդներից ու թվային ֆորմատներից մինչև ֆիլմերի հովանավորչություն։",
   },
-  "whyUs.fast.title": { ru: "Быстрое подтверждение", en: "Fast confirmation", hy: "Արագ հաստատում" },
+  "whyUs.fast.title": { ru: "Быстрое подтверждение", en: "Fast confirmation", hy: "Արագ արձագանքում" },
   "whyUs.fast.body": {
     ru: "Отвечаем на заявку в течение суток и сразу говорим, свободно ли место и когда можно выходить.",
     en: "We answer within a day and tell you straight away whether the slot is free and when you can go live.",
-    hy: "Պատասխանում ենք մեկ օրվա ընթացքում և անմիջապես ասում՝ ազատ է տեղը և երբ կարող եք մեկնարկել։",
+    hy: "Առանց ժամանակի կորստի ստացեք հայտի հաստատում և համապատասխան առաջարկներ 1 աշխատանքային օրվա ընթացքում։",
   },
-  "whyUs.pricing.title": { ru: "Прозрачные цены", en: "Transparent pricing", hy: "Թափանցիկ գներ" },
+  "whyUs.pricing.title": { ru: "Прозрачные цены", en: "Transparent pricing", hy: "Ճշգրիտ բյուջետավորում" },
   "whyUs.pricing.body": {
     ru: "Цена указана у каждого предложения. Никаких скрытых наценок и «уточним позже».",
     en: "Every listing carries its price. No hidden markups, no “we'll get back to you on that”.",
-    hy: "Յուրաքանչյուր առաջարկ ունի իր գինը։ Ոչ մի թաքնված հավելավճար և ոչ մի «կճշտենք հետո»։",
+    hy: "Պլանավորեք ձեր ծախսերն առանց անակնկալների։ Ֆիքսված արժեքներ յուրաքանչյուր ինտեգրման համար՝ առանց թաքնված պայմանների։",
   },
-  "whyUs.reporting.title": { ru: "Отчётность", en: "Accountability", hy: "Հաշվետվողականություն" },
+  "whyUs.reporting.title": { ru: "Отчётность", en: "Accountability", hy: "Թափանցիկ վերլուծություն" },
   "whyUs.reporting.body": {
     ru: "После размещения присылаем подтверждение выхода: фотоотчёт, эфирную справку или статистику показов.",
     en: "After the campaign runs you get proof: photo reports, broadcast logs or impression stats.",
-    hy: "Տեղաբաշխումից հետո ուղարկում ենք հաստատում՝ լուսանկարային հաշվետվություն, եթերային տեղեկանք կամ ցուցադրումների վիճակագրություն։",
+    hy: "Վերահսկեք ձեր ներդրումների արդյունավետությունը։ Ստացեք լիարժեք հաշվետվություն, ռեալ ցուցանիշներ և դիտումների ճշգրիտ վիճակագրություն։",
   },
 
   // ── Homepage: partner channels (src/components/home-partners.tsx) ──
   "homePartners.title": {
     ru: "Каналы, с которыми работаем",
     en: "The channels we work with",
-    hy: "Ալիքները, որոնց հետ աշխատում ենք",
+    hy: "Ուժեղ բրենդներ\nԻրական արդյունքներ",
   },
   "homePartners.subtitle": {
     ru: "Телеканалы, радиостанции и сети наружной рекламы — прямые партнёры площадки.",
@@ -3169,7 +3165,7 @@ export const UI: Record<string, Dict> = {
   "testimonials.title": {
     ru: "Примеры видеорекламы",
     en: "Video ad examples",
-    hy: "Վիդեոգովազդի օրինակներ",
+    hy: "Իրականացված համագործակցություններ",
   },
   "testimonials.subtitle": {
     ru: "Как выглядит видеоформат на площадке.",
@@ -3215,13 +3211,17 @@ export const UI: Record<string, Dict> = {
   },
 
   // ── Homepage: the four advertising types (src/components/ad-types.tsx) ──
-  "adTypes.title": { ru: "Виды рекламы", en: "Ways to advertise", hy: "Գովազդի տեսակները" },
+  "adTypes.title": {
+    ru: "Виды рекламы",
+    en: "Ways to advertise",
+    hy: "Գովազդային լուծումներ՝ յուրաքանչյուր բիզնեսի համար",
+  },
   "adTypes.subtitle": {
     ru: "Выберите, где показать бренд — и посмотрите свободные места с ценами.",
     en: "Pick where your brand should appear — then see what is available and what it costs.",
     hy: "Ընտրեք, թե որտեղ ցուցադրել բրենդը, և տեսեք ազատ տեղերն ու գները։",
   },
-  "adTypes.cta": { ru: "Смотреть", en: "Browse", hy: "Դիտել" },
+  "adTypes.cta": { ru: "Смотреть", en: "Browse", hy: "Տեսնել ավելին" },
 
   // The four channel groups — a card on the homepage, a section in the
   // mega-menu and a page of their own at /ads/<group-slug>. adGroup.CONTENT is
@@ -3253,11 +3253,7 @@ export const UI: Record<string, Dict> = {
   // a sale. Each line says what this inventory does TOWARDS the goal — warms
   // the audience, drives the search, supports the push — and claims no
   // measurement it can't produce.
-  "adGoal.title": {
-    ru: "Выберите по задаче",
-    en: "Pick by goal",
-    hy: "Ընտրեք ըստ նպատակի",
-  },
+  "adGoal.title": { ru: "Выберите по задаче", en: "Pick by goal", hy: "Հասեք Ձեր բիզնես նպատակներին" },
   "adGoal.subtitle": {
     ru: "Скажите, чего нужно добиться, — покажем, какая реклама на это работает.",
     en: "Tell us what you need to achieve and we'll show which advertising works towards it.",
@@ -3267,45 +3263,45 @@ export const UI: Record<string, Dict> = {
   "adGoal.AWARENESS.sub": {
     ru: "Быть на виду там, где город проходит каждый день",
     en: "Stay in sight where the city passes every day",
-    hy: "Լինել տեսադաշտում այնտեղ, որտեղով քաղաքն անցնում է ամեն օր",
+    hy: "Լինել տեսադաշտում ամեն օր",
   },
-  "adGoal.TRAFFIC": { ru: "Трафик на сайт", en: "Attract traffic", hy: "Տրաֆիկ դեպի կայք" },
+  "adGoal.TRAFFIC": { ru: "Трафик на сайт", en: "Attract traffic", hy: "Բրենդի դիրքավորում" },
   "adGoal.TRAFFIC.sub": {
     ru: "Баннеры и видео с переходом на вашу страницу",
     en: "Banners and video that click through to your page",
-    hy: "Բաններներ և վիդեո՝ ձեր էջ տանող անցումով",
+    hy: "Ձևավորել ճիշտ ընկալում շուկայում",
   },
-  "adGoal.LEADS": { ru: "Заявки и лиды", en: "Generate leads", hy: "Հայտեր և լիդեր" },
+  "adGoal.LEADS": { ru: "Заявки и лиды", en: "Generate leads", hy: "Թրաֆիկ դեպի կայք/հավելված" },
   "adGoal.LEADS.sub": {
     ru: "Превратить зрителя в обращение — форма, звонок, сообщение",
     en: "Turn a viewer into an enquiry — a form, a call, a message",
-    hy: "Դիտողին վերածել դիմումի՝ ձև, զանգ, հաղորդագրություն",
+    hy: "Ուղղորդել այցելուներին դեպի հարթակ",
   },
-  "adGoal.SALES": { ru: "Поддержка продаж", en: "Support a sales push", hy: "Վաճառքի աջակցություն" },
+  "adGoal.SALES": { ru: "Поддержка продаж", en: "Support a sales push", hy: "Լիդերի գեներացում" },
   "adGoal.SALES.sub": {
     ru: "Ролик на ТВ и радио под акцию, сезон или открытие",
     en: "A TV and radio spot behind a promotion, a season or an opening",
-    hy: "Հոլովակ հեռուստատեսությամբ և ռադիոյով՝ ակցիայի, սեզոնի կամ բացման համար",
+    hy: "Ձևավորել պատրաստի գնորդների հոսք",
   },
-  "adGoal.RETARGET": { ru: "Прогрев аудитории", en: "Warm the audience", hy: "Լսարանի նախապատրաստում" },
+  "adGoal.RETARGET": { ru: "Прогрев аудитории", en: "Warm the audience", hy: "Վաճառքների աճ" },
   "adGoal.RETARGET.sub": {
     ru: "Наружная и медийная реклама узнают бренд до того, как его догонит ретаргетинг",
     en: "Outdoor and media make the brand familiar before retargeting catches it up",
-    hy: "Արտաքին և մեդիա գովազդը ծանոթացնում է բրենդին՝ մինչև ռետարգեթինգը կհասնի",
+    hy: "Ապահովել արագ ու տեսանելի եկամուտ",
   },
-  "adGoal.APP": { ru: "Продвижение приложения", en: "Promote your app", hy: "Հավելվածի առաջխաղացում" },
+  "adGoal.APP": { ru: "Продвижение приложения", en: "Promote your app", hy: "Թիրախային B2B մարկետինգ" },
   "adGoal.APP.sub": {
     ru: "Показать приложение там, где его будут искать по названию",
     en: "Put the app where people will go looking for it by name",
-    hy: "Ցույց տալ հավելվածը այնտեղ, որտեղ այն կփնտրեն անունով",
+    hy: "Գրավել առանցքային հաճախորդների ու գործընկերների",
   },
-  "adGoal.ABM": { ru: "Работа с ключевыми клиентами", en: "Win your target accounts", hy: "Աշխատանք առանցքային հաճախորդների հետ" },
+  "adGoal.ABM": { ru: "Работа с ключевыми клиентами", en: "Win your target accounts", hy: "Վստահելիության ձևավորում" },
   "adGoal.ABM.sub": {
     ru: "События и интеграции, где нужные люди — в зале",
     en: "Events and integrations where the people you need are in the room",
-    hy: "Միջոցառումներ և ինտեգրումներ, որտեղ պետք մարդիկ դահլիճում են",
+    hy: "Ստեղծել էմոցիոնալ կապ լսարանի հետ",
   },
-  "adGoal.cta": { ru: "Смотреть", en: "Browse", hy: "Դիտել" },
+  "adGoal.cta": { ru: "Смотреть", en: "Browse", hy: "Տեսնել ավելին" },
 
   // ── the nine channels (see src/lib/ad-channels.ts for the key contract) ──
   "adChannel.PLACEMENT": { ru: "Продакт-плейсмент", en: "Product placement", hy: "Փրոդաքթ փլեյսմենթ" },
