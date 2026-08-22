@@ -3104,23 +3104,23 @@ export const UI: Record<string, Dict> = {
 
   // ── Homepage: why us (src/components/why-us.tsx) ──
   "whyUs.title": { ru: "Почему с нами", en: "Why work with us", hy: "Ինչո՞ւ մեզ հետ" },
-  "whyUs.network.title": { ru: "Вся сеть каналов", en: "Every channel in one place", hy: "Լիարժեք մեդիա գործիքակազմ" },
+  "whyUs.network.title": { ru: "Вся сеть каналов", en: "Every channel in one place", hy: "Ամբողջական մեդիաբազա" },
   "whyUs.network.body": {
     ru: "Наружная реклама, ТВ, радио, интернет и продакт-плейсмент — в одном месте, без десяти отдельных переговоров.",
     en: "Outdoor, TV, radio, online and product placement in one place — instead of ten separate negotiations.",
-    hy: "Գովազդի բոլոր ֆորմատները մեկ տեղում՝ բիլբորդներից մինչև ֆիլմերի հովանավորչություն։",
+    hy: "Բոլոր ֆորմատները մեկ հարթակում՝ բիլբորդներից մինչև հովանավորչություն։",
   },
   "whyUs.fast.title": { ru: "Быстрое подтверждение", en: "Fast confirmation", hy: "Արագ արձագանքում" },
   "whyUs.fast.body": {
     ru: "Отвечаем на заявку в течение суток и сразу говорим, свободно ли место и когда можно выходить.",
     en: "We answer within a day and tell you straight away whether the slot is free and when you can go live.",
-    hy: "Հայտի հաստատում և անհատական առաջարկ՝ ընդամենը 1 աշխատանքային օրում։",
+    hy: "Հայտի հաստատում և առաջարկի տրամադրում\n1 աշխատանքային օրում։",
   },
   "whyUs.pricing.title": { ru: "Прозрачные цены", en: "Transparent pricing", hy: "Անկեղծ պայմաններ" },
   "whyUs.pricing.body": {
     ru: "Цена указана у каждого предложения. Никаких скрытых наценок и «уточним позже».",
     en: "Every listing carries its price. No hidden markups, no “we'll get back to you on that”.",
-    hy: "Թափանցիկ գներ յուրաքանչյուր ձևաչափի համար՝ առանց անակնկալ հավելավճարների։",
+    hy: "Թափանցիկ գներ՝ առանց անակնկալ հավելավճարների։",
   },
   "whyUs.reporting.title": { ru: "Отчётность", en: "Accountability", hy: "Իրական ցուցանիշներ" },
   "whyUs.reporting.body": {
