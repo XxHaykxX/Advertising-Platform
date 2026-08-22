@@ -3108,13 +3108,13 @@ export const UI: Record<string, Dict> = {
   "whyUs.network.body": {
     ru: "Наружная реклама, ТВ, радио, интернет и продакт-плейсмент — в одном месте, без десяти отдельных переговоров.",
     en: "Outdoor, TV, radio, online and product placement in one place — instead of ten separate negotiations.",
-    hy: "Բոլոր ֆորմատները մեկ հարթակում՝ բիլբորդներից մինչև հովանավորչություն։",
+    hy: "Բոլոր ֆորմատները մեկ տեղում՝\nբիլբորդներից մինչև թվային էկրաններ։",
   },
   "whyUs.fast.title": { ru: "Быстрое подтверждение", en: "Fast confirmation", hy: "Արագ արձագանքում" },
   "whyUs.fast.body": {
     ru: "Отвечаем на заявку в течение суток и сразу говорим, свободно ли место и когда можно выходить.",
     en: "We answer within a day and tell you straight away whether the slot is free and when you can go live.",
-    hy: "Հայտի հաստատում և առաջարկի տրամադրում\n1 աշխատանքային օրում։",
+    hy: "Հայտի հաստատում ու առաջարկ՝ 1 աշխատանքային օրում։",
   },
   "whyUs.pricing.title": { ru: "Прозрачные цены", en: "Transparent pricing", hy: "Անկեղծ պայմաններ" },
   "whyUs.pricing.body": {
