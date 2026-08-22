@@ -3108,25 +3108,25 @@ export const UI: Record<string, Dict> = {
   "whyUs.network.body": {
     ru: "Наружная реклама, ТВ, радио, интернет и продакт-плейсмент — в одном месте, без десяти отдельных переговоров.",
     en: "Outdoor, TV, radio, online and product placement in one place — instead of ten separate negotiations.",
-    hy: "Գովազդի բոլոր տարբերակները մեկ հարթակում՝ բիլբորդներից ու թվային ֆորմատներից մինչև ֆիլմերի հովանավորչություն։",
+    hy: "Գովազդի բոլոր ֆորմատները մեկ տեղում՝ բիլբորդներից մինչև ֆիլմերի հովանավորչություն։",
   },
   "whyUs.fast.title": { ru: "Быстрое подтверждение", en: "Fast confirmation", hy: "Արագ արձագանքում" },
   "whyUs.fast.body": {
     ru: "Отвечаем на заявку в течение суток и сразу говорим, свободно ли место и когда можно выходить.",
     en: "We answer within a day and tell you straight away whether the slot is free and when you can go live.",
-    hy: "Առանց ժամանակի կորստի ստացեք հայտի հաստատում և համապատասխան առաջարկներ 1 աշխատանքային օրվա ընթացքում։",
+    hy: "Ստացեք հայտի հաստատում և համապատասխան առաջարկներ աշխատանքային 1 օրվա ընթացքում։",
   },
   "whyUs.pricing.title": { ru: "Прозрачные цены", en: "Transparent pricing", hy: "Ճշգրիտ բյուջետավորում" },
   "whyUs.pricing.body": {
     ru: "Цена указана у каждого предложения. Никаких скрытых наценок и «уточним позже».",
     en: "Every listing carries its price. No hidden markups, no “we'll get back to you on that”.",
-    hy: "Պլանավորեք ձեր ծախսերն առանց անակնկալների։ Ֆիքսված արժեքներ յուրաքանչյուր ինտեգրման համար՝ առանց թաքնված պայմանների։",
+    hy: "Ֆիքսված արժեքներ յուրաքանչյուր ինտեգրման համար՝ առանց թաքնված պայմանների։",
   },
   "whyUs.reporting.title": { ru: "Отчётность", en: "Accountability", hy: "Թափանցիկ վերլուծություն" },
   "whyUs.reporting.body": {
     ru: "После размещения присылаем подтверждение выхода: фотоотчёт, эфирную справку или статистику показов.",
     en: "After the campaign runs you get proof: photo reports, broadcast logs or impression stats.",
-    hy: "Վերահսկեք ձեր ներդրումների արդյունավետությունը։ Ստացեք լիարժեք հաշվետվություն, ռեալ ցուցանիշներ և դիտումների ճշգրիտ վիճակագրություն։",
+    hy: "Վերահսկեք ձեր ներդրումների արդյունավետությունը և ստացեք ռեալ ցուցանիշներ։",
   },
 
   // ── Homepage: partner channels (src/components/home-partners.tsx) ──
